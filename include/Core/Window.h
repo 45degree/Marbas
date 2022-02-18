@@ -1,7 +1,9 @@
 #ifndef MARBARS_CORE_WINDOW_H
 #define MARBARS_CORE_WINDOW_H
 
-#include "core/Common.h"
+#include "Core/Common.h"
+#include "Layer/Layer.h"
+
 #include <folly/FBString.h>
 #include <glog/logging.h>
 
@@ -14,6 +16,8 @@ struct WindowProp {
 };
 
 class Window {
+    using Layer = Marbas::Layer::Layer;
+
 public:
     explicit Window(const WindowProp& winProp): winProp(winProp) {};
 
@@ -32,6 +36,8 @@ public:
 private:
     GLFWwindow* glfwWindow;
     WindowProp winProp;
+
+    std::vector<Layer> layers;
 };
 
 }

@@ -1,5 +1,5 @@
-#include "core/Application.h"
-#include "core/Common.h"
+#include "Core/Application.h"
+#include "Core/Common.h"
 
 #include <glog/logging.h>
 

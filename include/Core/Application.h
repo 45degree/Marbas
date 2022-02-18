@@ -4,7 +4,7 @@
 #include <memory>
 #include <mutex>
 
-#include "core/Window.h"
+#include "Core/Window.h"
 #include <glog/logging.h>
 
 namespace Marbas::Core {
