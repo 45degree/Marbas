@@ -11,8 +11,16 @@ vsxmake*/
 # VSCODE
 .vscode/
 
+# IDEA
+.idea/
+
 # Cache
 .cache/
+.ccls-cache/
+
+*.plist
 
 compile_commands.json
 .vimspector.json
+
+imgui.ini

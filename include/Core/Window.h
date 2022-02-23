@@ -3,11 +3,13 @@
 
 #include "Core/Common.h"
 #include "Layer/Layer.h"
+#include "Event/Event.h"
 
 #include <folly/FBString.h>
+#include <folly/FBVector.h>
 #include <glog/logging.h>
 
-namespace Marbas::Core {
+namespace Marbas {
 
 struct WindowProp {
     folly::fbstring name;
@@ -15,19 +17,18 @@ struct WindowProp {
     size_t height;
 };
 
+struct WindowData;
 class Window {
-    using Layer = Marbas::Layer::Layer;
-
 public:
-    explicit Window(const WindowProp& winProp): winProp(winProp) {};
-
-    ~Window() {
-        glfwTerminate();
-        LOG(INFO) << "destroy windows";
-    }
+    Window(const WindowProp& winProp);
+    ~Window();
 
 public:
     void CreateWindow();
+
+    void ShowWindow();
+
+    void SetUpEventCallBackFun();
 
     GLFWwindow* GetGlfwWinow() const noexcept {
         return glfwWindow;
@@ -37,7 +38,8 @@ private:
     GLFWwindow* glfwWindow;
     WindowProp winProp;
 
-    std::vector<Layer> layers;
+    std::unique_ptr<WindowData> windowData;
+    std::unique_ptr<Layer> firstLayer;
 };
 
 }

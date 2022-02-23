@@ -7,7 +7,7 @@
 #include "Core/Window.h"
 #include <glog/logging.h>
 
-namespace Marbas::Core {
+namespace Marbas {
 
 class Application {
 private:

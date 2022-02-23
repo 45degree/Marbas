@@ -3,7 +3,7 @@
 
 #include <glog/logging.h>
 
-namespace Marbas::Core {
+namespace Marbas {
 
 std::unique_ptr<Application> Application::app;
 
@@ -24,21 +24,21 @@ void Application::CreateWindow(const WindowProp& winProp) {
 
 void Application::Run() {
     auto glfwWindow = appWindow->GetGlfwWinow();
-    glfwMakeContextCurrent(glfwWindow);
 
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
     /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(glfwWindow))
-    {
+    while (!glfwWindowShouldClose(glfwWindow)) {
+        /* Poll for and process events */
+        glfwPollEvents();
+
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
+        appWindow->ShowWindow();
+
         /* Swap front and back buffers */
         glfwSwapBuffers(glfwWindow);
-
-        /* Poll for and process events */
-        glfwPollEvents();
     }
 }
 

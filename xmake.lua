@@ -16,7 +16,6 @@ target("Imgui")
     add_files("3rdPart/imgui/*.cpp")
     add_files("3rdPart/imgui/backends/imgui_impl_glfw.cpp")
     add_files("3rdPart/imgui/backends/imgui_impl_opengl3.cpp")
-    remove_files("3rdPart/imgui/imgui_demo.cpp")
 
     add_packages("glfw")
 target_end()
@@ -34,6 +33,9 @@ target("Marbas")
 
     add_includedirs("$(projectdir)/include")
     add_files("src/*.cc")
+    add_files("src/Event/*.cc")
+    add_files("src/Layer/*.cc")
+    add_files("src/Layer/Widget/*.cc")
 
     add_deps("Imgui")
     add_packages("glfw", "glm", "glog", "glad", "glew", "folly")
