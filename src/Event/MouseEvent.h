@@ -8,7 +8,7 @@ namespace Marbas {
 
 class MouseEvent : public Event {
 public:
-    MouseEvent(EventType eventType) : Event(eventType, EventCategory::MOUSE_EVENT) {}
+    explicit MouseEvent(EventType eventType) : Event(eventType, EventCategory::MOUSE_EVENT) {}
     virtual ~MouseEvent() = default;
 
     MouseEvent(const MouseEvent&) = default;
@@ -26,8 +26,8 @@ public:
     }
 
 protected:
-    double x;
-    double y;
+    double x = 0.0;
+    double y = 0.0;
 };
 
 class MouseButtonEvent : public MouseEvent {
@@ -50,13 +50,17 @@ protected:
 
 class MousePressEvent : public MouseButtonEvent {
 public:
-    MousePressEvent(int button) : MouseButtonEvent(EventType::MOUSE_PRESS_EVENT, button) {}
+    explicit MousePressEvent(int button) :
+        MouseButtonEvent(EventType::MOUSE_PRESS_EVENT, button)
+    {}
     virtual ~MousePressEvent() = default;
 };
 
 class MouseReleaseEvent : public MouseButtonEvent {
 public:
-    MouseReleaseEvent(int button) : MouseButtonEvent(EventType::MOUSE_RELEASE_EVENT, button) {}
+    explicit MouseReleaseEvent(int button) :
+        MouseButtonEvent(EventType::MOUSE_RELEASE_EVENT, button)
+    {}
     virtual ~MouseReleaseEvent() = default;
 };
 

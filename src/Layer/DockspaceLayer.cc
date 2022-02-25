@@ -1,7 +1,7 @@
 #include "Layer/DockspaceLayer.h"
+#include "Common.h"
 
 #include <imgui.h>
-#include <glog/logging.h>
 
 namespace Marbas {
 

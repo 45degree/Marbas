@@ -5,7 +5,6 @@
 #include <mutex>
 
 #include "Core/Window.h"
-#include <glog/logging.h>
 
 namespace Marbas {
 
@@ -38,6 +37,7 @@ public:
 private:
     Application() = default;
 
+public:
     Application(const Application&) = delete;
     Application& operator=(const Application&) = delete;
 
@@ -45,6 +45,6 @@ private:
     std::unique_ptr<Window> appWindow;
 };
 
-}
+}  // namespace Marbas
 
 #endif

@@ -1,13 +1,12 @@
 #ifndef MARBARS_CORE_WINDOW_H
 #define MARBARS_CORE_WINDOW_H
 
-#include "Core/Common.h"
+#include "Common.h"
 #include "Layer/Layer.h"
 #include "Event/Event.h"
 
 #include <folly/FBString.h>
 #include <folly/FBVector.h>
-#include <glog/logging.h>
 
 namespace Marbas {
 

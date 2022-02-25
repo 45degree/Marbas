@@ -5,7 +5,6 @@
 #include "Core/Window.h"
 
 #include <iostream>
-#include <glog/logging.h>
 
 int main(int argc, char* argv[]) {
     FLAGS_alsologtostderr = true;

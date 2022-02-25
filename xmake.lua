@@ -32,11 +32,7 @@ target("Marbas")
     end
 
     add_includedirs("$(projectdir)/src")
-    add_files("src/*.cc")
-    add_files("src/Core/*.cc")
-    add_files("src/Event/*.cc")
-    add_files("src/Layer/*.cc")
-    add_files("src/Layer/Widget/*.cc")
+    add_files("src/**.cc")
 
     add_deps("Imgui")
     add_packages("glfw", "glm", "glog", "glad", "glew", "folly")

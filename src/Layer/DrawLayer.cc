@@ -1,5 +1,5 @@
+#include "Common.h"
 #include "Layer/DrawLayer.h"
-#include "glog/logging.h"
 
 namespace Marbas {
 

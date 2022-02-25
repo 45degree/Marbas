@@ -20,8 +20,8 @@ enum class EventCategory {
 class Event {
 public:
     Event(EventType eventType, EventCategory eventCategory):
-        eventType(eventType),
-        eventCategory(eventCategory)
+        eventCategory(eventCategory),
+        eventType(eventType)
     {}
 
     virtual ~Event() = default;

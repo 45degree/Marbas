@@ -1,7 +1,5 @@
 #include "Core/Application.h"
-#include "Core/Common.h"
-
-#include <glog/logging.h>
+#include "Common.h"
 
 namespace Marbas {
 
@@ -42,4 +40,4 @@ void Application::Run() {
     }
 }
 
-}
+}  // namespace Marbas

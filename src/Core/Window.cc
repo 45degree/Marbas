@@ -1,5 +1,4 @@
 #include "Core/Window.h"
-#include "glog/logging.h"
 
 #include "Event/MouseEvent.h"
 #include "Layer/ImguiLayer.h"
@@ -37,7 +36,7 @@ void Window::CreateWindow() {
                                   nullptr, nullptr);
 
     if(glfwWindow == nullptr) {
-        std::runtime_error("failed to create window");
+        throw std::runtime_error("failed to create window");
     }
     glfwMakeContextCurrent(glfwWindow);
     glfwSwapInterval(1);
@@ -74,7 +73,7 @@ void Window::ShowWindow() {
 
 void Window::SetUpEventCallBackFun() {
     glfwSetCursorPosCallback(glfwWindow,  [](GLFWwindow* glfwWindow, double xpos, double ypos) {
-        WindowData* windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
+        auto windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
         auto event = std::make_unique<MouseMoveEvent>();
         event->SetPos(xpos, ypos);
         windowData->eventCollection->AddEvent(std::move(event));
@@ -82,7 +81,7 @@ void Window::SetUpEventCallBackFun() {
 
     glfwSetMouseButtonCallback(glfwWindow,
                                [](GLFWwindow* glfwWindow, int button, int action, int mods) {
-        WindowData* windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
+        auto windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
         auto event = std::make_unique<MouseMoveEvent>();
 
         double xpos, ypos;
@@ -100,7 +99,7 @@ void Window::SetUpEventCallBackFun() {
     });
 
     glfwSetScrollCallback(glfwWindow, [](GLFWwindow* glfwWindow, double xOffset, double yOffset) {
-        WindowData* windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
+        auto windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
 
         double xpos, ypos;
         glfwGetCursorPos(glfwWindow, &xpos, &ypos);
@@ -112,4 +111,4 @@ void Window::SetUpEventCallBackFun() {
     });
 }
 
-}
+}  // namespace Marbas
