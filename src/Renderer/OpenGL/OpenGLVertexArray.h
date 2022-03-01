@@ -12,10 +12,10 @@ public:
     ~OpenGLVertexArray() override;
 
 public:
-    void Bind() override;
-    void UnBind() override;
+    void Bind() const override;
+    void UnBind() const override;
 
-    void EnableVertexAttribArray(const VertexBuffer& vertexBuffer) override;
+    void EnableVertexAttribArray(const VertexBuffer* vertexBuffer) const override;
 private:
     GLuint VAO;
 };

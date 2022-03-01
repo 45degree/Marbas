@@ -13,22 +13,22 @@ OpenGLVertexArray::~OpenGLVertexArray() {
     glDeleteVertexArrays(1, &VAO);
 }
 
-void OpenGLVertexArray::Bind() {
+void OpenGLVertexArray::Bind() const {
     LOG(INFO) << "bind vertex array;";
 
     glBindVertexArray(VAO);
 }
 
-void OpenGLVertexArray::UnBind() {
+void OpenGLVertexArray::UnBind() const {
     LOG(INFO) << "unbind vertex array;";
     glBindVertexArray(0);
 }
 
-void OpenGLVertexArray::EnableVertexAttribArray(const VertexBuffer& vertexBuffer) {
+void OpenGLVertexArray::EnableVertexAttribArray(const VertexBuffer* vertexBuffer) const {
     glBindVertexArray(VAO);
-    vertexBuffer.Bind();
+    vertexBuffer->Bind();
 
-    const auto& layout = vertexBuffer.Getlayout();
+    const auto& layout = vertexBuffer->Getlayout();
 
     for(const auto& elementInfo : layout) {
         GLuint index = elementInfo.index;

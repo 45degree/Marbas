@@ -22,7 +22,7 @@ target_end()
 
 target("Marbas")
     set_kind("binary")
-    set_languages("c11", "cxx17")
+    set_languages("c11", "cxx20")
     add_rules("utils.glsl2spv", {
         outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "shader")
     })
@@ -33,6 +33,7 @@ target("Marbas")
 
     add_includedirs("$(projectdir)/src")
     add_files("src/**.cc")
+    add_files("src/**.vert", "src/**.frag")
 
     add_deps("Imgui")
     add_packages("glfw", "glm", "glog", "glad", "glew", "folly")

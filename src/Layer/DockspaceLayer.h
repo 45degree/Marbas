@@ -8,7 +8,7 @@ namespace Marbas {
 class DockspaceLayer : public Layer {
 public:
     DockspaceLayer() : Layer("DockspaceLayer") {}
-    virtual ~DockspaceLayer();
+    ~DockspaceLayer() override;
 
 public:
     void OnAttach() override;
@@ -19,6 +19,6 @@ public:
 
 };
 
-}
+}  // namespace Marbas
 
 #endif

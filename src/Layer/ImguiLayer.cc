@@ -58,15 +58,6 @@ void ImguiLayer::OnBegin() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-
-    // if (ImGui::BeginMenuBar())
-    // {
-    //     if (ImGui::BeginMenu("Options"))
-    //     {
-    //         ImGui::EndMenu();
-    //     }
-    //     ImGui::EndMenuBar();
-    // }
 }
 
 void ImguiLayer::OnEnd() {
@@ -77,7 +68,6 @@ void ImguiLayer::OnEnd() {
     glViewport(0, 0, display_w, display_h);
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w,
                  clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

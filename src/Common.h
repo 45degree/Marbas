@@ -2,9 +2,12 @@
 #define MARBARS_COMMON_H
 
 #include <GLFW/glfw3.h>
-#include <glad/glad.h>
+// #include <glad/glad.h>
+#define GLEW_STATIC
+#include <GL/glew.h>
 #include <folly/FBVector.h>
 #include <folly/FBString.h>
+#include <filesystem>
 
 #ifdef WIN32
 #include <GL/GL.h>
@@ -18,6 +21,8 @@ template<typename T>
 using Vector = folly::fbvector<T>;
 
 using String = folly::fbstring;
+
+namespace FileSystem = std::filesystem;
 
 }
 

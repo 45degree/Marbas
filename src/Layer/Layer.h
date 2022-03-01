@@ -10,7 +10,7 @@ namespace Marbas {
 
 class Layer {
 public:
-    Layer(const folly::fbstring& layerName) :
+    explicit Layer(const folly::fbstring& layerName) :
         layerName(layerName)
     {}
 

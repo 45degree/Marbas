@@ -23,7 +23,11 @@ void Application::CreateWindow(const WindowProp& winProp) {
 void Application::Run() {
     auto glfwWindow = appWindow->GetGlfwWinow();
 
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    auto vendor = glGetString(GL_VENDOR);
+    auto version = glGetString(GL_VERSION);
+
+    LOG(INFO) <<"vendor is:" << vendor;
+    LOG(INFO) <<"version is:" << version;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(glfwWindow)) {

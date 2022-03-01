@@ -12,10 +12,10 @@ public:
     virtual ~VertexArray() = default;
 
 public:
-    virtual void Bind() = 0;
-    virtual void UnBind() = 0;
+    virtual void Bind() const = 0;
+    virtual void UnBind() const = 0;
 
-    virtual void EnableVertexAttribArray(const VertexBuffer& vertexBuffer) = 0;
+    virtual void EnableVertexAttribArray(const VertexBuffer* vertexBuffer) const = 0;
 };
 
 }  // namespace Marbas
