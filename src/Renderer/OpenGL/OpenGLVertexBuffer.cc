@@ -13,7 +13,7 @@ OpenGLVertexBuffer::OpenGLVertexBuffer(std::size_t size) : VBO(0) {
 OpenGLVertexBuffer::OpenGLVertexBuffer(const Vector<float>& data) : VBO(0) {
     LOG(INFO) << "create an opengl vertex buffer";
 
-    auto size = static_cast<GLsizeiptr>(data.size()) * sizeof(float);
+    auto size = static_cast<GLsizeiptr>(data.size() * sizeof(float));
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, size, data.data(), GL_STATIC_DRAW);
@@ -39,7 +39,7 @@ void OpenGLVertexBuffer::UnBind() const {
 void OpenGLVertexBuffer::SetData(const Vector<float>& data) const {
     LOG(INFO) << "set vertex buffer data";
 
-    auto size = static_cast<GLsizeiptr>(data.size()) * sizeof(float);
+    auto size = static_cast<GLsizeiptr>(data.size() * sizeof(float));
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, data.data());
 }

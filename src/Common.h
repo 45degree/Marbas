@@ -24,7 +24,7 @@ using String = folly::fbstring;
 
 namespace FileSystem = std::filesystem;
 
-}
+}  // namespace Marbas
 
 #include <glog/logging.h>
 

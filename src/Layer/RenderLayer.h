@@ -7,6 +7,7 @@
 #include "Renderer/Interface/IndexBuffer.h"
 #include "Renderer/Interface/Shader.h"
 #include "Renderer/Interface/DrawCall.h"
+#include "Renderer/Interface/FrameBuffer.h"
 
 namespace Marbas {
 
@@ -20,6 +21,11 @@ public:
     void OnDetach() override;
     void OnUpdate() override;
 
+public:
+    [[nodiscard]] const void* GetFrameBufferTexture() const noexcept{
+        return frameBuffer->GetColorAttachTexture();
+    }
+
 private:
     std::unique_ptr<VertexBuffer> vertexBuffer;
     std::unique_ptr<VertexArray> vertexArray;
@@ -27,6 +33,7 @@ private:
     std::unique_ptr<Shader> vertexShader;
     std::unique_ptr<Shader> fragmentShader;
     std::unique_ptr<DrawCall> drawCall;
+    std::unique_ptr<FrameBuffer> frameBuffer;
 };
 
 }  // namespace Marbas

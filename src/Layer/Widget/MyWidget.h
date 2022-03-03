@@ -9,8 +9,8 @@ namespace Marbas {
 
 class MyWidget : public Widget {
 public:
-    explicit MyWidget(const std::string& title): title(title){}
-    virtual ~MyWidget() {}
+    MyWidget(): Widget("MyWidget") {}
+    ~MyWidget() override = default;
 
     void Draw() override {
         ImGui::ShowDemoWindow();
@@ -20,6 +20,6 @@ private:
     std::string title;
 };
 
-}
+}  // namespace Marbas
 
 #endif

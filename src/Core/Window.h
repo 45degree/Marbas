@@ -3,10 +3,10 @@
 
 #include "Common.h"
 #include "Layer/Layer.h"
+#include "Layer/DrawLayer.h"
+#include "Layer/RenderLayer.h"
 #include "Event/Event.h"
-
-#include <folly/FBString.h>
-#include <folly/FBVector.h>
+#include "Layer/Widget/Image.h"
 
 namespace Marbas {
 
@@ -19,7 +19,7 @@ struct WindowProp {
 struct WindowData;
 class Window {
 public:
-    Window(const WindowProp& winProp);
+    explicit Window(const WindowProp& winProp);
     ~Window();
 
 public:
@@ -29,9 +29,17 @@ public:
 
     void SetUpEventCallBackFun();
 
-    GLFWwindow* GetGlfwWinow() const noexcept {
+    [[nodiscard]] GLFWwindow* GetGlfwWinow() const noexcept {
         return glfwWindow;
     }
+
+    void RegisterLayer(Layer* layer);
+
+    void RegisterLayers(const Vector<Layer*>& layers);
+
+    void RegisterWidget(Widget* widget);
+
+    void RegisterWidgets(const Vector<Widget*>& widgets);
 
 private:
     GLFWwindow* glfwWindow;
@@ -41,6 +49,6 @@ private:
     std::unique_ptr<Layer> firstLayer;
 };
 
-}
+}  // namespace Marbas
 
 #endif

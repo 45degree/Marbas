@@ -68,5 +68,5 @@ void Layer::EventDistribution(const Event& event) {
     }
 }
 
-}
+}  // namespace Marbas
 

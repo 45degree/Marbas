@@ -1,16 +1,20 @@
 #include "Core/Window.h"
-
 #include "Event/MouseEvent.h"
 #include "Layer/ImguiLayer.h"
+#include "Layer/Widget/Widget.h"
 #include "Layer/Widget/MyWidget.h"
+#include "Layer/Widget/Image.h"
 #include "Layer/DockspaceLayer.h"
 #include "Layer/DrawLayer.h"
 #include "Layer/RenderLayer.h"
+#include <unordered_map>
 
 namespace Marbas {
 
 struct WindowData {
     std::unique_ptr<EventCollection> eventCollection = nullptr;
+    std::unordered_map<String, Layer*> LayerMap;
+    std::unordered_map<String, Widget*> widgetMap;
 };
 
 Window::Window(const WindowProp& winProp):
@@ -26,6 +30,33 @@ Window::~Window() {
 
     glfwTerminate();
     LOG(INFO) << "destroy windows";
+}
+
+void Window::RegisterLayer(Layer* layer) {
+    if(layer == nullptr) return;
+
+    const String& layerName = layer->GetLayerName();
+    windowData->LayerMap[layerName] = layer;
+
+    LOG(INFO) << "register layer: " << layerName;
+}
+
+void Window::RegisterLayers(const Vector<Layer*>& layers) {
+    for(auto* layer : layers) {
+        RegisterLayer(layer);
+    }
+}
+
+void Window::RegisterWidget(Widget* widget) {
+    const String& name = widget->GetWidgetName();
+    windowData->widgetMap[name] = widget;
+    LOG(INFO) << "register widget: " << name;
+}
+
+void Window::RegisterWidgets(const Vector<Widget*>& widgets) {
+    for(auto* widget : widgets) {
+        RegisterWidget(widget);
+    }
 }
 
 void Window::CreateWindow() {
@@ -48,11 +79,6 @@ void Window::CreateWindow() {
         LOG(ERROR) << "fail to initialize glew ";
     }
 
-    // if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    // {
-    //     std::cout << "Failed to initialize GLAD" << std::endl;
-    // }
-
     // setup callback function
     SetUpEventCallBackFun();
 
@@ -61,16 +87,28 @@ void Window::CreateWindow() {
     auto dockspaceLayer = std::make_unique<DockspaceLayer>();
     auto drawLayer = std::make_unique<DrawLayer>();
     auto renderLayer = std::make_unique<RenderLayer>();
-    auto widget = std::make_unique<MyWidget>("title1");
-    drawLayer->AddWidget(std::move(widget));
 
-    drawLayer->AddNextLayer(std::move(renderLayer));
+    auto widget1 = std::make_unique<MyWidget>();
+    auto widget2 = std::make_unique<Image>();
+    RegisterWidgets({widget1.get(), widget2.get()});
+
+    drawLayer->AddWidget(std::move(widget1));
+    drawLayer->AddWidget(std::move(widget2));
+
     dockspaceLayer->AddNextLayer(std::move(drawLayer));
     imguiLayer->AddNextLayer(std::move(dockspaceLayer));
+    renderLayer->AddNextLayer(std::move(imguiLayer));
 
-    firstLayer = std::move(imguiLayer);
+    RegisterLayers({imguiLayer.get(), dockspaceLayer.get(), drawLayer.get(), renderLayer.get()});
 
+    firstLayer = std::move(renderLayer);
     firstLayer->Attach();
+
+    auto _renderLayer = dynamic_cast<RenderLayer*>(windowData->LayerMap.at("RenderLayer"));
+    auto image = dynamic_cast<Image*>(windowData->widgetMap.at("Image"));
+    auto textureId = const_cast<ImTextureID>(_renderLayer->GetFrameBufferTexture());
+    image->ChangeTexture(textureId);
+
     glfwSetWindowUserPointer(glfwWindow, windowData.get());
 }
 
@@ -122,6 +160,10 @@ void Window::SetUpEventCallBackFun() {
         event->SetPos(xpos, ypos);
 
         windowData->eventCollection->AddEvent(std::move(event));
+    });
+
+    glfwSetWindowSizeCallback(glfwWindow, [](GLFWwindow* window, int width, int height){
+        // TODO(45degree): impl callback function
     });
 }
 

@@ -3,8 +3,7 @@
 
 #include "Event/Event.h"
 #include "Event/MouseEvent.h"
-
-#include <folly/FBString.h>
+#include "Common.h"
 
 namespace Marbas {
 
@@ -19,6 +18,10 @@ public:
 public:
     void AddNextLayer(std::unique_ptr<Layer>&& nextLayer) {
         this->nextLayer = std::move(nextLayer);
+    }
+
+    const String& GetLayerName() {
+        return layerName;
     }
 
 public:
@@ -55,11 +58,11 @@ public:
     virtual void OnMouseScrolled(const MouseScrolledEvent& e) {};
 
 protected:
-    folly::fbstring layerName;
+    String layerName;
 
     std::unique_ptr<Layer> nextLayer = nullptr;
 };
 
-}
+}  // namespace Marbas
 
 #endif

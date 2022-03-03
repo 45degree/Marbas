@@ -11,7 +11,7 @@ namespace Marbas {
 class ImguiLayer : public Layer {
 public:
     explicit ImguiLayer(const Window* window) : Layer("ImguiLayer"), window(window) {}
-    virtual ~ImguiLayer();
+    ~ImguiLayer() override;
 
 public:
     void OnAttach() override;
@@ -25,6 +25,6 @@ private:
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 };
 
-}
+}  // namespace Marbas
 
 #endif

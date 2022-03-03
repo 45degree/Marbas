@@ -14,7 +14,7 @@ OpenGLIndexBuffer::OpenGLIndexBuffer(size_t size) {
 OpenGLIndexBuffer::OpenGLIndexBuffer(const Vector<int>& data) {
     LOG(INFO) << "create opengl index buffer";
 
-    auto size = static_cast<GLsizeiptr>(data.size()) * sizeof(int);
+    auto size = static_cast<GLsizeiptr>(data.size() * sizeof(int));
     glCreateBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data.data(), GL_STATIC_DRAW);
@@ -28,19 +28,17 @@ OpenGLIndexBuffer::~OpenGLIndexBuffer() {
 }
 
 void OpenGLIndexBuffer::Bind() const {
-    LOG(INFO) << "bind opengl index buffer";
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 }
 
 void OpenGLIndexBuffer::UnBind() const {
-    LOG(INFO) << "unbind opengl index buffer";
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void OpenGLIndexBuffer::SetData(const Vector<int> &data) {
     LOG(INFO) << "set data for opengl index buffer";
 
-    auto size = static_cast<GLsizeiptr>(data.size()) * sizeof(int);
+    auto size = static_cast<GLsizeiptr>(data.size() * sizeof(int));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size, data.data());
 

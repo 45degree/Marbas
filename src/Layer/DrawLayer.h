@@ -10,7 +10,7 @@ namespace Marbas {
 class DrawLayer : public Layer {
 public:
     DrawLayer() : Layer("DrawLayer") {}
-    virtual ~DrawLayer();
+    ~DrawLayer() override;
 
 public:
     void OnUpdate() override;
@@ -23,6 +23,6 @@ private:
     folly::fbvector<std::unique_ptr<Widget>> widgets;
 };
 
-};
+}  // namespace Marbas
 
 #endif

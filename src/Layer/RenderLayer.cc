@@ -6,6 +6,7 @@
 #include "Renderer/OpenGL/OpenGLIndexBuffer.h"
 #include "Renderer/OpenGL/OpenGLShader.h"
 #include "Renderer/OpenGL/OpenGLDrawCall.h"
+#include "Renderer/OpenGL/OpenGLFrameBuffer.h"
 
 namespace Marbas {
 
@@ -41,6 +42,11 @@ void RenderLayer::OnAttach() {
     auto _fragmentShader = std::make_unique<OpenGLShader>(ShaderType::FRAGMENT_SHADER);
     _fragmentShader->ReadSPIR_V("shader/shader.frag.spv", "main");
 
+    const FrameBufferInfo info = {.width = 800, .height = 600};
+    auto _frameBufer = std::make_unique<OpenGLFrameBuffer>(info);
+    _frameBufer->Create();
+    frameBuffer = std::move(_frameBufer);
+
     vertexShader = std::move(_vertexShader);
     fragmentShader = std::move(_fragmentShader);
 
@@ -57,8 +63,12 @@ void RenderLayer::OnAttach() {
 void RenderLayer::OnDetach() {}
 
 void RenderLayer::OnUpdate() {
+    frameBuffer->Bind();
+    glClear(GL_COLOR_BUFFER_BIT);
+    glViewport(0, 0, 800, 600);
     drawCall->Use();
     drawCall->Draw();
+    frameBuffer->UnBind();
 }
 
 }  // namespace Marbas

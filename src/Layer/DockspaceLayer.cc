@@ -54,8 +54,9 @@ void DockspaceLayer::OnBegin() {
 
     // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
     // and handle the pass-thru hole, so we ask Begin() to not render a background.
-    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) {
         window_flags |= ImGuiWindowFlags_NoBackground;
+    }
 
     // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
     // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
@@ -64,14 +65,17 @@ void DockspaceLayer::OnBegin() {
     // otherwise any change of dockspace/settings would lead to windows being stuck in limbo and
     // never being visible.
     static bool p_open = true;
-    if (!opt_padding)
+    if (!opt_padding) {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    }
     ImGui::Begin("DockSpace Demo", &p_open, window_flags);
-    if (!opt_padding)
+    if (!opt_padding) {
         ImGui::PopStyleVar();
+    }
 
-    if (opt_fullscreen)
+    if (opt_fullscreen) {
         ImGui::PopStyleVar(2);
+    }
 
     // Submit the DockSpace
     ImGuiIO& io = ImGui::GetIO();
@@ -87,4 +91,4 @@ void DockspaceLayer::OnEnd() {
     ImGui::End();
 }
 
-}
+}  // namespace Marbas

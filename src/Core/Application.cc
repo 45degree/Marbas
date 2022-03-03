@@ -34,13 +34,13 @@ void Application::Run() {
         /* Poll for and process events */
         glfwPollEvents();
 
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
-
         appWindow->ShowWindow();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(glfwWindow);
+
+        /* Render here */
+        glClear(GL_COLOR_BUFFER_BIT);
     }
 }
 

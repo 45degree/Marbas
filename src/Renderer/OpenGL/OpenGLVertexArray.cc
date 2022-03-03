@@ -14,13 +14,10 @@ OpenGLVertexArray::~OpenGLVertexArray() {
 }
 
 void OpenGLVertexArray::Bind() const {
-    LOG(INFO) << "bind vertex array;";
-
     glBindVertexArray(VAO);
 }
 
 void OpenGLVertexArray::UnBind() const {
-    LOG(INFO) << "unbind vertex array;";
     glBindVertexArray(0);
 }
 
