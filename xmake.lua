@@ -5,7 +5,7 @@ add_requires("glfw 3.3.5")
 add_requires("glew 2.2.0")
 add_requires("glm 0.9.9+8")
 add_requires("glog v0.5.0")
-add_requires("folly")
+add_requires("folly 2022.02.14")
 
 target("Imgui")
     set_kind("static")
@@ -21,7 +21,7 @@ target_end()
 
 target("Marbas")
     set_kind("binary")
-    set_languages("c11", "cxx20")
+    set_languages("c11", "cxx17")
     add_rules("utils.glsl2spv", {
         outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "shader")
     })

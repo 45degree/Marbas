@@ -4,10 +4,10 @@
 namespace Marbas {
 
 struct FrameBufferInfo {
-    int width;
-    int height;
-    bool depthAttach;
-    bool templateAttach;
+    int width = 0;
+    int height = 0;
+    bool depthAttach = false;
+    bool templateAttach = false;
 };
 
 class FrameBuffer {

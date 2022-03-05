@@ -29,10 +29,9 @@ void RenderLayer::OnAttach() {
 
     auto _vertexBuffer = std::make_unique<OpenGLVertexBuffer>(vertices);
 
-    ElementLayout layout {
-        .index = 0,
-        .size = 3,
-    };
+    ElementLayout layout;
+    layout.index = 0;
+    layout.size = 3;
     _vertexBuffer->SetLayout({layout});
     vertexBuffer = std::move(_vertexBuffer);
 
@@ -44,7 +43,10 @@ void RenderLayer::OnAttach() {
     auto _fragmentShader = std::make_unique<OpenGLShader>(ShaderType::FRAGMENT_SHADER);
     _fragmentShader->ReadSPIR_V("shader/shader.frag.spv", "main");
 
-    const FrameBufferInfo info = {.width = 800, .height = 600};
+    FrameBufferInfo info; // {.width = 800, .height = 600};
+    info.width = 800;
+    info.height = 600;
+
     auto _frameBufer = std::make_unique<OpenGLFrameBuffer>(info);
     _frameBufer->Create();
     frameBuffer = std::move(_frameBufer);

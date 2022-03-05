@@ -12,11 +12,10 @@ int main(int argc, char* argv[]) {
 
     auto app = Marbas::Application::GetInstace();
 
-    Marbas::WindowProp winProp {
-        .name = "Marbas",
-        .width = 800,
-        .height = 600,
-    };
+    Marbas::WindowProp winProp;
+    winProp.name = "Marbas";
+    winProp.width = 800;
+    winProp.height = 600;
 
     try {
         app->Init();
