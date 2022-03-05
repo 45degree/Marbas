@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 
     try {
         app->Init();
-        app->CreateWindow(winProp);
+        app->CreateSingleWindow(winProp);
         app->Run();
     }
     catch(const std::exception& e) {

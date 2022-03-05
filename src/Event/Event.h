@@ -1,20 +1,20 @@
 #ifndef MARBARS_EVENT_EVENT_H
 #define MARBARS_EVENT_EVENT_H
 
-#include <folly/FBVector.h>
 #include <iostream>
+#include "Common.h"
 
 namespace Marbas {
 
 enum class EventType {
-    MOUSE_PRESS_EVENT,
-    MOUSE_RELEASE_EVENT,
-    MOUSE_MOVE_EVENT,
-    MOUSE_SCROLLED_EVENT,
+    MARBAS_MOUSE_PRESS_EVENT,
+    MARBAS_MOUSE_RELEASE_EVENT,
+    MARBAS_MOUSE_MOVE_EVENT,
+    MARBAS_MOUSE_SCROLLED_EVENT,
 };
 
 enum class EventCategory {
-    MOUSE_EVENT,
+    MARBARS_MOUSE_EVENT,
 };
 
 class Event {
@@ -27,9 +27,9 @@ public:
     virtual ~Event() = default;
 
 public:
-    EventType GetEventType() const noexcept { return eventType; }
+    [[nodiscard]] EventType GetEventType() const noexcept { return eventType; }
 
-    EventCategory GetEventCategory() const noexcept { return eventCategory; }
+    [[nodiscard]] EventCategory GetEventCategory() const noexcept { return eventCategory; }
 
 protected:
     EventCategory eventCategory;
@@ -44,20 +44,21 @@ public:
 
 public:
     void AddEvent(std::unique_ptr<Event>&& event) noexcept;
+
     void ClearEvent() {
         events.clear();
     }
 
-    size_t Size() const noexcept {
+    [[nodiscard]] size_t Size() const noexcept {
         return events.size();
     }
 
     void BroadcastEventFromLayer(Layer* layer);
 
 private:
-    std::vector<std::unique_ptr<Event>> events;
+    Vector<std::unique_ptr<Event>> events;
 };
 
-}
+}  // namespace Marbas
 
 #endif

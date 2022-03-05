@@ -2,7 +2,6 @@
 
 add_rules("mode.debug", "mode.release")
 add_requires("glfw 3.3.5")
-add_requires("glad")
 add_requires("glew 2.2.0")
 add_requires("glm 0.9.9+8")
 add_requires("glog v0.5.0")
@@ -36,5 +35,5 @@ target("Marbas")
     add_files("src/**.vert", "src/**.frag")
 
     add_deps("Imgui")
-    add_packages("glfw", "glm", "glog", "glad", "glew", "folly")
+    add_packages("glfw", "glm", "glog", "glew", "folly")
 target_end()

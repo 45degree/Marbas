@@ -53,16 +53,16 @@ void Layer::BroadcastEvent(const Event& e) {
 
 void Layer::EventDistribution(const Event& event) {
     switch(event.GetEventType()) {
-    case EventType::MOUSE_PRESS_EVENT:
+    case EventType::MARBAS_MOUSE_PRESS_EVENT:
         OnMousePress(static_cast<const MousePressEvent&>(event));
         break;
-    case EventType::MOUSE_MOVE_EVENT:
+    case EventType::MARBAS_MOUSE_MOVE_EVENT:
         OnMouseMove(static_cast<const MouseMoveEvent&>(event));
         break;
-    case EventType::MOUSE_RELEASE_EVENT:
+    case EventType::MARBAS_MOUSE_RELEASE_EVENT:
         OnMouseRelease(static_cast<const MouseReleaseEvent&>(event));
         break;
-    case EventType::MOUSE_SCROLLED_EVENT:
+    case EventType::MARBAS_MOUSE_SCROLLED_EVENT:
         OnMouseScrolled(static_cast<const MouseScrolledEvent&>(event));
         break;
     }

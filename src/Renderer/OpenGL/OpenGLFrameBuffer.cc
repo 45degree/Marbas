@@ -19,18 +19,22 @@ void OpenGLFrameBuffer::UnBind() const {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void OpenGLFrameBuffer::ChangeBufferSize(int width, int height) {
+void OpenGLFrameBuffer::Resize(int width, int height) {
     Bind();
-    glBindTexture(GL_TEXTURE_2D, colorAttachTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frameBufferInfo.width, frameBufferInfo.height, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    frameBufferInfo.height = height;
+    frameBufferInfo.width = width;
+    ReCreate();
+}
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+void OpenGLFrameBuffer::ReCreate() {
+    glDeleteFramebuffers(1, &frameBufferID);
+    glDeleteTextures(1, &colorAttachTexture);
+    glDeleteTextures(1, &depthAttachTexture);
+    frameBufferID = 0;
+    colorAttachTexture = 0;
+    depthAttachTexture = 0;
 
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        LOG(ERROR) << "failed to create frame buffer";
-    }
+    Create();
 }
 
 void OpenGLFrameBuffer::Create() {
@@ -46,14 +50,24 @@ void OpenGLFrameBuffer::Create() {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachTexture,
                            0);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
     if(frameBufferInfo.depthAttach) {
+        glGenTextures(1, &depthAttachTexture);
+        glBindTexture(GL_TEXTURE_2D, depthAttachTexture);
 
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frameBufferInfo.width, frameBufferInfo.height, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
+                               depthAttachTexture, 0);
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         LOG(ERROR) << "failed to create frame buffer";
+        throw std::runtime_error("failed to create frame buffer");
     }
 }
 

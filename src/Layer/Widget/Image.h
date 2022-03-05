@@ -2,6 +2,7 @@
 #define MARBARS_LAYER_WIDGET_IMAGE_H
 
 #include "Layer/Widget/Widget.h"
+#include "Renderer/Interface/Viewport.h"
 #include "imgui.h"
 #include "Common.h"
 
@@ -9,24 +10,48 @@ namespace Marbas {
 
 class Image : public Widget {
 public:
-    explicit Image(ImTextureID textureId = nullptr):
+    explicit Image(ImTextureID textureId = nullptr, const Viewport* viewport = nullptr):
         Widget("Image"),
-        texture(textureId)
-    {}
+        texture(textureId),
+        viewport(viewport)
+    {
+    }
 
     ~Image() override = default;
 
     void Draw() override {
-        auto windowsSize = ImGui::GetWindowSize();
-        ImGui::Image(texture, windowsSize);
+        auto [x, y, width, height] = viewport->GetViewport();
+        imageSize = ImGui::GetContentRegionAvail();
+
+        float ratio;
+        if(width > height) {
+            ratio = imageSize.x / static_cast<float>(width);
+            imageSize.y = ratio * static_cast<float>(height);
+        }
+        else {
+            ratio = imageSize.y / static_cast<float>(height);
+            imageSize.x = ratio * static_cast<float>(width);
+        }
+
+        ImGui::Image(texture, imageSize);
+    }
+
+    void SetViewport(const Viewport* viewport) noexcept {
+        this->viewport = viewport;
     }
 
     void ChangeTexture(ImTextureID textureId) {
         texture = textureId;
     }
 
+    [[nodiscard]] const ImVec2 GetImageSize() const noexcept {
+        return imageSize;
+    }
+
 private:
     ImTextureID texture;
+    ImVec2 imageSize;
+    const Viewport* viewport;
 };
 
 }  // namespace Marbas

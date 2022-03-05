@@ -2,11 +2,11 @@
 #define MARBARS_COMMON_H
 
 #include <GLFW/glfw3.h>
-// #include <glad/glad.h>
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <folly/FBVector.h>
 #include <folly/FBString.h>
+#include <folly/Format.h>
 #include <filesystem>
 
 #ifdef WIN32
@@ -23,6 +23,8 @@ using Vector = folly::fbvector<T>;
 using String = folly::fbstring;
 
 namespace FileSystem = std::filesystem;
+
+#define FORMAT(Str, ...) folly::sformat(Str, __VA_ARGS__);
 
 }  // namespace Marbas
 

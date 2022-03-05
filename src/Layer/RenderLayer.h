@@ -5,6 +5,7 @@
 #include "Renderer/Interface/VertexBuffer.h"
 #include "Renderer/Interface/VertexArray.h"
 #include "Renderer/Interface/IndexBuffer.h"
+#include "Renderer/Interface/Viewport.h"
 #include "Renderer/Interface/Shader.h"
 #include "Renderer/Interface/DrawCall.h"
 #include "Renderer/Interface/FrameBuffer.h"
@@ -26,6 +27,14 @@ public:
         return frameBuffer->GetColorAttachTexture();
     }
 
+    [[nodiscard]] const Viewport* GetViewport() const noexcept {
+        return viewport.get();
+    }
+
+    void AddViewport(std::unique_ptr<Viewport>&& viewport) {
+        this->viewport = std::move(viewport);
+    }
+
 private:
     std::unique_ptr<VertexBuffer> vertexBuffer;
     std::unique_ptr<VertexArray> vertexArray;
@@ -34,6 +43,7 @@ private:
     std::unique_ptr<Shader> fragmentShader;
     std::unique_ptr<DrawCall> drawCall;
     std::unique_ptr<FrameBuffer> frameBuffer;
+    std::unique_ptr<Viewport> viewport;
 };
 
 }  // namespace Marbas

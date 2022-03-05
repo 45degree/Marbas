@@ -12,7 +12,9 @@ public:
     ~OpenGLFrameBuffer() override;
 
 public:
-    void Create();
+    void Create() override;
+    void ReCreate() override;
+    void Resize(int width, int height) override;
 
     void Bind() const override;
     void UnBind() const override;
@@ -21,11 +23,10 @@ public:
         return reinterpret_cast<const void*>(colorAttachTexture);
     }
 
-    void ChangeBufferSize(int width, int height);
-
 private:
     GLuint frameBufferID;
     GLuint colorAttachTexture;
+    GLuint depthAttachTexture;
 };
 
 }  // namespace Marbas

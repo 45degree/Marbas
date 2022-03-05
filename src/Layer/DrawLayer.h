@@ -3,7 +3,7 @@
 
 #include "Layer/Layer.h"
 #include "Layer/Widget/Widget.h"
-#include "folly/FBVector.h"
+#include "Common.h"
 
 namespace Marbas {
 
@@ -20,7 +20,7 @@ public:
     }
 
 private:
-    folly::fbvector<std::unique_ptr<Widget>> widgets;
+    Vector<std::unique_ptr<Widget>> widgets;
 };
 
 }  // namespace Marbas

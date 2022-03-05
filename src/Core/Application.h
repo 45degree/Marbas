@@ -22,16 +22,24 @@ public:
         return app.get();
     }
 
+    static const Window* GetApplicationsWindow() {
+        return app->GetWindow();
+    }
+
 public:
     void Init() const;
 
-    void CreateWindow(const WindowProp& winProp);
+    void CreateSingleWindow(const WindowProp& winProp);
 
     void Run();
 
     void Destroy() {
         auto* origin = app.release();
         delete origin;
+    }
+
+    [[nodiscard]] const Window* GetWindow() const {
+        return appWindow.get();
     }
 
 private:

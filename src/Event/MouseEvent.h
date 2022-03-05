@@ -8,8 +8,10 @@ namespace Marbas {
 
 class MouseEvent : public Event {
 public:
-    explicit MouseEvent(EventType eventType) : Event(eventType, EventCategory::MOUSE_EVENT) {}
-    virtual ~MouseEvent() = default;
+    explicit MouseEvent(EventType eventType) :
+        Event(eventType, EventCategory::MARBARS_MOUSE_EVENT)
+    {}
+    ~MouseEvent() override = default;
 
     MouseEvent(const MouseEvent&) = default;
     MouseEvent& operator=(const MouseEvent&) = default;
@@ -36,11 +38,11 @@ public:
         MouseEvent(eventType),
         button(button)
     {}
-    virtual ~MouseButtonEvent() = default;
+    ~MouseButtonEvent() override = default;
 
 public:
 
-    int GetButton() const noexcept {
+    [[nodiscard]] int GetButton() const noexcept {
         return button;
     }
 
@@ -51,42 +53,42 @@ protected:
 class MousePressEvent : public MouseButtonEvent {
 public:
     explicit MousePressEvent(int button) :
-        MouseButtonEvent(EventType::MOUSE_PRESS_EVENT, button)
+        MouseButtonEvent(EventType::MARBAS_MOUSE_PRESS_EVENT, button)
     {}
-    virtual ~MousePressEvent() = default;
+    ~MousePressEvent() override = default;
 };
 
 class MouseReleaseEvent : public MouseButtonEvent {
 public:
     explicit MouseReleaseEvent(int button) :
-        MouseButtonEvent(EventType::MOUSE_RELEASE_EVENT, button)
+        MouseButtonEvent(EventType::MARBAS_MOUSE_RELEASE_EVENT, button)
     {}
-    virtual ~MouseReleaseEvent() = default;
+    ~MouseReleaseEvent() override = default;
 };
 
 class MouseMoveEvent : public MouseEvent {
 public:
-    MouseMoveEvent(): MouseEvent(EventType::MOUSE_MOVE_EVENT)
+    MouseMoveEvent(): MouseEvent(EventType::MARBAS_MOUSE_MOVE_EVENT)
     {}
-    virtual ~MouseMoveEvent() = default;
+    ~MouseMoveEvent() override = default;
 };
 
 class MouseScrolledEvent : public MouseEvent {
 public:
     MouseScrolledEvent(double xoffset, double yoffset) :
-        MouseEvent(EventType::MOUSE_SCROLLED_EVENT),
+        MouseEvent(EventType::MARBAS_MOUSE_SCROLLED_EVENT),
         xoffset(xoffset),
         yoffset(yoffset)
     {}
 
-    virtual ~MouseScrolledEvent() = default;
+    ~MouseScrolledEvent() override = default;
 
 public:
-    double GetXOffset() const noexcept {
+    [[nodiscard]] double GetXOffset() const noexcept {
         return xoffset;
     }
 
-    double GetYOffset() const noexcept {
+    [[nodiscard]] double GetYOffset() const noexcept {
         return yoffset;
     }
 
@@ -95,6 +97,6 @@ private:
     double yoffset;
 };
 
-};
+}  // namespace Marbas;
 
 #endif

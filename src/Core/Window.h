@@ -23,7 +23,7 @@ public:
     ~Window();
 
 public:
-    void CreateWindow();
+    void CreateSingleWindow();
 
     void ShowWindow();
 
@@ -40,6 +40,10 @@ public:
     void RegisterWidget(Widget* widget);
 
     void RegisterWidgets(const Vector<Widget*>& widgets);
+
+    [[nodiscard]] Widget* GetWidget(const String& widgetName) const;
+
+    [[nodiscard]] Layer* GetLayer(const String& layerName) const;
 
 private:
     GLFWwindow* glfwWindow;

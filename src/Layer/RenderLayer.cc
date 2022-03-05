@@ -1,11 +1,13 @@
 #include "Layer/RenderLayer.h"
 #include "Common.h"
+#include "Core/Application.h"
 #include "Renderer/OpenGL/OpenGLVertexBuffer.h"
 #include "Renderer/Interface/VertexBuffer.h"
 #include "Renderer/OpenGL/OpenGLVertexArray.h"
 #include "Renderer/OpenGL/OpenGLIndexBuffer.h"
 #include "Renderer/OpenGL/OpenGLShader.h"
 #include "Renderer/OpenGL/OpenGLDrawCall.h"
+#include "Renderer/OpenGL/OpenGLViewport.h"
 #include "Renderer/OpenGL/OpenGLFrameBuffer.h"
 
 namespace Marbas {
@@ -64,10 +66,12 @@ void RenderLayer::OnDetach() {}
 
 void RenderLayer::OnUpdate() {
     frameBuffer->Bind();
+
     glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0, 0, 800, 600);
+    viewport->UseViewport();
     drawCall->Use();
     drawCall->Draw();
+
     frameBuffer->UnBind();
 }
 

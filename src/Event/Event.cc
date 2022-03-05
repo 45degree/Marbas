@@ -17,4 +17,4 @@ void EventCollection::BroadcastEventFromLayer(Layer* layer) {
 }
 
 
-}
+}  // namespace Marbas

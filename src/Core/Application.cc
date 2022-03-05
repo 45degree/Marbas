@@ -13,9 +13,9 @@ void Application::Init() const {
     LOG(INFO) << "initialized glfw successful!";
 }
 
-void Application::CreateWindow(const WindowProp& winProp) {
+void Application::CreateSingleWindow(const WindowProp& winProp) {
     appWindow = std::make_unique<Window>(winProp);
-    appWindow->CreateWindow();
+    appWindow->CreateSingleWindow();
 
     LOG(INFO) << "create window successful!";
 }

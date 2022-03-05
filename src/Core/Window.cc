@@ -7,6 +7,8 @@
 #include "Layer/DockspaceLayer.h"
 #include "Layer/DrawLayer.h"
 #include "Layer/RenderLayer.h"
+
+#include "Renderer/OpenGL/OpenGLViewport.h"
 #include <unordered_map>
 
 namespace Marbas {
@@ -23,7 +25,6 @@ Window::Window(const WindowProp& winProp):
 {
     windowData->eventCollection = std::make_unique<EventCollection>();
 }
-
 
 Window::~Window() {
     firstLayer->Detach();
@@ -59,7 +60,7 @@ void Window::RegisterWidgets(const Vector<Widget*>& widgets) {
     }
 }
 
-void Window::CreateWindow() {
+void Window::CreateSingleWindow() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
@@ -87,10 +88,17 @@ void Window::CreateWindow() {
     auto dockspaceLayer = std::make_unique<DockspaceLayer>();
     auto drawLayer = std::make_unique<DrawLayer>();
     auto renderLayer = std::make_unique<RenderLayer>();
+    RegisterLayers({imguiLayer.get(), dockspaceLayer.get(), drawLayer.get(), renderLayer.get()});
+
+    auto viewport = std::make_unique<OpenGLViewport>();
+    viewport->SetViewport(0, 0, 800, 600);
 
     auto widget1 = std::make_unique<MyWidget>();
     auto widget2 = std::make_unique<Image>();
     RegisterWidgets({widget1.get(), widget2.get()});
+    widget2->SetViewport(viewport.get());
+
+    renderLayer->AddViewport(std::move(viewport));
 
     drawLayer->AddWidget(std::move(widget1));
     drawLayer->AddWidget(std::move(widget2));
@@ -99,13 +107,11 @@ void Window::CreateWindow() {
     imguiLayer->AddNextLayer(std::move(dockspaceLayer));
     renderLayer->AddNextLayer(std::move(imguiLayer));
 
-    RegisterLayers({imguiLayer.get(), dockspaceLayer.get(), drawLayer.get(), renderLayer.get()});
-
     firstLayer = std::move(renderLayer);
     firstLayer->Attach();
 
-    auto _renderLayer = dynamic_cast<RenderLayer*>(windowData->LayerMap.at("RenderLayer"));
-    auto image = dynamic_cast<Image*>(windowData->widgetMap.at("Image"));
+    auto _renderLayer = dynamic_cast<RenderLayer*>(GetLayer("RenderLayer"));
+    auto image = dynamic_cast<Image*>(GetWidget("Image"));
     auto textureId = const_cast<ImTextureID>(_renderLayer->GetFrameBufferTexture());
     image->ChangeTexture(textureId);
 
@@ -121,6 +127,20 @@ void Window::ShowWindow() {
     firstLayer->Begin();
     firstLayer->Update();
     firstLayer->End();
+}
+
+Widget* Window::GetWidget(const String& widgetName) const {
+    auto& widgets = windowData->widgetMap;
+    if(widgets.find(widgetName) == widgets.end()) return nullptr;
+
+    return widgets.at(widgetName);
+}
+
+Layer* Window::GetLayer(const String &layerName) const {
+    auto& layers = windowData->LayerMap;
+    if(layers.find(layerName) == layers.end()) return nullptr;
+
+    return layers.at(layerName);
 }
 
 void Window::SetUpEventCallBackFun() {
