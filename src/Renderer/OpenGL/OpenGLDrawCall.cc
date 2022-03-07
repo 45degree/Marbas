@@ -1,5 +1,6 @@
 #include "Renderer/OpenGL/OpenGLDrawCall.h"
 #include "Renderer/OpenGL/OpenGLShader.h"
+#include "Renderer/OpenGL/OpenGLTexture.h"
 
 namespace Marbas {
 
@@ -48,10 +49,78 @@ void OpenGLDrawCall::Use() {
 
 void OpenGLDrawCall::Draw() {
     verticesArray->Bind();
+
+    for(auto& [bind, texture] : textures) {
+        setInt(texture->GetTextureName(), bind);
+        texture->Bind(bind);
+    }
+
     indexBuffer->Bind();
 
     auto count = static_cast<GLsizei>(indexBuffer->GetIndexCount());
     glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+}
+
+void OpenGLDrawCall::AddTexture(Texture2D* texture, int uniformBind) {
+    auto openglTexture = dynamic_cast<OpenGLTexture2D*>(texture);
+    if(openglTexture == nullptr) {
+        LOG(ERROR) << "this texture is not a opengl 2D texture";
+    }
+
+    if(textures.find(uniformBind) != textures.end()) {
+        LOG(ERROR) << FORMAT("failed to add this texture for uniform {}", uniformBind);
+        return;
+    }
+    textures[uniformBind] = openglTexture;
+}
+
+
+void OpenGLDrawCall::setBool(const String& name, bool value) const {
+    glUniform1i(glGetUniformLocation(programID, name.c_str()), static_cast<int>(value));
+}
+
+void OpenGLDrawCall::setInt(const String& name, int value) const {
+    glUniform1i(glGetUniformLocation(programID, name.c_str()), value);
+}
+
+void OpenGLDrawCall::setFloat(const String& name, float value) const {
+    glUniform1f(glGetUniformLocation(programID, name.c_str()), value);
+}
+
+void OpenGLDrawCall::setVec2(const String& name, const glm::vec2 &value) const {
+    glUniform2fv(glGetUniformLocation(programID, name.c_str()), 1, &value[0]);
+}
+
+void OpenGLDrawCall::setVec2(const String& name, float x, float y) const {
+    glUniform2f(glGetUniformLocation(programID, name.c_str()), x, y); 
+}
+
+void OpenGLDrawCall::setVec3(const String& name, const glm::vec3 &value) const {
+    glUniform3fv(glGetUniformLocation(programID, name.c_str()), 1, &value[0]); 
+}
+
+void OpenGLDrawCall::setVec3(const String& name, float x, float y, float z) const {
+    glUniform3f(glGetUniformLocation(programID, name.c_str()), x, y, z);
+}
+
+void OpenGLDrawCall::setVec4(const String& name, const glm::vec4 &value) const {
+    glUniform4fv(glGetUniformLocation(programID, name.c_str()), 1, &value[0]);
+}
+
+void OpenGLDrawCall::setVec4(const String& name, float x, float y, float z, float w) const {
+    glUniform4f(glGetUniformLocation(programID, name.c_str()), x, y, z, w);
+}
+
+void OpenGLDrawCall::setMat2(const String& name, const glm::mat2 &mat) const {
+    glUniformMatrix2fv(glGetUniformLocation(programID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+void OpenGLDrawCall::setMat3(const String& name, const glm::mat3 &mat) const {
+    glUniformMatrix3fv(glGetUniformLocation(programID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+void OpenGLDrawCall::setMat4(const String& name, const glm::mat4 &mat) const {
+    glUniformMatrix4fv(glGetUniformLocation(programID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
 
 }  // namespace Marbas

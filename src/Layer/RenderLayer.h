@@ -44,6 +44,8 @@ private:
     std::unique_ptr<DrawCall> drawCall;
     std::unique_ptr<FrameBuffer> frameBuffer;
     std::unique_ptr<Viewport> viewport;
+    std::unique_ptr<Texture2D> texture1;
+    std::unique_ptr<Texture2D> texture2;
 };
 
 }  // namespace Marbas

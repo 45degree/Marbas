@@ -33,7 +33,7 @@ public:
             imageSize.x = ratio * static_cast<float>(width);
         }
 
-        ImGui::Image(texture, imageSize);
+        ImGui::Image(texture, imageSize, ImVec2(0, 1), ImVec2(1, 0));
     }
 
     void SetViewport(const Viewport* viewport) noexcept {
