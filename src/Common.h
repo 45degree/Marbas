@@ -2,7 +2,11 @@
 #define MARBARS_COMMON_H
 
 #include <GLFW/glfw3.h>
+
+#ifndef GLEW_STATIC
 #define GLEW_STATIC
+#endif
+
 #include <GL/glew.h>
 #include <folly/FBVector.h>
 #include <folly/FBString.h>

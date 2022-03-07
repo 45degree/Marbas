@@ -9,6 +9,7 @@
 #include "Renderer/OpenGL/OpenGLDrawCall.h"
 #include "Renderer/OpenGL/OpenGLViewport.h"
 #include "Renderer/OpenGL/OpenGLFrameBuffer.h"
+#include "Renderer/OpenGL/OpenGLTexture.h"
 
 namespace Marbas {
 
@@ -16,10 +17,11 @@ RenderLayer::~RenderLayer() = default;
 
 void RenderLayer::OnAttach() {
     Vector<float> vertices = {
-        0.5f, 0.5f, 0.0f,   // 右上角
-        0.5f, -0.5f, 0.0f,  // 右下角
-        -0.5f, -0.5f, 0.0f, // 左下角
-        -0.5f, 0.5f, 0.0f   // 左上角
+        //     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
+         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // 右上
+         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // 右下
+        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
+        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
     };
 
     Vector<int> indices  {
@@ -29,10 +31,15 @@ void RenderLayer::OnAttach() {
 
     auto _vertexBuffer = std::make_unique<OpenGLVertexBuffer>(vertices);
 
-    ElementLayout layout;
-    layout.index = 0;
-    layout.size = 3;
-    _vertexBuffer->SetLayout({layout});
+    ElementLayout layout1, layout2, layout3;
+    layout1.index = 0;
+    layout1.size = 3;
+    layout2.index = 1;
+    layout2.size = 3;
+    layout3.index = 2;
+    layout3.size = 2;
+
+    _vertexBuffer->SetLayout({layout1, layout2, layout3});
     vertexBuffer = std::move(_vertexBuffer);
 
     vertexArray = std::make_unique<OpenGLVertexArray>();
@@ -43,7 +50,7 @@ void RenderLayer::OnAttach() {
     auto _fragmentShader = std::make_unique<OpenGLShader>(ShaderType::FRAGMENT_SHADER);
     _fragmentShader->ReadSPIR_V("shader/shader.frag.spv", "main");
 
-    FrameBufferInfo info; // {.width = 800, .height = 600};
+    FrameBufferInfo info;
     info.width = 800;
     info.height = 600;
 
@@ -54,12 +61,23 @@ void RenderLayer::OnAttach() {
     vertexShader = std::move(_vertexShader);
     fragmentShader = std::move(_fragmentShader);
 
+    auto _texture = std::make_unique<OpenGLTexture2D>("texture");
+    _texture->ReadImage("resource/container.jpg");
+    texture1 = std::move(_texture);
+
+    auto _texture2 = std::make_unique<OpenGLTexture2D>("texture2");
+    _texture2->ReadImage("resource/awesomeface.png");
+    texture2 = std::move(_texture2);
+
     drawCall = std::make_unique<OpenGLDrawCall>();
     drawCall->AddVertices(vertexBuffer.get(), vertexArray.get());
     drawCall->AddIndeices(indexBuffer.get());
 
     drawCall->AddShader(vertexShader.get());
     drawCall->AddShader(fragmentShader.get());
+
+    drawCall->AddTexture(texture1.get(), 0);
+    drawCall->AddTexture(texture2.get(), 1);
 
     drawCall->Link();
 }
@@ -73,7 +91,6 @@ void RenderLayer::OnUpdate() {
     viewport->UseViewport();
     drawCall->Use();
     drawCall->Draw();
-
     frameBuffer->UnBind();
 }
 
