@@ -35,10 +35,11 @@ void OpenGLTexture2D::ReadImage(const FileSystem::path &path) {
 
     // tell stb_image.h to flip loaded texture's on the y-axis.
     stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+    auto filename = path.string();
+    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
 
     if(data == nullptr) {
-        LOG(ERROR) << FORMAT("failed to load image from {}", path.c_str());
+        LOG(ERROR) << FORMAT("failed to load image from {}", filename);
         return;
     }
 

@@ -9,7 +9,8 @@ namespace Marbas {
 
 void Mesh::ReadModle(const FileSystem::path &modelPath) {
     Assimp::Importer importer;
-    const auto* scene = importer.ReadFile(modelPath, aiProcess_Triangulate | aiProcess_FlipUVs);
+    auto filename = modelPath.string();
+    const auto* scene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_FlipUVs);
 
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)  {
         LOG(ERROR) << FORMAT("Failed to load model: {}", importer.GetErrorString());
