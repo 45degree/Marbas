@@ -5,6 +5,8 @@
 #include "Renderer/Interface/DrawCall.h"
 #include "Renderer/Interface/Texture.h"
 
+#include <assimp/scene.h>
+
 namespace Marbas {
 
 class Mesh {
@@ -14,6 +16,9 @@ public:
 
 public:
     void ReadModle(const FileSystem::path& modelPath);
+
+private:
+    void ProcessMesh(const aiMesh* mesh ,const aiScene* scene);
 
 public:
     std::unique_ptr<DrawCall> drawCall;
