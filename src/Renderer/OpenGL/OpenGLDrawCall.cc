@@ -50,9 +50,7 @@ void OpenGLDrawCall::Use() {
 void OpenGLDrawCall::Draw() {
 
     for(auto& [bind, texture] : textures) {
-        // setInt(texture->GetTextureName(), bind);
         texture->Bind(bind);
-        // setInt("u_Texture", bind);
     }
 
     verticesArray->Bind();

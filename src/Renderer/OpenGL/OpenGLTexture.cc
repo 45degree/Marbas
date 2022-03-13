@@ -37,8 +37,6 @@ OpenGLTexture2D::OpenGLTexture2D(const FileSystem::path& imagePath): Texture2D(i
     glTextureSubImage2D(textureID, 0, 0, 0, width, height, dataFormat, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D); 
 
-    LOG(INFO) << "texture error: " << glGetError();
-
     stbi_image_free(data);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -58,10 +56,7 @@ OpenGLTexture2D::OpenGLTexture2D(int width, int height) : Texture2D(width, heigh
 }
 
 void OpenGLTexture2D::Bind(int uniformBind) {
-    // glActiveTexture(GL_TEXTURE0 + uniformBind);
-    // glBindTexture(GL_TEXTURE_2D, textureID);
     glBindTextureUnit(uniformBind, textureID);
-    LOG(INFO) << "texture error: " << glGetError();
 }
 
 void OpenGLTexture2D::SetData(void *data, uint32_t size) {
