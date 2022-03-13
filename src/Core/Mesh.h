@@ -22,7 +22,7 @@ private:
 
 public:
     std::unique_ptr<DrawCall> drawCall;
-    Vector<std::unique_ptr<Texture*>> textures;
+    Vector<std::unique_ptr<Texture2D*>> textures;
 };
 
 }  // namespace Marbas

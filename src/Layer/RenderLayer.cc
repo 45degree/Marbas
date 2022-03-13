@@ -61,12 +61,10 @@ void RenderLayer::OnAttach() {
     vertexShader = std::move(_vertexShader);
     fragmentShader = std::move(_fragmentShader);
 
-    auto _texture = std::make_unique<OpenGLTexture2D>("texture");
-    _texture->ReadImage("resource/container.jpg");
+    auto _texture = std::make_unique<OpenGLTexture2D>("resource/container.jpg");
     texture1 = std::move(_texture);
 
-    auto _texture2 = std::make_unique<OpenGLTexture2D>("texture2");
-    _texture2->ReadImage("resource/awesomeface.png");
+    auto _texture2 = std::make_unique<OpenGLTexture2D>("resource/awesomeface.png");
     texture2 = std::move(_texture2);
 
     drawCall = std::make_unique<OpenGLDrawCall>();

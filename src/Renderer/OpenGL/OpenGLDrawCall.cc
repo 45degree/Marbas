@@ -48,13 +48,14 @@ void OpenGLDrawCall::Use() {
 }
 
 void OpenGLDrawCall::Draw() {
-    verticesArray->Bind();
 
     for(auto& [bind, texture] : textures) {
-        setInt(texture->GetTextureName(), bind);
+        // setInt(texture->GetTextureName(), bind);
         texture->Bind(bind);
+        // setInt("u_Texture", bind);
     }
 
+    verticesArray->Bind();
     indexBuffer->Bind();
 
     auto count = static_cast<GLsizei>(indexBuffer->GetIndexCount());
@@ -62,9 +63,12 @@ void OpenGLDrawCall::Draw() {
 }
 
 void OpenGLDrawCall::AddTexture(Texture2D* texture, int uniformBind) {
+    Use();
+
     auto openglTexture = dynamic_cast<OpenGLTexture2D*>(texture);
     if(openglTexture == nullptr) {
         LOG(ERROR) << "this texture is not a opengl 2D texture";
+        return;
     }
 
     if(textures.find(uniformBind) != textures.end()) {
