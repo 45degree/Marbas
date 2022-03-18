@@ -39,6 +39,8 @@ OpenGLTexture2D::OpenGLTexture2D(const FileSystem::path& imagePath): Texture2D(i
 
     stbi_image_free(data);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    LOG(INFO) << FORMAT("create a opengl texture, the image is {}", m_imagePath);
 }
 
 OpenGLTexture2D::OpenGLTexture2D(int width, int height) : Texture2D(width, height) {
@@ -57,6 +59,10 @@ OpenGLTexture2D::OpenGLTexture2D(int width, int height) : Texture2D(width, heigh
 
 void OpenGLTexture2D::Bind(int uniformBind) {
     glBindTextureUnit(uniformBind, textureID);
+
+    auto error = glGetError();
+    LOG_IF(ERROR, error) << FORMAT("can't bind texture: {}, image is {}, error code is {}",
+                                   textureID, m_imagePath, error);
 }
 
 void OpenGLTexture2D::SetData(void *data, uint32_t size) {
@@ -68,6 +74,10 @@ void OpenGLTexture2D::SetData(void *data, uint32_t size) {
 
 void OpenGLTexture2D::UnBind() {
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    auto error = glGetError();
+    LOG_IF(ERROR, error) << FORMAT("can't unbind texture: {}, image is {}, error code is {}",
+                                   textureID, m_imagePath, error);
 }
 
 OpenGLTexture2D::~OpenGLTexture2D() {

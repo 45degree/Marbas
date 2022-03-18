@@ -15,14 +15,20 @@ OpenGLVertexArray::~OpenGLVertexArray() {
 
 void OpenGLVertexArray::Bind() const {
     glBindVertexArray(VAO);
+
+    auto error = glGetError();
+    LOG_IF(ERROR, error) << FORMAT("can't bind vertex array {}, error code is {}", VAO, error);
 }
 
 void OpenGLVertexArray::UnBind() const {
     glBindVertexArray(0);
+
+    auto error = glGetError();
+    LOG_IF(ERROR, error) << FORMAT("can't unbind vertex array {}, error code is {}", VAO, error);
 }
 
 void OpenGLVertexArray::EnableVertexAttribArray(const VertexBuffer* vertexBuffer) const {
-    glBindVertexArray(VAO);
+    Bind();
     vertexBuffer->Bind();
 
     const auto& layout = vertexBuffer->Getlayout();
@@ -37,6 +43,9 @@ void OpenGLVertexArray::EnableVertexAttribArray(const VertexBuffer* vertexBuffer
         glEnableVertexAttribArray(elementInfo.index);
         glVertexAttribPointer(index, size, GL_FLOAT, isNormalized, stride, offset);
     }
+    //
+    // vertexBuffer->UnBind();
+    // UnBind();
 }
 
 }  // namespace Marbas

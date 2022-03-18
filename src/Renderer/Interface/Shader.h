@@ -1,45 +1,32 @@
-#ifndef MARBARS_RENDERER_INTERFACE_SHADER_H
-#define MARBARS_RENDERER_INTERFACE_SHADER_H
+#ifndef MARBARS_RENDER_INTERFACE_SHADER_H
+#define MARBARS_RENDER_INTERFACE_SHADER_H
 
-#include "Common.h"
+#include "Renderer/Interface/ShaderCode.h"
+#include "Renderer/Interface/VertexBuffer.h"
+#include "Renderer/Interface/VertexArray.h"
+#include "Renderer/Interface/IndexBuffer.h"
+#include "Renderer/Interface/Texture.h"
 
 namespace Marbas {
 
-enum class ShaderType {
-    VERTEX_SHADER,
-    FRAGMENT_SHADER
-};
-
 class Shader {
 public:
-    explicit Shader(const ShaderType& shaderType) : shaderType(shaderType) {};
+    Shader() = default;
     virtual ~Shader() = default;
 
 public:
-    /**
-     * @brief read spri-v file
-     *
-     * SPIR-V is similar to GLSL, but it has some differences. Two differences are particularly
-     * relevant.
-     *
-     * 1. A single SPIR-V file can have function entry-points for multiple shader stages, even of
-     *    different types.
-     * 2. SPIR-V has the concept of "specialization constants": parameters
-     *    which the user can provide before the SPIR-V is compiled into its final form.
-     *
-     * @see https://www.khronos.org/opengl/wiki/SPIR-V
-     *
-     * @param path the path of spri-v file
-     * @param enterPoint the enterPoint of spri-v file
-     *
-     * @note we assume the spri-v file don't have specialization constants.
-     */
-    virtual void ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) = 0;
 
-    [[nodiscard]] ShaderType GetShaderType() const noexcept { return shaderType; };
+    // virtual void AddIndeices(const IndexBuffer* indices) = 0;
 
-protected:
-    ShaderType shaderType;
+    virtual void AddShaderCode(const ShaderCode* shaderCode) = 0;
+
+    virtual void AddUniformDataBlock(uint32_t bindingPoint, const void* data, uint32_t size) = 0;
+
+    virtual void Link() = 0;
+
+    // virtual void Draw() = 0;
+
+    virtual void Use() = 0;
 };
 
 }  // namespace Marbas

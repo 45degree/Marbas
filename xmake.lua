@@ -24,13 +24,14 @@ target_end()
 target("Marbas")
     set_kind("binary")
     set_languages("c11", "cxx17")
-    add_rules("utils.glsl2spv", {
-        outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "shader")
-    })
+    -- add_rules("utils.glsl2spv", {
+    --     outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "shader")
+    -- })
 
     on_load(function()
         local executedir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)");
         os.cp("$(projectdir)/resource", executedir)
+        os.cp("$(projectdir)/src/Shader/*", path.join(executedir, "shader"))
     end)
 
     if is_mode("debug") then
@@ -39,7 +40,7 @@ target("Marbas")
 
     add_includedirs("$(projectdir)/src")
     add_files("src/**.cc")
-    add_files("src/**.vert", "src/**.frag")
+    -- add_files("src/**.vert", "src/**.frag")
 
     add_deps("Imgui")
     add_packages("glfw", "glm", "glog", "glew", "folly", "stb", "assimp")

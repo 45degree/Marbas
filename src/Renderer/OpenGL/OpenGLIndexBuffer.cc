@@ -11,7 +11,7 @@ OpenGLIndexBuffer::OpenGLIndexBuffer(size_t size) {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), nullptr, GL_STATIC_DRAW);
 }
 
-OpenGLIndexBuffer::OpenGLIndexBuffer(const Vector<int>& data) {
+OpenGLIndexBuffer::OpenGLIndexBuffer(const Vector<uint32_t>& data) {
     LOG(INFO) << "create opengl index buffer";
 
     auto size = static_cast<GLsizeiptr>(data.size() * sizeof(int));
@@ -19,7 +19,7 @@ OpenGLIndexBuffer::OpenGLIndexBuffer(const Vector<int>& data) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data.data(), GL_STATIC_DRAW);
 
-    indexCount = size;
+    indexCount = data.size();
 }
 
 OpenGLIndexBuffer::~OpenGLIndexBuffer() {
@@ -29,20 +29,26 @@ OpenGLIndexBuffer::~OpenGLIndexBuffer() {
 
 void OpenGLIndexBuffer::Bind() const {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
+    auto error = glGetError();
+    LOG_IF(ERROR, error) << FORMAT("can't bind index buffer: {}", EBO);
 }
 
 void OpenGLIndexBuffer::UnBind() const {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    auto error = glGetError();
+    LOG_IF(ERROR, error) << FORMAT("can't unbind index buffer: {}", EBO);
 }
 
-void OpenGLIndexBuffer::SetData(const Vector<int> &data) {
+void OpenGLIndexBuffer::SetData(const Vector<uint32_t> &data) {
     LOG(INFO) << "set data for opengl index buffer";
 
     auto size = static_cast<GLsizeiptr>(data.size() * sizeof(int));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size, data.data());
 
-    indexCount = size;
+    indexCount = data.size();
 }
 
 }  // namespace Marbas

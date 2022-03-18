@@ -6,6 +6,10 @@ namespace Marbas {
 std::unique_ptr<Application> Application::app;
 
 void Application::Init() const {
+    glfwSetErrorCallback([](int error, const char* descriptor) {
+        LOG(ERROR) << FORMAT("glfw error {}: {}", error, descriptor);
+    });
+
     if(!glfwInit()) {
         throw std::runtime_error("failed to initialized glfw");
     }

@@ -6,9 +6,12 @@
 #include "Renderer/Interface/VertexArray.h"
 #include "Renderer/Interface/IndexBuffer.h"
 #include "Renderer/Interface/Viewport.h"
+#include "Renderer/Interface/ShaderCode.h"
 #include "Renderer/Interface/Shader.h"
-#include "Renderer/Interface/DrawCall.h"
 #include "Renderer/Interface/FrameBuffer.h"
+
+#include "Core/Camera.h"
+#include "Core/Model.h"
 
 namespace Marbas {
 
@@ -36,16 +39,25 @@ public:
     }
 
 private:
+    std::unique_ptr<ShaderCode> vertexShader;
+    std::unique_ptr<ShaderCode> fragmentShader;
+    std::unique_ptr<Shader> m_shader;
+    std::unique_ptr<FrameBuffer> frameBuffer;
+    std::unique_ptr<Viewport> viewport;
+    std::unique_ptr<Camera> camera;
+    std::unique_ptr<Model> model;
+
+
+    ////
     std::unique_ptr<VertexBuffer> vertexBuffer;
     std::unique_ptr<VertexArray> vertexArray;
     std::unique_ptr<IndexBuffer> indexBuffer;
-    std::unique_ptr<Shader> vertexShader;
-    std::unique_ptr<Shader> fragmentShader;
-    std::unique_ptr<DrawCall> drawCall;
-    std::unique_ptr<FrameBuffer> frameBuffer;
-    std::unique_ptr<Viewport> viewport;
+
     std::unique_ptr<Texture2D> texture1;
     std::unique_ptr<Texture2D> texture2;
+
+    DrawUnit drawUnit;
+    OpenGLDrawCollection collection;
 };
 
 }  // namespace Marbas

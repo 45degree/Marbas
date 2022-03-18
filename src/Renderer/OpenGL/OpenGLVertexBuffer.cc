@@ -27,13 +27,17 @@ OpenGLVertexBuffer::~OpenGLVertexBuffer() {
 }
 
 void OpenGLVertexBuffer::Bind() const {
-    LOG(INFO) << "bind the opengl vertex buffer";
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    auto error = glGetError();
+    LOG_IF(ERROR, error) << FORMAT("can't bind vertex buffer: {}, error code is {}", VBO, error);
 }
 
 void OpenGLVertexBuffer::UnBind() const {
-    LOG(INFO) << "unbind the opengl vertex buffer";
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    auto error = glGetError();
+    LOG_IF(ERROR, error) << FORMAT("can't unbind vertex buffer {}, error code is {}", VBO, error);
 }
 
 void OpenGLVertexBuffer::SetData(const Vector<float>& data) const {

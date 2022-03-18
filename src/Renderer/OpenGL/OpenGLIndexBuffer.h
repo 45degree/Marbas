@@ -8,11 +8,11 @@ namespace Marbas {
 class OpenGLIndexBuffer : public IndexBuffer {
 public:
     explicit OpenGLIndexBuffer(size_t size);
-    explicit OpenGLIndexBuffer(const Vector<int>& data);
+    explicit OpenGLIndexBuffer(const Vector<uint32_t>& data);
     ~OpenGLIndexBuffer() override;
 
 public:
-    void SetData(const Vector<int>& data) override;
+    void SetData(const Vector<uint32_t>& data) override;
     void Bind() const override;
     void UnBind() const override;
 

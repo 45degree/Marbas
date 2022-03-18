@@ -12,7 +12,7 @@ public:
 public:
     virtual void Bind() const = 0;
     virtual void UnBind() const = 0;
-    virtual void SetData(const Vector<int>& data) = 0;
+    virtual void SetData(const Vector<uint32_t>& data) = 0;
 
     [[nodiscard]] size_t GetIndexCount() const noexcept { return indexCount; }
 

@@ -1,105 +1,119 @@
 #include "Renderer/OpenGL/OpenGLShader.h"
-
-#include <fstream>
+#include "Renderer/OpenGL/OpenGLShaderCode.h"
+#include "Renderer/OpenGL/OpenGLTexture.h"
 
 namespace Marbas {
 
-static GLenum ConvertToOpenGLShaderType(const ShaderType& type) noexcept {
-    switch(type) {
-        case ShaderType::VERTEX_SHADER: return GL_VERTEX_SHADER;
-        case ShaderType::FRAGMENT_SHADER: return GL_FRAGMENT_SHADER;
-    }
-}
-
-void OpenGLShader::ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) {
-    std::ifstream file;
-    file.open(path, std::ios_base::in | std::ios_base::binary);
-    if(!file.is_open()) return;
-
-    // read the spri-v content
-    Vector<char> content;
-    try {
-        file.seekg(0, std::ios::beg);
-        file.seekg(0, std::ios::end);
-        auto size = file.tellg();
-        content.resize(size);
-        file.seekg(0, std::ios::beg);
-        file.read(content.data(), size);
-    }
-    catch(const std::exception& e) {
-        file.close();
-        throw e;
-    }
-
-    auto contentSize = static_cast<GLsizei>(content.size());
-    glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V, content.data(), contentSize);
-    glSpecializeShader(shaderID, enterPoint.c_str(), 0, nullptr, nullptr);
-
-    // Specialization is equivalent to compilation.
-    GLint isCompiled = 0;
-    glGetShaderiv(shaderID, GL_COMPILE_STATUS, &isCompiled);
-    if (isCompiled == GL_FALSE)
-    {
-        GLint maxLength = 0;
-        glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &maxLength);
-
-        // The maxLength includes the NULL character
-        std::vector<GLchar> infoLog(maxLength);
-        glGetShaderInfoLog(shaderID, maxLength, &maxLength, &infoLog[0]);
-
-        LOG(INFO) << infoLog.data();
-
-        // We don't need the shader anymore.
-        glDeleteShader(shaderID);
-
-        // Use the infoLog as you see fit.
-
-        // In this simple program, we'll just leave
-        return;
-    }
-}
-
-void OpenGLShader::ReadFromSource(const FileSystem::path& path) {
-    std::ifstream file;
-    file.open(path, std::ios_base::in | std::ios_base::binary);
-    if(!file.is_open()) return;
-
-    // read the spri-v content
-    Vector<char> content;
-    try {
-        file.seekg(0, std::ios::beg);
-        file.seekg(0, std::ios::end);
-        auto size = file.tellg();
-        content.resize(size);
-        file.seekg(0, std::ios::beg);
-        file.read(content.data(), size);
-    }
-    catch(const std::exception& e) {
-        file.close();
-        throw e;
-    }
-
-    const char* shaderSource = content.data();
-    String str(shaderSource);
-    LOG(INFO) << str;
-    glShaderSource(shaderID, 1, &shaderSource, nullptr);
-    glCompileShader(shaderID);
-
-    GLint success = 0;
-    glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        LOG(INFO) <<"ERROR::SHADER::FRAGMENT::COMPILATION_FAILED";
-    }
-}
-
-OpenGLShader::OpenGLShader(const ShaderType& shaderType) : Shader(shaderType) {
-    GLenum openglShaderType = ConvertToOpenGLShaderType(shaderType);
-    shaderID = glCreateShader(openglShaderType);
+OpenGLShader::OpenGLShader() {
+    programID = glCreateProgram();
+    // m_mvp = std::make_unique<OpenGLUniformBuffer>(3 * sizeof(glm::mat4));
+    // m_mvp->SetBindingPoint(0);
 }
 
 OpenGLShader::~OpenGLShader() {
-    glDeleteShader(shaderID);
+    glDeleteProgram(programID);
 }
 
-} // namespace Marbas
+// void OpenGLShader::AddVertices(const VertexBuffer* vertexBuffer,
+//                                  const VertexArray* verticesArray) {
+//     this->verticesArray = verticesArray;
+//     verticesArray->EnableVertexAttribArray(vertexBuffer);
+// }
+
+// void OpenGLShader::AddIndeices(const IndexBuffer *indices) {
+//     this->indexBuffer = indices;
+// }
+
+void OpenGLShader::AddShaderCode(const ShaderCode* shaderCode) {
+    auto openglShader =  dynamic_cast<const OpenGLShaderCode*>(shaderCode);
+    if(openglShader == nullptr) {
+        LOG(ERROR) << "shader is not a opengl shader";
+        throw std::runtime_error("shader can't dynamic cast to OpenglShader");
+    }
+    auto shaderId = openglShader->GetShaderID();
+    glAttachShader(programID, shaderId);
+}
+
+
+// void OpenGLShader::SetMvp(const glm::mat4& model, const glm::mat4& view, 
+//                             const glm::mat4& projection) {
+//
+//     if(!m_isLink) return;
+//
+//     m_mvp->BindToBindPoint();
+//     m_mvp->SetData(glm::value_ptr(model), sizeof(model), 0);
+//     m_mvp->SetData(glm::value_ptr(view), sizeof(view), sizeof(glm::mat4));
+//     m_mvp->SetData(glm::value_ptr(projection), sizeof(glm::mat4), sizeof(glm::mat4));
+// }
+
+void OpenGLShader::Link() {
+    glLinkProgram(programID);
+    GLint success = 0;
+    glGetProgramiv(programID, GL_LINK_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetProgramInfoLog(programID, 512, nullptr, infoLog);
+        LOG(ERROR) << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog;
+    }
+
+    // GLuint blockIndex = glGetUniformBlockIndex(programID, "Matrices");
+    //
+    // auto error = glGetError();
+    // LOG(INFO) << "error1:" << error;
+    //
+    // GLint blockSize;
+    // glGetActiveUniformBlockiv(programID, blockIndex,GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
+    //
+    // error = glGetError();
+    // LOG(INFO) << "error2:" << error;
+    // LOG(INFO) << blockSize;
+
+    m_isLink = true;
+}
+
+void OpenGLShader::AddUniformDataBlock(uint32_t bindingPoint, const void *data, uint32_t size) {
+    if(m_uniformDataBlocks.find(bindingPoint) == m_uniformDataBlocks.end()) {
+        m_uniformDataBlocks[bindingPoint] = std::make_unique<OpenGLUniformBuffer>(size, bindingPoint);
+    }
+
+    auto* uniformBlock = m_uniformDataBlocks.at(bindingPoint).get();
+    uniformBlock->SetData(data, size, 0);
+}
+
+void OpenGLShader::Use() {
+    glUseProgram(programID);
+    for(auto& [bindingPoint, buffer] : m_uniformDataBlocks) {
+        buffer->Bind();
+    }
+}
+
+// void OpenGLShader::Draw() {
+//     for(auto& [bind, texture] : textures) {
+//         texture->Bind(bind);
+//     }
+//
+//     verticesArray->Bind();
+//     indexBuffer->Bind();
+//     m_mvp->Bind();
+//
+//     auto count = static_cast<GLsizei>(indexBuffer->GetIndexCount());
+//     glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+// }
+
+// void OpenGLShader::AddTexture(Texture2D* texture, int uniformBind) {
+//     Use();
+//
+//     auto openglTexture = dynamic_cast<OpenGLTexture2D*>(texture);
+//     if(openglTexture == nullptr) {
+//         LOG(ERROR) << "this texture is not a opengl 2D texture";
+//         return;
+//     }
+//
+//     if(textures.find(uniformBind) != textures.end()) {
+//         LOG(ERROR) << FORMAT("failed to add this texture for uniform {}", uniformBind);
+//         return;
+//     }
+//     textures[uniformBind] = openglTexture;
+// }
+
+}  // namespace Marbas
