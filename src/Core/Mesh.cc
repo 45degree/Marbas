@@ -1,4 +1,5 @@
 #include "Core/Mesh.h"
+#include "Renderer/Interface/RendererFactory.h"
 #include "Renderer/OpenGL/OpenGLVertexBuffer.h"
 #include "Renderer/OpenGL/OpenGLIndexBuffer.h"
 #include "Renderer/OpenGL/OpenGLVertexArray.h"
@@ -65,20 +66,21 @@ void Mesh::LoadToGPU(bool force) {
     textureCoorElement.size = 2;
     Vector<ElementLayout> layout({vertexElement, normalElement, textureCoorElement});
 
-    m_vertexBuffer = std::make_unique<OpenGLVertexBuffer>(m_vertices);
+    m_vertexBuffer = RendererFactory::GetInstance(RendererType::OPENGL)->CreateVertexBuffer(m_vertices);
     m_vertexBuffer->SetLayout(layout);
 
-    m_indicesBuffer = std::make_unique<OpenGLIndexBuffer>(m_indices);
+    m_indicesBuffer = RendererFactory::GetInstance(RendererType::OPENGL)->CreateIndexBuffer(m_indices);  // std::make_unique<OpenGLIndexBuffer>(m_indices);
 
     for(const auto& path : m_texturePathes) {
-        m_textures.push_back(std::make_unique<OpenGLTexture2D>(path));
+        auto texture = RendererFactory::GetInstance(RendererType::OPENGL)->CreateTexutre2D(path);
+        m_textures.push_back(texture);
     }
 
     m_drawUnit.m_indicesBuffer = m_indicesBuffer.get();
     m_drawUnit.m_vertexBuffer = m_vertexBuffer.get();
 
     for(auto& texture : m_textures) {
-        m_drawUnit.textures.push_back(texture.get());
+        m_drawUnit.textures.push_back(texture);
     }
 
     LOG(INFO) << "Load the mesh to GPU";
@@ -90,9 +92,9 @@ void Mesh::UnLoadFromGPU() {
     m_vertexBuffer.reset();
     m_indicesBuffer.reset();
 
-    for(auto& texture : m_textures) {
-        texture.reset();
-    }
+    // for(auto& texture : m_textures) {
+    //     texture.reset();
+    // }
 
     m_drawUnit.m_indicesBuffer = nullptr;
     m_drawUnit.m_vertexBuffer = nullptr;

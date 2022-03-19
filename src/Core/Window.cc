@@ -7,8 +7,8 @@
 #include "Layer/DockspaceLayer.h"
 #include "Layer/DrawLayer.h"
 #include "Layer/RenderLayer.h"
+#include "Renderer/RendererCommon.h"
 
-#include "Renderer/OpenGL/OpenGLViewport.h"
 #include <unordered_map>
 
 namespace Marbas {
@@ -90,7 +90,7 @@ void Window::CreateSingleWindow() {
     auto renderLayer = std::make_unique<RenderLayer>();
     RegisterLayers({imguiLayer.get(), dockspaceLayer.get(), drawLayer.get(), renderLayer.get()});
 
-    auto viewport = std::make_unique<OpenGLViewport>();
+    auto viewport = RendererFactory::GetInstance(RendererType::OPENGL)->CreateViewport();
     viewport->SetViewport(0, 0, 800, 600);
 
     auto widget1 = std::make_unique<MyWidget>();

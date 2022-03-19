@@ -2,17 +2,13 @@
 #include "Common.h"
 #include "Core/Application.h"
 #include "Core/Model.h"
-#include "Renderer/OpenGL/OpenGLVertexBuffer.h"
-#include "Renderer/Interface/VertexBuffer.h"
-#include "Renderer/OpenGL/OpenGLVertexArray.h"
-#include "Renderer/OpenGL/OpenGLIndexBuffer.h"
-#include "Renderer/OpenGL/OpenGLShaderCode.h"
-#include "Renderer/OpenGL/OpenGLShader.h"
-#include "Renderer/OpenGL/OpenGLViewport.h"
-#include "Renderer/OpenGL/OpenGLFrameBuffer.h"
-#include "Renderer/OpenGL/OpenGLTexture.h"
+#include "Renderer/RendererCommon.h"
 
 namespace Marbas {
+
+RenderLayer::RenderLayer() : Layer("RenderLayer") {
+   m_rendererFactory = RendererFactory::GetInstance(RendererType::OPENGL);
+}
 
 RenderLayer::~RenderLayer() = default;
 
@@ -23,7 +19,7 @@ void RenderLayer::OnAttach() {
     info.width = 800;
     info.height = 600;
 
-    auto _frameBufer = std::make_unique<OpenGLFrameBuffer>(info);
+    auto _frameBufer = m_rendererFactory->CreateFrameBuffer(info);
     _frameBufer->Create();
     frameBuffer = std::move(_frameBufer);
 
@@ -36,15 +32,13 @@ void RenderLayer::OnAttach() {
     camera = std::make_unique<Camera>();
     camera->SetPosition(glm::vec3(0, 0, 20));
 
-    auto _vertexShader = std::make_unique<OpenGLShaderCode>(ShaderType::VERTEX_SHADER);
-    _vertexShader->ReadFromSource("shader/shader.vert");
-    auto _fragmentShader = std::make_unique<OpenGLShaderCode>(ShaderType::FRAGMENT_SHADER);
-    _fragmentShader->ReadFromSource("shader/shader.frag");
+    vertexShader = m_rendererFactory->CreateShaderCode("shader/shader.vert", ShaderCodeType::FILE,
+                                                       ShaderType::VERTEX_SHADER);
 
-    vertexShader = std::move(_vertexShader);
-    fragmentShader = std::move(_fragmentShader);
+    fragmentShader = m_rendererFactory->CreateShaderCode("shader/shader.frag", ShaderCodeType::FILE,
+                                                         ShaderType::FRAGMENT_SHADER);
 
-    m_shader = std::make_unique<OpenGLShader>();
+    m_shader = m_rendererFactory->CreateShader();
     m_shader->AddShaderCode(fragmentShader.get());
     m_shader->AddShaderCode(vertexShader.get());
     m_shader->Link();

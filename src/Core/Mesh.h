@@ -47,7 +47,7 @@ private:
 
     std::unique_ptr<VertexBuffer> m_vertexBuffer;
     std::unique_ptr<IndexBuffer> m_indicesBuffer;
-    Vector<std::unique_ptr<Texture2D>> m_textures;
+    Vector<Texture2D*> m_textures;
 
     DrawUnit m_drawUnit;
 
