@@ -9,7 +9,7 @@ namespace Marbas {
 class MouseEvent : public Event {
 public:
     explicit MouseEvent(EventType eventType) :
-        Event(eventType, EventCategory::MARBARS_MOUSE_EVENT)
+        Event(eventType, EventCategory::MARBAS_MOUSE_EVENT)
     {}
     ~MouseEvent() override = default;
 
@@ -97,6 +97,6 @@ private:
     double yoffset;
 };
 
-}  // namespace Marbas;
+}  // namespace Marbas
 
 #endif

@@ -65,6 +65,12 @@ void Layer::EventDistribution(const Event& event) {
     case EventType::MARBAS_MOUSE_SCROLLED_EVENT:
         OnMouseScrolled(static_cast<const MouseScrolledEvent&>(event));
         break;
+    case EventType::MARBAS_KEY_PRESS_EVENT:
+        OnKeyPress(static_cast<const KeyEvent&>(event));
+        break;
+    case EventType::MARBAS_KEY_RELEASE_EVENT:
+        OnKeyRelase(static_cast<const KeyEvent&>(event));
+        break;
     }
 }
 

@@ -24,3 +24,6 @@ compile_commands.json
 .vimspector.json
 
 imgui.ini
+
+resource/
+!resource/.gitkeep

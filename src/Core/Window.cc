@@ -1,5 +1,6 @@
 #include "Core/Window.h"
 #include "Event/MouseEvent.h"
+#include "Event/KeyEvent.h"
 #include "Layer/ImguiLayer.h"
 #include "Layer/Widget/Widget.h"
 #include "Layer/Widget/MyWidget.h"
@@ -154,7 +155,7 @@ void Window::SetUpEventCallBackFun() {
     glfwSetMouseButtonCallback(glfwWindow,
                                [](GLFWwindow* glfwWindow, int button, int action, int mods) {
         auto windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
-        auto event = std::make_unique<MouseMoveEvent>();
+        // auto event = std::make_unique<MouseMoveEvent>();
 
         double xpos, ypos;
         glfwGetCursorPos(glfwWindow, &xpos, &ypos);
@@ -166,6 +167,20 @@ void Window::SetUpEventCallBackFun() {
         else if(action == GLFW_RELEASE) {
             auto event = std::make_unique<MouseReleaseEvent>(button);
             event->SetPos(xpos, ypos);
+            windowData->eventCollection->AddEvent(std::move(event));
+        }
+        GLFWkeyfun a;
+    });
+
+    glfwSetKeyCallback(glfwWindow,
+                       [](GLFWwindow* glfwWindow, int key, int scancode, int action, int mods){
+        auto windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
+        if(action == GLFW_PRESS) {
+            auto event = std::make_unique<KeyEvent>(EventType::MARBAS_KEY_PRESS_EVENT);
+            windowData->eventCollection->AddEvent(std::move(event));
+        }
+        else if (action == GLFW_RELEASE) {
+            auto event = std::make_unique<KeyEvent>(EventType::MARBAS_KEY_RELEASE_EVENT);
             windowData->eventCollection->AddEvent(std::move(event));
         }
     });

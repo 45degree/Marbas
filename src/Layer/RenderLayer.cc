@@ -3,6 +3,7 @@
 #include "Core/Application.h"
 #include "Core/Model.h"
 #include "Renderer/RendererCommon.h"
+#include "Event/Input.h"
 
 namespace Marbas {
 
@@ -31,6 +32,7 @@ void RenderLayer::OnAttach() {
 
     camera = std::make_unique<Camera>();
     camera->SetPosition(glm::vec3(0, 0, 20));
+    camera->AddPitch(20.0f);
 
     vertexShader = m_rendererFactory->CreateShaderCode("shader/shader.vert", ShaderCodeType::FILE,
                                                        ShaderType::VERTEX_SHADER);

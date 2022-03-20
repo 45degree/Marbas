@@ -3,6 +3,7 @@
 
 #include "Event/Event.h"
 #include "Event/MouseEvent.h"
+#include "Event/KeyEvent.h"
 #include "Common.h"
 
 namespace Marbas {
@@ -53,13 +54,13 @@ public:
 public:
     virtual void OnMousePress(const MousePressEvent& e) {}
     virtual void OnMouseRelease(const MouseReleaseEvent& e) {}
-    virtual void OnKeyPress(const Event& e) {}
+    virtual void OnKeyPress(const KeyEvent& e) {}
+    virtual void OnKeyRelase(const KeyEvent& e) {}
     virtual void OnMouseMove(const MouseMoveEvent& e) {};
     virtual void OnMouseScrolled(const MouseScrolledEvent& e) {};
 
 protected:
     String layerName;
-
     std::unique_ptr<Layer> nextLayer = nullptr;
 };
 
