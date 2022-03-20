@@ -17,14 +17,13 @@ void RenderLayer::OnAttach() {
 
     // create framebuffer
     FrameBufferInfo info;
+    info.depthAttach = true;
     info.width = 800;
     info.height = 600;
 
     auto _frameBufer = m_rendererFactory->CreateFrameBuffer(info);
     _frameBufer->Create();
     frameBuffer = std::move(_frameBufer);
-
-    glEnable(GL_DEPTH_TEST);
 
     model = std::make_unique<Model>();
     model->ReadFromFile("resource/nanosuit/nanosuit.obj");
@@ -54,9 +53,11 @@ void RenderLayer::OnDetach() {}
 
 void RenderLayer::OnUpdate() {
     frameBuffer->Bind();
+    glEnable(GL_DEPTH_TEST);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     viewport->UseViewport();
 
     auto viewMatrix = camera->GetViewMartix();
@@ -78,6 +79,7 @@ void RenderLayer::OnUpdate() {
     model->Draw();
 
     frameBuffer->UnBind();
+    glDisable(GL_DEPTH_TEST);
 }
 
 void RenderLayer::OnMouseMove(const MouseMoveEvent& e) {

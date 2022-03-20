@@ -49,8 +49,8 @@ void OpenGLFrameBuffer::Create() {
     glGenTextures(1, &colorAttachTexture);
     glBindTexture(GL_TEXTURE_2D, colorAttachTexture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frameBufferInfo.width, frameBufferInfo.height, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frameBufferInfo.width, frameBufferInfo.height, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -59,24 +59,20 @@ void OpenGLFrameBuffer::Create() {
                            0);
 
     if(frameBufferInfo.depthAttach) {
-        glGenTextures(1, &depthAttachTexture);
-        glBindTexture(GL_TEXTURE_2D, depthAttachTexture);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frameBufferInfo.width, frameBufferInfo.height, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
-                               depthAttachTexture, 0);
+        glGenRenderbuffers(1, &depthAttachTexture);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthAttachTexture);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, frameBufferInfo.width,
+                              frameBufferInfo.height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
+                                  depthAttachTexture);
     }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         LOG(ERROR) << "failed to create frame buffer";
         throw std::runtime_error("failed to create frame buffer");
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 }  // namespace Marbas

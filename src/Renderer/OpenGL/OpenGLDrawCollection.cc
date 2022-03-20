@@ -26,6 +26,10 @@ void OpenGLDrawCollection::Draw() {
 
         drawUtil->m_vertexBuffer->UnBind();
         drawUtil->m_indicesBuffer->UnBind();
+
+        for(auto* texture : drawUtil->textures) {
+            texture->UnBind();
+        }
     }
 }
 

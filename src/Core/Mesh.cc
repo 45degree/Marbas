@@ -69,7 +69,7 @@ void Mesh::LoadToGPU(bool force) {
     m_vertexBuffer = RendererFactory::GetInstance(RendererType::OPENGL)->CreateVertexBuffer(m_vertices);
     m_vertexBuffer->SetLayout(layout);
 
-    m_indicesBuffer = RendererFactory::GetInstance(RendererType::OPENGL)->CreateIndexBuffer(m_indices);  // std::make_unique<OpenGLIndexBuffer>(m_indices);
+    m_indicesBuffer = RendererFactory::GetInstance(RendererType::OPENGL)->CreateIndexBuffer(m_indices);
 
     for(const auto& path : m_texturePathes) {
         auto texture = RendererFactory::GetInstance(RendererType::OPENGL)->CreateTexutre2D(path);
