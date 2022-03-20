@@ -31,8 +31,7 @@ void RenderLayer::OnAttach() {
     model->GenerateGPUData();
 
     camera = std::make_unique<Camera>();
-    camera->SetPosition(glm::vec3(0, 0, 20));
-    camera->AddPitch(20.0f);
+    camera->SetFixPoint(glm::vec3(0, 0, 0));
 
     vertexShader = m_rendererFactory->CreateShaderCode("shader/shader.vert", ShaderCodeType::FILE,
                                                        ShaderType::VERTEX_SHADER);
@@ -61,7 +60,7 @@ void RenderLayer::OnUpdate() {
     viewport->UseViewport();
 
     auto viewMatrix = camera->GetViewMartix();
-    auto projectionMatrix = camera->GetPerspective(glm::radians(45.0f), 800.0 / 600.0);
+    auto projectionMatrix = camera->GetPerspective(800.0 / 600.0);
     auto modelMatrix = model->GetModelMatrix();
 
     struct MVP {
@@ -79,6 +78,30 @@ void RenderLayer::OnUpdate() {
     model->Draw();
 
     frameBuffer->UnBind();
+}
+
+void RenderLayer::OnMouseMove(const MouseMoveEvent& e) {
+    auto [x, y] = e.GetPos();
+    double xOffset = x - m_mouseLastX;
+    double yOffset = y - m_mouseLastY;
+
+    if(Input::IsKeyPress(GLFW_KEY_LEFT_SHIFT)) {
+        if(Input::IsMousePress(GLFW_MOUSE_BUTTON_MIDDLE)) {
+            camera->MoveFixPoint(-xOffset, yOffset);
+        }
+    }
+    else if (Input::IsMousePress(GLFW_MOUSE_BUTTON_MIDDLE)) {
+            camera->AddPitch(yOffset);
+            camera->AddYaw(-xOffset);
+    }
+
+    m_mouseLastX = x;
+    m_mouseLastY = y;
+}
+
+void RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
+    auto yOffset = e.GetYOffset();
+    camera->AddFov(yOffset);
 }
 
 }  // namespace Marbas

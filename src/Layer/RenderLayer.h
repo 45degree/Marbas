@@ -19,6 +19,10 @@ public:
     void OnDetach() override;
     void OnUpdate() override;
 
+    void OnMouseMove(const MouseMoveEvent& e) override;
+
+    void OnMouseScrolled(const MouseScrolledEvent& e) override;
+
 public:
     [[nodiscard]] const void* GetFrameBufferTexture() const noexcept{
         return frameBuffer->GetColorAttachTexture();
@@ -42,6 +46,10 @@ private:
     std::unique_ptr<Model> model;
 
     RendererFactory* m_rendererFactory;
+
+private:
+    double m_mouseLastX;
+    double m_mouseLastY;
 
 };
 
