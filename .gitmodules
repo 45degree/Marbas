@@ -1,3 +1,6 @@
 [submodule "3rdPart/imgui"]
 	path = 3rdPart/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "3rdPart/ImGuizmo"]
+	path = 3rdPart/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git

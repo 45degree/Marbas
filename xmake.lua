@@ -21,12 +21,20 @@ target("Imgui")
     add_packages("glfw")
 target_end()
 
+target("ImGuizmo")
+    set_kind("static")
+    set_languages("c11", "cxx11")
+    add_includedirs("$(projectdir)/3rdPart/ImGuizmo", { public = true })
+    add_deps("Imgui")
+    add_files("3rdPart/ImGuizmo/*.cpp")
+target_end()
+
 target("Marbas")
     set_kind("binary")
     set_languages("c11", "cxx17")
-    -- add_rules("utils.glsl2spv", {
-    --     outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "shader")
-    -- })
+    add_rules("utils.glsl2spv", {
+        outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "shader")
+    })
 
     on_load(function()
         local executedir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)");
@@ -40,8 +48,8 @@ target("Marbas")
 
     add_includedirs("$(projectdir)/src")
     add_files("src/**.cc")
-    -- add_files("src/**.vert", "src/**.frag")
+    add_files("src/**.vert", "src/**.frag")
 
-    add_deps("Imgui")
+    add_deps("Imgui", "ImGuizmo")
     add_packages("glfw", "glm", "glog", "glew", "folly", "stb", "assimp")
 target_end()
