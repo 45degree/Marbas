@@ -10,7 +10,10 @@ int main(int argc, char* argv[]) {
     FLAGS_alsologtostderr = true;
     google::InitGoogleLogging(argv[0]);
 
-    auto app = Marbas::Application::GetInstace();
+    auto appData = std::make_unique<Marbas::ApplicationData>();
+    appData->rendererType = Marbas::RendererType::OPENGL;
+
+    auto app = Marbas::Application::GetInstace(std::move(appData));
 
     Marbas::WindowProp winProp;
     winProp.name = "Marbas";

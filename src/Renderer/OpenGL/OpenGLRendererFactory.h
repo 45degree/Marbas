@@ -38,6 +38,11 @@ public:
     [[nodiscard]] Texture2D*
     CreateTexutre2D(const Path& imagePath) override;
 
+    [[nodiscard]] Texture2D*
+    CreateTexutre2D(int width, int height, TextureFormatType formatType) override;
+
+    virtual void DestoryTexture2D(Texture2D* texture) override;
+
     [[nodiscard]] std::unique_ptr<DrawCollection>
     CreateDrawCollection() const override;
 
@@ -51,7 +56,8 @@ public:
     CreateViewport() const override;
 
 private:
-    std::unordered_map<String, std::unique_ptr<OpenGLTexture2D>> m_Textures2D;
+    std::unordered_map<String, std::unique_ptr<OpenGLTexture2D>> m_Texture2DImages;
+    Vector<std::unique_ptr<OpenGLTexture2D>> m_Texture2DDynamic;
 
     friend RendererFactory;
 };

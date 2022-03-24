@@ -8,6 +8,10 @@
 #include "Renderer/OpenGL/OpenGLShaderCode.h"
 #include "Renderer/OpenGL/OpenGLViewport.h"
 
+#define STB_IMAGE_STATIC
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 namespace Marbas {
 
 std::unique_ptr<FrameBuffer>
@@ -52,11 +56,56 @@ OpenGLRendererFactory::CreateShader() const {
 Texture2D*
 OpenGLRendererFactory::CreateTexutre2D(const Path& imagePath) {
     String pathStr = String(imagePath.string());
-    if(m_Textures2D.find(pathStr) == m_Textures2D.end()) {
-        m_Textures2D[pathStr] = std::make_unique<OpenGLTexture2D>(imagePath);
+
+    if(m_Texture2DImages.find(pathStr) != m_Texture2DImages.end()) {
+        return m_Texture2DImages.at(pathStr).get();
     }
-    return m_Textures2D[pathStr].get();
+
+    // load image
+    int width, height, nrChannels;
+    TextureFormatType formatType;
+
+    // tell stb_image.h to flip loaded texture's on the y-axis.
+    stbi_set_flip_vertically_on_load(true);
+    auto filename = imagePath.string();
+    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
+
+    if(data == nullptr) {
+        LOG(ERROR) << FORMAT("failed to load image from {}", filename);
+        return nullptr;
+    }
+
+    formatType = nrChannels == 4 ? TextureFormatType::RGBA : TextureFormatType::RGB;
+
+    auto dataFormat = formatType == TextureFormatType::RGBA ? GL_RGBA : GL_RGB;
+    auto internalFormat = formatType == TextureFormatType::RGBA ? GL_RGBA8 : GL_RGB8;
+
+    // TODO(45degree): calculate hash for this image
+
+    // create textrue
+    auto texture = std::make_unique<OpenGLTexture2D>(width, height, formatType);
+    texture->SetData(data, width * height * nrChannels);
+
+    stbi_image_free(data);
+
+    LOG(INFO) << FORMAT("create a opengl texture, the image is {}", pathStr);
+
+    m_Texture2DImages[pathStr] = std::move(texture);
+    return m_Texture2DImages[pathStr].get();
 }
+
+Texture2D*
+OpenGLRendererFactory::CreateTexutre2D(int width, int height, TextureFormatType format) {
+    m_Texture2DDynamic.push_back(std::make_unique<OpenGLTexture2D>(width, height, format));
+    auto size = m_Texture2DDynamic.size();
+    return m_Texture2DDynamic[size - 1].get();
+}
+
+
+void OpenGLRendererFactory::DestoryTexture2D(Texture2D* texture) {
+    // TODO
+}
+
 
 std::unique_ptr<DrawCollection>
 OpenGLRendererFactory::CreateDrawCollection() const {

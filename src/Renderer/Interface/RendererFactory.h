@@ -58,6 +58,11 @@ public:
     [[nodiscard]] virtual Texture2D*
     CreateTexutre2D(const Path& imagePath) = 0;
 
+    [[nodiscard]] virtual Texture2D*
+    CreateTexutre2D(int width, int height, TextureFormatType formatType) = 0;
+
+    virtual void DestoryTexture2D(Texture2D* texture) = 0;
+
     [[nodiscard]] virtual std::unique_ptr<DrawCollection>
     CreateDrawCollection() const = 0;
 

@@ -43,7 +43,7 @@ private:
     std::unique_ptr<FrameBuffer> frameBuffer;
     std::unique_ptr<Viewport> viewport;
     std::unique_ptr<Camera> camera;
-    std::unique_ptr<Model> model;
+    Vector<std::unique_ptr<Model>> models;
 
     RendererFactory* m_rendererFactory;
 

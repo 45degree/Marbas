@@ -8,7 +8,7 @@
 namespace Marbas {
 
 RenderLayer::RenderLayer() : Layer("RenderLayer") {
-   m_rendererFactory = RendererFactory::GetInstance(RendererType::OPENGL);
+   m_rendererFactory = Application::GetRendererFactory();
 }
 
 RenderLayer::~RenderLayer() = default;
@@ -25,9 +25,11 @@ void RenderLayer::OnAttach() {
     _frameBufer->Create();
     frameBuffer = std::move(_frameBufer);
 
-    model = std::make_unique<Model>();
+    auto model = std::make_unique<Model>();
     model->ReadFromFile("resource/nanosuit/nanosuit.obj");
     model->GenerateGPUData();
+
+    models.push_back(std::move(model));
 
     camera = std::make_unique<Camera>();
     camera->SetFixPoint(glm::vec3(0, 0, 0));
@@ -43,9 +45,11 @@ void RenderLayer::OnAttach() {
     m_shader->AddShaderCode(vertexShader.get());
     m_shader->Link();
 
-    auto* collection = model->GetDrawCollection();
-    for(auto drawUnit : collection->m_drawUnits) {
-        drawUnit->m_shader = m_shader.get();
+    for(auto& _model : models) {
+        auto* collection = _model->GetDrawCollection();
+        for(auto drawUnit : collection->m_drawUnits) {
+            drawUnit->m_shader = m_shader.get();
+        }
     }
 }
 
@@ -62,21 +66,25 @@ void RenderLayer::OnUpdate() {
 
     auto viewMatrix = camera->GetViewMartix();
     auto projectionMatrix = camera->GetPerspective(800.0 / 600.0);
-    auto modelMatrix = model->GetModelMatrix();
 
     struct MVP {
         glm::mat4 model;
         glm::mat4 view;
         glm::mat4 projection;
-    } mvp;
+    };
+    for(auto& model : models) {
+        auto modelMatrix = model->GetModelMatrix();
 
-    mvp.model = modelMatrix;
-    mvp.view = viewMatrix;
-    mvp.projection = projectionMatrix;
+        MVP mvp;
 
-    m_shader->AddUniformDataBlock(0,  &mvp, sizeof(MVP));
+        mvp.model = modelMatrix;
+        mvp.view = viewMatrix;
+        mvp.projection = projectionMatrix;
 
-    model->Draw();
+        m_shader->AddUniformDataBlock(0,  &mvp, sizeof(MVP));
+
+        model->Draw();
+    }
 
     frameBuffer->UnBind();
     glDisable(GL_DEPTH_TEST);

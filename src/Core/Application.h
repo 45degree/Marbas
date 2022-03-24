@@ -5,18 +5,23 @@
 #include <mutex>
 
 #include "Core/Window.h"
+#include "Renderer/RendererCommon.h"
 
 namespace Marbas {
+
+struct ApplicationData {
+    RendererType rendererType = RendererType::OPENGL;
+};
 
 class Application {
 private:
     static std::unique_ptr<Application> app;
 
 public:
-    static Application* GetInstace() {
+    static Application* GetInstace(std::unique_ptr<ApplicationData>&& appData = nullptr) {
         static std::once_flag flag;
         std::call_once(flag, [&]() {
-            app.reset(new Application());
+            app.reset(new Application(std::move(appData)));
         });
 
         return app.get();
@@ -26,8 +31,18 @@ public:
         return app->GetWindow();
     }
 
+    static RendererFactory* GetRendererFactory() {
+        if(!app->m_isInitialized) {
+            String errorMsg = "can't get renderer factory before the application initialized";
+            LOG(ERROR) << errorMsg;
+            throw std::runtime_error(errorMsg);
+        }
+        auto rendererType = app->m_applicationData->rendererType;
+        return RendererFactory::GetInstance(rendererType);
+    }
+
 public:
-    void Init() const;
+    void Init();
 
     void CreateSingleWindow(const WindowProp& winProp);
 
@@ -43,7 +58,9 @@ public:
     }
 
 private:
-    Application() = default;
+    explicit Application(std::unique_ptr<ApplicationData>&& appData) :
+        m_applicationData(std::move(appData))
+    {}
 
 public:
     Application(const Application&) = delete;
@@ -51,6 +68,9 @@ public:
 
 private:
     std::unique_ptr<Window> appWindow;
+    std::unique_ptr<ApplicationData> m_applicationData;
+
+    bool m_isInitialized = false;
 };
 
 }  // namespace Marbas

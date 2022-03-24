@@ -7,18 +7,33 @@ add_requires("glm 0.9.9+8")
 add_requires("glog v0.5.0")
 add_requires("folly 2022.02.14")
 add_requires("stb 2021.09.10")
-add_requires("assimp v5.1.4")
+add_requires("assimp v5.2.3")
 
 target("Imgui")
     set_kind("static")
     set_languages("c11", "cxx11")
     add_includedirs("$(projectdir)/3rdPart/imgui", { public = true })
+    add_includedirs("$(projectdir)/3rdPart/", { public = true })
     add_includedirs("$(projectdir)/3rdPart/imgui/backends", {public = true})
     add_files("3rdPart/imgui/*.cpp")
     add_files("3rdPart/imgui/backends/imgui_impl_glfw.cpp")
     add_files("3rdPart/imgui/backends/imgui_impl_opengl3.cpp")
 
     add_packages("glfw")
+target_end()
+
+target("ImFileDialog")
+    set_kind("static")
+    set_languages("c11", "cxx17")
+    add_deps("Imgui")
+    add_packages("stb")
+
+    if is_plat("windows") then
+        add_defines("NOMINMAX")
+    end
+
+    add_includedirs("$(projectdir)/3rdPart/ImFileDialog", { public = true })
+    add_files("$(projectdir)/3rdPart/ImFileDialog/ImFileDialog.cpp")
 target_end()
 
 target("ImGuizmo")
@@ -50,6 +65,6 @@ target("Marbas")
     add_files("src/**.cc")
     add_files("src/**.vert", "src/**.frag")
 
-    add_deps("Imgui", "ImGuizmo")
+    add_deps("Imgui", "ImGuizmo", "ImFileDialog")
     add_packages("glfw", "glm", "glog", "glew", "folly", "stb", "assimp")
 target_end()

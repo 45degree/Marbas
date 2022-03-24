@@ -8,6 +8,8 @@
 #include "Event/Event.h"
 #include "Layer/Widget/Image.h"
 
+#include <tuple>
+
 namespace Marbas {
 
 struct WindowProp {
@@ -45,12 +47,16 @@ public:
 
     [[nodiscard]] Layer* GetLayer(const String& layerName) const;
 
-private:
-    GLFWwindow* glfwWindow;
-    WindowProp winProp;
+    std::tuple<uint32_t, uint32_t> GetWindowsSize() const;
 
+private:
+    String m_windowName;
+    GLFWwindow* glfwWindow;
     std::unique_ptr<WindowData> windowData;
+
     std::unique_ptr<Layer> firstLayer;
+
+    RendererFactory* m_rendererFactory;
 };
 
 }  // namespace Marbas

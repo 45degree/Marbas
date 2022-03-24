@@ -1,9 +1,11 @@
 #include "Core/Window.h"
+#include "Core/Application.h"
 #include "Event/MouseEvent.h"
 #include "Event/KeyEvent.h"
 #include "Layer/ImguiLayer.h"
 #include "Layer/Widget/Widget.h"
 #include "Layer/Widget/MyWidget.h"
+#include "Layer/Widget/FileDialog.h"
 #include "Layer/Widget/Image.h"
 #include "Layer/DockspaceLayer.h"
 #include "Layer/DrawLayer.h"
@@ -15,16 +17,21 @@
 namespace Marbas {
 
 struct WindowData {
+    uint32_t height;
+    uint32_t width;
     std::unique_ptr<EventCollection> eventCollection = nullptr;
     std::unordered_map<String, Layer*> LayerMap;
     std::unordered_map<String, Widget*> widgetMap;
 };
 
 Window::Window(const WindowProp& winProp):
-        winProp(winProp),
-        windowData(std::make_unique<WindowData>())
+        windowData(std::make_unique<WindowData>()),
+        m_windowName(winProp.name)
 {
+    windowData->width = winProp.width;
+    windowData->height = winProp.height;
     windowData->eventCollection = std::make_unique<EventCollection>();
+    m_rendererFactory = Application::GetRendererFactory();
 }
 
 Window::~Window() {
@@ -66,9 +73,9 @@ void Window::CreateSingleWindow() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
 
-    int width = static_cast<int>(winProp.width);
-    int height = static_cast<int>(winProp.height);
-    glfwWindow = glfwCreateWindow(width, height, winProp.name.c_str(), nullptr, nullptr);
+    int width = static_cast<int>(windowData->width);
+    int height = static_cast<int>(windowData->height);
+    glfwWindow = glfwCreateWindow(width, height, m_windowName.c_str(), nullptr, nullptr);
 
     if(glfwWindow == nullptr) {
         throw std::runtime_error("failed to create window");
@@ -91,11 +98,19 @@ void Window::CreateSingleWindow() {
     auto renderLayer = std::make_unique<RenderLayer>();
     RegisterLayers({imguiLayer.get(), dockspaceLayer.get(), drawLayer.get(), renderLayer.get()});
 
-    auto viewport = RendererFactory::GetInstance(RendererType::OPENGL)->CreateViewport();
-    viewport->SetViewport(0, 0, 800, 600);
+    auto viewport = m_rendererFactory->CreateViewport();
+    viewport->SetViewport(0, 0, width, height);
+
+    FileDialogCrateInfo info {
+        "TextureOpenDialog",
+        "Open a texture",
+        "Image file (*.png;*.jpg;*.jpeg;*.bmp;*.tga){.png,.jpg,.jpeg,.bmp,.tga},.*",
+    };
 
     auto widget1 = std::make_unique<MyWidget>();
     auto widget2 = std::make_unique<Image>();
+
+    auto widget3 = std::make_unique<FileDialog>(info);
     RegisterWidgets({widget1.get(), widget2.get()});
     widget2->SetViewport(viewport.get());
 
@@ -103,6 +118,7 @@ void Window::CreateSingleWindow() {
 
     drawLayer->AddWidget(std::move(widget1));
     drawLayer->AddWidget(std::move(widget2));
+    drawLayer->AddWidget(std::move(widget3));
 
     dockspaceLayer->AddNextLayer(std::move(drawLayer));
     imguiLayer->AddNextLayer(std::move(dockspaceLayer));
@@ -155,7 +171,6 @@ void Window::SetUpEventCallBackFun() {
     glfwSetMouseButtonCallback(glfwWindow,
                                [](GLFWwindow* glfwWindow, int button, int action, int mods) {
         auto windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
-        // auto event = std::make_unique<MouseMoveEvent>();
 
         double xpos, ypos;
         glfwGetCursorPos(glfwWindow, &xpos, &ypos);
@@ -197,9 +212,15 @@ void Window::SetUpEventCallBackFun() {
         windowData->eventCollection->AddEvent(std::move(event));
     });
 
-    glfwSetWindowSizeCallback(glfwWindow, [](GLFWwindow* window, int width, int height){
-        // TODO(45degree): impl callback function
+    glfwSetWindowSizeCallback(glfwWindow, [](GLFWwindow* glfwWindow, int width, int height){
+        auto windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
+        windowData->width = width;
+        windowData->height = height;
     });
+}
+
+std::tuple<uint32_t, uint32_t> Window::GetWindowsSize() const {
+    return std::make_tuple(windowData->width, windowData->height);
 }
 
 }  // namespace Marbas
