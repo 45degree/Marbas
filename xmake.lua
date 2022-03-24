@@ -7,7 +7,7 @@ add_requires("glm 0.9.9+8")
 add_requires("glog v0.5.0")
 add_requires("folly 2022.02.14")
 add_requires("stb 2021.09.10")
-add_requires("assimp v5.1.4")
+add_requires("assimp v5.2.2")
 
 target("Imgui")
     set_kind("static")
@@ -37,8 +37,12 @@ target("Marbas")
     })
 
     on_load(function()
-        local executedir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)");
+        local executedir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)")
         os.cp("$(projectdir)/resource", executedir)
+        if os.exists(path.join(executedir, "shader")) then
+            os.rm(path.join(executedir, "shader"));
+        end
+        os.mkdir(path.join(executedir, "shader"))
         os.cp("$(projectdir)/src/Shader/*", path.join(executedir, "shader"))
     end)
 
