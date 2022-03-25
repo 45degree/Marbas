@@ -2,7 +2,7 @@
 #define MARBARS_LAYER_RENDER_LAYER_H
 
 #include "Layer/Layer.h"
-#include "Renderer/RendererCommon.h"
+#include "RHI/RHI.h"
 
 #include "Core/Camera.h"
 #include "Core/Model.h"
@@ -45,7 +45,7 @@ private:
     std::unique_ptr<Camera> camera;
     Vector<std::unique_ptr<Model>> models;
 
-    RendererFactory* m_rendererFactory;
+    RHIFactory* m_rhiFactory;
 
 private:
     double m_mouseLastX;

@@ -2,13 +2,13 @@
 #include "Common.h"
 #include "Core/Application.h"
 #include "Core/Model.h"
-#include "Renderer/RendererCommon.h"
+#include "RHI/RHI.h"
 #include "Event/Input.h"
 
 namespace Marbas {
 
 RenderLayer::RenderLayer() : Layer("RenderLayer") {
-   m_rendererFactory = Application::GetRendererFactory();
+   m_rhiFactory = Application::GetRendererFactory();
 }
 
 RenderLayer::~RenderLayer() = default;
@@ -21,7 +21,7 @@ void RenderLayer::OnAttach() {
     info.width = 800;
     info.height = 600;
 
-    auto _frameBufer = m_rendererFactory->CreateFrameBuffer(info);
+    auto _frameBufer = m_rhiFactory->CreateFrameBuffer(info);
     _frameBufer->Create();
     frameBuffer = std::move(_frameBufer);
 
@@ -34,13 +34,13 @@ void RenderLayer::OnAttach() {
     camera = std::make_unique<Camera>();
     camera->SetFixPoint(glm::vec3(0, 0, 0));
 
-    vertexShader = m_rendererFactory->CreateShaderCode("shader/shader.vert", ShaderCodeType::FILE,
+    vertexShader = m_rhiFactory->CreateShaderCode("shader/shader.vert", ShaderCodeType::FILE,
                                                        ShaderType::VERTEX_SHADER);
 
-    fragmentShader = m_rendererFactory->CreateShaderCode("shader/shader.frag", ShaderCodeType::FILE,
+    fragmentShader = m_rhiFactory->CreateShaderCode("shader/shader.frag", ShaderCodeType::FILE,
                                                          ShaderType::FRAGMENT_SHADER);
 
-    m_shader = m_rendererFactory->CreateShader();
+    m_shader = m_rhiFactory->CreateShader();
     m_shader->AddShaderCode(fragmentShader.get());
     m_shader->AddShaderCode(vertexShader.get());
     m_shader->Link();

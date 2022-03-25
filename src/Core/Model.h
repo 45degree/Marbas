@@ -4,13 +4,7 @@
 #include "Common.h"
 #include "Core/Mesh.h"
 #include "Core/Camera.h"
-#include "Renderer/Interface/RendererFactory.h"
-#include "Renderer/Interface/DrawCollection.h"
-#include "Renderer/OpenGL/OpenGLDrawCollection.h"
-#include "Renderer/Interface/VertexBuffer.h"
-#include "Renderer/Interface/VertexArray.h"
-#include "Renderer/Interface/IndexBuffer.h"
-#include "Renderer/Interface/Texture.h"
+#include "RHI/RHI.h"
 
 #include <assimp/scene.h>
 
@@ -19,7 +13,7 @@ namespace Marbas {
 class Model {
 public:
     Model() {
-        m_drawCollection = RendererFactory::GetInstance(RendererType::OPENGL)->CreateDrawCollection();
+        m_drawCollection = RHIFactory::GetInstance(RendererType::OPENGL)->CreateDrawCollection();
     }
     ~Model() = default;
 

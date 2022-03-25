@@ -1,9 +1,5 @@
 #include "Core/Mesh.h"
-#include "Renderer/Interface/RendererFactory.h"
-#include "Renderer/OpenGL/OpenGLVertexBuffer.h"
-#include "Renderer/OpenGL/OpenGLIndexBuffer.h"
-#include "Renderer/OpenGL/OpenGLVertexArray.h"
-#include "Renderer/OpenGL/OpenGLTexture.h"
+#include "RHI/RHI.h"
 #include "Common.h"
 
 #include <assimp/Importer.hpp>
@@ -66,13 +62,13 @@ void Mesh::LoadToGPU(bool force) {
     textureCoorElement.size = 2;
     Vector<ElementLayout> layout({vertexElement, normalElement, textureCoorElement});
 
-    m_vertexBuffer = RendererFactory::GetInstance(RendererType::OPENGL)->CreateVertexBuffer(m_vertices);
+    m_vertexBuffer = RHIFactory::GetInstance(RendererType::OPENGL)->CreateVertexBuffer(m_vertices);
     m_vertexBuffer->SetLayout(layout);
 
-    m_indicesBuffer = RendererFactory::GetInstance(RendererType::OPENGL)->CreateIndexBuffer(m_indices);
+    m_indicesBuffer = RHIFactory::GetInstance(RendererType::OPENGL)->CreateIndexBuffer(m_indices);
 
     for(const auto& path : m_texturePathes) {
-        auto texture = RendererFactory::GetInstance(RendererType::OPENGL)->CreateTexutre2D(path);
+        auto texture = RHIFactory::GetInstance(RendererType::OPENGL)->CreateTexutre2D(path);
         m_textures.push_back(texture);
     }
 

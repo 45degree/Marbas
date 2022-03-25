@@ -1,11 +1,12 @@
 #ifndef MARBARS_CORE_APPLICATION_H
 #define MARBARS_CORE_APPLICATION_H
 
+#include "Core/Window.h"
+#include "RHI/RHI.h"
+
 #include <memory>
 #include <mutex>
 
-#include "Core/Window.h"
-#include "Renderer/RendererCommon.h"
 
 namespace Marbas {
 
@@ -31,14 +32,14 @@ public:
         return app->GetWindow();
     }
 
-    static RendererFactory* GetRendererFactory() {
+    static RHIFactory* GetRendererFactory() {
         if(!app->m_isInitialized) {
             String errorMsg = "can't get renderer factory before the application initialized";
             LOG(ERROR) << errorMsg;
             throw std::runtime_error(errorMsg);
         }
         auto rendererType = app->m_applicationData->rendererType;
-        return RendererFactory::GetInstance(rendererType);
+        return RHIFactory::GetInstance(rendererType);
     }
 
 public:

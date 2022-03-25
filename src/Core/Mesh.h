@@ -2,9 +2,7 @@
 #define MARBARS_CORE_MESH_H
 
 #include "Common.h"
-#include "Renderer/Interface/DrawUnit.h"
-#include "Renderer/Interface/Shader.h"
-#include "Renderer/Interface/Texture.h"
+#include "RHI/RHI.h"
 
 #include <assimp/scene.h>
 

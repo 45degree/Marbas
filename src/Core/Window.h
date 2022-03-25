@@ -56,7 +56,7 @@ private:
 
     std::unique_ptr<Layer> firstLayer;
 
-    RendererFactory* m_rendererFactory;
+    RHIFactory* m_rhiFactory;
 };
 
 }  // namespace Marbas

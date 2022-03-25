@@ -1,7 +1,4 @@
 #include "Core/Model.h"
-#include "Renderer/OpenGL/OpenGLVertexArray.h"
-#include "Renderer/OpenGL/OpenGLVertexBuffer.h"
-#include "Renderer/OpenGL/OpenGLIndexBuffer.h"
 
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>

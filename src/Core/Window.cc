@@ -4,13 +4,13 @@
 #include "Event/KeyEvent.h"
 #include "Layer/ImguiLayer.h"
 #include "Layer/Widget/Widget.h"
-#include "Layer/Widget/MyWidget.h"
+// #include "Layer/Widget/MyWidget.h"
 #include "Layer/Widget/FileDialog.h"
 #include "Layer/Widget/Image.h"
 #include "Layer/DockspaceLayer.h"
 #include "Layer/DrawLayer.h"
 #include "Layer/RenderLayer.h"
-#include "Renderer/RendererCommon.h"
+#include "RHI/RHI.h"
 
 #include <unordered_map>
 
@@ -31,7 +31,7 @@ Window::Window(const WindowProp& winProp):
     windowData->width = winProp.width;
     windowData->height = winProp.height;
     windowData->eventCollection = std::make_unique<EventCollection>();
-    m_rendererFactory = Application::GetRendererFactory();
+    m_rhiFactory = Application::GetRendererFactory();
 }
 
 Window::~Window() {
@@ -98,7 +98,7 @@ void Window::CreateSingleWindow() {
     auto renderLayer = std::make_unique<RenderLayer>();
     RegisterLayers({imguiLayer.get(), dockspaceLayer.get(), drawLayer.get(), renderLayer.get()});
 
-    auto viewport = m_rendererFactory->CreateViewport();
+    auto viewport = m_rhiFactory->CreateViewport();
     viewport->SetViewport(0, 0, width, height);
 
     FileDialogCrateInfo info {
@@ -107,16 +107,16 @@ void Window::CreateSingleWindow() {
         "Image file (*.png;*.jpg;*.jpeg;*.bmp;*.tga){.png,.jpg,.jpeg,.bmp,.tga},.*",
     };
 
-    auto widget1 = std::make_unique<MyWidget>();
+    // auto widget1 = std::make_unique<MyWidget>();
     auto widget2 = std::make_unique<Image>();
 
     auto widget3 = std::make_unique<FileDialog>(info);
-    RegisterWidgets({widget1.get(), widget2.get()});
+    RegisterWidgets({widget2.get()});
     widget2->SetViewport(viewport.get());
 
     renderLayer->AddViewport(std::move(viewport));
 
-    drawLayer->AddWidget(std::move(widget1));
+    // drawLayer->AddWidget(std::move(widget1));
     drawLayer->AddWidget(std::move(widget2));
     drawLayer->AddWidget(std::move(widget3));
 
