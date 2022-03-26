@@ -3,10 +3,10 @@
 #include "Event/MouseEvent.h"
 #include "Event/KeyEvent.h"
 #include "Layer/ImguiLayer.h"
-#include "Layer/Widget/Widget.h"
+#include "Widget/Widget.h"
 // #include "Layer/Widget/MyWidget.h"
-#include "Layer/Widget/FileDialog.h"
-#include "Layer/Widget/Image.h"
+#include "Widget/FileDialog.h"
+#include "Widget/Image.h"
 #include "Layer/DockspaceLayer.h"
 #include "Layer/DrawLayer.h"
 #include "Layer/RenderLayer.h"
@@ -108,9 +108,10 @@ void Window::CreateSingleWindow() {
     };
 
     // auto widget1 = std::make_unique<MyWidget>();
-    auto widget2 = std::make_unique<Image>();
+    auto widget2 = std::make_unique<Image>(renderLayer.get(), viewport.get());
 
     auto widget3 = std::make_unique<FileDialog>(info);
+    widget3->SetShow(false);
     RegisterWidgets({widget2.get()});
     widget2->SetViewport(viewport.get());
 
@@ -126,11 +127,6 @@ void Window::CreateSingleWindow() {
 
     firstLayer = std::move(renderLayer);
     firstLayer->Attach();
-
-    auto _renderLayer = dynamic_cast<RenderLayer*>(GetLayer("RenderLayer"));
-    auto image = dynamic_cast<Image*>(GetWidget("Image"));
-    auto textureId = const_cast<ImTextureID>(_renderLayer->GetFrameBufferTexture());
-    image->ChangeTexture(textureId);
 
     glfwSetWindowUserPointer(glfwWindow, windowData.get());
 }

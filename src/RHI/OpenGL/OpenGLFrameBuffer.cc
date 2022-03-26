@@ -42,6 +42,8 @@ void OpenGLFrameBuffer::ReCreate() {
     colorAttachTexture = 0;
     depthAttachTexture = 0;
 
+    glGenFramebuffers(1, &frameBufferID);
+    glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
     Create();
 }
 

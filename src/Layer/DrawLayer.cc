@@ -10,9 +10,11 @@ DrawLayer::~DrawLayer() {
 
 void DrawLayer::OnUpdate() {
     for(auto& widget : widgets) {
-        ImGui::Begin(widget->GetWidgetName().c_str());
-        widget->Draw();
-        ImGui::End();
+        if(widget->IsShow()) {
+            ImGui::Begin(widget->GetWidgetName().c_str());
+            widget->Draw();
+            ImGui::End();
+        }
     }
 }
 }  // namespace Marbas

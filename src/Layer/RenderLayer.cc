@@ -35,10 +35,10 @@ void RenderLayer::OnAttach() {
     camera->SetFixPoint(glm::vec3(0, 0, 0));
 
     vertexShader = m_rhiFactory->CreateShaderCode("shader/shader.vert", ShaderCodeType::FILE,
-                                                       ShaderType::VERTEX_SHADER);
+                                                   ShaderType::VERTEX_SHADER);
 
     fragmentShader = m_rhiFactory->CreateShaderCode("shader/shader.frag", ShaderCodeType::FILE,
-                                                         ShaderType::FRAGMENT_SHADER);
+                                                    ShaderType::FRAGMENT_SHADER);
 
     m_shader = m_rhiFactory->CreateShader();
     m_shader->AddShaderCode(fragmentShader.get());
@@ -56,6 +56,9 @@ void RenderLayer::OnAttach() {
 void RenderLayer::OnDetach() {}
 
 void RenderLayer::OnUpdate() {
+    auto [x, y, width, height] = viewport->GetViewport();
+    frameBuffer->Resize(width, height);
+
     frameBuffer->Bind();
     glEnable(GL_DEPTH_TEST);
 
@@ -65,7 +68,7 @@ void RenderLayer::OnUpdate() {
     viewport->UseViewport();
 
     auto viewMatrix = camera->GetViewMartix();
-    auto projectionMatrix = camera->GetPerspective(800.0 / 600.0);
+    auto projectionMatrix = camera->GetPerspective(width / height);
 
     struct MVP {
         glm::mat4 model;
@@ -101,8 +104,8 @@ void RenderLayer::OnMouseMove(const MouseMoveEvent& e) {
         }
     }
     else if (Input::IsMousePress(GLFW_MOUSE_BUTTON_MIDDLE)) {
-            camera->AddPitch(yOffset);
-            camera->AddYaw(-xOffset);
+        camera->AddPitch(yOffset);
+        camera->AddYaw(-xOffset);
     }
 
     m_mouseLastX = x;

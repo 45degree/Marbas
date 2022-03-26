@@ -1,7 +1,7 @@
-#ifndef MARBAS_LAYER_WIDGET_FILEDIALOG_H
-#define MARBAS_LAYER_WIDGET_FILEDIALOG_H
+#ifndef MARBAS_WIDGET_FILEDIALOG_H
+#define MARBAS_WIDGET_FILEDIALOG_H
 
-#include "Layer/Widget/Widget.h"
+#include "Widget/Widget.h"
 #include "Common.h"
 #include "ImFileDialog.h"
 #include "RHI/RHI.h"
@@ -27,10 +27,6 @@ public:
 public:
     void Draw() override;
 
-    void Show() {
-        m_isShow = true;
-    }
-
     [[nodiscard]] std::optional<Path> GetSelectedFile() const noexcept {
         if(!m_isSeleted) return std::nullopt;
 
@@ -45,8 +41,6 @@ private:
     const FileDialogCrateInfo m_createInfo;
 
     std::unordered_map<void*, Texture2D*> m_textures;
-
-    bool m_isShow = false;
 };
 
 }  // namespace Marbas

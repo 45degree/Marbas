@@ -6,7 +6,7 @@
 #include "Layer/DrawLayer.h"
 #include "Layer/RenderLayer.h"
 #include "Event/Event.h"
-#include "Layer/Widget/Image.h"
+#include "Widget/Image.h"
 
 #include <tuple>
 
