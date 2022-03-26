@@ -7,32 +7,35 @@
 
 namespace Marbas {
 
-RenderLayer::RenderLayer() : Layer("RenderLayer") {
+RenderLayer::RenderLayer(int width, int height):
+    Layer("RenderLayer")
+{
    m_rhiFactory = Application::GetRendererFactory();
+
+   m_frameBufferInfo.height = height;
+   m_frameBufferInfo.width = width;
+   m_frameBufferInfo.depthAttach = true;
+   m_frameBufferInfo.templateAttach = false;
+
+   m_viewport = m_rhiFactory->CreateViewport();
+   m_viewport->SetViewport(0, 0, width, height);
+
+   m_frameBuffer = m_rhiFactory->CreateFrameBuffer(m_frameBufferInfo);
+   m_frameBuffer->Create();
+
+   m_editorCamera = std::make_unique<Camera>();
+   m_editorCamera->SetFixPoint(glm::vec3(0, 0, 0));
 }
 
 RenderLayer::~RenderLayer() = default;
 
 void RenderLayer::OnAttach() {
 
-    // create framebuffer
-    FrameBufferInfo info;
-    info.depthAttach = true;
-    info.width = 800;
-    info.height = 600;
-
-    auto _frameBufer = m_rhiFactory->CreateFrameBuffer(info);
-    _frameBufer->Create();
-    frameBuffer = std::move(_frameBufer);
-
     auto model = std::make_unique<Model>();
     model->ReadFromFile("resource/nanosuit/nanosuit.obj");
-    model->GenerateGPUData();
+    // model->GenerateGPUData();
 
     models.push_back(std::move(model));
-
-    camera = std::make_unique<Camera>();
-    camera->SetFixPoint(glm::vec3(0, 0, 0));
 
     vertexShader = m_rhiFactory->CreateShaderCode("shader/shader.vert", ShaderCodeType::FILE,
                                                    ShaderType::VERTEX_SHADER);
@@ -56,19 +59,18 @@ void RenderLayer::OnAttach() {
 void RenderLayer::OnDetach() {}
 
 void RenderLayer::OnUpdate() {
-    auto [x, y, width, height] = viewport->GetViewport();
-    frameBuffer->Resize(width, height);
-
-    frameBuffer->Bind();
+    m_frameBuffer->Bind();
     glEnable(GL_DEPTH_TEST);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    viewport->UseViewport();
+    m_viewport->UseViewport();
+    auto [x, y, w, h] = m_viewport->GetViewport();
 
-    auto viewMatrix = camera->GetViewMartix();
-    auto projectionMatrix = camera->GetPerspective(width / height);
+    auto viewMatrix = m_editorCamera->GetViewMartix();
+
+    auto projectionMatrix = m_editorCamera->GetPerspective();
 
     struct MVP {
         glm::mat4 model;
@@ -89,7 +91,7 @@ void RenderLayer::OnUpdate() {
         model->Draw();
     }
 
-    frameBuffer->UnBind();
+    m_frameBuffer->UnBind();
     glDisable(GL_DEPTH_TEST);
 }
 
@@ -100,12 +102,12 @@ void RenderLayer::OnMouseMove(const MouseMoveEvent& e) {
 
     if(Input::IsKeyPress(GLFW_KEY_LEFT_SHIFT)) {
         if(Input::IsMousePress(GLFW_MOUSE_BUTTON_MIDDLE)) {
-            camera->MoveFixPoint(-xOffset, yOffset);
+            m_editorCamera->MoveFixPoint(-xOffset, yOffset);
         }
     }
     else if (Input::IsMousePress(GLFW_MOUSE_BUTTON_MIDDLE)) {
-        camera->AddPitch(yOffset);
-        camera->AddYaw(-xOffset);
+        m_editorCamera->AddPitch(yOffset);
+        m_editorCamera->AddYaw(-xOffset);
     }
 
     m_mouseLastX = x;
@@ -114,7 +116,7 @@ void RenderLayer::OnMouseMove(const MouseMoveEvent& e) {
 
 void RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
     auto yOffset = e.GetYOffset();
-    camera->AddFov(yOffset);
+    m_editorCamera->AddFov(yOffset);
 }
 
 }  // namespace Marbas

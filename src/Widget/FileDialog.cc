@@ -3,8 +3,8 @@
 namespace Marbas {
 
 FileDialog::FileDialog(const FileDialogCrateInfo& createInfo) :
-    m_createInfo(createInfo),
-    Widget(createInfo.fileDialogName)
+    Widget(createInfo.fileDialogName),
+    m_createInfo(createInfo)
 {
     m_rhiFactory = Application::GetRendererFactory();
 
@@ -46,7 +46,7 @@ void FileDialog::Draw() {
         if (ifd::FileDialog::Instance().IsDone(m_createInfo.fileDialogName.c_str())) {
             if (ifd::FileDialog::Instance().HasResult()) {
                 String res = ifd::FileDialog::Instance().GetResult().u8string();
-                m_selectedFile = res;
+                m_selectedFile = res.c_str();
                 m_isSeleted = true;
                 printf("OPEN[%s]\n", res.c_str());
             }

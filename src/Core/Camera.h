@@ -25,12 +25,16 @@ public:
         return glm::lookAt(m_fixPoint + distance * direction, m_fixPoint, m_upDirection);
     }
 
-    [[nodiscard]] glm::mat4 GetPerspective(float aspect) const noexcept {
-        return glm::perspective(glm::radians(fov), aspect, m_near, m_far);
+    [[nodiscard]] glm::mat4 GetPerspective() const noexcept {
+        return glm::perspective(glm::radians(fov), m_aspect, m_near, m_far);
     }
 
     void SetFixPoint(const glm::vec3& newPos) {
         m_fixPoint = newPos;
+    }
+
+    void SetAspect(float aspect) noexcept {
+        m_aspect = aspect;
     }
 
     void AddPitch(float pitch) noexcept {
@@ -69,6 +73,7 @@ private:
     float m_far = 100.0f;
     float distance = 50.f;
     float fov = 45.0f;
+    float m_aspect = 800.f / 600.f;
     glm::vec3 m_fixPoint = glm::vec3(0, 0, 0);
     glm::vec3 m_upDirection = glm::vec3(0, 1, 0);
 

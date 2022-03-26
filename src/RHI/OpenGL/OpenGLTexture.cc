@@ -45,7 +45,8 @@ void OpenGLTexture2D::Bind(int uniformBind) {
     glBindTextureUnit(uniformBind, textureID);
 
     auto error = glGetError();
-    LOG_IF(ERROR, error) << FORMAT("can't bind texture: {}, error code is {}", textureID, error);
+    LOG_IF(ERROR, error) << FORMAT("can't bind texture {} to {}, error code is {}",
+                                   textureID, uniformBind, error);
 }
 
 void OpenGLTexture2D::SetData(void *data, uint32_t size) {

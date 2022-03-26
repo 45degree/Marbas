@@ -52,8 +52,12 @@ target("Marbas")
     })
 
     on_load(function()
-        local executedir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)");
+        local executedir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)")
         os.cp("$(projectdir)/resource", executedir)
+        if os.exists(path.join(executedir, "shader")) then
+            os.rm(path.join(executedir, "shader"));
+        end
+        os.mkdir(path.join(executedir, "shader"))
         os.cp("$(projectdir)/src/Shader/*", path.join(executedir, "shader"))
     end)
 

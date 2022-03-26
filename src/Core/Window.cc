@@ -95,11 +95,8 @@ void Window::CreateSingleWindow() {
     auto imguiLayer = std::make_unique<ImguiLayer>(this);
     auto dockspaceLayer = std::make_unique<DockspaceLayer>();
     auto drawLayer = std::make_unique<DrawLayer>();
-    auto renderLayer = std::make_unique<RenderLayer>();
+    auto renderLayer = std::make_unique<RenderLayer>(1920, 1080);
     RegisterLayers({imguiLayer.get(), dockspaceLayer.get(), drawLayer.get(), renderLayer.get()});
-
-    auto viewport = m_rhiFactory->CreateViewport();
-    viewport->SetViewport(0, 0, width, height);
 
     FileDialogCrateInfo info {
         "TextureOpenDialog",
@@ -108,14 +105,12 @@ void Window::CreateSingleWindow() {
     };
 
     // auto widget1 = std::make_unique<MyWidget>();
-    auto widget2 = std::make_unique<Image>(renderLayer.get(), viewport.get());
+    auto widget2 = std::make_unique<Image>();
 
     auto widget3 = std::make_unique<FileDialog>(info);
     widget3->SetShow(false);
     RegisterWidgets({widget2.get()});
-    widget2->SetViewport(viewport.get());
-
-    renderLayer->AddViewport(std::move(viewport));
+    // widget2->SetViewport(viewport.get());
 
     // drawLayer->AddWidget(std::move(widget1));
     drawLayer->AddWidget(std::move(widget2));

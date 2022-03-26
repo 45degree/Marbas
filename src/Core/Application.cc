@@ -31,8 +31,8 @@ void Application::Run() {
     auto vendor = glGetString(GL_VENDOR);
     auto version = glGetString(GL_VERSION);
 
-    LOG(INFO) <<"vendor is:" << vendor;
-    LOG(INFO) <<"version is:" << version;
+    LOG(INFO) <<FORMAT("vendor is {}", vendor);
+    LOG(INFO) <<FORMAT("version is {}", version);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(glfwWindow)) {

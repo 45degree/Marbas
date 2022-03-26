@@ -36,7 +36,7 @@ public:
         if(!app->m_isInitialized) {
             String errorMsg = "can't get renderer factory before the application initialized";
             LOG(ERROR) << errorMsg;
-            throw std::runtime_error(errorMsg);
+            throw std::runtime_error(errorMsg.c_str());
         }
         auto rendererType = app->m_applicationData->rendererType;
         return RHIFactory::GetInstance(rendererType);
