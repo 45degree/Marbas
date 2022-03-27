@@ -22,19 +22,28 @@ target("Imgui")
     add_packages("glfw")
 target_end()
 
-target("ImFileDialog")
+-- target("ImFileDialog")
+    -- set_kind("static")
+    -- set_languages("c11", "cxx17")
+    -- add_deps("Imgui")
+    -- add_packages("stb")
+    --
+    -- if is_plat("windows") then
+    --     add_defines("NOMINMAX")
+    -- end
+    --
+    -- add_includedirs("$(projectdir)/3rdPart/ImFileDialog", { public = true })
+    -- add_files("$(projectdir)/3rdPart/ImFileDialog/ImFileDialog.cpp")
+-- target_end()
+
+target("ImGuiFileDialog")
     set_kind("static")
     set_languages("c11", "cxx17")
     add_deps("Imgui")
-    add_packages("stb")
 
-    if is_plat("windows") then
-        add_defines("NOMINMAX")
-    end
-
-    add_includedirs("$(projectdir)/3rdPart/ImFileDialog", { public = true })
-    add_files("$(projectdir)/3rdPart/ImFileDialog/ImFileDialog.cpp")
-target_end()
+    add_files("$(projectdir)/3rdPart/ImGuiFileDialog/**.cpp")
+    add_includedirs("$(projectdir)/3rdPart/ImGuiFileDialog", { public = true })
+target_end();
 
 target("ImGuizmo")
     set_kind("static")
@@ -69,6 +78,6 @@ target("Marbas")
     add_files("src/**.cc")
     add_files("src/**.vert", "src/**.frag")
 
-    add_deps("Imgui", "ImGuizmo", "ImFileDialog")
+    add_deps("Imgui", "ImGuizmo", "ImGuiFileDialog")
     add_packages("glfw", "glm", "glog", "glew", "folly", "stb", "assimp")
 target_end()

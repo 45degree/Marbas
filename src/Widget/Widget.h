@@ -19,16 +19,7 @@ public:
 
     virtual void Draw() = 0;
 
-    [[nodiscard]] bool IsShow() const noexcept {
-        return m_isShow;
-    }
-
-    void SetShow(bool isShow) noexcept {
-        m_isShow = isShow;
-    }
-
 protected:
-    bool m_isShow = true;
     const String m_widgetName;
 };
 

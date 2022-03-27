@@ -10,10 +10,9 @@ namespace Marbas {
 
 class Image : public Widget {
 public:
-    explicit Image():
-        Widget("Image")
-    {
-    }
+    explicit Image(const String& title = "Image"):
+        Widget(title)
+    {}
 
     ~Image() override = default;
 

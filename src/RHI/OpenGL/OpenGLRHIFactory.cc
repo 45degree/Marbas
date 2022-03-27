@@ -80,7 +80,7 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
     auto dataFormat = formatType == TextureFormatType::RGBA ? GL_RGBA : GL_RGB;
     auto internalFormat = formatType == TextureFormatType::RGBA ? GL_RGBA8 : GL_RGB8;
 
-    // TODO(45degree): calculate hash for this image
+    // TODO: calculate hash for this image
 
     // create textrue
     auto texture = std::make_unique<OpenGLTexture2D>(width, height, formatType);

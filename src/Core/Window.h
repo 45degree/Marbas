@@ -35,19 +35,13 @@ public:
         return glfwWindow;
     }
 
+    // TODO: need to remove it
     void RegisterLayer(Layer* layer);
-
     void RegisterLayers(const Vector<Layer*>& layers);
-
-    void RegisterWidget(Widget* widget);
-
-    void RegisterWidgets(const Vector<Widget*>& widgets);
-
-    [[nodiscard]] Widget* GetWidget(const String& widgetName) const;
 
     [[nodiscard]] Layer* GetLayer(const String& layerName) const;
 
-    std::tuple<uint32_t, uint32_t> GetWindowsSize() const;
+    [[nodiscard]] std::tuple<uint32_t, uint32_t> GetWindowsSize() const;
 
 private:
     String m_windowName;

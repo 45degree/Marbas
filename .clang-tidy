@@ -3,6 +3,7 @@ Checks: >
     bugprone-*,
     # cppcoreguidelines-*,
     google-*,
+    -google-readability-todo,
     # hicpp-*,
     # misc-*,
 

@@ -1,12 +1,11 @@
 #ifndef MARBAS_WIDGET_FILEDIALOG_H
 #define MARBAS_WIDGET_FILEDIALOG_H
 
-#include "Widget/Widget.h"
+#include "Widget/Dialog.h"
 #include "Common.h"
-#include "ImFileDialog.h"
 #include "RHI/RHI.h"
 
-#include "Core/Application.h"
+#include "ImGuiFileDialog.h"
 
 #include <optional>
 
@@ -18,13 +17,15 @@ struct FileDialogCrateInfo {
     String fileFilter;
 };
 
-class FileDialog : public Widget {
+class FileDialog : public Dialog {
 public:
     explicit FileDialog(const FileDialogCrateInfo& createInfo);
 
     ~FileDialog() override = default;
 
 public:
+    void Open() override;
+
     void Draw() override;
 
     [[nodiscard]] std::optional<Path> GetSelectedFile() const noexcept {
@@ -33,13 +34,18 @@ public:
         return m_selectedFile;
     }
 
+    void SelectCallback(std::function<void(const char*, const char*)>&& callback) {
+        m_callback = callback;
+    }
+
 private:
-    RHIFactory* m_rhiFactory = nullptr;
-    Texture2D* m_texture = nullptr;
+    std::unique_ptr<ImGuiFileDialog> m_instance;
+
     Path m_selectedFile;
     bool m_isSeleted = false;
     const FileDialogCrateInfo m_createInfo;
 
+    std::function<void(const char*, const char*)> m_callback;
     std::unordered_map<void*, Texture2D*> m_textures;
 };
 

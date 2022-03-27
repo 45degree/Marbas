@@ -4,6 +4,6 @@
 [submodule "3rdPart/ImGuizmo"]
 	path = 3rdPart/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
-[submodule "3rdPart/ImFileDialog"]
-	path = 3rdPart/ImFileDialog
-	url = https://github.com/dfranx/ImFileDialog.git
+[submodule "3rdPart/ImGuiFileDialog"]
+	path = 3rdPart/ImGuiFileDialog
+	url = https://github.com/aiekick/ImGuiFileDialog.git
