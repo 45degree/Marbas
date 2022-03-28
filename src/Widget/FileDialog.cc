@@ -20,7 +20,9 @@ void FileDialog::Open() {
 
 void FileDialog::Draw() {
 
-    if(!m_instance->Display(m_createInfo.fileDialogName.c_str())) return;
+    if(!m_instance->Display(m_createInfo.fileDialogName.c_str(), ImGuiWindowFlags_NoDocking)) {
+        return;
+    }
 
     // action if OK
     if (m_instance->IsOk()) {
