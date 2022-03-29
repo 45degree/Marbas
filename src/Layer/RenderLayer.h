@@ -40,8 +40,8 @@ public:
         return m_viewport.get();
     }
 
-    void AddViewport(std::unique_ptr<Viewport>&& viewport) {
-        this->m_viewport = std::move(viewport);
+    void AddModle(std::unique_ptr<Model>&& model) {
+        models.push_back(std::move(model));
     }
 
     Camera* GetCamera() {

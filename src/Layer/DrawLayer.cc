@@ -1,8 +1,11 @@
-#include "Common.h"
 #include "Layer/DrawLayer.h"
-#include "imgui.h"
-
+#include "Core/Application.h"
+#include "Core/Model.h"
+#include "Layer/RenderLayer.h"
 #include "Widget/Image.h"
+#include "Common.h"
+
+#include "imgui.h"
 
 namespace Marbas {
 
@@ -15,7 +18,9 @@ void DrawLayer::OnAttach() {
     FileDialogCrateInfo info {
         "TextureOpenDialog",
         "Open a texture",
-        "Image file (*.png;*.jpg;*.jpeg;*.bmp;*.tga){.png,.jpg,.jpeg,.bmp,.tga}",
+        "model file "
+        "(*.off *.obj *.ply *.pmx)"
+        "{.off,.obj,.ply,.pmx}",
     };
 
     auto renderImage = std::make_unique<Image>("renderImage");
@@ -38,7 +43,12 @@ void DrawLayer::OnUpdate() {
 void DrawLayer::DrawMenuBar() {
 
     m_fileDialog->SelectCallback([](const char* filePathName, const char* fileName){
-        LOG(INFO) << FORMAT("{}, {}", String(filePathName), String(fileName));
+        auto model = std::make_unique<Model>();
+        model->ReadFromFile(filePathName);
+
+        auto layer = Application::GetApplicationsWindow()->GetLayer("RenderLayer");
+        auto renderLayer = dynamic_cast<RenderLayer*>(layer);
+        renderLayer->AddModle(std::move(model));
     });
 
     if (ImGui::BeginMenuBar()) {

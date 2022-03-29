@@ -31,11 +31,9 @@ RenderLayer::~RenderLayer() = default;
 
 void RenderLayer::OnAttach() {
 
-    auto model = std::make_unique<Model>();
-    model->ReadFromFile("resource/nanosuit/nanosuit.obj");
     // model->GenerateGPUData();
 
-    models.push_back(std::move(model));
+    // models.push_back(std::move(model));
 
     vertexShader = m_rhiFactory->CreateShaderCode("shader/shader.vert", ShaderCodeType::FILE,
                                                    ShaderType::VERTEX_SHADER);
@@ -48,17 +46,19 @@ void RenderLayer::OnAttach() {
     m_shader->AddShaderCode(vertexShader.get());
     m_shader->Link();
 
+}
+
+void RenderLayer::OnDetach() {}
+
+void RenderLayer::OnUpdate() {
+
     for(auto& _model : models) {
         auto* collection = _model->GetDrawCollection();
         for(auto drawUnit : collection->m_drawUnits) {
             drawUnit->m_shader = m_shader.get();
         }
     }
-}
 
-void RenderLayer::OnDetach() {}
-
-void RenderLayer::OnUpdate() {
     m_frameBuffer->Bind();
     glEnable(GL_DEPTH_TEST);
 
