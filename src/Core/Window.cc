@@ -20,8 +20,8 @@ struct WindowData {
 };
 
 Window::Window(const WindowProp& winProp):
-        windowData(std::make_unique<WindowData>()),
-        m_windowName(winProp.name)
+        m_windowName(winProp.name),
+        windowData(std::make_unique<WindowData>())
 {
     windowData->width = winProp.width;
     windowData->height = winProp.height;
@@ -51,15 +51,11 @@ void Window::RegisterLayers(const Vector<Layer*>& layers) {
     }
 }
 
-static void APIENTRY glDebugOutput(GLenum source, 
-                            GLenum type, 
-                            unsigned int id, 
-                            GLenum severity, 
-                            GLsizei length, 
-                            const char *message, 
-                            const void *userParam)
-{
-    if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return; // ignore these non-significant error codes
+static void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
+                          GLsizei length, const char *message, const void *userParam) {
+
+    // ignore these non-significant error codes
+    if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
     std::cout << "---------------" << std::endl;
     std::cout << "Debug message (" << id << "): " <<  message << std::endl;
