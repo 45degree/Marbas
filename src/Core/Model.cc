@@ -1,10 +1,18 @@
 #include "Core/Model.h"
+#include "Core/Application.h"
 
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
+
 namespace Marbas {
+
+Model::Model() {
+    m_drawCollection = Application::GetRendererFactory()->CreateDrawCollection();
+}
+
+Model::~Model() = default;
 
 void Model::ReadFromFile(const Path &sceneFile) {
     Assimp::Importer importer;

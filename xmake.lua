@@ -22,20 +22,6 @@ target("Imgui")
     add_packages("glfw")
 target_end()
 
--- target("ImFileDialog")
-    -- set_kind("static")
-    -- set_languages("c11", "cxx17")
-    -- add_deps("Imgui")
-    -- add_packages("stb")
-    --
-    -- if is_plat("windows") then
-    --     add_defines("NOMINMAX")
-    -- end
-    --
-    -- add_includedirs("$(projectdir)/3rdPart/ImFileDialog", { public = true })
-    -- add_files("$(projectdir)/3rdPart/ImFileDialog/ImFileDialog.cpp")
--- target_end()
-
 target("ImGuiFileDialog")
     set_kind("static")
     set_languages("c11", "cxx17")

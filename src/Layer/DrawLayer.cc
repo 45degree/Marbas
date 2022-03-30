@@ -2,7 +2,7 @@
 #include "Core/Application.h"
 #include "Core/Model.h"
 #include "Layer/RenderLayer.h"
-#include "Widget/Image.h"
+#include "Widget/RenderImage.h"
 #include "Common.h"
 
 #include "imgui.h"

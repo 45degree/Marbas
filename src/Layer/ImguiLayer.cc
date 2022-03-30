@@ -1,8 +1,10 @@
 #include "Common.h"
 #include "Layer/ImguiLayer.h"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <ImGuizmo.h>
 
 namespace Marbas {
 
@@ -58,6 +60,8 @@ void ImguiLayer::OnBegin() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+
+    ImGuizmo::BeginFrame();
 }
 
 void ImguiLayer::OnEnd() {

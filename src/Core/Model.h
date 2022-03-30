@@ -1,5 +1,5 @@
-#ifndef MARBAS_CORE_SCENE_H
-#define MARBAS_CORE_SCENE_H
+#ifndef MARBAS_CORE_MODEL_H
+#define MARBAS_CORE_MODEL_H
 
 #include "Common.h"
 #include "Core/Mesh.h"
@@ -12,10 +12,8 @@ namespace Marbas {
 
 class Model {
 public:
-    Model() {
-        m_drawCollection = RHIFactory::GetInstance(RendererType::OPENGL)->CreateDrawCollection();
-    }
-    ~Model() = default;
+    Model();
+    ~Model();
 
 public:
     void ReadFromFile(const Path& sceneFile);
