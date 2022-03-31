@@ -1,0 +1,9 @@
+[menu]
+menuList = ["model"]
+
+[menu.model]
+name = "模型"
+
+[menu.model.item]
+load = "加载"
+reload = "重新加载"

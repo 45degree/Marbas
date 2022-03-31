@@ -10,6 +10,8 @@ int main(int argc, char* argv[]) {
     FLAGS_alsologtostderr = true;
     google::InitGoogleLogging(argv[0]);
 
+    // read config file
+
     auto appData = std::make_unique<Marbas::ApplicationData>();
     appData->rendererType = Marbas::RendererType::OPENGL;
 
