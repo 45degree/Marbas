@@ -9,6 +9,24 @@ add_requires("folly 2022.02.14")
 add_requires("stb 2021.09.10")
 add_requires("assimp v5.2.3")
 add_requires("toml++ v3.0.0")
+add_requires("libiconv 1.16")
+
+package("uchardet")
+    add_deps("cmake")
+    set_sourcedir(path.join("3rdPart", "uchardet"))
+    on_install("windows", function (package)
+        local configs = {}
+        table.insert(configs, "-DCMAKE_BUILD_TYPE=" .. (package:debug() and "Debug" or "Release"))
+        table.insert(configs, "-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"))
+        table.insert(configs, "-DBUILD_BINARY=" .. "OFF")
+        import("package.tools.cmake").install(package, configs)
+    end)
+
+    on_test(function (package)
+        assert(package:has_cfuncs("uchardet_get_charset", {includes = "uchardet/uchardet.h"}))
+    end)
+package_end()
+add_requires("uchardet")
 
 target("Imgui")
     set_kind("static")
@@ -49,10 +67,14 @@ target("Marbas")
 
     on_load(function()
         local executedir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)")
+
         os.cp("$(projectdir)/resource", executedir)
+        os.cp("$(projectdir)/assert", executedir)
+
         if os.exists(path.join(executedir, "shader")) then
-            os.rm(path.join(executedir, "shader"));
+            os.rm(path.join(executedir, "shader"))
         end
+
         os.mkdir(path.join(executedir, "shader"))
         os.cp("$(projectdir)/src/Shader/*", path.join(executedir, "shader"))
     end)
@@ -66,5 +88,6 @@ target("Marbas")
     add_files("src/**.vert", "src/**.frag")
 
     add_deps("Imgui", "ImGuizmo", "ImGuiFileDialog")
-    add_packages("glfw", "glm", "glog", "glew", "folly", "stb", "assimp", "toml++")
+    add_packages("glfw", "glm", "glog", "glew", "folly", "stb", "assimp",
+                 "toml++", "libiconv", "uchardet")
 target_end()

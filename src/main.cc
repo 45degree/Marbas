@@ -3,6 +3,7 @@
 
 #include "Core/Application.h"
 #include "Core/Window.h"
+#include "Config.h"
 
 #include <iostream>
 
@@ -11,6 +12,8 @@ int main(int argc, char* argv[]) {
     google::InitGoogleLogging(argv[0]);
 
     // read config file
+    Marbas::Config config("assert/");
+    config.Load();
 
     auto appData = std::make_unique<Marbas::ApplicationData>();
     appData->rendererType = Marbas::RendererType::OPENGL;

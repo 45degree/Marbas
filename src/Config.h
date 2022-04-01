@@ -19,9 +19,9 @@ private:
     void LoadLocaleFile();
 
 private:
-    String m_configDir;
-    String m_fontPath;
-    String m_localeFilePath;
+    Path m_configDir;
+    Path m_fontPath;
+    Path m_localeFilePath;
 
     std::map<String, String> m_ResourcesNameMap;
 };
