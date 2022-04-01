@@ -1,5 +1,6 @@
-#include "Tool/EncodingConvert.h"
 #include <gtest/gtest.h>
+
+#include "Tool/EncodingConvert.h"
 #include <fstream>
 
 namespace Marbas {
@@ -42,6 +43,13 @@ TEST_F(EncodingConvertTest, GkbToUTF8) { // NOLINT
     EncodingConvert convert("gb18030", "utf-8");
     String utf8Str = ReadFromFile("Test/utf-8.txt");
     String newStr = convert.Convert(ReadFromFile("Test/gb18030.txt"));
+
+    ASSERT_STREQ(utf8Str.c_str(), newStr.c_str());
+}
+
+TEST_F(EncodingConvertTest, ConvertToUTF8) { // NOLINT
+    String utf8Str = ReadFromFile("Test/utf-8.txt");
+    String newStr = EncodingConvertToUTF8(ReadFromFile("Test/gb18030.txt"));
 
     ASSERT_STREQ(utf8Str.c_str(), newStr.c_str());
 }
