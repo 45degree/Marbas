@@ -4,6 +4,7 @@
 #include "Core/Window.h"
 #include "RHI/RHI.h"
 
+#include <glog/logging.h>
 #include <memory>
 #include <mutex>
 

@@ -1,5 +1,9 @@
 #include "Common.h"
+
+#include "RHI/OpenGL/OpenGLRHICommon.h"
 #include "RHI/OpenGL/OpenGLIndexBuffer.h"
+
+#include <glog/logging.h>
 
 namespace Marbas {
 

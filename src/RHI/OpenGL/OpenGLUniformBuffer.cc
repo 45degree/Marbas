@@ -1,5 +1,7 @@
 #include "RHI/OpenGL/OpenGLUniformBuffer.h"
 
+#include <glog/logging.h>
+
 namespace Marbas {
 
 OpenGLUniformBuffer::OpenGLUniformBuffer(uint32_t size, uint32_t bindingPoint) :

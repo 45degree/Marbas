@@ -2,6 +2,7 @@
 #include "RHI/RHI.h"
 #include "Common.h"
 
+#include <glog/logging.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 

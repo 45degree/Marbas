@@ -1,5 +1,6 @@
 #include "RHI/OpenGL/OpenGLShaderCode.h"
 
+#include <glog/logging.h>
 #include <fstream>
 
 namespace Marbas {

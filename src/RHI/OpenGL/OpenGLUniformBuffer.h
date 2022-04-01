@@ -2,6 +2,7 @@
 #define MARBAS_RHI_OPENGL_UNIFORMBUFFER_H
 
 #include "Common.h"
+#include "RHI/OpenGL/OpenGLRHICommon.h"
 #include "RHI/Interface/UniformBuffer.h"
 
 namespace Marbas {

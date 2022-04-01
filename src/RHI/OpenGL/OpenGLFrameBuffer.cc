@@ -1,5 +1,7 @@
 #include "RHI/OpenGL/OpenGLFrameBuffer.h"
 
+#include <glog/logging.h>
+
 namespace Marbas {
 
 OpenGLFrameBuffer::OpenGLFrameBuffer(const FrameBufferInfo& info) : FrameBuffer(info) {

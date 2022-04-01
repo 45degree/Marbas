@@ -2,6 +2,7 @@
 #define MARBARS_RHI_OPENGL_VERTEX_ARRAY_H
 
 #include "Common.h"
+#include "RHI/OpenGL/OpenGLRHICommon.h"
 #include "RHI/Interface/VertexArray.h"
 
 namespace Marbas {

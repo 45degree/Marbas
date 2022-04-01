@@ -28,24 +28,12 @@ void Application::CreateSingleWindow(const WindowProp& winProp) {
 void Application::Run() {
     auto glfwWindow = appWindow->GetGlfwWinow();
 
-    auto vendor = glGetString(GL_VENDOR);
-    auto version = glGetString(GL_VERSION);
-
-    LOG(INFO) <<FORMAT("vendor is {}", vendor);
-    LOG(INFO) <<FORMAT("version is {}", version);
-
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(glfwWindow)) {
         /* Poll for and process events */
         glfwPollEvents();
 
         appWindow->ShowWindow();
-
-        /* Swap front and back buffers */
-        glfwSwapBuffers(glfwWindow);
-
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
     }
 }
 

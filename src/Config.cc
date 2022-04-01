@@ -1,7 +1,9 @@
 #include "Config.h"
 
+#include <glog/logging.h>
 #include <toml++/toml.h>
 #include <uchardet/uchardet.h>
+#include <iconv.h>
 
 namespace Marbas {
 

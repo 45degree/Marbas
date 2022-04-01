@@ -10,7 +10,7 @@ namespace Marbas {
 
 class OpenGLRHIFactory : public RHIFactory {
 private:
-    OpenGLRHIFactory() = default;
+    OpenGLRHIFactory();
 
 public:
     OpenGLRHIFactory(const OpenGLRHIFactory&) = delete;
@@ -18,6 +18,20 @@ public:
     ~OpenGLRHIFactory() override = default;
 
 public:
+
+    void Enable(EnableItem item) const override;
+
+    void Disable(EnableItem item) const override;
+
+    void ClearColor(float r, float g, float b, float a) const override;
+
+    void PrintRHIInfo() const override;
+
+    void Init(GLFWwindow *window) const override;
+
+    void SwapBuffer(GLFWwindow* window) const override;
+
+    void ClearBuffer(const ClearBuferBit bufferBit) const override;
 
     [[nodiscard]] std::unique_ptr<VertexBuffer>
     CreateVertexBuffer(const Vector<float>& data) const override;

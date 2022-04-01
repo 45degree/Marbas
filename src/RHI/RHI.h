@@ -1,5 +1,5 @@
-#ifndef MARBARS_RENDERER_RENDERER_COMMON_H
-#define MARBARS_RENDERER_RENDERER_COMMON_H
+#ifndef MARBARS_RHI_RENDERER_COMMON_H
+#define MARBARS_RHI_RENDERER_COMMON_H
 
 #include "RHI/Interface/DrawCall.h"
 #include "RHI/Interface/DrawUnit.h"

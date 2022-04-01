@@ -2,6 +2,7 @@
 #define MARBARS_RHI_OPENGL_VERTEX_BUFFER_H
 
 #include "RHI/Interface/VertexBuffer.h"
+#include "RHI/OpenGL/OpenGLRHICommon.h"
 #include "Common.h"
 
 namespace Marbas {

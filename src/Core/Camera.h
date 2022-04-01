@@ -1,7 +1,7 @@
 #ifndef MARBARS_CORE_CAMERA_H
 #define MARBARS_CORE_CAMERA_H
 
-#include "Common.h"
+#include "MathCommon.h"
 
 /**
  * @brief this camera always looks at a fixed point, and can rotate around it

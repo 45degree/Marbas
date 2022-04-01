@@ -1,5 +1,7 @@
 #include "RHI/OpenGL/OpenGLVertexBuffer.h"
 
+#include <glog/logging.h>
+
 namespace Marbas {
 
 OpenGLVertexBuffer::OpenGLVertexBuffer(std::size_t size) : VBO(0) {

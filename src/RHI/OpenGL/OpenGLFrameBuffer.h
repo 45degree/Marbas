@@ -2,6 +2,7 @@
 #define MARBARS_RHI_OPENGL_FRAMEBUFFER_H
 
 #include "RHI/Interface/FrameBuffer.h"
+#include "RHI/OpenGL/OpenGLRHICommon.h"
 #include "Common.h"
 
 namespace Marbas {

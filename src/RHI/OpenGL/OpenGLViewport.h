@@ -11,9 +11,7 @@ public:
     ~OpenGLViewport() override = default;
 
 public:
-    void UseViewport() const override {
-        glViewport(x, y, width, height);
-    }
+    void UseViewport() const override;
 };
 
 }  // namespace Marbas

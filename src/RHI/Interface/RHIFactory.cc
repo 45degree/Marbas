@@ -2,11 +2,12 @@
 #include "RHI/OpenGL/OpenGLRHIFactory.h"
 #include "Common.h"
 
+#include <glog/logging.h>
 #include <mutex>
 
 namespace Marbas {
 
-std::unique_ptr<RHIFactory> RHIFactory::m_rhiFactory;
+std::unique_ptr<RHIFactory> RHIFactory::m_rhiFactory = nullptr;
 
 RHIFactory* RHIFactory::GetInstance(const RendererType& rendererType) {
     static std::once_flag flag;

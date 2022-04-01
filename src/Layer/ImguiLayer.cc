@@ -1,6 +1,8 @@
 #include "Common.h"
 #include "Layer/ImguiLayer.h"
+#include "Core/Application.h"
 
+#include <glog/logging.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -14,6 +16,9 @@ ImguiLayer::~ImguiLayer() {
 
 void ImguiLayer::OnAttach() {
     LOG(INFO) << "begin to initialize imgui layer";
+
+    m_rhiFactory = Application::GetRendererFactory();
+    m_viewport = m_rhiFactory->CreateViewport();
 
     const char* glsl_version = "#version 150";
 
@@ -67,11 +72,14 @@ void ImguiLayer::OnBegin() {
 void ImguiLayer::OnEnd() {
 
     ImGui::Render();
-    int display_w, display_h;
-    glfwGetFramebufferSize(window->GetGlfwWinow(), &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w,
-                 clear_color.z * clear_color.w, clear_color.w);
+
+    auto [display_w, display_h] = Application::GetApplicationsWindow()->GetWindowsSize();
+
+    m_viewport->SetViewport(0, 0, display_w, display_h);
+    m_viewport->UseViewport();
+
+    m_rhiFactory->ClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w,
+                             clear_color.z * clear_color.w, clear_color.w);
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

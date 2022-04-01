@@ -1,5 +1,7 @@
 #include "RHI/OpenGL/OpenGLVertexArray.h"
 
+#include <glog/logging.h>
+
 namespace Marbas {
 
 OpenGLVertexArray::OpenGLVertexArray() {

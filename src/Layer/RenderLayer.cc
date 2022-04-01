@@ -60,10 +60,12 @@ void RenderLayer::OnUpdate() {
     }
 
     m_frameBuffer->Bind();
-    glEnable(GL_DEPTH_TEST);
 
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    m_rhiFactory->Enable(EnableItem::DEPTH);
+
+    m_rhiFactory->ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    m_rhiFactory->ClearBuffer(ClearBuferBit::COLOR_BUFFER);
+    m_rhiFactory->ClearBuffer(ClearBuferBit::DEPTH_BUFFER);
 
     m_viewport->UseViewport();
     auto [x, y, w, h] = m_viewport->GetViewport();
@@ -92,7 +94,7 @@ void RenderLayer::OnUpdate() {
     }
 
     m_frameBuffer->UnBind();
-    glDisable(GL_DEPTH_TEST);
+    m_rhiFactory->Disable(EnableItem::DEPTH);
 }
 
 void RenderLayer::OnMouseMove(const MouseMoveEvent& e) {

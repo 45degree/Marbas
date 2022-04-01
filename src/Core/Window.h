@@ -8,6 +8,7 @@
 #include "Event/Event.h"
 #include "Widget/RenderImage.h"
 
+#include <GLFW/glfw3.h>
 #include <tuple>
 
 namespace Marbas {
@@ -35,8 +36,8 @@ public:
         return glfwWindow;
     }
 
-    // TODO: need to remove it
     void RegisterLayer(Layer* layer);
+
     void RegisterLayers(const Vector<Layer*>& layers);
 
     [[nodiscard]] Layer* GetLayer(const String& layerName) const;

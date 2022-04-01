@@ -1,6 +1,7 @@
 #ifndef MARBAS_RHI_OPENGL_SHADERCODE_H
 #define MARBAS_RHI_OPENGL_SHADERCODE_H
 
+#include "RHI/OpenGL/OpenGLRHICommon.h"
 #include "RHI/Interface/ShaderCode.h"
 
 namespace Marbas {

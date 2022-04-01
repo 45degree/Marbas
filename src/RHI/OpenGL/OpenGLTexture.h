@@ -1,6 +1,7 @@
 #ifndef MARBARS_RHI_OPENGL_TEXTURE_H
 #define MARBARS_RHI_OPENGL_TEXTURE_H
 
+#include "RHI/OpenGL/OpenGLRHICommon.h"
 #include "RHI/Interface/Texture.h"
 
 namespace Marbas {

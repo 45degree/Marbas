@@ -2,6 +2,8 @@
 #include "RHI/OpenGL/OpenGLShaderCode.h"
 #include "RHI/OpenGL/OpenGLTexture.h"
 
+#include <glog/logging.h>
+
 namespace Marbas {
 
 OpenGLShader::OpenGLShader() {

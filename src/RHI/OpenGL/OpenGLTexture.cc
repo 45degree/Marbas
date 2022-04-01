@@ -1,5 +1,7 @@
 #include "RHI/OpenGL/OpenGLTexture.h"
 
+#include <glog/logging.h>
+
 namespace Marbas {
 
 static GLenum ConvertToOpenglDataFormat(TextureFormatType type) {

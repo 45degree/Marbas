@@ -10,6 +10,7 @@
 #include "RHI/Interface/ShaderCode.h"
 #include "RHI/Interface/Viewport.h"
 
+#include <GLFW/glfw3.h>
 #include <memory>
 
 namespace Marbas {
@@ -22,6 +23,15 @@ enum class RendererType {
 enum class ShaderCodeType {
     FILE,
     BINARY,
+};
+
+enum class ClearBuferBit {
+    COLOR_BUFFER,
+    DEPTH_BUFFER,
+};
+
+enum class EnableItem {
+    DEPTH,
 };
 
 /**
@@ -38,6 +48,20 @@ public:
     virtual ~RHIFactory() = default;
 
 public:
+
+    virtual void Enable(EnableItem item) const = 0;
+
+    virtual void Disable(EnableItem item) const = 0;
+
+    virtual void ClearColor(float r, float g, float b, float a) const = 0;
+
+    virtual void PrintRHIInfo() const = 0;
+
+    virtual void Init(GLFWwindow* window) const = 0;
+
+    virtual void SwapBuffer(GLFWwindow* window) const = 0;
+
+    virtual void ClearBuffer(const ClearBuferBit bufferBit) const = 0;
 
     [[nodiscard]] virtual std::unique_ptr<VertexBuffer>
     CreateVertexBuffer(const Vector<float>& data) const = 0;
