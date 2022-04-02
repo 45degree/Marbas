@@ -1,9 +1,12 @@
 #include "Config.h"
+#include "Tool/EncodingConvert.h"
 
 #include <glog/logging.h>
 #include <toml++/toml.h>
 #include <uchardet/uchardet.h>
 #include <iconv.h>
+
+#include <iostream>
 
 namespace Marbas {
 
@@ -41,8 +44,8 @@ void Config::LoadLocaleFile() {
                 throw std::runtime_error(errorMsg.c_str());
             }
             auto itemStr = item.value_or("");
-            auto model = menu[itemStr];
-            auto name = model["name"].value_or("");
+            auto name = String(EncodingConvertToUTF8(menu[itemStr]["name"].value_or("")));
+            m_ResourcesNameMap[itemStr] = name;
         }
     }
     catch(std::exception& e) {
