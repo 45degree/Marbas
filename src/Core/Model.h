@@ -16,7 +16,9 @@ public:
     ~Model();
 
 public:
-    void ReadFromFile(const Path& sceneFile);
+    void CreateFromFile(const Path& sceneFile);
+
+    void CreateFromAssimp(const aiScene* scene, const aiNode* node);
 
     void SetPosition(const glm::vec3& newPos) {
         m_position = newPos;

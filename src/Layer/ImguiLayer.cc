@@ -27,7 +27,17 @@ void ImguiLayer::OnAttach() {
     ImGui::CreateContext();
 
     ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->AddFontFromFileTTF("assert/font/NotoSansSC-Light.otf", 20);
+    ImFontConfig cfg;
+    cfg.OversampleH = 1;
+    static ImFontGlyphRangesBuilder range;
+    range.Clear();
+    static ImVector<ImWchar> gr;
+    gr.clear();
+    range.AddRanges(ImGui::GetIO().Fonts->GetGlyphRangesChineseFull());
+    range.BuildRanges(&gr);
+    // ImGui::GetIO().Fonts->AddFontFromFileTTF("wqy-zenhei.ttc", 16.0f, &cfg, gr.Data);
+
+    io.Fonts->AddFontFromFileTTF("assert/font/NotoSansSC-Light.otf", 16, &cfg, gr.Data);
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking

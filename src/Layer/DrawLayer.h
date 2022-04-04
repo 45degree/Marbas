@@ -31,6 +31,8 @@ private:
     std::unordered_map<String, Widget*> m_widgetsMap;
 
     std::unique_ptr<FileDialog> m_fileDialog;
+
+    std::unique_ptr<FileDialog> m_sceneFileDialog;
 };
 
 }  // namespace Marbas

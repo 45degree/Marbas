@@ -14,7 +14,7 @@ Model::Model() {
 
 Model::~Model() = default;
 
-void Model::ReadFromFile(const Path &sceneFile) {
+void Model::CreateFromFile(const Path &sceneFile) {
     Assimp::Importer importer;
     auto filename = sceneFile.string();
     const auto* scene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_FlipUVs);
@@ -26,6 +26,10 @@ void Model::ReadFromFile(const Path &sceneFile) {
     m_scenePath = sceneFile.parent_path();
 
     ProcessNode(scene, scene->mRootNode);
+}
+
+void Model::CreateFromAssimp(const aiScene *scene, const aiNode *node) {
+    ProcessNode(scene, node);
 }
 
 void Model::ProcessNode(const aiScene* scene, const aiNode* node) {

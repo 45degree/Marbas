@@ -48,6 +48,8 @@ target("ImGuiFileDialog")
     set_languages("c11", "cxx17")
     add_deps("Imgui")
 
+    add_defines("USE_STD_FILESYSTEM")
+
     add_files("$(projectdir)/3rdPart/ImGuiFileDialog/**.cpp")
     add_includedirs("$(projectdir)/3rdPart/ImGuiFileDialog", { public = true })
 target_end();
