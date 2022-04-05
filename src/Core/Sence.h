@@ -11,100 +11,40 @@ public:
     explicit SceneNode(const String& nodeName = "SceneNode") :
         m_sceneNodeName(nodeName)
     {}
-    ~SceneNode() = default;
+    virtual ~SceneNode() = default;
 
 public:
     const char* GetSceneNodeName() {
         return m_sceneNodeName.c_str();
     }
 
+    SceneNode** GetSubSceneNodes() {
+        return m_subSceneNode.data();
+    }
+
+    size_t GetSubSceneNodesCount() {
+        return m_subSceneNode.size();
+    }
+
+    void AddSubSceneNode(SceneNode* node) {
+        m_subSceneNode.push_back(node);
+    }
+
+    void AddMesh(std::unique_ptr<Mesh>&& mesh) {
+        m_mesh.push_back(std::move(mesh));
+    }
+
+    size_t GetMeshCount() {
+        return m_mesh.size();
+    }
+
 protected:
     String m_sceneNodeName;
+    Vector<SceneNode*> m_subSceneNode;
+    Vector<std::unique_ptr<Mesh>> m_mesh;
 };
-
-/**
- * @brief the scene node which implement this interface means it can add subnode
- */
-class IAddSubNode {
-public:
-    virtual void AddSubSceneNode(const SceneNode* sceneNode) = 0;
-};
-
-
-/**
- * @brief a collection node for the scene node, it only stored a node name, you can add a subnode
- *        in it
- */
-class CollectionSceneNode : public SceneNode, IAddSubNode {
-public:
-    explicit CollectionSceneNode(const String& nodeName = "SceneNode") :
-        SceneNode(nodeName)
-    {}
-    ~CollectionSceneNode() = default;
-
-public:
-    void AddSubSceneNode(const SceneNode* sceneNode) override {
-        m_subnode.push_back(sceneNode);
-    }
-
-protected:
-    Vector<const SceneNode*> m_subnode;
-
-};
-
-/**
- * @brief a mesh node is a node which contains a single mesh
- */
-class MeshNodeLeaf final : public SceneNode {
-public:
-    explicit MeshNodeLeaf(const String& nodeName) : SceneNode(nodeName)
-    {}
-    ~MeshNodeLeaf() = default;
-
-public:
-    void SetMesh(std::unique_ptr<Mesh>&& mesh) {
-        m_mesh = std::move(mesh);
-    }
-
-private:
-    std::unique_ptr<Mesh> m_mesh;
-};
-
-/**
- * @brief a model node is a node which cantains a single model
- *
- * @note A model node can contain multiple mesh nodes, and multiple mesh nodes can also be
- *       combined into one model node
- */
-class ModelNodeLeaf final : public SceneNode {
-public:
-
-    // TODO: need to implement
-    /**
-     * @brief 
-     *
-     * @param collectionNode
-     */
-    static std::unique_ptr<ModelNodeLeaf>
-    ConvertNodeToModelNode(std::unique_ptr<IAddSubNode>&& collectionNode);
-
-    // TODO: need to implement
-    /**
-     * @brief 
-     *
-     * @param node
-     *
-     * @return 
-     */
-    static bool CheckNodeCanBeConvertToModelNode(const IAddSubNode* node);
-
-private:
-    Vector<const MeshNodeLeaf*> m_meshs;
-};
-
 
 class SceneLight : public SceneNode {
-
 };
 
 /**

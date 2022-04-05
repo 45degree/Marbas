@@ -9,7 +9,30 @@
 
 namespace Marbas {
 
-std::unique_ptr<Scene> Scene::CreateSceneFromFile(const Path &sceneFile) {
+static void ProcessNode(Scene* scene, SceneNode* sceneNode,
+                        const aiScene* aScene, const aiNode* aNode)
+{
+    if(scene == nullptr || sceneNode == nullptr) {
+        throw std::runtime_error("scene is null or lastSceneNode is null");
+    }
+
+    for(int i = 0; i < aNode->mNumMeshes; i++) {
+        auto aMesh = aScene->mMeshes[aNode->mMeshes[i]];
+        auto mesh = std::make_unique<Mesh>(aMesh->mName.C_Str());
+        sceneNode->AddMesh(std::move(mesh));
+    }
+
+    for(int i = 0; i < aNode->mNumChildren; i++) {
+        auto childNode = std::make_unique<SceneNode>();
+        auto childNode_ptr = childNode.get();
+        sceneNode->AddSubSceneNode(childNode.get());
+        scene->RegisterSceneNode(std::move(childNode));
+        ProcessNode(scene, childNode_ptr, aScene, aNode->mChildren[i]);
+    }
+}
+
+std::unique_ptr<Scene> Scene::CreateSceneFromFile(const Path& sceneFile) {
+
     Assimp::Importer importer;
     auto filename = sceneFile.string();
     const auto* assimpScene = importer.ReadFile(filename, aiProcess_Triangulate |
@@ -39,18 +62,10 @@ std::unique_ptr<Scene> Scene::CreateSceneFromFile(const Path &sceneFile) {
         }
     }
 
-    // TODO: process model(mesh) for the scene
-
     auto aRootNode = assimpScene->mRootNode;
+    ProcessNode(scene.get(), rootNode, assimpScene, aRootNode);
 
-    // NOTE:A root node has at least one child node
-    for(int i = 0; i < aRootNode->mNumChildren; i++) { 
-        auto childNode = aRootNode->mChildren[i];
-
-        // ProcessNode(rootNode, rootNode, assimpScene, childNode);
-    }
-
-    return nullptr;
+    return scene;
 }
 
 }  // namespace Marbas
