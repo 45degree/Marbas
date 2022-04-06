@@ -17,7 +17,10 @@ struct WindowData {
     uint32_t height;
     uint32_t width;
     std::unique_ptr<EventCollection> eventCollection = nullptr;
-    std::unordered_map<String, Layer*> LayerMap;
+    std::unique_ptr<DockspaceLayer> m_dockerSpaceLayer;
+    std::unique_ptr<DrawLayer> m_drawLayer;
+    std::unique_ptr<ImguiLayer> m_imguiLayer;
+    std::unique_ptr<RenderLayer> m_renderLayer;
 };
 
 Window::Window(const WindowProp& winProp):
@@ -37,20 +40,20 @@ Window::~Window() {
     // LOG(INFO) << "destroy windows";
 }
 
-void Window::RegisterLayer(Layer* layer) {
-    if(layer == nullptr) return;
-
-    const String& layerName = layer->GetLayerName();
-    windowData->LayerMap[layerName] = layer;
-
-    LOG(INFO) << "register layer: " << layerName;
-}
-
-void Window::RegisterLayers(const Vector<Layer*>& layers) {
-    for(auto* layer : layers) {
-        RegisterLayer(layer);
-    }
-}
+// void Window::RegisterLayer(LayerBase* layer) {
+//     if(layer == nullptr) return;
+//
+//     const String& layerName = layer->GetLayerName();
+//     windowData->LayerMap[layerName] = layer;
+//
+//     LOG(INFO) << "register layer: " << layerName;
+// }
+//
+// void Window::RegisterLayers(const Vector<LayerBase*>& layers) {
+//     for(auto* layer : layers) {
+//         RegisterLayer(layer);
+//     }
+// }
 
 void Window::CreateSingleWindow() {
 
@@ -71,26 +74,34 @@ void Window::CreateSingleWindow() {
     SetUpEventCallBackFun();
 
     // attach layer
+
+    auto dockSpaceLayer = std::make_unique<DockspaceLayer>(this);
     auto imguiLayer = std::make_unique<ImguiLayer>(this);
-    auto dockspaceLayer = std::make_unique<DockspaceLayer>();
-    auto drawLayer = std::make_unique<DrawLayer>();
-    auto renderLayer = std::make_unique<RenderLayer>(1920, 1080);
-    RegisterLayers({imguiLayer.get(), dockspaceLayer.get(), drawLayer.get(), renderLayer.get()});
+    auto drawLayer = std::make_unique<DrawLayer>(this);
+    auto renderLayer = std::make_unique<RenderLayer>(1920, 1080, this);
 
-    dockspaceLayer->AddNextLayer(std::move(drawLayer));
-    imguiLayer->AddNextLayer(std::move(dockspaceLayer));
-    renderLayer->AddNextLayer(std::move(imguiLayer));
 
-    firstLayer = std::move(renderLayer);
+    dockSpaceLayer->AddNextLayer(drawLayer.get());
+    imguiLayer->AddNextLayer(dockSpaceLayer.get());
+    renderLayer->AddNextLayer(imguiLayer.get());
+
+
+    firstLayer = renderLayer.get();
+
+    windowData->m_imguiLayer =std::move(imguiLayer);
+    windowData->m_dockerSpaceLayer = std::move(dockSpaceLayer);
+    windowData->m_drawLayer = std::move(drawLayer);
+    windowData->m_renderLayer = std::move(renderLayer);
+
+
     firstLayer->Attach();
-
     glfwSetWindowUserPointer(glfwWindow, windowData.get());
 }
 
 void Window::ShowWindow() {
 
     // push all event to every layer
-    windowData->eventCollection->BroadcastEventFromLayer(firstLayer.get());
+    windowData->eventCollection->BroadcastEventFromLayer(firstLayer);
     windowData->eventCollection->ClearEvent();
 
     firstLayer->Begin();
@@ -104,18 +115,31 @@ void Window::ShowWindow() {
     m_rhiFactory->ClearBuffer(ClearBuferBit::COLOR_BUFFER);
 }
 
-Layer* Window::GetLayer(const String &layerName) const {
-    auto& layers = windowData->LayerMap;
-    if(layers.find(layerName) == layers.end()) return nullptr;
+// LayerBase* Window::GetLayer(const String &layerName) const {
+//     // auto& layers = windowData->LayerMap;
+//     // if(layers.find(layerName) == layers.end()) return nullptr;
+//
+//     // return layers.at(layerName);
+//     return nullptr;
+// }
 
-    return layers.at(layerName);
+RenderLayer* Window::GetRenderLayer() const {
+    return windowData->m_renderLayer.get();
+}
+
+DrawLayer* Window::GetDrawLayer() const {
+    return windowData->m_drawLayer.get();
+}
+
+ImguiLayer* Window::GetImGuiLayer() const {
+    return windowData->m_imguiLayer.get();
 }
 
 void Window::SetUpEventCallBackFun() {
     glfwSetCursorPosCallback(glfwWindow,  [](GLFWwindow* glfwWindow, double xpos, double ypos) {
         auto windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
         auto event = std::make_unique<MouseMoveEvent>();
-        event->SetPos(xpos, ypos);
+        event->SetPos({xpos, ypos});
         windowData->eventCollection->AddEvent(std::move(event));
     });
 
@@ -127,12 +151,12 @@ void Window::SetUpEventCallBackFun() {
         glfwGetCursorPos(glfwWindow, &xpos, &ypos);
         if(action == GLFW_PRESS) {
             auto event = std::make_unique<MousePressEvent>(button);
-            event->SetPos(xpos, ypos);
+            event->SetPos({xpos, ypos});
             windowData->eventCollection->AddEvent(std::move(event));
         }
         else if(action == GLFW_RELEASE) {
             auto event = std::make_unique<MouseReleaseEvent>(button);
-            event->SetPos(xpos, ypos);
+            event->SetPos({xpos, ypos});
             windowData->eventCollection->AddEvent(std::move(event));
         }
         GLFWkeyfun a;
@@ -158,7 +182,7 @@ void Window::SetUpEventCallBackFun() {
         glfwGetCursorPos(glfwWindow, &xpos, &ypos);
 
         auto event = std::make_unique<MouseScrolledEvent>(xOffset, yOffset);
-        event->SetPos(xpos, ypos);
+        event->SetPos({xpos, ypos});
 
         windowData->eventCollection->AddEvent(std::move(event));
     });

@@ -1,57 +1,62 @@
-#include "Layer/Layer.h"
+#include "Layer/LayerBase.h"
+#include "Core/Window.h"
 
 namespace Marbas {
 
-Layer::~Layer() = default;
+LayerBase::LayerBase(const Window* window):
+    m_window(window)
+{}
 
-void Layer::Attach() {
+LayerBase::~LayerBase() = default;
+
+void LayerBase::Attach() {
     OnAttach();
 
-    if(nextLayer != nullptr) {
-        nextLayer->Attach();
+    if(m_nextLayer != nullptr) {
+        m_nextLayer->Attach();
     }
 }
 
-void Layer::Detach() {
-    if(nextLayer != nullptr) {
-        nextLayer->Detach();
+void LayerBase::Detach() {
+    if(m_nextLayer != nullptr) {
+        m_nextLayer->Detach();
     }
     OnDetach();
 }
 
-void Layer::Begin() {
+void LayerBase::Begin() {
     OnBegin();
 
-    if(nextLayer != nullptr) {
-        nextLayer->Begin();
+    if(m_nextLayer != nullptr) {
+        m_nextLayer->Begin();
     }
 }
 
-void Layer::End() {
-    if(nextLayer != nullptr) {
-        nextLayer->End();
+void LayerBase::End() {
+    if(m_nextLayer != nullptr) {
+        m_nextLayer->End();
     }
 
     OnEnd();
 }
 
-void Layer::Update() {
+void LayerBase::Update() {
     OnUpdate();
 
-    if(nextLayer != nullptr) {
-        nextLayer->Update();
+    if(m_nextLayer != nullptr) {
+        m_nextLayer->Update();
     }
 }
 
-void Layer::BroadcastEvent(const Event& e) {
+void LayerBase::BroadcastEvent(const Event& e) {
     EventDistribution(e);
 
-    if(nextLayer != nullptr) {
-        nextLayer->BroadcastEvent(e);
+    if(m_nextLayer != nullptr) {
+        m_nextLayer->BroadcastEvent(e);
     }
 }
 
-void Layer::EventDistribution(const Event& event) {
+void LayerBase::EventDistribution(const Event& event) {
     switch(event.GetEventType()) {
     case EventType::MARBAS_MOUSE_PRESS_EVENT:
         OnMousePress(static_cast<const MousePressEvent&>(event));

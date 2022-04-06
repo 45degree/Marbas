@@ -2,11 +2,8 @@
 #define MARBARS_CORE_WINDOW_H
 
 #include "Common.h"
+#include "RHI/RHI.h"
 #include "Layer/Layer.h"
-#include "Layer/DrawLayer.h"
-#include "Layer/RenderLayer.h"
-#include "Event/Event.h"
-#include "Widget/RenderImage.h"
 
 #include <GLFW/glfw3.h>
 #include <tuple>
@@ -36,21 +33,20 @@ public:
         return glfwWindow;
     }
 
-    void RegisterLayer(Layer* layer);
-
-    void RegisterLayers(const Vector<Layer*>& layers);
-
-    [[nodiscard]] Layer* GetLayer(const String& layerName) const;
+    // [[nodiscard]] LayerBase* GetLayer(const String& layerName) const;
 
     [[nodiscard]] std::tuple<uint32_t, uint32_t> GetWindowsSize() const;
+
+    [[nodiscard]] RenderLayer* GetRenderLayer() const;
+    [[nodiscard]] DrawLayer* GetDrawLayer() const;
+    [[nodiscard]] ImguiLayer* GetImGuiLayer() const;
 
 private:
     String m_windowName;
     GLFWwindow* glfwWindow;
     std::unique_ptr<WindowData> windowData;
 
-    std::unique_ptr<Layer> firstLayer;
-
+    LayerBase* firstLayer;
     RHIFactory* m_rhiFactory;
 };
 

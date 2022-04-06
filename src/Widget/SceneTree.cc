@@ -4,25 +4,26 @@
 
 namespace Marbas {
 
-void SceneTreeWidget::Draw() {
-    if(ImGui::TreeNode("RootScene")){
+static void DrawNode(SceneNode* node) {
+    if(node == nullptr) return;
 
-        const char* names[5] = { "Label1", "Label2", "Label3", "Label4", "Label5" };
-        for (int n = 0; n < 5; n++) {
-            ImGui::Selectable(names[n]);
-            if (ImGui::BeginPopupContextItem())
-            {
-                ImGui::Text("This a popup for \"%s\"!", names[n]);
-                if (ImGui::Button("Close"))
-                    ImGui::CloseCurrentPopup();
-                ImGui::EndPopup();
+    if(node->GetSubSceneNodesCount() > 0) {
+        if(ImGui::TreeNode(node->GetSceneNodeName())) {
+            auto subNodes = node->GetSubSceneNodes();
+            for(int i = 0; i < node->GetSubSceneNodesCount(); i++) {
+                DrawNode(subNodes[i]);
             }
-            if (ImGui::IsItemHovered())
-                ImGui::SetTooltip("Right-click to open popup");
+            ImGui::TreePop();
         }
-
-        ImGui::TreePop();
     }
+    else ImGui::Selectable(node->GetSceneNodeName());
+}
+
+void SceneTreeWidget::Draw() {
+    if(m_scene == nullptr) return;
+
+    auto* sceneRoot = m_scene->GetRootSceneNode();
+    DrawNode(sceneRoot);
 }
 
 }  // namespace Marbas

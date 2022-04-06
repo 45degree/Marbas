@@ -1,16 +1,15 @@
 #ifndef MARBARS_LAYER_DRAW_H
 #define MARBARS_LAYER_DRAW_H
 
-#include "Layer/Layer.h"
+#include "Layer/LayerBase.h"
 #include "Widget/Widget.h"
-#include "Common.h"
 #include "Widget/FileDialog.h"
 
 namespace Marbas {
 
-class DrawLayer : public Layer {
+class DrawLayer : public LayerBase {
 public:
-    DrawLayer();
+    explicit DrawLayer(const Window* windows);
     ~DrawLayer() override;
 
 public:

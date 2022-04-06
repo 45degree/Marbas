@@ -1,17 +1,20 @@
 #include "Layer/DrawLayer.h"
+#include "Layer/RenderLayer.h"
 #include "Core/Application.h"
 #include "Core/Model.h"
 #include "Layer/RenderLayer.h"
 #include "Widget/RenderImage.h"
 #include "Widget/SceneTree.h"
-#include "Core/Sence.h"
+#include "Core/Scene.h"
 #include "Common.h"
 
 #include <imgui.h>
 
 namespace Marbas {
 
-DrawLayer::DrawLayer(): Layer("DrawLayer") {}
+DrawLayer::DrawLayer(const Window* window) :
+    LayerBase(window)
+{}
 
 DrawLayer::~DrawLayer() = default;
 
@@ -28,6 +31,12 @@ void DrawLayer::OnAttach() {
         "Open A Scene",
         "scene file (*.3DS *.glTF){.3DS,.glTF}",
     };
+
+    auto renderLayer = m_window->GetRenderLayer();
+    if(renderLayer == nullptr) {
+        LOG(ERROR) << "can't find renderLayer";
+        throw std::runtime_error("can't find renderLayer");
+    }
 
     auto renderImage = std::make_unique<Image>("renderImage");
     auto sceneTree = std::make_unique<SceneTreeWidget>();
@@ -61,8 +70,17 @@ void DrawLayer::DrawMenuBar() {
         // renderLayer->AddModle(std::move(model));
     });
 
-    m_sceneFileDialog->SelectCallback([](const char* filePathName, const char* fileName) {
-        Scene::CreateSceneFromFile(filePathName);
+    m_sceneFileDialog->SelectCallback([&](const char* filePathName, const char* fileName) {
+        auto scene = Scene::CreateSceneFromFile(filePathName);
+
+        auto widget = m_widgetsMap["SceneTree"];
+        auto sceneTree = dynamic_cast<SceneTreeWidget*>(widget);
+        if(sceneTree == nullptr) return;
+
+        sceneTree->SetScnen(scene.get());
+
+        auto renderLayer = m_window->GetRenderLayer();
+        renderLayer->SetSecne(std::move(scene));
     });
 
     if (ImGui::BeginMenuBar()) {

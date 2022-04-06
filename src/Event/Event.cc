@@ -1,5 +1,5 @@
 #include "Event/Event.h"
-#include "Layer/Layer.h"
+#include "Layer/LayerBase.h"
 
 namespace Marbas {
 
@@ -9,9 +9,9 @@ void EventCollection::AddEvent(std::unique_ptr<Event>&& event) noexcept {
     events.push_back(std::move(event));
 }
 
-void EventCollection::BroadcastEventFromLayer(Layer* layer) {
-    for(int i = 0; i < events.size(); i++) {
-        const Event& e = *events[i];
+void EventCollection::BroadcastEventFromLayer(LayerBase* layer) {
+    for(auto& event : events) {
+        const Event& e = *event;
         layer->BroadcastEvent(e);
     }
 }

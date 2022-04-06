@@ -1,13 +1,15 @@
 #ifndef MARBARS_LAYER_DOCKSPACE_LAYER_H
 #define MARBARS_LAYER_DOCKSPACE_LAYER_H
 
-#include "Layer/Layer.h"
+#include "Layer/LayerBase.h"
 
 namespace Marbas {
 
-class DockspaceLayer : public Layer {
+class DockspaceLayer : public LayerBase {
 public:
-    DockspaceLayer() : Layer("DockspaceLayer") {}
+    explicit DockspaceLayer(const Window* window) :
+        LayerBase(window)
+    {}
     ~DockspaceLayer() override;
 
 public:
@@ -16,7 +18,6 @@ public:
     void OnUpdate() override;
     void OnBegin() override;
     void OnEnd() override;
-
 };
 
 }  // namespace Marbas

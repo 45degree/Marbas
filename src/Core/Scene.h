@@ -8,7 +8,7 @@ namespace Marbas {
 
 class SceneNode {
 public:
-    explicit SceneNode(const String& nodeName = "SceneNode") :
+    explicit SceneNode(const String& nodeName) :
         m_sceneNodeName(nodeName)
     {}
     virtual ~SceneNode() = default;
@@ -56,7 +56,7 @@ class SceneLight : public SceneNode {
 class Scene {
 public:
     Scene() {
-        m_allSceneNode.push_back(std::make_unique<SceneNode>());
+        m_allSceneNode.push_back(std::make_unique<SceneNode>("RootNode"));
         m_rootNode = m_allSceneNode[0].get();
     }
 
@@ -83,8 +83,6 @@ public:
      * @return Scene
      */
     static std::unique_ptr<Scene> CreateSceneFromFile(const Path& sceneFile);
-
-private:
 
     [[nodiscard]] SceneNode* GetRootSceneNode() const noexcept {
         return m_rootNode;

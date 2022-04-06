@@ -2,7 +2,9 @@
 #define MARBARS_EVENT_MOUSEEVENT_H
 
 #include "Event/Event.h"
-#include "tuple"
+#include "MathCommon.h"
+
+#include <tuple>
 
 namespace Marbas {
 
@@ -18,18 +20,18 @@ public:
 
 public:
 
-    void SetPos(double x, double y) noexcept {
-        this->x = x;
-        this->y = y;
+    void SetPos(glm::vec2 pos) noexcept {
+        this->x = pos.x;
+        this->y = pos.y;
     }
 
-    std::tuple<double, double> GetPos() const noexcept {
+    [[nodiscard]] std::tuple<float, float> GetPos() const noexcept {
         return std::make_tuple(x, y);
     }
 
 protected:
-    double x = 0.0;
-    double y = 0.0;
+    float x = 0.0;
+    float y = 0.0;
 };
 
 class MouseButtonEvent : public MouseEvent {
@@ -84,17 +86,17 @@ public:
     ~MouseScrolledEvent() override = default;
 
 public:
-    [[nodiscard]] double GetXOffset() const noexcept {
+    [[nodiscard]] float GetXOffset() const noexcept {
         return xoffset;
     }
 
-    [[nodiscard]] double GetYOffset() const noexcept {
+    [[nodiscard]] float GetYOffset() const noexcept {
         return yoffset;
     }
 
 private:
-    double xoffset;
-    double yoffset;
+    float xoffset;
+    float yoffset;
 };
 
 }  // namespace Marbas

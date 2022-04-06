@@ -6,9 +6,7 @@
 
 namespace Marbas {
 
-DockspaceLayer::~DockspaceLayer() {
-    LOG(INFO) << "release dockspace layer";
-}
+DockspaceLayer::~DockspaceLayer() = default;
 
 void DockspaceLayer::OnAttach() {
 

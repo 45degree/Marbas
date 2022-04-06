@@ -12,7 +12,7 @@ public:
     virtual ~Viewport() = default;
 
 public:
-    void SetViewport(int x, int y, int width, int height) {
+    void SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
         this->x = x;
         this->y = y;
         this->width = width;
@@ -26,8 +26,8 @@ public:
     }
 
 protected:
-    int x, y;
-    int width, height;
+    uint32_t x, y;
+    uint32_t width, height;
 };
 
 }  // namespace Marbas

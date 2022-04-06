@@ -1,4 +1,4 @@
-#include "Core/Sence.h"
+#include "Core/Scene.h"
 #include "Core/Model.h"
 
 #include <assimp/Importer.hpp>
@@ -23,7 +23,7 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
     }
 
     for(int i = 0; i < aNode->mNumChildren; i++) {
-        auto childNode = std::make_unique<SceneNode>();
+        auto childNode = std::make_unique<SceneNode>(aNode->mChildren[i]->mName.C_Str());
         auto childNode_ptr = childNode.get();
         sceneNode->AddSubSceneNode(childNode.get());
         scene->RegisterSceneNode(std::move(childNode));

@@ -39,7 +39,7 @@ protected:
     EventType eventType;
 };
 
-class Layer;
+class LayerBase;
 class EventCollection {
 public:
     EventCollection() = default;
@@ -56,7 +56,7 @@ public:
         return events.size();
     }
 
-    void BroadcastEventFromLayer(Layer* layer);
+    void BroadcastEventFromLayer(LayerBase* layer);
 
 private:
     Vector<std::unique_ptr<Event>> events;

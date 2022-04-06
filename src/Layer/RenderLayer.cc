@@ -7,8 +7,8 @@
 
 namespace Marbas {
 
-RenderLayer::RenderLayer(int width, int height):
-    Layer("RenderLayer")
+RenderLayer::RenderLayer(int width, int height, const Window* window):
+    LayerBase(window)
 {
    m_rhiFactory = Application::GetRendererFactory();
 
@@ -99,8 +99,8 @@ void RenderLayer::OnUpdate() {
 
 void RenderLayer::OnMouseMove(const MouseMoveEvent& e) {
     auto [x, y] = e.GetPos();
-    double xOffset = x - m_mouseLastX;
-    double yOffset = y - m_mouseLastY;
+    auto xOffset = x - m_mouseLastX;
+    auto yOffset = y - m_mouseLastY;
 
     if(Input::IsKeyPress(GLFW_KEY_LEFT_SHIFT)) {
         if(Input::IsMousePress(GLFW_MOUSE_BUTTON_MIDDLE)) {

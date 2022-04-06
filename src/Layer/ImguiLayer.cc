@@ -59,7 +59,7 @@ void ImguiLayer::OnAttach() {
     }
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window->GetGlfwWinow(), true);
+    ImGui_ImplGlfw_InitForOpenGL(m_window->GetGlfwWinow(), true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     LOG(INFO) << "imgui layer initialized successful";

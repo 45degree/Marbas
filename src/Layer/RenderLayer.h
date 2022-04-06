@@ -1,16 +1,17 @@
 #ifndef MARBARS_LAYER_RENDER_LAYER_H
 #define MARBARS_LAYER_RENDER_LAYER_H
 
-#include "Layer/Layer.h"
+#include "Layer/LayerBase.h"
 #include "RHI/RHI.h"
 #include "Core/Camera.h"
 #include "Core/Model.h"
+#include "Core/Scene.h"
 
 namespace Marbas {
 
-class RenderLayer : public Layer{
+class RenderLayer : public LayerBase{
 public:
-    RenderLayer(int width, int height);
+    RenderLayer(int width, int height, const  Window* window);
     ~RenderLayer() override;
 
 public:
@@ -47,6 +48,14 @@ public:
         return m_editorCamera.get();
     }
 
+    void SetSecne(std::unique_ptr<Scene>&& scene) {
+        m_scene = std::move(scene);
+    }
+
+    [[nodiscard]] Scene* GetScene() const {
+        return m_scene.get();
+    }
+
 private:
     std::unique_ptr<ShaderCode> vertexShader;
     std::unique_ptr<ShaderCode> fragmentShader;
@@ -57,13 +66,15 @@ private:
     std::unique_ptr<Viewport> m_viewport;
     std::unique_ptr<Camera> m_editorCamera;
 
+    std::unique_ptr<Scene> m_scene;
+
     FrameBufferInfo m_frameBufferInfo;
     RHIFactory* m_rhiFactory;
 
 private:
     bool m_isFrameChanged = false;
-    double m_mouseLastX;
-    double m_mouseLastY;
+    float m_mouseLastX;
+    float m_mouseLastY;
 };
 
 }  // namespace Marbas
