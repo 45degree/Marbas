@@ -12,7 +12,6 @@ namespace Marbas {
 struct DrawUnit  {
     VertexBuffer* m_vertexBuffer;
     IndexBuffer* m_indicesBuffer;
-    Shader* m_shader;
     Vector<Texture2D*> textures;
 };
 

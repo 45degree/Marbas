@@ -6,7 +6,7 @@ OpenGLDrawCollection::OpenGLDrawCollection() : DrawCollection() {
     m_vertexArray = std::make_unique<OpenGLVertexArray>();
 }
 
-void OpenGLDrawCollection::Draw() {
+void OpenGLDrawCollection::Draw(Shader* shader) {
     for(auto* drawUtil : m_drawUnits) {
 
         // DrawUnit* drawUtil = *(m_drawUnits.begin());
@@ -19,7 +19,7 @@ void OpenGLDrawCollection::Draw() {
         m_vertexArray->Bind();
         drawUtil->m_vertexBuffer->Bind();
         drawUtil->m_indicesBuffer->Bind();
-        drawUtil->m_shader->Use();
+        shader->Use();
 
         auto count = static_cast<GLsizei>(drawUtil->m_indicesBuffer->GetIndexCount());
         glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);

@@ -62,12 +62,6 @@ void DrawLayer::OnUpdate() {
 void DrawLayer::DrawMenuBar() {
 
     m_fileDialog->SelectCallback([](const char* filePathName, const char* fileName){
-        // auto model = std::make_unique<Model>();
-        // model->CreateFromFile(filePathName);
-        //
-        // auto layer = Application::GetApplicationsWindow()->GetLayer("RenderLayer");
-        // auto renderLayer = dynamic_cast<RenderLayer*>(layer);
-        // renderLayer->AddModle(std::move(model));
     });
 
     m_sceneFileDialog->SelectCallback([&](const char* filePathName, const char* fileName) {
@@ -77,7 +71,7 @@ void DrawLayer::DrawMenuBar() {
         auto sceneTree = dynamic_cast<SceneTreeWidget*>(widget);
         if(sceneTree == nullptr) return;
 
-        sceneTree->SetScnen(scene.get());
+        sceneTree->SetScene(scene.get());
 
         auto renderLayer = m_window->GetRenderLayer();
         renderLayer->SetSecne(std::move(scene));
@@ -89,19 +83,19 @@ void DrawLayer::DrawMenuBar() {
                 m_fileDialog->Open();
             }
 
-            if (ImGui::MenuItem("打开", "Ctrl+S"))   {
-        m_sceneFileDialog->Open();
-      }
+            if (ImGui::MenuItem("打开", "Ctrl+S")) {
+                m_sceneFileDialog->Open();
+            }
 
-      if (ImGui::MenuItem("Close", "Ctrl+W")) {
-      }
-
-      ImGui::EndMenu();
+            if (ImGui::MenuItem("Close", "Ctrl+W")) {
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
     }
-    ImGui::EndMenuBar();
-  }
-  m_fileDialog->Draw();
-  m_sceneFileDialog->Draw();
+
+    m_fileDialog->Draw();
+    m_sceneFileDialog->Draw();
 }
 
 } // namespace Marbas

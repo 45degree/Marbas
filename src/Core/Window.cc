@@ -40,21 +40,6 @@ Window::~Window() {
     // LOG(INFO) << "destroy windows";
 }
 
-// void Window::RegisterLayer(LayerBase* layer) {
-//     if(layer == nullptr) return;
-//
-//     const String& layerName = layer->GetLayerName();
-//     windowData->LayerMap[layerName] = layer;
-//
-//     LOG(INFO) << "register layer: " << layerName;
-// }
-//
-// void Window::RegisterLayers(const Vector<LayerBase*>& layers) {
-//     for(auto* layer : layers) {
-//         RegisterLayer(layer);
-//     }
-// }
-
 void Window::CreateSingleWindow() {
 
     m_rhiFactory = Application::GetRendererFactory();

@@ -45,19 +45,11 @@ void RenderLayer::OnAttach() {
     m_shader->AddShaderCode(fragmentShader.get());
     m_shader->AddShaderCode(vertexShader.get());
     m_shader->Link();
-
 }
 
 void RenderLayer::OnDetach() {}
 
 void RenderLayer::OnUpdate() {
-
-    for(auto& _model : models) {
-        auto* collection = _model->GetDrawCollection();
-        for(auto drawUnit : collection->m_drawUnits) {
-            drawUnit->m_shader = m_shader.get();
-        }
-    }
 
     m_frameBuffer->Bind();
 
@@ -79,19 +71,6 @@ void RenderLayer::OnUpdate() {
         glm::mat4 view;
         glm::mat4 projection;
     };
-    for(auto& model : models) {
-        auto modelMatrix = model->GetModelMatrix();
-
-        MVP mvp;
-
-        mvp.model = modelMatrix;
-        mvp.view = viewMatrix;
-        mvp.projection = projectionMatrix;
-
-        m_shader->AddUniformDataBlock(0,  &mvp, sizeof(MVP));
-
-        model->Draw();
-    }
 
     m_frameBuffer->UnBind();
     m_rhiFactory->Disable(EnableItem::DEPTH);
@@ -119,6 +98,16 @@ void RenderLayer::OnMouseMove(const MouseMoveEvent& e) {
 void RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
     auto yOffset = e.GetYOffset();
     m_editorCamera->AddFov(yOffset);
+}
+
+void RenderLayer::RenderScenNode(SceneNode* node) {
+    if(node->GetMeshCount() > 0) {
+        auto drawCollection = m_rhiFactory->CreateDrawCollection();
+        for(int i = 0; i < node->GetMeshCount(); i++) {
+            auto mesh = node->GetMesh(i);
+            // drawCollection->AddDrawUnit();
+        }
+    }
 }
 
 }  // namespace Marbas

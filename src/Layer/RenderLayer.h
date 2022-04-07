@@ -40,10 +40,6 @@ public:
         return m_viewport.get();
     }
 
-    void AddModle(std::unique_ptr<Model>&& model) {
-        models.push_back(std::move(model));
-    }
-
     Camera* GetCamera() {
         return m_editorCamera.get();
     }
@@ -57,9 +53,11 @@ public:
     }
 
 private:
+    void RenderScenNode(SceneNode* ndoe);
+
+private:
     std::unique_ptr<ShaderCode> vertexShader;
     std::unique_ptr<ShaderCode> fragmentShader;
-    Vector<std::unique_ptr<Model>> models;
 
     std::unique_ptr<Shader> m_shader;
     std::unique_ptr<FrameBuffer> m_frameBuffer;

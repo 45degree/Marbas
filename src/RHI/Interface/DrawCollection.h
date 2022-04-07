@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "RHI/Interface/DrawUnit.h"
+#include "RHI/Interface/Shader.h"
 
 #include <unordered_set>
 
@@ -18,7 +19,7 @@ public:
         m_drawUnits.insert(drawUnit);
     }
 
-    virtual void Draw() = 0;
+    virtual void Draw(Shader* shader) = 0;
 
 public:
     std::unordered_set<DrawUnit*> m_drawUnits;

@@ -1,5 +1,6 @@
 #include "Core/Scene.h"
 #include "Core/Model.h"
+#include "Core/Application.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -16,10 +17,17 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
         throw std::runtime_error("scene is null or lastSceneNode is null");
     }
 
-    for(int i = 0; i < aNode->mNumMeshes; i++) {
-        auto aMesh = aScene->mMeshes[aNode->mMeshes[i]];
-        auto mesh = std::make_unique<Mesh>(aMesh->mName.C_Str());
-        sceneNode->AddMesh(std::move(mesh));
+    if(aNode->mNumMeshes > 0) {
+        auto drawCollection = Application::GetRendererFactory()->CreateDrawCollection();
+        for(int i = 0; i < aNode->mNumMeshes; i++) {
+            auto aMesh = aScene->mMeshes[aNode->mMeshes[i]];
+            auto mesh = std::make_unique<Mesh>(aMesh->mName.C_Str());
+            mesh->ReadFromNode(aScene->mMeshes[aNode->mMeshes[i]], aScene);
+
+            drawCollection->AddDrawUnit(mesh->GetDrawUnit());
+            sceneNode->AddMesh(std::move(mesh));
+        }
+        sceneNode->SetDrawCollection(std::move(drawCollection));
     }
 
     for(int i = 0; i < aNode->mNumChildren; i++) {

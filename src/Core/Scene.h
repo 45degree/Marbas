@@ -31,17 +31,50 @@ public:
     }
 
     void AddMesh(std::unique_ptr<Mesh>&& mesh) {
+        if(m_drawCollection != nullptr) {
+            m_drawCollection->AddDrawUnit(mesh->GetDrawUnit());
+        }
         m_mesh.push_back(std::move(mesh));
+    }
+
+    void SetDrawCollection(std::unique_ptr<DrawCollection>&& drawCollection) {
+        for(auto& mesh : m_mesh) {
+            drawCollection->AddDrawUnit(mesh->GetDrawUnit());
+        }
+
+        m_drawCollection = std::move(drawCollection);
     }
 
     size_t GetMeshCount() {
         return m_mesh.size();
     }
 
+    [[nodiscard]] const Mesh* GetMesh(size_t index) const {
+        return m_mesh[index].get();
+    }
+
+    /**
+     * @brief get the scene model matrix if the scene node has meshes;
+     *
+     * @note if the scene node don't have meshes, this method will return an identity matrix
+     *
+     * @return the model matrix
+     */
+    [[nodiscard]] glm::mat4 GetModelMatrix() const {
+        if(m_mesh.empty()) return glm::mat4(1.0f);
+
+        return modelMatrix;
+    }
+
 protected:
     String m_sceneNodeName;
+
+    /// This matrix only takes effect when this node has a grid
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+
     Vector<SceneNode*> m_subSceneNode;
     Vector<std::unique_ptr<Mesh>> m_mesh;
+    std::unique_ptr<DrawCollection> m_drawCollection = nullptr;
 };
 
 class SceneLight : public SceneNode {
@@ -71,9 +104,11 @@ public:
         m_allSceneNode.push_back(std::move(sceneNode));
     }
 
-public:
+    [[nodiscard]] SceneNode* GetRootSceneNode() const noexcept {
+        return m_rootNode;
+    }
 
-    // TODO: need to implement
+public:
 
     /**
      * @brief Create the Scene Tree from the scene file(such glTF)
@@ -83,10 +118,6 @@ public:
      * @return Scene
      */
     static std::unique_ptr<Scene> CreateSceneFromFile(const Path& sceneFile);
-
-    [[nodiscard]] SceneNode* GetRootSceneNode() const noexcept {
-        return m_rootNode;
-    }
 
 private:
     Vector<std::unique_ptr<SceneNode>> m_allSceneNode;

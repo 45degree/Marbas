@@ -12,7 +12,7 @@ public:
     ~SceneTreeWidget() override = default;
 
 public:
-    void SetScnen(Scene* scene) {
+    void SetScene(Scene* scene) {
         m_scene = scene;
     }
 
