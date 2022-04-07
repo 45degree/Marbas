@@ -11,7 +11,7 @@
 namespace Marbas {
 
 static void ProcessNode(Scene* scene, SceneNode* sceneNode,
-                        const aiScene* aScene, const aiNode* aNode)
+                        const aiScene* aScene, const aiNode* aNode, const Path& path)
 {
     if(scene == nullptr || sceneNode == nullptr) {
         throw std::runtime_error("scene is null or lastSceneNode is null");
@@ -21,7 +21,7 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
         auto drawCollection = Application::GetRendererFactory()->CreateDrawCollection();
         for(int i = 0; i < aNode->mNumMeshes; i++) {
             auto aMesh = aScene->mMeshes[aNode->mMeshes[i]];
-            auto mesh = std::make_unique<Mesh>(aMesh->mName.C_Str());
+            auto mesh = std::make_unique<Mesh>(path.string());
             mesh->ReadFromNode(aScene->mMeshes[aNode->mMeshes[i]], aScene);
 
             drawCollection->AddDrawUnit(mesh->GetDrawUnit());
@@ -35,7 +35,7 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
         auto childNode_ptr = childNode.get();
         sceneNode->AddSubSceneNode(childNode.get());
         scene->RegisterSceneNode(std::move(childNode));
-        ProcessNode(scene, childNode_ptr, aScene, aNode->mChildren[i]);
+        ProcessNode(scene, childNode_ptr, aScene, aNode->mChildren[i], path);
     }
 }
 
@@ -71,7 +71,7 @@ std::unique_ptr<Scene> Scene::CreateSceneFromFile(const Path& sceneFile) {
     }
 
     auto aRootNode = assimpScene->mRootNode;
-    ProcessNode(scene.get(), rootNode, assimpScene, aRootNode);
+    ProcessNode(scene.get(), rootNode, assimpScene, aRootNode, sceneFile.parent_path());
 
     return scene;
 }

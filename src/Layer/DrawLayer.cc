@@ -29,7 +29,7 @@ void DrawLayer::OnAttach() {
     FileDialogCrateInfo sceneInfo {
         "Scene",
         "Open A Scene",
-        "scene file (*.3DS *.glTF){.3DS,.glTF}",
+        "scene file (*.obj *.pmx *.glTF){.pmx,.obj,.glTF}",
     };
 
     auto renderLayer = m_window->GetRenderLayer();

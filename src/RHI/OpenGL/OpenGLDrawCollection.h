@@ -12,7 +12,7 @@ public:
     ~OpenGLDrawCollection() override = default;
 
 public:
-    void Draw(Shader* Shader) override;
+    void Draw(Shader* Shader) const override;
 
 private:
     std::unique_ptr<OpenGLVertexArray> m_vertexArray;

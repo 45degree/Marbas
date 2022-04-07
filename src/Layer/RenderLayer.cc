@@ -31,10 +31,6 @@ RenderLayer::~RenderLayer() = default;
 
 void RenderLayer::OnAttach() {
 
-    // model->GenerateGPUData();
-
-    // models.push_back(std::move(model));
-
     vertexShader = m_rhiFactory->CreateShaderCode("shader/shader.vert", ShaderCodeType::FILE,
                                                    ShaderType::VERTEX_SHADER);
 
@@ -63,14 +59,18 @@ void RenderLayer::OnUpdate() {
     auto [x, y, w, h] = m_viewport->GetViewport();
 
     auto viewMatrix = m_editorCamera->GetViewMartix();
-
     auto projectionMatrix = m_editorCamera->GetPerspective();
 
-    struct MVP {
-        glm::mat4 model;
-        glm::mat4 view;
-        glm::mat4 projection;
-    };
+    MVP mvp;
+    mvp.projection = projectionMatrix;
+    mvp.view = viewMatrix;
+
+    if(m_scene != nullptr) {
+        auto rootScene = m_scene->GetRootSceneNode();
+        if(rootScene != nullptr) {
+            RenderScenNode(rootScene, m_shader.get(), mvp);
+        }
+    }
 
     m_frameBuffer->UnBind();
     m_rhiFactory->Disable(EnableItem::DEPTH);
@@ -100,13 +100,22 @@ void RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
     m_editorCamera->AddFov(yOffset);
 }
 
-void RenderLayer::RenderScenNode(SceneNode* node) {
-    if(node->GetMeshCount() > 0) {
-        auto drawCollection = m_rhiFactory->CreateDrawCollection();
-        for(int i = 0; i < node->GetMeshCount(); i++) {
-            auto mesh = node->GetMesh(i);
-            // drawCollection->AddDrawUnit();
-        }
+void RenderLayer::RenderScenNode(SceneNode* node, Shader* shader, MVP& mvp) {
+    if(node == nullptr) return;
+
+    auto drawCollection = node->GetDrawCollection();
+    if(drawCollection != nullptr) {
+        mvp.model = node->GetModelMatrix();
+        shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
+        drawCollection->Draw(shader);
+    }
+
+    if(node->GetSubSceneNodesCount() == 0) return;
+
+    auto subNodes = node->GetSubSceneNodes();
+    for(int i = 0; i < node->GetSubSceneNodesCount(); i++) {
+        auto subNode = subNodes[i];
+        RenderScenNode(subNode, shader, mvp);
     }
 }
 

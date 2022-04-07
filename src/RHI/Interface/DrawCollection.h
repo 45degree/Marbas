@@ -19,7 +19,7 @@ public:
         m_drawUnits.insert(drawUnit);
     }
 
-    virtual void Draw(Shader* shader) = 0;
+    virtual void Draw(Shader* shader) const = 0;
 
 public:
     std::unordered_set<DrawUnit*> m_drawUnits;

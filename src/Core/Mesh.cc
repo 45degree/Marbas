@@ -1,10 +1,12 @@
 #include "Core/Mesh.h"
 #include "RHI/RHI.h"
 #include "Common.h"
+#include "Tool/EncodingConvert.h"
 
 #include <glog/logging.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
+#include <iostream>
 
 namespace Marbas {
 
@@ -43,8 +45,10 @@ void Mesh::ReadFromNode(const aiMesh* mesh, const aiScene* scene) {
 
     // load texture path
     if (mesh->mMaterialIndex >= 0) {
+        m_texturePathes.clear();
         auto* material = scene->mMaterials[mesh->mMaterialIndex];
         LoadMaterialTexturePath(material, aiTextureType_DIFFUSE);
+        // LoadMaterialTexturePath(material, aiTextureType_AMBIENT);
     }
 }
 
@@ -68,6 +72,7 @@ void Mesh::LoadToGPU(bool force) {
 
     m_indicesBuffer = RHIFactory::GetInstance(RendererType::OPENGL)->CreateIndexBuffer(m_indices);
 
+    m_textures.clear();
     for(const auto& path : m_texturePathes) {
         auto texture = RHIFactory::GetInstance(RendererType::OPENGL)->CreateTexutre2D(path);
         m_textures.push_back(texture);
@@ -89,10 +94,6 @@ void Mesh::UnLoadFromGPU() {
     m_vertexBuffer.reset();
     m_indicesBuffer.reset();
 
-    // for(auto& texture : m_textures) {
-    //     texture.reset();
-    // }
-
     m_drawUnit.m_indicesBuffer = nullptr;
     m_drawUnit.m_vertexBuffer = nullptr;
 
@@ -100,16 +101,17 @@ void Mesh::UnLoadFromGPU() {
 }
 
 void Mesh::LoadMaterialTexturePath(const aiMaterial* material, aiTextureType type) {
-    m_texturePathes.clear();
     for(auto i = 0; i < material->GetTextureCount(type); i++) {
         aiString str;
         material->GetTexture(type, i, &str);
-        m_texturePathes.push_back(m_meshPath / str.C_Str());
+        auto texturePath = (m_meshPath / str.C_Str()).string();
+#ifdef _WIN32
+    std::replace(texturePath.begin(), texturePath.end(), '/', '\\');
+#elif __linux__
+    std::replace(texturePath.begin(), texturePath.end(), '\\', '/');
+#endif
+        m_texturePathes.push_back(texturePath);
     }
-}
-
-void Mesh::SetShader(Shader* shader) {
-    m_drawUnit.m_shader = shader;
 }
 
 }  // namespace Marbas

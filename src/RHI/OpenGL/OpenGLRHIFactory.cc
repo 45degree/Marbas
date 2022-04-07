@@ -196,8 +196,6 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
     int width, height, nrChannels;
     TextureFormatType formatType;
 
-    // tell stb_image.h to flip loaded texture's on the y-axis.
-    stbi_set_flip_vertically_on_load(true);
     auto filename = imagePath.string();
     unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
 
@@ -216,6 +214,7 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
     // create textrue
     auto texture = std::make_unique<OpenGLTexture2D>(width, height, formatType);
     texture->SetData(data, width * height * nrChannels);
+    texture->SetImagePath(imagePath);
 
     stbi_image_free(data);
 

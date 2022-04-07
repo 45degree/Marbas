@@ -39,6 +39,7 @@ public:
 
     void SetDrawCollection(std::unique_ptr<DrawCollection>&& drawCollection) {
         for(auto& mesh : m_mesh) {
+            mesh->LoadToGPU();
             drawCollection->AddDrawUnit(mesh->GetDrawUnit());
         }
 
@@ -51,6 +52,10 @@ public:
 
     [[nodiscard]] const Mesh* GetMesh(size_t index) const {
         return m_mesh[index].get();
+    }
+
+    [[nodiscard]] const DrawCollection* GetDrawCollection() const {
+        return m_drawCollection.get();
     }
 
     /**

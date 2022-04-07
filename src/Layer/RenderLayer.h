@@ -9,6 +9,12 @@
 
 namespace Marbas {
 
+struct MVP {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 projection;
+};
+
 class RenderLayer : public LayerBase{
 public:
     RenderLayer(int width, int height, const  Window* window);
@@ -53,7 +59,7 @@ public:
     }
 
 private:
-    void RenderScenNode(SceneNode* ndoe);
+    void RenderScenNode(SceneNode* ndoe, Shader* shader, MVP& mvp);
 
 private:
     std::unique_ptr<ShaderCode> vertexShader;
@@ -64,7 +70,7 @@ private:
     std::unique_ptr<Viewport> m_viewport;
     std::unique_ptr<Camera> m_editorCamera;
 
-    std::unique_ptr<Scene> m_scene;
+    std::unique_ptr<Scene> m_scene = nullptr;
 
     FrameBufferInfo m_frameBufferInfo;
     RHIFactory* m_rhiFactory;

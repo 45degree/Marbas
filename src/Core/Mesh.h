@@ -28,8 +28,6 @@ public:
 
     void UnLoadFromGPU();
 
-    void SetShader(Shader* shader);
-
     DrawUnit* GetDrawUnit() {
         return &m_drawUnit;
     }
@@ -39,7 +37,7 @@ private:
 
 private:
     Path m_meshPath;
-    Vector<float> m_vertices; 
+    Vector<float> m_vertices;
     Vector<uint32_t> m_indices;
     Vector<Path> m_texturePathes;
 

@@ -47,7 +47,7 @@ void Model::ProcessNode(const aiScene* scene, const aiNode* node) {
 
 void Model::Draw() {
     GenerateGPUData();
-    m_drawCollection->Draw();
+    // m_drawCollection->Draw();
 }
 
 

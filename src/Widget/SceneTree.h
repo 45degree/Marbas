@@ -19,7 +19,7 @@ public:
     void Draw() override;
 
 private:
-    Scene* m_scene;
+    Scene* m_scene = nullptr;
 };
 
 }  // namespace Marbas

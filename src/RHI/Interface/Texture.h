@@ -27,8 +27,12 @@ public:
     virtual void UnBind() = 0;
     virtual void* GetTexture() = 0;
 
+    void SetImagePath(const String& imagePath) {
+        m_imagePath = imagePath;
+    }
+
 protected:
-    // String m_imagePath;
+    String m_imagePath;
     int width;
     int height;
     TextureFormatType format;
