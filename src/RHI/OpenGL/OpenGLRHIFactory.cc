@@ -214,7 +214,7 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
     // create textrue
     auto texture = std::make_unique<OpenGLTexture2D>(width, height, formatType);
     texture->SetData(data, width * height * nrChannels);
-    texture->SetImagePath(imagePath);
+    texture->SetImagePath(imagePath.string());
 
     stbi_image_free(data);
 
