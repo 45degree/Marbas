@@ -14,20 +14,31 @@ public:
     virtual ~SceneNode() = default;
 
 public:
-    const char* GetSceneNodeName() {
+    [[nodiscard]] const char* GetSceneNodeName() const {
         return m_sceneNodeName.c_str();
     }
 
-    SceneNode** GetSubSceneNodes() {
-        return m_subSceneNode.data();
+    [[nodiscard]] Vector<const SceneNode*> GetSubSceneNodes() const {
+        // return m_subSceneNode.data();
+        Vector<const SceneNode*> result;
+        for(auto& subNode : m_subSceneNode) {
+            result.push_back(subNode.get());
+        }
+        return result;
     }
 
-    size_t GetSubSceneNodesCount() {
-        return m_subSceneNode.size();
+    void AddSubSceneNode(std::unique_ptr<SceneNode>&& node) {
+        m_subSceneNode.push_back(std::move(node));
     }
 
-    void AddSubSceneNode(SceneNode* node) {
-        m_subSceneNode.push_back(node);
+    void DeleteSubSceneNode(const SceneNode* node) {
+        for(int i = 0; i < m_subSceneNode.size(); i++) {
+            if(node == m_subSceneNode[i].get()) {
+                m_subSceneNode.erase(m_subSceneNode.begin() + i);
+                return;
+            }
+        }
+        return;
     }
 
     void AddMesh(std::unique_ptr<Mesh>&& mesh) {
@@ -46,7 +57,7 @@ public:
         m_drawCollection = std::move(drawCollection);
     }
 
-    size_t GetMeshCount() {
+    [[nodiscard]] size_t GetMeshCount() const {
         return m_mesh.size();
     }
 
@@ -76,9 +87,9 @@ protected:
 
     /// This matrix only takes effect when this node has a grid
     glm::mat4 modelMatrix = glm::mat4(1.0f);
-
-    Vector<SceneNode*> m_subSceneNode;
+    Vector<std::unique_ptr<SceneNode>> m_subSceneNode;
     Vector<std::unique_ptr<Mesh>> m_mesh;
+
     std::unique_ptr<DrawCollection> m_drawCollection = nullptr;
 };
 
@@ -94,8 +105,7 @@ class SceneLight : public SceneNode {
 class Scene {
 public:
     Scene() {
-        m_allSceneNode.push_back(std::make_unique<SceneNode>("RootNode"));
-        m_rootNode = m_allSceneNode[0].get();
+        m_rootNode = std::make_unique<SceneNode>("RootNode");
     }
 
     ~Scene() = default;
@@ -105,13 +115,11 @@ public:
 
     void AddCamera();
 
-    void RegisterSceneNode(std::unique_ptr<SceneNode>&& sceneNode) {
-        m_allSceneNode.push_back(std::move(sceneNode));
+    [[nodiscard]] SceneNode* GetRootSceneNode() const noexcept {
+        return m_rootNode.get();
     }
 
-    [[nodiscard]] SceneNode* GetRootSceneNode() const noexcept {
-        return m_rootNode;
-    }
+    void DeleteSceneNode(SceneNode* sceneNode);
 
 public:
 
@@ -125,9 +133,9 @@ public:
     static std::unique_ptr<Scene> CreateSceneFromFile(const Path& sceneFile);
 
 private:
-    Vector<std::unique_ptr<SceneNode>> m_allSceneNode;
+    // Vector<std::unique_ptr<SceneNode>> m_allSceneNode;
 
-    SceneNode* m_rootNode;
+    std::unique_ptr<SceneNode> m_rootNode = nullptr;
 };
 
 }  // namespace Marbas

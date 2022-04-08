@@ -59,7 +59,7 @@ public:
     }
 
 private:
-    void RenderScenNode(SceneNode* ndoe, Shader* shader, MVP& mvp);
+    void RenderScenNode(const SceneNode* ndoe, Shader* shader, MVP& mvp);
 
 private:
     std::unique_ptr<ShaderCode> vertexShader;

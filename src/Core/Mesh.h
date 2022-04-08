@@ -24,6 +24,22 @@ public:
         return m_indices;
     }
 
+    [[nodiscard]] Vector<const Texture2D*> GetTexture() const {
+        Vector<const Texture2D*> result;
+        for(auto texture : m_textures) {
+            result.push_back(texture);
+        }
+        return result;
+    }
+
+    void SetMeshName(const String& name) {
+        m_meshName = name;
+    }
+
+    [[nodiscard]] String GetMeshName() const {
+        return m_meshName;
+    }
+
     void LoadToGPU(bool force = false);
 
     void UnLoadFromGPU();
@@ -36,7 +52,9 @@ private:
     void LoadMaterialTexturePath(const aiMaterial* material, aiTextureType type);
 
 private:
+    String m_meshName;
     Path m_meshPath;
+
     Vector<float> m_vertices;
     Vector<uint32_t> m_indices;
     Vector<Path> m_texturePathes;

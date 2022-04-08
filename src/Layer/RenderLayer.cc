@@ -100,7 +100,7 @@ void RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
     m_editorCamera->AddFov(yOffset);
 }
 
-void RenderLayer::RenderScenNode(SceneNode* node, Shader* shader, MVP& mvp) {
+void RenderLayer::RenderScenNode(const SceneNode* node, Shader* shader, MVP& mvp) {
     if(node == nullptr) return;
 
     auto drawCollection = node->GetDrawCollection();
@@ -110,11 +110,10 @@ void RenderLayer::RenderScenNode(SceneNode* node, Shader* shader, MVP& mvp) {
         drawCollection->Draw(shader);
     }
 
-    if(node->GetSubSceneNodesCount() == 0) return;
-
     auto subNodes = node->GetSubSceneNodes();
-    for(int i = 0; i < node->GetSubSceneNodesCount(); i++) {
-        auto subNode = subNodes[i];
+    if(subNodes.empty()) return;
+
+    for(const auto* subNode : subNodes) {
         RenderScenNode(subNode, shader, mvp);
     }
 }

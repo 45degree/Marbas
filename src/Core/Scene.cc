@@ -37,7 +37,7 @@ public:
         return true;
     }
 
-    Assimp::IOStream* Open(const char *strFile, const char *strMode) {
+    Assimp::IOStream* Open(const char *strFile, const char *strMode) override {
         ai_assert(strFile != nullptr);
         ai_assert(strMode != nullptr);
         FILE *file;
@@ -48,8 +48,18 @@ public:
 
         return new MyIOStream(file, strFile);
     }
-
 };
+
+static bool DeleteNode(SceneNode* sceneNode) {
+    auto subNodes = sceneNode->GetSubSceneNodes();
+    for(const auto* subNode : subNodes) {
+        if(DeleteNode(const_cast<SceneNode*>(subNode))) {
+            sceneNode->DeleteSubSceneNode(subNode);
+        }
+    }
+
+    return sceneNode->GetSubSceneNodes().empty() && sceneNode->GetMeshCount() == 0;
+}
 
 static void ProcessNode(Scene* scene, SceneNode* sceneNode,
                         const aiScene* aScene, const aiNode* aNode, const Path& path)
@@ -63,6 +73,7 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
         for(int i = 0; i < aNode->mNumMeshes; i++) {
             auto aMesh = aScene->mMeshes[aNode->mMeshes[i]];
             auto mesh = std::make_unique<Mesh>(path.string());
+            mesh->SetMeshName(aMesh->mName.C_Str());
             mesh->ReadFromNode(aScene->mMeshes[aNode->mMeshes[i]], aScene);
 
             drawCollection->AddDrawUnit(mesh->GetDrawUnit());
@@ -74,8 +85,7 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
     for(int i = 0; i < aNode->mNumChildren; i++) {
         auto childNode = std::make_unique<SceneNode>(aNode->mChildren[i]->mName.C_Str());
         auto childNode_ptr = childNode.get();
-        sceneNode->AddSubSceneNode(childNode.get());
-        scene->RegisterSceneNode(std::move(childNode));
+        sceneNode->AddSubSceneNode(std::move(childNode));
         ProcessNode(scene, childNode_ptr, aScene, aNode->mChildren[i], path);
     }
 }
@@ -116,8 +126,36 @@ std::unique_ptr<Scene> Scene::CreateSceneFromFile(const Path& sceneFile) {
 
     auto aRootNode = assimpScene->mRootNode;
     ProcessNode(scene.get(), rootNode, assimpScene, aRootNode, sceneFile.parent_path());
+    DeleteNode(rootNode);
 
     return scene;
+}
+
+void Scene::DeleteSceneNode(SceneNode *sceneNode) {
+    std::function<const SceneNode*(const SceneNode*, const SceneNode*)> findParent =
+        [&, this](const SceneNode* sceneNode, const SceneNode* currentNode) -> const SceneNode* {
+        if(this->m_rootNode.get() == sceneNode) {
+            return nullptr;
+        }
+
+        auto subNodes = currentNode->GetSubSceneNodes();
+        for(const auto* subNode : subNodes) {
+            if(subNode == sceneNode) {
+                return currentNode;
+            }
+
+            auto parent = findParent(sceneNode, subNode);
+            if(parent != nullptr) {
+                return parent;
+            }
+        }
+        return nullptr;
+    };
+
+    auto parent = const_cast<SceneNode*>(findParent(sceneNode, m_rootNode.get()));
+    if(parent == nullptr) return;
+
+    parent->DeleteSubSceneNode(sceneNode);
 }
 
 }  // namespace Marbas

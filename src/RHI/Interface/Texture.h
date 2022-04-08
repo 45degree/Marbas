@@ -31,6 +31,10 @@ public:
         m_imagePath = imagePath;
     }
 
+    [[nodiscard]] String GetImagePath() const {
+        return m_imagePath;
+    }
+
 protected:
     String m_imagePath;
     int width;
