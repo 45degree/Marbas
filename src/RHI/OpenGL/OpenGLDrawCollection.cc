@@ -1,4 +1,4 @@
-#include "RHI/OpenGL/OpenGLDrawCollection.h"
+#include "RHI/OpenGL/OpenGLDrawCollection.hpp"
 
 namespace Marbas {
 

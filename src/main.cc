@@ -1,9 +1,9 @@
 #define GOOGLE_GLOG_DLL_DECL
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 
-#include "Core/Application.h"
-#include "Core/Window.h"
-#include "Config.h"
+#include "Core/Application.hpp"
+#include "Core/Window.hpp"
+#include "Config.hpp"
 
 #include <iostream>
 

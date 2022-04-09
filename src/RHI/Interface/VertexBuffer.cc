@@ -1,4 +1,4 @@
-#include "RHI/Interface/VertexBuffer.h"
+#include "RHI/Interface/VertexBuffer.hpp"
 
 #include <algorithm>
 

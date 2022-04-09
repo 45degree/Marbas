@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "Tool/EncodingConvert.h"
+#include "Tool/EncodingConvert.hpp"
 #include <fstream>
 
 namespace Marbas {

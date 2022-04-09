@@ -1,6 +1,6 @@
-#include "Common.h"
-#include "Layer/ImguiLayer.h"
-#include "Core/Application.h"
+#include "Common.hpp"
+#include "Layer/ImguiLayer.hpp"
+#include "Core/Application.hpp"
 
 #include <glog/logging.h>
 #include <imgui.h>

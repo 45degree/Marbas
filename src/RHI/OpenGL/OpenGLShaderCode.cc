@@ -1,4 +1,4 @@
-#include "RHI/OpenGL/OpenGLShaderCode.h"
+#include "RHI/OpenGL/OpenGLShaderCode.hpp"
 
 #include <glog/logging.h>
 #include <fstream>

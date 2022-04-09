@@ -1,6 +1,6 @@
-#include "RHI/OpenGL/OpenGLShader.h"
-#include "RHI/OpenGL/OpenGLShaderCode.h"
-#include "RHI/OpenGL/OpenGLTexture.h"
+#include "RHI/OpenGL/OpenGLShader.hpp"
+#include "RHI/OpenGL/OpenGLShaderCode.hpp"
+#include "RHI/OpenGL/OpenGLTexture.hpp"
 
 #include <glog/logging.h>
 

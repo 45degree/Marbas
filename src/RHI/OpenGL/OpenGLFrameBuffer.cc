@@ -1,4 +1,4 @@
-#include "RHI/OpenGL/OpenGLFrameBuffer.h"
+#include "RHI/OpenGL/OpenGLFrameBuffer.hpp"
 
 #include <glog/logging.h>
 

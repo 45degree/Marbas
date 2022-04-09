@@ -1,7 +1,7 @@
-#include "Core/Mesh.h"
-#include "RHI/RHI.h"
-#include "Common.h"
-#include "Tool/EncodingConvert.h"
+#include "Core/Mesh.hpp"
+#include "RHI/RHI.hpp"
+#include "Common.hpp"
+#include "Tool/EncodingConvert.hpp"
 
 #include <glog/logging.h>
 #include <assimp/Importer.hpp>

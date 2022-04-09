@@ -1,5 +1,5 @@
-#include "Core/Application.h"
-#include "Common.h"
+#include "Core/Application.hpp"
+#include "Common.hpp"
 
 namespace Marbas {
 

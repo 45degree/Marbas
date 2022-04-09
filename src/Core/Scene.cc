@@ -1,54 +1,15 @@
-#include "Core/Scene.h"
-#include "Core/Model.h"
-#include "Core/Application.h"
-#include "Tool/EncodingConvert.h"
+#include "Core/Scene.hpp"
+#include "Core/Model.hpp"
+#include "Core/Application.hpp"
+#include "Tool/EncodingConvert.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include <assimp/IOSystem.hpp>
-#include <assimp/IOStream.hpp>
-#include <assimp/DefaultIOSystem.h>
-#include <assimp/DefaultIOStream.h>
-#include <assimp/ai_assert.h>
-
 #include <glog/logging.h>
 
-
 namespace Marbas {
-
-class MyIoSystem;
-class MyIOStream : public Assimp::DefaultIOStream {
-    friend MyIoSystem;
-protected:
-    MyIOStream(FILE* file, const char* strFile) : DefaultIOStream(file, strFile) {}
-};
-
-class MyIoSystem : public Assimp::DefaultIOSystem {
-public:
-    bool Exists( const char* pFile) const override {
-        FILE *file = ::fopen(pFile, "rb");
-        if (!file) {
-            return false;
-        }
-
-        ::fclose(file);
-        return true;
-    }
-
-    Assimp::IOStream* Open(const char *strFile, const char *strMode) override {
-        ai_assert(strFile != nullptr);
-        ai_assert(strMode != nullptr);
-        FILE *file;
-        file = ::fopen(strFile, strMode);
-        if (!file) {
-            return nullptr;
-        }
-
-        return new MyIOStream(file, strFile);
-    }
-};
 
 static bool DeleteNode(SceneNode* sceneNode) {
     auto subNodes = sceneNode->GetSubSceneNodes();
@@ -93,7 +54,6 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
 std::unique_ptr<Scene> Scene::CreateSceneFromFile(const Path& sceneFile) {
 
     Assimp::Importer importer;
-    importer.SetIOHandler(new MyIoSystem());
 
     auto filename = sceneFile.string();
     const auto* assimpScene = importer.ReadFile(filename.c_str(), aiProcess_Triangulate |

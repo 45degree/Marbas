@@ -1,9 +1,9 @@
-#include "Layer/RenderLayer.h"
-#include "Common.h"
-#include "Core/Application.h"
-#include "Core/Model.h"
-#include "RHI/RHI.h"
-#include "Event/Input.h"
+#include "Layer/RenderLayer.hpp"
+#include "Common.hpp"
+#include "Core/Application.hpp"
+#include "Core/Model.hpp"
+#include "RHI/RHI.hpp"
+#include "Event/Input.hpp"
 
 namespace Marbas {
 

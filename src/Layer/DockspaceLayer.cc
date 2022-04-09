@@ -1,5 +1,5 @@
-#include "Layer/DockspaceLayer.h"
-#include "Common.h"
+#include "Layer/DockspaceLayer.hpp"
+#include "Common.hpp"
 
 #include <glog/logging.h>
 #include <imgui.h>

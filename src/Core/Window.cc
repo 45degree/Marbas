@@ -1,12 +1,12 @@
-#include "Core/Window.h"
-#include "Core/Application.h"
-#include "Event/MouseEvent.h"
-#include "Event/KeyEvent.h"
-#include "Layer/ImguiLayer.h"
-#include "Layer/DockspaceLayer.h"
-#include "Layer/DrawLayer.h"
-#include "Layer/RenderLayer.h"
-#include "RHI/RHI.h"
+#include "Core/Window.hpp"
+#include "Core/Application.hpp"
+#include "Event/MouseEvent.hpp"
+#include "Event/KeyEvent.hpp"
+#include "Layer/ImguiLayer.hpp"
+#include "Layer/DockspaceLayer.hpp"
+#include "Layer/DrawLayer.hpp"
+#include "Layer/RenderLayer.hpp"
+#include "RHI/RHI.hpp"
 
 #include <glog/logging.h>
 #include <unordered_map>

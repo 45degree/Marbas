@@ -1,4 +1,4 @@
-#include "RHI/OpenGL/OpenGLVertexBuffer.h"
+#include "RHI/OpenGL/OpenGLVertexBuffer.hpp"
 
 #include <glog/logging.h>
 

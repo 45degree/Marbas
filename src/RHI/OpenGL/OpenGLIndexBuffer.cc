@@ -1,7 +1,6 @@
-#include "Common.h"
-
-#include "RHI/OpenGL/OpenGLRHICommon.h"
-#include "RHI/OpenGL/OpenGLIndexBuffer.h"
+#include "Common.hpp"
+#include "RHI/OpenGL/OpenGLRHICommon.hpp"
+#include "RHI/OpenGL/OpenGLIndexBuffer.hpp"
 
 #include <glog/logging.h>
 

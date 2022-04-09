@@ -1,5 +1,5 @@
-#include "Config.h"
-#include "Tool/EncodingConvert.h"
+#include "Config.hpp"
+#include "Tool/EncodingConvert.hpp"
 
 #include <glog/logging.h>
 #include <toml++/toml.h>

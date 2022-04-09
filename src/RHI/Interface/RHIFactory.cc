@@ -1,6 +1,6 @@
-#include "RHI/Interface/RHIFactory.h"
-#include "RHI/OpenGL/OpenGLRHIFactory.h"
-#include "Common.h"
+#include "RHI/Interface/RHIFactory.hpp"
+#include "RHI/OpenGL/OpenGLRHIFactory.hpp"
+#include "Common.hpp"
 
 #include <glog/logging.h>
 #include <mutex>

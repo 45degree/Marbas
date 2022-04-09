@@ -1,7 +1,8 @@
-#include "Widget/FileDialog.h"
-#include "Core/Application.h"
-#include "ImGuiFileDialog.h"
-#include "ImGuiFileDialogConfig.h"
+#include "Widget/FileDialog.hpp"
+#include "Core/Application.hpp"
+
+#include <ImGuiFileDialog.h>
+#include <ImGuiFileDialogConfig.h>
 
 namespace Marbas {
 

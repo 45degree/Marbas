@@ -1,4 +1,4 @@
-#include "RHI/OpenGL/OpenGLUniformBuffer.h"
+#include "RHI/OpenGL/OpenGLUniformBuffer.hpp"
 
 #include <glog/logging.h>
 

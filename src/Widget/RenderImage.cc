@@ -1,8 +1,8 @@
-#include "Widget/RenderImage.h"
-#include "RHI/RHI.h"
-#include "Common.h"
-#include "Core/Window.h"
-#include "Core/Application.h"
+#include "Widget/RenderImage.hpp"
+#include "RHI/RHI.hpp"
+#include "Common.hpp"
+#include "Core/Window.hpp"
+#include "Core/Application.hpp"
 
 namespace Marbas {
 

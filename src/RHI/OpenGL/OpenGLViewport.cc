@@ -1,5 +1,5 @@
-#include "RHI/OpenGL/OpenGLViewport.h"
-#include "RHI/OpenGL/OpenGLRHICommon.h"
+#include "RHI/OpenGL/OpenGLViewport.hpp"
+#include "RHI/OpenGL/OpenGLRHICommon.hpp"
 
 namespace Marbas {
 

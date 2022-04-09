@@ -11,15 +11,15 @@
 #include <GL/gl.h>
 #endif
 
-#include "RHI/OpenGL/OpenGLRHIFactory.h"
-#include "RHI/OpenGL/OpenGLDrawCollection.h"
-#include "RHI/OpenGL/OpenGLFrameBuffer.h"
-#include "RHI/OpenGL/OpenGLIndexBuffer.h"
-#include "RHI/OpenGL/OpenGLShader.h"
-#include "RHI/OpenGL/OpenGLVertexBuffer.h"
-#include "RHI/OpenGL/OpenGLVertexArray.h"
-#include "RHI/OpenGL/OpenGLShaderCode.h"
-#include "RHI/OpenGL/OpenGLViewport.h"
+#include "RHI/OpenGL/OpenGLRHIFactory.hpp"
+#include "RHI/OpenGL/OpenGLDrawCollection.hpp"
+#include "RHI/OpenGL/OpenGLFrameBuffer.hpp"
+#include "RHI/OpenGL/OpenGLIndexBuffer.hpp"
+#include "RHI/OpenGL/OpenGLShader.hpp"
+#include "RHI/OpenGL/OpenGLVertexBuffer.hpp"
+#include "RHI/OpenGL/OpenGLVertexArray.hpp"
+#include "RHI/OpenGL/OpenGLShaderCode.hpp"
+#include "RHI/OpenGL/OpenGLViewport.hpp"
 
 #include <glog/logging.h>
 #include <iostream>

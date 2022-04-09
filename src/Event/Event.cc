@@ -1,5 +1,5 @@
-#include "Event/Event.h"
-#include "Layer/LayerBase.h"
+#include "Event/Event.hpp"
+#include "Layer/LayerBase.hpp"
 
 namespace Marbas {
 

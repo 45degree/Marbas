@@ -1,4 +1,4 @@
-#include "RHI/OpenGL/OpenGLVertexArray.h"
+#include "RHI/OpenGL/OpenGLVertexArray.hpp"
 
 #include <glog/logging.h>
 

@@ -1,5 +1,5 @@
-#include "Core/Model.h"
-#include "Core/Application.h"
+#include "Core/Model.hpp"
+#include "Core/Application.hpp"
 
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>

@@ -1,5 +1,5 @@
-#include "Layer/LayerBase.h"
-#include "Core/Window.h"
+#include "Layer/LayerBase.hpp"
+#include "Core/Window.hpp"
 
 namespace Marbas {
 

@@ -1,4 +1,4 @@
-#include "RHI/OpenGL/OpenGLTexture.h"
+#include "RHI/OpenGL/OpenGLTexture.hpp"
 
 #include <glog/logging.h>
 
