@@ -21,6 +21,7 @@
 #include "RHI/OpenGL/OpenGLShaderCode.hpp"
 #include "RHI/OpenGL/OpenGLViewport.hpp"
 
+#include <folly/Hash.h>
 #include <glog/logging.h>
 #include <iostream>
 
@@ -30,6 +31,7 @@
 
 namespace Marbas {
 
+// TODO: need to make it more readable
 static void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
                           GLsizei length, const char *message, const void *userParam) {
 
@@ -188,10 +190,6 @@ Texture2D*
 OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
     String pathStr = String(imagePath.string());
 
-    if(m_Texture2DImages.find(pathStr) != m_Texture2DImages.end()) {
-        return m_Texture2DImages.at(pathStr).get();
-    }
-
     // load image
     int width, height, nrChannels;
     TextureFormatType formatType;
@@ -204,41 +202,43 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
         return nullptr;
     }
 
+    // get hash code of the image
+    auto hashCode = folly::hash::fnv32_buf(data, static_cast<size_t>(width) * height * nrChannels);
+    if(m_texturePool.IsImageTexutreExisted(hashCode)) {
+        return m_texturePool.GetTextureByHashCode(hashCode);
+    }
+
     formatType = nrChannels == 4 ? TextureFormatType::RGBA : TextureFormatType::RGB;
-
-    auto dataFormat = formatType == TextureFormatType::RGBA ? GL_RGBA : GL_RGB;
-    auto internalFormat = formatType == TextureFormatType::RGBA ? GL_RGBA8 : GL_RGB8;
-
-    // TODO: calculate hash for this image
 
     // create textrue
     auto texture = std::make_unique<OpenGLTexture2D>(width, height, formatType);
+    auto texturePtr = texture.get();
     texture->SetData(data, width * height * nrChannels);
-    texture->SetImagePath(imagePath.string());
+    texture->SetImageInfo(imagePath.string(), hashCode);
 
     stbi_image_free(data);
 
     LOG(INFO) << FORMAT("create a opengl texture, the image is {}", pathStr);
 
-    m_Texture2DImages[pathStr] = std::move(texture);
-    return m_Texture2DImages[pathStr].get();
+    m_texturePool.AddTexture(std::move(texture), hashCode);
+
+    return texturePtr;
 }
 
 Texture2D*
 OpenGLRHIFactory::CreateTexutre2D(int width, int height, TextureFormatType format) {
-    m_Texture2DDynamic.push_back(std::make_unique<OpenGLTexture2D>(width, height, format));
-    auto size = m_Texture2DDynamic.size();
-    return m_Texture2DDynamic[size - 1].get();
+    auto texture = std::make_unique<OpenGLTexture2D>(width, height, format);
+    auto texturePtr = texture.get();
+
+    m_texturePool.AddTexture(std::move(texture));
+
+    return texturePtr;
 }
 
 
 void OpenGLRHIFactory::DestoryTexture2D(Texture2D* texture) {
-    for(auto iter = m_Texture2DDynamic.cbegin(); iter != m_Texture2DDynamic.cend(); iter++) {
-        if(iter->get() == texture) {
-            m_Texture2DDynamic.erase(iter);
-            return;
-        }
-    }
+    auto openGLTexture2D = dynamic_cast<OpenGLTexture2D*>(texture);
+    m_texturePool.DeleteTexture(openGLTexture2D);
 }
 
 

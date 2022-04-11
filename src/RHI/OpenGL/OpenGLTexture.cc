@@ -26,11 +26,10 @@ static GLenum ConvertToOpenglInternalFormat(TextureFormatType type) {
     }
 }
 
-OpenGLTexture2D::OpenGLTexture2D(int width, int height, TextureFormatType format) :
+OpenGLTexture2D::OpenGLTexture2D(int width, int height, TextureFormatType format):
     Texture2D(width, height, format)
 {
 
-    auto dataFormat = ConvertToOpenglDataFormat(format);
     auto internalFormat = ConvertToOpenglInternalFormat(format);
 
     glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
@@ -41,6 +40,10 @@ OpenGLTexture2D::OpenGLTexture2D(int width, int height, TextureFormatType format
 
     glTextureParameteri(textureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTextureParameteri(textureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+}
+
+OpenGLTexture2D::~OpenGLTexture2D() {
+    glDeleteTextures(1, &textureID);
 }
 
 void OpenGLTexture2D::Bind(int uniformBind) {
@@ -75,8 +78,37 @@ void* OpenGLTexture2D::GetTexture() {
     return reinterpret_cast<void*>(textureID);
 }
 
-OpenGLTexture2D::~OpenGLTexture2D() {
-    glDeleteTextures(1, &textureID);
+void OpenGLTexturePool::DeleteTexture(OpenGLTexture2D* texture) {
+    auto iter = std::find_if(m_textures.begin(), m_textures.end(),
+            [&](std::unique_ptr<OpenGLTexture2D>& m_texture) {
+        return m_texture.get() == texture;
+    });
+
+    if(iter == m_textures.end()) return;
+
+    if(!(*iter)->IsImageTexture()) {
+        m_textures.erase(iter);
+        return;
+    }
+
+    uint32_t hashCode = (*iter)->GetHashCode();
+    m_imageTextures.erase(hashCode);
+    m_textures.erase(iter);
+
+    return;
 }
 
-}  // namespace Marbas
+
+void OpenGLTexturePool::AddTexture(std::unique_ptr<OpenGLTexture2D> &&texture, 
+                                    std::optional<uint32_t> hashCode) {
+
+    if(hashCode.has_value()) {
+        auto _hashCode = hashCode.value();
+        m_imageTextures[_hashCode] = texture.get();
+    }
+
+    texture->SetTextureId(m_textures.size());
+    m_textures.push_back(std::move(texture));
+}
+
+} // namespace Marbas

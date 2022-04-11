@@ -2,7 +2,7 @@
 #define MARBARS_RHI_RENDERER_COMMON_H
 
 #include "RHI/Interface/DrawCall.hpp"
-#include "RHI/Interface/DrawUnit.hpp"
+#include "RHI/Interface/DrawBatch.hpp"
 #include "RHI/Interface/DrawCollection.hpp"
 #include "RHI/Interface/FrameBuffer.hpp"
 #include "RHI/Interface/IndexBuffer.hpp"

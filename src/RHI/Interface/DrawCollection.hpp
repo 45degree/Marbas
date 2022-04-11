@@ -2,7 +2,7 @@
 #define MARBAS_RHI_INTERFACE_DRAWCOLLECTION_H
 
 #include "Common.hpp"
-#include "RHI/Interface/DrawUnit.hpp"
+#include "RHI/Interface/DrawBatch.hpp"
 #include "RHI/Interface/Shader.hpp"
 
 #include <unordered_set>

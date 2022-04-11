@@ -70,8 +70,7 @@ public:
     CreateViewport() const override;
 
 private:
-    std::unordered_map<String, std::unique_ptr<OpenGLTexture2D>> m_Texture2DImages;
-    Vector<std::unique_ptr<OpenGLTexture2D>> m_Texture2DDynamic;
+    OpenGLTexturePool m_texturePool;
 
     friend RHIFactory;
 };
