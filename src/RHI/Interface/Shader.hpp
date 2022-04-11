@@ -16,17 +16,13 @@ public:
 
 public:
 
-    // virtual void AddIndeices(const IndexBuffer* indices) = 0;
-
     virtual void AddShaderCode(const ShaderCode* shaderCode) = 0;
 
     virtual void AddUniformDataBlock(uint32_t bindingPoint, const void* data, uint32_t size) = 0;
 
     virtual void Link() = 0;
 
-    // virtual void Draw() = 0;
-
-    virtual void Use() = 0;
+    virtual void Use() const = 0;
 };
 
 }  // namespace Marbas

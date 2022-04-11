@@ -64,7 +64,7 @@ public:
     virtual void ClearBuffer(const ClearBuferBit bufferBit) const = 0;
 
     [[nodiscard]] virtual std::unique_ptr<VertexBuffer>
-    CreateVertexBuffer(const Vector<float>& data) const = 0;
+    CreateVertexBuffer(const void* data, size_t size) const = 0;
 
     [[nodiscard]] virtual std::unique_ptr<VertexArray>
     CreateVertexArray() const = 0;
@@ -89,6 +89,9 @@ public:
 
     [[nodiscard]] virtual std::unique_ptr<DrawCollection>
     CreateDrawCollection() const = 0;
+
+    [[nodiscard]] virtual std::unique_ptr<DrawBatch>
+    CreateDrawBatch() const = 0;
 
     [[nodiscard]] virtual std::unique_ptr<UniformBuffer>
     CreateUniformBuffer(uint32_t size, uint32_t bindingPoint) const = 0;

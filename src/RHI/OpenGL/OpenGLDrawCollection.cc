@@ -9,13 +9,10 @@ OpenGLDrawCollection::OpenGLDrawCollection() : DrawCollection() {
 void OpenGLDrawCollection::Draw(Shader* shader) const {
     for(auto* drawUtil : m_drawUnits) {
 
-        // DrawUnit* drawUtil = *(m_drawUnits.begin());
         int i = 0;
         for(auto* texture : drawUtil->textures) {
             texture->Bind(i++);
         }
-        auto textureSize = drawUtil->textures.size();
-        shader->AddUniformDataBlock(1, &textureSize, sizeof(decltype(textureSize)));
 
         m_vertexArray->EnableVertexAttribArray(drawUtil->m_vertexBuffer);
         m_vertexArray->Bind();

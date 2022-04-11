@@ -1,5 +1,5 @@
-#ifndef MARBARS_CORE_MESH_H
-#define MARBARS_CORE_MESH_H
+#ifndef MARBAS_CORE_MESH_H
+#define MARBAS_CORE_MESH_H
 
 #include "Common.hpp"
 #include "RHI/RHI.hpp"
@@ -7,6 +7,15 @@
 #include <assimp/scene.h>
 
 namespace Marbas {
+
+#pragma pack(1)
+extern "C" struct MeshVertexInfo {
+    float posX, posY, posZ;
+    float normalX, normalY, normalZ;
+    float textureU, textureV;
+    int textureId;
+};
+#pragma pack()
 
 class Mesh {
 public:
@@ -16,21 +25,13 @@ public:
 public:
     void ReadFromNode(const aiMesh* mesh, const aiScene* scene);
 
-    [[nodiscard]] const Vector<float>& GetVertices() const {
+    [[nodiscard]] const Vector<MeshVertexInfo>& GetVertices() const {
         return m_vertices;
     }
 
     [[nodiscard]] const Vector<uint32_t> GetIndices() const {
         return m_indices;
     }
-
-    // [[nodiscard]] Vector<const Texture2D*> GetTexture() const {
-    //     Vector<const Texture2D*> result;
-    //     for(auto texture : m_textures) {
-    //         result.push_back(texture);
-    //     }
-    //     return result;
-    // }
 
     void SetMeshName(const String& name) {
         m_meshName = name;
@@ -40,24 +41,21 @@ public:
         return m_meshName;
     }
 
-    void LoadToGPU(bool force = false);
-
-    void UnLoadFromGPU();
-
-    // DrawUnit* GetDrawUnit() {
-    //     return &m_drawUnit;
-    // }
+    void AddTexturesToMaterial(Material* material) const;
 
 private:
-    void LoadMaterialTexturePath(const aiMaterial* material, aiTextureType type);
+    Vector<Texture2D*> LoadMaterialTexture(const aiMaterial* material, aiTextureType type);
 
 private:
     String m_meshName;
     Path m_meshPath;
 
-    Vector<float> m_vertices;
+    Vector<MeshVertexInfo> m_vertices;
     Vector<uint32_t> m_indices;
-    Vector<Path> m_texturePathes;
+
+    Vector<Texture2D*> m_textures;
+    Vector<Texture2D*> m_ambientTextures;
+    Vector<Texture2D*> m_diffuseTextures;
 
     bool m_isLoadToGPU = false;
 };

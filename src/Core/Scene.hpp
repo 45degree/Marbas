@@ -6,7 +6,9 @@
 
 namespace Marbas {
 
+class Scene;
 class SceneNode {
+    friend Scene;
 public:
 
     /**
@@ -69,19 +71,7 @@ public:
     }
 
     void AddMesh(std::unique_ptr<Mesh>&& mesh) {
-        // if(m_drawCollection != nullptr) {
-        //     m_drawCollection->AddDrawUnit(mesh->GetDrawUnit());
-        // }
         m_mesh.push_back(std::move(mesh));
-    }
-
-    void SetDrawCollection(std::unique_ptr<DrawCollection>&& drawCollection) {
-        // for(auto& mesh : m_mesh) {
-        //     mesh->LoadToGPU();
-        //     drawCollection->AddDrawUnit(mesh->GetDrawUnit());
-        // }
-
-        m_drawCollection = std::move(drawCollection);
     }
 
     [[nodiscard]] size_t GetMeshCount() const {
@@ -90,10 +80,6 @@ public:
 
     [[nodiscard]] const Mesh* GetMesh(size_t index) const {
         return m_mesh[index].get();
-    }
-
-    [[nodiscard]] const DrawCollection* GetDrawCollection() const {
-        return m_drawCollection.get();
     }
 
     /**
@@ -109,6 +95,16 @@ public:
         return modelMatrix;
     }
 
+    void SetMaterial(std::unique_ptr<Material>&& material) {
+        m_material = std::move(material);
+    }
+
+    void SetDrawBatch(std::unique_ptr<DrawBatch>&& drawBathch) {
+        m_drawBatch = std::move(drawBathch);
+    }
+
+    void GenerateGPUData();
+
 protected:
     String m_sceneNodeName;
     bool m_isStatic;
@@ -118,7 +114,8 @@ protected:
     Vector<std::unique_ptr<SceneNode>> m_subSceneNode;
     Vector<std::unique_ptr<Mesh>> m_mesh;
 
-    std::unique_ptr<DrawCollection> m_drawCollection = nullptr;
+    std::unique_ptr<Material> m_material = nullptr;
+    std::unique_ptr<DrawBatch> m_drawBatch = nullptr;
 };
 
 class SceneLight : public SceneNode {
@@ -168,15 +165,12 @@ public:
     static std::unique_ptr<Scene> CreateSceneFromFile(const Path& sceneFile);
 
 private:
-    // Vector<std::unique_ptr<SceneNode>> m_allSceneNode;
-
     std::unique_ptr<VertexBuffer> m_vertexBuffer;
     std::unique_ptr<IndexBuffer> m_indicesBuffer;
-    Vector<Texture2D*> m_textures;
-
-    std::unique_ptr<DrawCollection> m_staticDrwaCollection;
 
     std::unique_ptr<SceneNode> m_rootNode = nullptr;
+
+    Vector<std::unique_ptr<DrawBatch>> m_staticDrawBatch;
 };
 
 }  // namespace Marbas

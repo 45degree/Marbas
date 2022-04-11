@@ -30,17 +30,22 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
     }
 
     if(aNode->mNumMeshes > 0) {
-        auto drawCollection = Application::GetRendererFactory()->CreateDrawCollection();
+        auto drawBatch = Application::GetRendererFactory()->CreateDrawBatch();
+        auto material = std::make_unique<Material>();
+        drawBatch->SetMaterial(material.get());
+
         for(int i = 0; i < aNode->mNumMeshes; i++) {
             auto aMesh = aScene->mMeshes[aNode->mMeshes[i]];
             auto mesh = std::make_unique<Mesh>(path.string());
             mesh->SetMeshName(aMesh->mName.C_Str());
             mesh->ReadFromNode(aScene->mMeshes[aNode->mMeshes[i]], aScene);
+            mesh->AddTexturesToMaterial(material.get());
 
-            drawCollection->AddDrawUnit(mesh->GetDrawUnit());
             sceneNode->AddMesh(std::move(mesh));
         }
-        sceneNode->SetDrawCollection(std::move(drawCollection));
+
+        sceneNode->SetDrawBatch(std::move(drawBatch));
+        sceneNode->SetMaterial(std::move(material));
     }
 
     for(int i = 0; i < aNode->mNumChildren; i++) {
@@ -49,6 +54,10 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
         sceneNode->AddSubSceneNode(std::move(childNode));
         ProcessNode(scene, childNode_ptr, aScene, aNode->mChildren[i], path);
     }
+}
+
+void SceneNode::GenerateGPUData() {
+    Vector<MeshVertexInfo> vertex;
 }
 
 std::unique_ptr<Scene> Scene::CreateSceneFromFile(const Path& sceneFile) {

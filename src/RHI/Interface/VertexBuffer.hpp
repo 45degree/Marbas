@@ -4,15 +4,30 @@
 #include "Common.hpp"
 #include <cstdint>
 #include <glm/glm.hpp>
+#include <numeric>
 
 namespace Marbas {
 
+enum class ElementType {
+    BYTE,
+    UNSIGNED_BYTE,
+    SHORT,
+    UNSIGNED_SHORT,
+    INT,
+    UNSIGNED_INT,
+    FLOAT,
+    HALF_FLOAT,
+    DOUBLE
+};
+
 struct ElementLayout {
-    int index;   // Specifies the index of the generic vertex attribute
-    size_t size; // Specifies the number of components per generic vertex attribute
-    bool normalized; // Specifies whether fixed-point data values should be normalized
-    size_t stride; // Specifies the byte offset between consecutive generic vertex attributes.
-    size_t offset; // Specifies the offset of the first component in the array.
+    int index;        /// Specifies the index of the generic vertex attribute
+    ElementType mateType;
+    size_t typeBytes;
+    size_t count;     // Specifies the number of components per generic vertex attribute
+    bool normalized;  // Specifies whether fixed-point data values should be normalized
+    size_t stride;    // Specifies the byte offset between consecutive generic vertex attributes.
+    size_t offset;    // Specifies the offset of the first component in the array.
 };
 
 /**
@@ -37,7 +52,7 @@ public:
      */
     void SetLayout(const Vector<ElementLayout>& layout);
 
-    virtual void SetData(const Vector<float>& data) const = 0;
+    virtual void SetData(const void* data, size_t size) const = 0;
     virtual void Bind() const = 0;
     virtual void UnBind() const = 0;
 

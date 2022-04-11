@@ -20,6 +20,7 @@
 #include "RHI/OpenGL/OpenGLVertexArray.hpp"
 #include "RHI/OpenGL/OpenGLShaderCode.hpp"
 #include "RHI/OpenGL/OpenGLViewport.hpp"
+#include "RHI/OpenGL/OpenGLDrawBatch.hpp"
 
 #include <folly/Hash.h>
 #include <glog/logging.h>
@@ -153,8 +154,8 @@ OpenGLRHIFactory::CreateFrameBuffer(const FrameBufferInfo& info) const {
 }
 
 std::unique_ptr<VertexBuffer>
-OpenGLRHIFactory::CreateVertexBuffer(const Vector<float>& data) const {
-    return std::make_unique<OpenGLVertexBuffer>(data);
+OpenGLRHIFactory::CreateVertexBuffer(const void* data, size_t size) const {
+    return std::make_unique<OpenGLVertexBuffer>(data, size);
 }
 
 std::unique_ptr<VertexArray>
@@ -246,6 +247,12 @@ std::unique_ptr<DrawCollection>
 OpenGLRHIFactory::CreateDrawCollection() const {
     return std::make_unique<OpenGLDrawCollection>();
 }
+
+std::unique_ptr<DrawBatch>
+OpenGLRHIFactory::CreateDrawBatch() const {
+    return std::make_unique<OpenGLDrawBatch>();
+}
+
 
 std::unique_ptr<UniformBuffer>
 OpenGLRHIFactory::CreateUniformBuffer(uint32_t size, uint32_t bindingPoint) const {

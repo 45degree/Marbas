@@ -34,7 +34,7 @@ public:
     void ClearBuffer(const ClearBuferBit bufferBit) const override;
 
     [[nodiscard]] std::unique_ptr<VertexBuffer>
-    CreateVertexBuffer(const Vector<float>& data) const override;
+    CreateVertexBuffer(const void* data, size_t size) const override;
 
     [[nodiscard]] std::unique_ptr<VertexArray>
     CreateVertexArray() const override;
@@ -59,6 +59,9 @@ public:
 
     [[nodiscard]] std::unique_ptr<DrawCollection>
     CreateDrawCollection() const override;
+
+    [[nodiscard]] std::unique_ptr<DrawBatch>
+    CreateDrawBatch() const override;
 
     [[nodiscard]] std::unique_ptr<UniformBuffer>
     CreateUniformBuffer(uint32_t size, uint32_t bindingPoint) const override;

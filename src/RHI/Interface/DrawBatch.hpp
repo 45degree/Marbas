@@ -5,7 +5,7 @@
 #include "RHI/Interface/VertexBuffer.hpp"
 #include "RHI/Interface/VertexArray.hpp"
 #include "RHI/Interface/IndexBuffer.hpp"
-#include "RHI/Interface/Texture.hpp"
+#include "RHI/Interface/Material.hpp"
 
 namespace Marbas {
 
@@ -21,15 +21,31 @@ public:
     ~DrawBatch() = default;
 
 public:
-    void AddTexture(Texture2D* texture) {
-        m_textures.push_back(texture);
+    virtual void Draw() = 0;
+
+    void SetVertexBuffer(std::unique_ptr<VertexBuffer>&& vertexBuffer) {
+        m_vertexBuffer = std::move(vertexBuffer);
     }
 
-private:
+    void SetIndexBuffer(std::unique_ptr<IndexBuffer>&& indexBuffer) {
+        m_indexBuffer = std::move(indexBuffer);
+    }
+
+    void SetMaterial(Material* material) noexcept {
+        m_material = material;
+    }
+
+    [[nodiscard]] bool IsComplete() const noexcept {
+        return !(m_vertexBuffer == nullptr || m_vertexArray == nullptr ||
+                 m_indexBuffer == nullptr || m_material == nullptr);
+    }
+
+protected:
     std::unique_ptr<VertexBuffer> m_vertexBuffer = nullptr;
-    std::unique_ptr<IndexBuffer> m_indicesBuffer = nullptr;
-    Vector<Texture2D*> m_textures;
-    Shader* m_shader;
+    std::unique_ptr<VertexArray> m_vertexArray = nullptr;
+    std::unique_ptr<IndexBuffer> m_indexBuffer = nullptr;
+
+    Material* m_material;
 };
 
 }  // namespace Marbas

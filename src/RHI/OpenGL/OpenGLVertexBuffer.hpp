@@ -10,14 +10,14 @@ namespace Marbas {
 class OpenGLVertexBuffer : public VertexBuffer {
 public:
     explicit OpenGLVertexBuffer(std::size_t size);
-    explicit OpenGLVertexBuffer(const Vector<float>& data);
+    explicit OpenGLVertexBuffer(const void* data, size_t size);
 
     ~OpenGLVertexBuffer() override;
 
 public:
     void Bind() const override;
     void UnBind() const override;
-    void SetData(const Vector<float>& data) const override;
+    void SetData(const void* data, size_t size) const override;
 
 private:
     GLuint VBO;
