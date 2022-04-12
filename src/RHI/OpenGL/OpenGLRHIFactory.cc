@@ -158,6 +158,11 @@ OpenGLRHIFactory::CreateVertexBuffer(const void* data, size_t size) const {
     return std::make_unique<OpenGLVertexBuffer>(data, size);
 }
 
+std::unique_ptr<VertexBuffer>
+OpenGLRHIFactory::CreateVertexBuffer(size_t size) const {
+    return std::make_unique<OpenGLVertexBuffer>(size);
+}
+
 std::unique_ptr<VertexArray>
 OpenGLRHIFactory::CreateVertexArray() const {
     return std::make_unique<OpenGLVertexArray>();
@@ -166,6 +171,11 @@ OpenGLRHIFactory::CreateVertexArray() const {
 std::unique_ptr<IndexBuffer>
 OpenGLRHIFactory::CreateIndexBuffer(const Vector<uint32_t>& indices) const {
     return std::make_unique<OpenGLIndexBuffer>(indices);
+}
+
+std::unique_ptr<IndexBuffer>
+OpenGLRHIFactory::CreateIndexBuffer(size_t size) const {
+
 }
 
 std::unique_ptr<ShaderCode>

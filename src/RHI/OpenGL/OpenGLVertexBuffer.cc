@@ -4,7 +4,10 @@
 
 namespace Marbas {
 
-OpenGLVertexBuffer::OpenGLVertexBuffer(std::size_t size) : VBO(0) {
+OpenGLVertexBuffer::OpenGLVertexBuffer(std::size_t size) :
+    VertexBuffer(size),
+    VBO(0)
+{
     LOG(INFO) << "create an opengl vertex buffer";
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -12,7 +15,10 @@ OpenGLVertexBuffer::OpenGLVertexBuffer(std::size_t size) : VBO(0) {
     LOG(INFO) << "opengl vertex buffer create finish";
 }
 
-OpenGLVertexBuffer::OpenGLVertexBuffer(const void* data, size_t size) : VBO(0) {
+OpenGLVertexBuffer::OpenGLVertexBuffer(const void* data, size_t size) :
+    VertexBuffer(size),
+    VBO(0)
+{
     LOG(INFO) << "create an opengl vertex buffer";
 
     glGenBuffers(1, &VBO);
@@ -41,11 +47,17 @@ void OpenGLVertexBuffer::UnBind() const {
     LOG_IF(ERROR, error) << FORMAT("can't unbind vertex buffer {}, error code is {}", VBO, error);
 }
 
-void OpenGLVertexBuffer::SetData(const void* data, size_t size) const {
+void OpenGLVertexBuffer::SetData(const void* data, size_t size, size_t offset) const {
     LOG(INFO) << "set vertex buffer data";
 
+    if(offset + size > m_size) {
+        LOG(ERROR) << FORMAT("can't set data for buffer, this buffer's max size is {}", m_size);
+        return;
+    }
+
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(size), data);
+    glBufferSubData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(offset),
+                    static_cast<GLsizeiptr>(size), data);
 }
 
 }  // namespace Marbas

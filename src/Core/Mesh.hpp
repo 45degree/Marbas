@@ -17,6 +17,15 @@ extern "C" struct MeshVertexInfo {
 };
 #pragma pack()
 
+Vector<ElementLayout> GetMeshVertexInfoLayout() {
+    return {
+        ElementLayout{1, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
+        ElementLayout{2, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
+        ElementLayout{3, ElementType::FLOAT, sizeof(float), 2, false, 0, 0},
+        ElementLayout{4, ElementType::INT,  sizeof(int), 1, false, 0, 0},
+    };
+};
+
 class Mesh {
 public:
     explicit Mesh(const Path& meshPath) : m_meshPath(meshPath) {};
@@ -35,6 +44,10 @@ public:
 
     void SetMeshName(const String& name) {
         m_meshName = name;
+    }
+
+    [[nodiscard]] size_t GetVertexByte() const {
+        return sizeof(decltype(m_vertices[0])) * m_vertices.size();
     }
 
     [[nodiscard]] String GetMeshName() const {

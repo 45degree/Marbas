@@ -17,7 +17,7 @@ public:
 public:
     void Bind() const override;
     void UnBind() const override;
-    void SetData(const void* data, size_t size) const override;
+    void SetData(const void* data, size_t size, size_t offset) const override;
 
 private:
     GLuint VBO;

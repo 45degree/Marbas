@@ -35,6 +35,10 @@ public:
         m_material = material;
     }
 
+    void SetVertexArray(std::unique_ptr<VertexArray>&& vertexArray) {
+        m_vertexArray = std::move(vertexArray);
+    }
+
     [[nodiscard]] bool IsComplete() const noexcept {
         return !(m_vertexBuffer == nullptr || m_vertexArray == nullptr ||
                  m_indexBuffer == nullptr || m_material == nullptr);

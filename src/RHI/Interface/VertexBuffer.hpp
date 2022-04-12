@@ -43,7 +43,7 @@ struct ElementLayout {
  */
 class VertexBuffer {
 public:
-    VertexBuffer() = default;
+    explicit VertexBuffer(size_t size) : m_size(size) {}
     virtual ~VertexBuffer() = default;
 public:
 
@@ -52,9 +52,13 @@ public:
      */
     void SetLayout(const Vector<ElementLayout>& layout);
 
-    virtual void SetData(const void* data, size_t size) const = 0;
+    virtual void SetData(const void* data, size_t size, size_t offset) const = 0;
     virtual void Bind() const = 0;
     virtual void UnBind() const = 0;
+
+    [[nodiscard]] size_t GetSize() const {
+        return m_size;
+    }
 
     [[nodiscard]] const Vector<ElementLayout>& Getlayout() const {
         return m_layout;
@@ -62,6 +66,7 @@ public:
 
 protected:
     Vector<ElementLayout> m_layout;
+    size_t m_size;
 };
 
 

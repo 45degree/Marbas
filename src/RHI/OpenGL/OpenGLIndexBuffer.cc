@@ -6,23 +6,26 @@
 
 namespace Marbas {
 
-OpenGLIndexBuffer::OpenGLIndexBuffer(size_t size) {
+OpenGLIndexBuffer::OpenGLIndexBuffer(size_t count):
+    IndexBuffer(count)
+{
     LOG(INFO) << "create opengl index buffer";
 
+    auto size = static_cast<GLsizeiptr>(count * sizeof(uint32_t));
     glCreateBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), nullptr, GL_STATIC_DRAW);
 }
 
-OpenGLIndexBuffer::OpenGLIndexBuffer(const Vector<uint32_t>& data) {
+OpenGLIndexBuffer::OpenGLIndexBuffer(const Vector<uint32_t>& data):
+    IndexBuffer(data.size())
+{
     LOG(INFO) << "create opengl index buffer";
 
     auto size = static_cast<GLsizeiptr>(data.size() * sizeof(int));
     glCreateBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data.data(), GL_STATIC_DRAW);
-
-    indexCount = data.size();
 }
 
 OpenGLIndexBuffer::~OpenGLIndexBuffer() {
@@ -44,14 +47,20 @@ void OpenGLIndexBuffer::UnBind() const {
     LOG_IF(ERROR, error) << FORMAT("can't unbind index buffer: {}", EBO);
 }
 
-void OpenGLIndexBuffer::SetData(const Vector<uint32_t> &data) {
+void OpenGLIndexBuffer::SetData(const Vector<uint32_t> &data, size_t offsetCount) {
     LOG(INFO) << "set data for opengl index buffer";
 
-    auto size = static_cast<GLsizeiptr>(data.size() * sizeof(int));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size, data.data());
+    if(offsetCount + data.size() > m_indexCount) {
+        LOG(ERROR) << FORMAT("can't set data for buffer, this buffer's max count is {}",
+                             m_indexCount);
+        return;
+    }
 
-    indexCount = data.size();
+    auto size = static_cast<GLsizeiptr>(data.size() * sizeof(uint32_t));
+    auto offset = static_cast<GLsizeiptr>(offsetCount * sizeof(uint32_t));
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(offset), size, data.data());
 }
 
 }  // namespace Marbas

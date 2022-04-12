@@ -7,17 +7,17 @@ namespace Marbas {
 
 class IndexBuffer {
 public:
-    IndexBuffer() = default;
+    explicit IndexBuffer(size_t count): m_indexCount(count) {}
     virtual ~IndexBuffer() = default;
 public:
     virtual void Bind() const = 0;
     virtual void UnBind() const = 0;
-    virtual void SetData(const Vector<uint32_t>& data) = 0;
+    virtual void SetData(const Vector<uint32_t>& data, size_t offsetCount) = 0;
 
-    [[nodiscard]] size_t GetIndexCount() const noexcept { return indexCount; }
+    [[nodiscard]] size_t GetIndexCount() const noexcept { return m_indexCount; }
 
 protected:
-    size_t indexCount = 0;
+    size_t m_indexCount = 0;
 };
 
 }  // namespace Marbas

@@ -36,11 +36,17 @@ public:
     [[nodiscard]] std::unique_ptr<VertexBuffer>
     CreateVertexBuffer(const void* data, size_t size) const override;
 
+    [[nodiscard]] std::unique_ptr<VertexBuffer>
+    CreateVertexBuffer(size_t size) const override;
+
     [[nodiscard]] std::unique_ptr<VertexArray>
     CreateVertexArray() const override;
 
     [[nodiscard]] std::unique_ptr<IndexBuffer>
     CreateIndexBuffer(const Vector<uint32_t>& indices) const override;
+
+    [[nodiscard]] std::unique_ptr<IndexBuffer>
+    CreateIndexBuffer(size_t size) const override;
 
     [[nodiscard]] std::unique_ptr<ShaderCode>
     CreateShaderCode(const Path& path, const ShaderCodeType type,

@@ -54,19 +54,19 @@ public:
         m_srcBlendFactor = srcBlendType;
     }
 
-    Vector<Texture2D*> GetAmbientTextures() const {
+    [[nodiscard]] Vector<Texture2D*> GetAmbientTextures() const {
         return Vector<Texture2D*>(m_ambientTextures.begin(), m_ambientTextures.end());
     }
 
-    Vector<Texture2D*> GetDiffuseTextures() const {
+    [[nodiscard]] Vector<Texture2D*> GetDiffuseTextures() const {
         return Vector<Texture2D*>(m_diffuseTextures.begin(), m_diffuseTextures.end());
     }
 
-    Shader* GetShader() const noexcept {
+    [[nodiscard]] Shader* GetShader() const noexcept {
         return m_shader;
     }
 
-    std::tuple<BlendFactor, BlendFactor> GetBlendFactor() const noexcept {
+    [[nodiscard]] std::tuple<BlendFactor, BlendFactor> GetBlendFactor() const noexcept {
         return {m_srcBlendFactor, m_dstBlendFactor};
     }
 

@@ -12,7 +12,7 @@ public:
     ~OpenGLIndexBuffer() override;
 
 public:
-    void SetData(const Vector<uint32_t>& data) override;
+    void SetData(const Vector<uint32_t>& data, size_t offset) override;
     void Bind() const override;
     void UnBind() const override;
 

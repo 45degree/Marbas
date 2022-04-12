@@ -57,7 +57,42 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
 }
 
 void SceneNode::GenerateGPUData() {
-    Vector<MeshVertexInfo> vertex;
+    // calculate the size of the vertex data
+    size_t totalVertexSize = std::accumulate(m_mesh.begin(), m_mesh.end(), 0, 
+        [](size_t size, const auto& mesh){
+            return size + mesh->GetVertexByte();
+        }
+    );
+    size_t totalIndexCount = std::accumulate(m_mesh.begin(), m_mesh.end(), 0,
+        [](size_t count, const auto& mesh) {
+            return count + 1;
+        }
+    );
+    auto vertexBuffer = Application::GetRendererFactory()->CreateVertexBuffer(totalVertexSize);
+    auto indexBuffer = Application::GetRendererFactory()->CreateIndexBuffer(totalIndexCount);
+
+    size_t vertexoOffset = 0, indexOffset = 0;
+    for(auto& mesh : m_mesh) {
+        auto vertices = mesh->GetVertices();
+        auto indices = mesh->GetIndices();
+        std::transform(indices.begin(), indices.end(), indices.begin(),
+            [&indexOffset](uint32_t index) {
+                return index + indexOffset;
+            }
+        );
+
+        vertexBuffer->SetData(vertices.data(), mesh->GetVertexByte(), vertexoOffset);
+        indexBuffer->SetData(indices, indexOffset);
+        vertexoOffset += mesh->GetVertexByte();
+        indexOffset += indices.size();
+    }
+    vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
+
+    auto vertexArray = Application::GetRendererFactory()->CreateVertexArray();
+    vertexArray->EnableVertexAttribArray(vertexBuffer.get());
+
+    m_drawBatch->SetVertexBuffer(std::move(vertexBuffer));
+    m_drawBatch->SetIndexBuffer(std::move(indexBuffer));
 }
 
 std::unique_ptr<Scene> Scene::CreateSceneFromFile(const Path& sceneFile) {
