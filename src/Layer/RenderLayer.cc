@@ -50,7 +50,6 @@ void RenderLayer::OnUpdate() {
     m_frameBuffer->Bind();
 
     m_rhiFactory->Enable(EnableItem::DEPTH);
-    // m_rhiFactory->Enable(EnableItem::BLEND);
 
     m_rhiFactory->ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     m_rhiFactory->ClearBuffer(ClearBuferBit::COLOR_BUFFER);
@@ -77,7 +76,6 @@ void RenderLayer::OnUpdate() {
     }
 
     m_frameBuffer->UnBind();
-    // m_rhiFactory->Disable(EnableItem::BLEND);
     m_rhiFactory->Disable(EnableItem::DEPTH);
 }
 

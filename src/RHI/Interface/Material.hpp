@@ -66,8 +66,16 @@ public:
         return Vector<Texture2D*>(m_diffuseTextures.begin(), m_diffuseTextures.end());
     }
 
-    Vector<Texture2D*> GetAllTextures() const {
+    [[nodiscard]] Vector<Texture2D*> GetAllTextures() const {
         return m_allTextures;
+    }
+
+    void EnableBlend(bool isEnable) noexcept {
+        m_enableBlend = isEnable;
+    }
+
+    [[nodiscard]] bool IsEnableBlend() const noexcept {
+        return m_enableBlend;
     }
 
     int GetTextureBindPoint(const Texture2D* texture) {
@@ -92,6 +100,7 @@ private:
     std::unordered_set<Texture2D*> m_ambientTextures;
     std::unordered_set<Texture2D*> m_diffuseTextures;
 
+    bool m_enableBlend = false;
     BlendFactor m_srcBlendFactor = BlendFactor::SRC_ALPHA;
     BlendFactor m_dstBlendFactor = BlendFactor::ONE_MINUS_SRC_ALPHA;
     Shader* m_shader;
