@@ -31,10 +31,10 @@ RenderLayer::~RenderLayer() = default;
 
 void RenderLayer::OnAttach() {
 
-    vertexShader = m_rhiFactory->CreateShaderCode("shader/shader.vert", ShaderCodeType::FILE,
+    vertexShader = m_rhiFactory->CreateShaderCode("shader/shader.vert.glsl", ShaderCodeType::FILE,
                                                    ShaderType::VERTEX_SHADER);
 
-    fragmentShader = m_rhiFactory->CreateShaderCode("shader/shader.frag", ShaderCodeType::FILE,
+    fragmentShader = m_rhiFactory->CreateShaderCode("shader/shader.frag.glsl", ShaderCodeType::FILE,
                                                     ShaderType::FRAGMENT_SHADER);
 
     m_shader = m_rhiFactory->CreateShader();
@@ -50,6 +50,7 @@ void RenderLayer::OnUpdate() {
     m_frameBuffer->Bind();
 
     m_rhiFactory->Enable(EnableItem::DEPTH);
+    // m_rhiFactory->Enable(EnableItem::BLEND);
 
     m_rhiFactory->ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     m_rhiFactory->ClearBuffer(ClearBuferBit::COLOR_BUFFER);
@@ -66,6 +67,9 @@ void RenderLayer::OnUpdate() {
     mvp.view = viewMatrix;
 
     if(m_scene != nullptr) {
+        // TODO: draw static batch
+
+        // draw scene node
         auto rootScene = m_scene->GetRootSceneNode();
         if(rootScene != nullptr) {
             RenderScenNode(rootScene, m_shader.get(), mvp);
@@ -73,6 +77,7 @@ void RenderLayer::OnUpdate() {
     }
 
     m_frameBuffer->UnBind();
+    // m_rhiFactory->Disable(EnableItem::BLEND);
     m_rhiFactory->Disable(EnableItem::DEPTH);
 }
 
@@ -103,16 +108,17 @@ void RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
 void RenderLayer::RenderScenNode(const SceneNode* node, Shader* shader, MVP& mvp) {
     if(node == nullptr) return;
 
-    auto drawCollection = node->GetDrawCollection();
-    if(drawCollection != nullptr) {
+    if(!node->IsStatic() && node->GetMeshCount() != 0) {
+        auto* drawBatch = node->GetDrawBatch();
         mvp.model = node->GetModelMatrix();
         shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
-        drawCollection->Draw(shader);
+
+        auto* material = node->GetMaterial();
+        material->SetShader(shader);
+        drawBatch->Draw();
     }
 
     auto subNodes = node->GetSubSceneNodes();
-    if(subNodes.empty()) return;
-
     for(const auto* subNode : subNodes) {
         RenderScenNode(subNode, shader, mvp);
     }

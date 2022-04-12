@@ -34,7 +34,7 @@ void VertexBuffer::SetLayout(const Vector<ElementLayout>& layout) {
     for(int i = 0; i < this->m_layout.size(); i++) {
         m_layout[i].offset = offset;
         m_layout[i].stride = stride;
-        offset += sizeof(float) * m_layout[i].count;
+        offset += m_layout[i].typeBytes * m_layout[i].count;
     }
 }
 

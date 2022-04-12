@@ -35,15 +35,19 @@ public:
 
 public:
     void AddAmbientTextures(Texture2D* texture) {
+        if(texture == nullptr) return;
         if(m_ambientTextures.find(texture) != m_ambientTextures.end()) return;
 
         m_ambientTextures.insert(texture);
+        m_allTextures.push_back(texture);
     }
 
     void AddDiffuseTextures(Texture2D* texture) {
+        if(texture == nullptr) return;
         if(m_diffuseTextures.find(texture) != m_diffuseTextures.end()) return;
 
         m_diffuseTextures.insert(texture);
+        m_allTextures.push_back(texture);
     }
 
     void SetShader(Shader* shader) {
@@ -62,6 +66,19 @@ public:
         return Vector<Texture2D*>(m_diffuseTextures.begin(), m_diffuseTextures.end());
     }
 
+    Vector<Texture2D*> GetAllTextures() const {
+        return m_allTextures;
+    }
+
+    int GetTextureBindPoint(const Texture2D* texture) {
+        if(texture == nullptr) return -1;
+
+        auto iter = std::find(m_allTextures.begin(), m_allTextures.end(), texture);
+        if(iter == m_allTextures.end()) return -1;
+
+        return static_cast<int>(std::distance(m_allTextures.begin(), iter));
+    }
+
     [[nodiscard]] Shader* GetShader() const noexcept {
         return m_shader;
     }
@@ -71,8 +88,10 @@ public:
     }
 
 private:
+    Vector<Texture2D*> m_allTextures;
     std::unordered_set<Texture2D*> m_ambientTextures;
     std::unordered_set<Texture2D*> m_diffuseTextures;
+
     BlendFactor m_srcBlendFactor = BlendFactor::SRC_ALPHA;
     BlendFactor m_dstBlendFactor = BlendFactor::ONE_MINUS_SRC_ALPHA;
     Shader* m_shader;

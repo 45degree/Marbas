@@ -32,6 +32,7 @@ enum class ClearBuferBit {
 
 enum class EnableItem {
     DEPTH,
+    BLEND,
 };
 
 /**

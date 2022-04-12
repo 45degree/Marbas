@@ -10,21 +10,14 @@ namespace Marbas {
 
 #pragma pack(1)
 extern "C" struct MeshVertexInfo {
-    float posX, posY, posZ;
-    float normalX, normalY, normalZ;
-    float textureU, textureV;
-    int textureId;
+    float posX = 0.f, posY = 0.f, posZ = 0.f;
+    float normalX = 0.f, normalY = 0.f, normalZ = 0.f;
+    float textureU = 0.f, textureV = 0.f;
+    float diffuseTextureId = 0, ambientTextureId = 0;
 };
 #pragma pack()
 
-Vector<ElementLayout> GetMeshVertexInfoLayout() {
-    return {
-        ElementLayout{1, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
-        ElementLayout{2, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
-        ElementLayout{3, ElementType::FLOAT, sizeof(float), 2, false, 0, 0},
-        ElementLayout{4, ElementType::INT,  sizeof(int), 1, false, 0, 0},
-    };
-};
+extern Vector<ElementLayout> GetMeshVertexInfoLayout();
 
 class Mesh {
 public:
@@ -50,14 +43,30 @@ public:
         return sizeof(decltype(m_vertices[0])) * m_vertices.size();
     }
 
+    [[nodiscard]] size_t GetVertexCount() const {
+        return m_vertices.size();
+    }
+
+    [[nodiscard]] size_t GetIndicesCount() const noexcept {
+        return m_indices.size();
+    }
+
     [[nodiscard]] String GetMeshName() const {
         return m_meshName;
+    }
+
+    [[nodiscard]] Texture2D* GetDiffuseTexture() const noexcept {
+        return m_diffuseTextures;
+    }
+
+    [[nodiscard]] Texture2D* GetAmbientTexture() const noexcept {
+        return m_ambientTextures;
     }
 
     void AddTexturesToMaterial(Material* material) const;
 
 private:
-    Vector<Texture2D*> LoadMaterialTexture(const aiMaterial* material, aiTextureType type);
+    Texture2D* LoadMaterialTexture(const aiMaterial* material, aiTextureType type);
 
 private:
     String m_meshName;
@@ -66,11 +75,8 @@ private:
     Vector<MeshVertexInfo> m_vertices;
     Vector<uint32_t> m_indices;
 
-    Vector<Texture2D*> m_textures;
-    Vector<Texture2D*> m_ambientTextures;
-    Vector<Texture2D*> m_diffuseTextures;
-
-    bool m_isLoadToGPU = false;
+    Texture2D* m_ambientTextures = nullptr;
+    Texture2D* m_diffuseTextures = nullptr;
 };
 
 }  // namespace Marbas

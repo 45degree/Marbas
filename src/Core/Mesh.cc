@@ -11,6 +11,15 @@
 
 namespace Marbas {
 
+Vector<ElementLayout> GetMeshVertexInfoLayout() {
+    return {
+        ElementLayout{0, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
+        ElementLayout{1, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
+        ElementLayout{2, ElementType::FLOAT, sizeof(float), 2, false, 0, 0},
+        ElementLayout{3, ElementType::FLOAT, sizeof(int),   2, false, 0, 0},
+    };
+};
+
 void Mesh::ReadFromNode(const aiMesh* mesh, const aiScene* scene) {
 
     // set vertex buffer
@@ -35,6 +44,7 @@ void Mesh::ReadFromNode(const aiMesh* mesh, const aiScene* scene) {
             info.textureU = texture[i].x;
             info.textureV = texture[i].y;
         }
+        m_vertices.push_back(info);
     }
 
     // set face (index buffer)
@@ -50,43 +60,31 @@ void Mesh::ReadFromNode(const aiMesh* mesh, const aiScene* scene) {
         auto* material = scene->mMaterials[mesh->mMaterialIndex];
 
         // diffuse texture
-        auto diffuseTextures = LoadMaterialTexture(material, aiTextureType_DIFFUSE);
-        m_diffuseTextures.insert(m_diffuseTextures.end(), diffuseTextures.begin(),
-                                 diffuseTextures.end());
+        m_diffuseTextures =  LoadMaterialTexture(material, aiTextureType_DIFFUSE);
 
         // ambient Textures
-        auto ambientTextures = LoadMaterialTexture(material, aiTextureType_AMBIENT);
-        m_ambientTextures.insert(m_ambientTextures.end(), ambientTextures.begin(),
-                                 ambientTextures.end());
-
+        m_ambientTextures = LoadMaterialTexture(material, aiTextureType_AMBIENT);
     }
 }
 
 void Mesh::AddTexturesToMaterial(Material* material) const {
-    for(auto* texture : m_diffuseTextures) {
-        material->AddDiffuseTextures(texture);
-    }
-
-    for(auto* texture : m_ambientTextures) {
-        material->AddAmbientTextures(texture);
-    }
+    material->AddDiffuseTextures(m_diffuseTextures);
+    material->AddAmbientTextures(m_ambientTextures);
 }
 
-Vector<Texture2D*> Mesh::LoadMaterialTexture(const aiMaterial* material, aiTextureType type) {
-    Vector<Texture2D*> result;
-    for(auto i = 0; i < material->GetTextureCount(type); i++) {
-        aiString str;
-        material->GetTexture(type, i, &str);
-        auto texturePath = (m_meshPath / str.C_Str()).string();
+Texture2D* Mesh::LoadMaterialTexture(const aiMaterial* material, aiTextureType type) {
+    if(material->GetTextureCount(type) == 0) return nullptr;
+
+    aiString str;
+    material->GetTexture(type, 0, &str);
+    auto texturePath = (m_meshPath / str.C_Str()).string();
 #ifdef _WIN32
-        std::replace(texturePath.begin(), texturePath.end(), '/', '\\');
+    std::replace(texturePath.begin(), texturePath.end(), '/', '\\');
 #elif __linux__
-        std::replace(texturePath.begin(), texturePath.end(), '\\', '/');
+    std::replace(texturePath.begin(), texturePath.end(), '\\', '/');
 #endif
-        auto texture = Application::GetRendererFactory()->CreateTexutre2D(texturePath);
-        result.push_back(texture);
-    }
-    return result;
+    auto texture = Application::GetRendererFactory()->CreateTexutre2D(texturePath);
+    return texture;
 }
 
 }  // namespace Marbas

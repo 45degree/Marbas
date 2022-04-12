@@ -46,6 +46,7 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
 
         sceneNode->SetDrawBatch(std::move(drawBatch));
         sceneNode->SetMaterial(std::move(material));
+        sceneNode->GenerateGPUData();
     }
 
     for(int i = 0; i < aNode->mNumChildren; i++) {
@@ -57,15 +58,19 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
 }
 
 void SceneNode::GenerateGPUData() {
+    /**
+     * TODO: the material can't add any texture after this function called
+     */
+
     // calculate the size of the vertex data
     size_t totalVertexSize = std::accumulate(m_mesh.begin(), m_mesh.end(), 0, 
-        [](size_t size, const auto& mesh){
+        [](size_t size, const std::unique_ptr<Mesh>& mesh){
             return size + mesh->GetVertexByte();
         }
     );
     size_t totalIndexCount = std::accumulate(m_mesh.begin(), m_mesh.end(), 0,
-        [](size_t count, const auto& mesh) {
-            return count + 1;
+        [](size_t count, const std::unique_ptr<Mesh>& mesh) {
+            return count + mesh->GetIndicesCount();
         }
     );
     auto vertexBuffer = Application::GetRendererFactory()->CreateVertexBuffer(totalVertexSize);
@@ -81,16 +86,23 @@ void SceneNode::GenerateGPUData() {
             }
         );
 
+        // TODO: need to file the texture id
+        auto diffuseId = m_material->GetTextureBindPoint(mesh->GetDiffuseTexture());
+        auto ambientId = m_material->GetTextureBindPoint(mesh->GetAmbientTexture());
+        for(auto& vertex : vertices) {
+            vertex.diffuseTextureId = diffuseId;
+            vertex.ambientTextureId = ambientId;
+        }
+
         vertexBuffer->SetData(vertices.data(), mesh->GetVertexByte(), vertexoOffset);
         indexBuffer->SetData(indices, indexOffset);
         vertexoOffset += mesh->GetVertexByte();
         indexOffset += indices.size();
     }
     vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
-
     auto vertexArray = Application::GetRendererFactory()->CreateVertexArray();
-    vertexArray->EnableVertexAttribArray(vertexBuffer.get());
 
+    m_drawBatch->SetVertexArray(std::move(vertexArray));
     m_drawBatch->SetVertexBuffer(std::move(vertexBuffer));
     m_drawBatch->SetIndexBuffer(std::move(indexBuffer));
 }

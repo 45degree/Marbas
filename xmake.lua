@@ -99,7 +99,7 @@ target("Marbas")
     add_files("$(projectdir)/src/Layer/**.cc")
     add_files("$(projectdir)/src/*.cc")
 
-    add_files("$(projectdir)/src/**.vert", "src/**.frag")
+    add_files("$(projectdir)/src/**.glsl")
 
     add_deps("Imgui", "ImGuizmo", "ImGuiFileDialog", "Marbas.RHI", "Marbas.Tool")
 

@@ -48,7 +48,8 @@ void OpenGLVertexBuffer::UnBind() const {
 }
 
 void OpenGLVertexBuffer::SetData(const void* data, size_t size, size_t offset) const {
-    LOG(INFO) << "set vertex buffer data";
+    LOG(INFO) << FORMAT("set vertex buffer data, the buffer size is {}, offset is {}",
+                        m_size, offset);
 
     if(offset + size > m_size) {
         LOG(ERROR) << FORMAT("can't set data for buffer, this buffer's max size is {}", m_size);

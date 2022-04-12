@@ -79,6 +79,8 @@ void OpenGLRHIFactory::Enable(EnableItem item) const {
     switch(item) {
     case EnableItem::DEPTH:
         glEnable(GL_DEPTH_TEST); break;
+    case EnableItem::BLEND:
+        glEnable(GL_BLEND); break;
     }
 }
 
@@ -86,6 +88,8 @@ void OpenGLRHIFactory::Disable(EnableItem item) const {
     switch(item) {
     case EnableItem::DEPTH:
         glDisable(GL_DEPTH_TEST); break;
+    case EnableItem::BLEND:
+        glDisable(GL_BLEND); break;
     }
 }
 
@@ -175,7 +179,7 @@ OpenGLRHIFactory::CreateIndexBuffer(const Vector<uint32_t>& indices) const {
 
 std::unique_ptr<IndexBuffer>
 OpenGLRHIFactory::CreateIndexBuffer(size_t size) const {
-
+    return std::make_unique<OpenGLIndexBuffer>(size);
 }
 
 std::unique_ptr<ShaderCode>

@@ -19,7 +19,7 @@ public:
      *            all static node in scnen will in one
      * drawcall
      */
-    explicit SceneNode(const String& nodeName, bool isStatic = true) :
+    explicit SceneNode(const String& nodeName, bool isStatic = false) :
         m_sceneNodeName(nodeName),
         m_isStatic(isStatic)
     {}
@@ -51,7 +51,8 @@ public:
     [[nodiscard]] Vector<const SceneNode*> GetSubSceneNodes() const {
         Vector<const SceneNode*> result;
         std::transform(m_subSceneNode.begin(), m_subSceneNode.end(), std::back_inserter(result),
-            [](std::unique_ptr<SceneNode>& node)->const SceneNode* { return node.get(); });
+            [](const std::unique_ptr<SceneNode>& node)->const SceneNode* { return node.get(); }
+        );
 
         return result;
     }
@@ -101,6 +102,14 @@ public:
 
     void SetDrawBatch(std::unique_ptr<DrawBatch>&& drawBathch) {
         m_drawBatch = std::move(drawBathch);
+    }
+
+    [[nodiscard]] DrawBatch* GetDrawBatch() const noexcept {
+        return m_drawBatch.get();
+    }
+
+    [[nodiscard]] Material* GetMaterial() const noexcept {
+        return m_material.get();
     }
 
     void GenerateGPUData();

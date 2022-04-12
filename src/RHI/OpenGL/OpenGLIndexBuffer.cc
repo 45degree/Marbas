@@ -48,7 +48,8 @@ void OpenGLIndexBuffer::UnBind() const {
 }
 
 void OpenGLIndexBuffer::SetData(const Vector<uint32_t> &data, size_t offsetCount) {
-    LOG(INFO) << "set data for opengl index buffer";
+    LOG(INFO) << FORMAT("set data for opengl index buffer, the buffer count is {},"
+                        " offset count is {}", m_indexCount, offsetCount);
 
     if(offsetCount + data.size() > m_indexCount) {
         LOG(ERROR) << FORMAT("can't set data for buffer, this buffer's max count is {}",
