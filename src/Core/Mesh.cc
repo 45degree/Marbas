@@ -16,7 +16,7 @@ Vector<ElementLayout> GetMeshVertexInfoLayout() {
         ElementLayout{0, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
         ElementLayout{1, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
         ElementLayout{2, ElementType::FLOAT, sizeof(float), 2, false, 0, 0},
-        ElementLayout{3, ElementType::FLOAT, sizeof(int),   2, false, 0, 0},
+        ElementLayout{3, ElementType::INT, sizeof(int),     2, false, 0, 0},
     };
 };
 

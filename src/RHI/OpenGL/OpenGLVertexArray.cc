@@ -57,8 +57,22 @@ void OpenGLVertexArray::EnableVertexAttribArray(const VertexBuffer* vertexBuffer
         auto offset = reinterpret_cast<const void*>(elementInfo.offset);
 
         glEnableVertexAttribArray(elementInfo.index);
-        glVertexAttribPointer(index, size, ConvertToOpenGLType(elementInfo.mateType),
-                              isNormalized, stride, offset);
+        switch(elementInfo.mateType) {
+        case ElementType::BYTE:
+        case ElementType::UNSIGNED_BYTE:
+        case ElementType::SHORT:
+        case ElementType::UNSIGNED_SHORT:
+        case ElementType::INT:
+        case ElementType::UNSIGNED_INT:
+            glVertexAttribIPointer(index, size, ConvertToOpenGLType(elementInfo.mateType),
+                                   stride, offset);
+            break;
+        case ElementType::FLOAT:
+        case ElementType::DOUBLE:
+        case ElementType::HALF_FLOAT:
+            glVertexAttribPointer(index, size, ConvertToOpenGLType(elementInfo.mateType),
+                                  isNormalized, stride, offset);
+        }
     }
 }
 

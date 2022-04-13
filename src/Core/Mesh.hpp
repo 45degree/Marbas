@@ -13,7 +13,7 @@ extern "C" struct MeshVertexInfo {
     float posX = 0.f, posY = 0.f, posZ = 0.f;
     float normalX = 0.f, normalY = 0.f, normalZ = 0.f;
     float textureU = 0.f, textureV = 0.f;
-    float diffuseTextureId = 0, ambientTextureId = 0;
+    int32_t diffuseTextureId = 0, ambientTextureId = 0;
 };
 #pragma pack()
 
