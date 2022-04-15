@@ -1,7 +1,7 @@
 #ifndef MARBAS_RHI_INTERFACE_RENDERER_FACETORY_H
 #define MARBAS_RHI_INTERFACE_RENDERER_FACETORY_H
 
-#include "RHI/Interface/DrawCollection.hpp"
+#include "RHI/Interface/DrawBatch.hpp"
 #include "RHI/Interface/FrameBuffer.hpp"
 #include "RHI/Interface/Shader.hpp"
 #include "RHI/Interface/UniformBuffer.hpp"
@@ -93,9 +93,6 @@ public:
     CreateTexutre2D(int width, int height, TextureFormatType formatType) = 0;
 
     virtual void DestoryTexture2D(Texture2D* texture) = 0;
-
-    [[nodiscard]] virtual std::unique_ptr<DrawCollection>
-    CreateDrawCollection() const = 0;
 
     [[nodiscard]] virtual std::unique_ptr<DrawBatch>
     CreateDrawBatch() const = 0;

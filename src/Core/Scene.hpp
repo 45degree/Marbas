@@ -2,7 +2,8 @@
 #define MARBAS_CORE_SCENE_H
 
 #include "Common.hpp"
-#include "Core/Model.hpp"
+#include "Core/Mesh.hpp"
+#include "RHI/RHI.hpp"
 
 namespace Marbas {
 
@@ -93,7 +94,11 @@ public:
     [[nodiscard]] glm::mat4 GetModelMatrix() const {
         if(m_mesh.empty()) return glm::mat4(1.0f);
 
-        return modelMatrix;
+        return m_modelMatrix;
+    }
+
+    void SetModelMatrix(const glm::mat4& modelMatrix) {
+        m_modelMatrix = modelMatrix;
     }
 
     void SetMaterial(std::unique_ptr<Material>&& material) {
@@ -119,7 +124,7 @@ protected:
     bool m_isStatic;
 
     /// This matrix only takes effect when this node has a grid
-    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    glm::mat4 m_modelMatrix = glm::mat4(1.0f);
     Vector<std::unique_ptr<SceneNode>> m_subSceneNode;
     Vector<std::unique_ptr<Mesh>> m_mesh;
 

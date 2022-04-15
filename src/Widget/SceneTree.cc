@@ -1,10 +1,11 @@
 #include "Widget/SceneTree.hpp"
 
 #include <imgui.h>
+#include <glog/logging.h>
 
 namespace Marbas {
 
-static void DrawNode(const SceneNode* node) {
+void SceneTreeWidget::DrawNode(const SceneNode* node) {
     if(node == nullptr) return;
 
     auto subNodes = node->GetSubSceneNodes();
@@ -17,7 +18,9 @@ static void DrawNode(const SceneNode* node) {
         }
     }
     else {
-        ImGui::Selectable(node->GetSceneNodeName());
+        if (ImGui::Selectable(node->GetSceneNodeName())) {
+            m_renderImage->SetSelectedSceneNode(const_cast<SceneNode*>(node));
+        }
     }
 }
 

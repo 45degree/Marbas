@@ -69,7 +69,7 @@ includes("src/Test")
 
 target("Marbas")
     set_kind("binary")
-    set_languages("c11", "cxx17")
+    set_languages("c11", "cxx20")
     add_rules("utils.glsl2spv", {
         outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "shader")
     })

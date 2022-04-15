@@ -12,7 +12,6 @@
 #endif
 
 #include "RHI/OpenGL/OpenGLRHIFactory.hpp"
-#include "RHI/OpenGL/OpenGLDrawCollection.hpp"
 #include "RHI/OpenGL/OpenGLFrameBuffer.hpp"
 #include "RHI/OpenGL/OpenGLIndexBuffer.hpp"
 #include "RHI/OpenGL/OpenGLShader.hpp"
@@ -203,7 +202,7 @@ OpenGLRHIFactory::CreateShader() const {
 
 Texture2D*
 OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
-    String pathStr = String(imagePath.string());
+    String pathStr = imagePath.string();
 
     // load image
     int width, height, nrChannels;
@@ -256,17 +255,10 @@ void OpenGLRHIFactory::DestoryTexture2D(Texture2D* texture) {
     m_texturePool.DeleteTexture(openGLTexture2D);
 }
 
-
-std::unique_ptr<DrawCollection>
-OpenGLRHIFactory::CreateDrawCollection() const {
-    return std::make_unique<OpenGLDrawCollection>();
-}
-
 std::unique_ptr<DrawBatch>
 OpenGLRHIFactory::CreateDrawBatch() const {
     return std::make_unique<OpenGLDrawBatch>();
 }
-
 
 std::unique_ptr<UniformBuffer>
 OpenGLRHIFactory::CreateUniformBuffer(uint32_t size, uint32_t bindingPoint) const {

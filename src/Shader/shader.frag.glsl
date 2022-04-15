@@ -12,9 +12,6 @@ void main() {
     if(id != -1) {
         vec4 texColor = texture(ourTextures[id], ourTex);
 
-        if(texColor.a < 0.1)
-            discard;
-
         FragColor = texColor;
     }
 }

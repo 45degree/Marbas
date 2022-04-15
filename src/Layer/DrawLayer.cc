@@ -1,7 +1,6 @@
 #include "Layer/DrawLayer.hpp"
 #include "Layer/RenderLayer.hpp"
 #include "Core/Application.hpp"
-#include "Core/Model.hpp"
 #include "Layer/RenderLayer.hpp"
 #include "Widget/RenderImage.hpp"
 #include "Widget/SceneTree.hpp"
@@ -38,8 +37,8 @@ void DrawLayer::OnAttach() {
         throw std::runtime_error("can't find renderLayer");
     }
 
-    auto renderImage = std::make_unique<Image>("renderImage");
-    auto sceneTree = std::make_unique<SceneTreeWidget>();
+    auto renderImage = std::make_unique<RenderImage>("renderImage");
+    auto sceneTree = std::make_unique<SceneTreeWidget>(renderImage.get());
 
     m_fileDialog= std::make_unique<FileDialog>(info);
     m_sceneFileDialog = std::make_unique<FileDialog>(sceneInfo);

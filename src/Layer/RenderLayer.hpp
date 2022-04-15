@@ -4,7 +4,6 @@
 #include "Layer/LayerBase.hpp"
 #include "RHI/RHI.hpp"
 #include "Core/Camera.hpp"
-#include "Core/Model.hpp"
 #include "Core/Scene.hpp"
 
 namespace Marbas {

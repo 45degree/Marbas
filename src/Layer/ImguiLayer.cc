@@ -35,7 +35,6 @@ void ImguiLayer::OnAttach() {
     gr.clear();
     range.AddRanges(ImGui::GetIO().Fonts->GetGlyphRangesChineseFull());
     range.BuildRanges(&gr);
-    // ImGui::GetIO().Fonts->AddFontFromFileTTF("wqy-zenhei.ttc", 16.0f, &cfg, gr.Data);
 
     io.Fonts->AddFontFromFileTTF("assert/font/NotoSansSC-Light.otf", 16, &cfg, gr.Data);
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls

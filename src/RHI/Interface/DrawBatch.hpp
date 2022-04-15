@@ -9,12 +9,6 @@
 
 namespace Marbas {
 
-struct DrawUnit  {
-    VertexBuffer* m_vertexBuffer = nullptr;
-    IndexBuffer* m_indicesBuffer = nullptr;
-    Vector<Texture2D*> textures;
-};
-
 class DrawBatch {
 public:
     DrawBatch() = default;

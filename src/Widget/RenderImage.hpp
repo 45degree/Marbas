@@ -8,13 +8,13 @@
 
 namespace Marbas {
 
-class Image : public Widget {
+class RenderImage : public Widget {
 public:
-    explicit Image(const String& title = "Image"):
+    explicit RenderImage(const String& title = "Image"):
         Widget(title)
     {}
 
-    ~Image() override = default;
+    ~RenderImage() override = default;
 
     void Draw() override;
 
@@ -22,7 +22,12 @@ public:
         return imageSize;
     }
 
+    void SetSelectedSceneNode(SceneNode* node) {
+        m_selectedNode = node;
+    }
+
 private:
+    SceneNode* m_selectedNode = nullptr;
     ImVec2 imageSize;
 };
 

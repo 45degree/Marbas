@@ -63,9 +63,6 @@ public:
 
     void DestoryTexture2D(Texture2D* texture) override;
 
-    [[nodiscard]] std::unique_ptr<DrawCollection>
-    CreateDrawCollection() const override;
-
     [[nodiscard]] std::unique_ptr<DrawBatch>
     CreateDrawBatch() const override;
 
