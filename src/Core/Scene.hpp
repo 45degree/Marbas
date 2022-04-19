@@ -101,23 +101,35 @@ public:
         m_modelMatrix = modelMatrix;
     }
 
-    void SetMaterial(std::unique_ptr<Material>&& material) {
-        m_material = std::move(material);
+    void AddMaterial(std::unique_ptr<Material>&& material) {
+        m_materials.push_back(std::move(material));
     }
 
-    void SetDrawBatch(std::unique_ptr<DrawBatch>&& drawBathch) {
-        m_drawBatch = std::move(drawBathch);
+    void AddDrawBatch(std::unique_ptr<DrawBatch>&& drawBatch) {
+        m_drawBatches.push_back(std::move(drawBatch));
     }
 
-    [[nodiscard]] DrawBatch* GetDrawBatch() const noexcept {
-        return m_drawBatch.get();
+    [[nodiscard]] Vector<DrawBatch*> GetDrawBatches() const noexcept {
+        Vector<DrawBatch*> drawBatches;
+        std::transform(m_drawBatches.begin(), m_drawBatches.end(), std::back_inserter(drawBatches),
+            [](const std::unique_ptr<DrawBatch>& drawBatch) {
+                return drawBatch.get();
+            }
+        );
+        return drawBatches;
     }
 
-    [[nodiscard]] Material* GetMaterial() const noexcept {
-        return m_material.get();
+    [[nodiscard]] Vector<Material*> GetMaterials() const noexcept {
+        Vector<Material*> materials;
+        std::transform(m_materials.begin(), m_materials.end(), std::back_inserter(materials),
+            [](const std::unique_ptr<Material>& material){
+                return material.get();
+            }
+        );
+        return materials;
     }
 
-    void GenerateGPUData();
+    void GenerateGPUData(RHIFactory* rhiFactory);
 
 protected:
     String m_sceneNodeName;
@@ -128,8 +140,8 @@ protected:
     Vector<std::unique_ptr<SceneNode>> m_subSceneNode;
     Vector<std::unique_ptr<Mesh>> m_mesh;
 
-    std::unique_ptr<Material> m_material = nullptr;
-    std::unique_ptr<DrawBatch> m_drawBatch = nullptr;
+    Vector<std::unique_ptr<Material>> m_materials;
+    Vector<std::unique_ptr<DrawBatch>> m_drawBatches;
 };
 
 class SceneLight : public SceneNode {

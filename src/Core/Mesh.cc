@@ -68,8 +68,8 @@ void Mesh::ReadFromNode(const aiMesh* mesh, const aiScene* scene) {
 }
 
 void Mesh::AddTexturesToMaterial(Material* material) const {
-    material->AddDiffuseTextures(m_diffuseTextures);
-    material->AddAmbientTextures(m_ambientTextures);
+    material->SetDiffuseTexture(m_diffuseTextures);
+    material->SetAmbientTexture(m_ambientTextures);
 }
 
 Texture2D* Mesh::LoadMaterialTexture(const aiMaterial* material, aiTextureType type) {
