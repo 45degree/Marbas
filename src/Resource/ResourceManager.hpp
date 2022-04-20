@@ -27,8 +27,7 @@ public:
 
 public:
 
-    // template<typename T = ResourceBase, typename std::enable_if<std::is_base_of_v<ResourceBase, T>>>
-    template<std::derived_from<ResourceBase> T>
+    template<std::derived_from<ResourceBase> T = ResourceBase>
     T* FindResource(int id) {
         auto* resource = m_resources[id].get();
         T* result = dynamic_cast<T*>(resource);
