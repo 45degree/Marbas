@@ -83,8 +83,10 @@ Texture2D* Mesh::LoadMaterialTexture(const aiMaterial* material, aiTextureType t
 #elif __linux__
     std::replace(texturePath.begin(), texturePath.end(), '\\', '/');
 #endif
+
+    // TODO: need to impove it
     auto texture = Application::GetRendererFactory()->CreateTexutre2D(texturePath);
-    return texture;
+    return nullptr;
 }
 
 }  // namespace Marbas

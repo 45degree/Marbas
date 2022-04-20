@@ -25,5 +25,9 @@ compile_commands.json
 
 imgui.ini
 
-resource/
-!resource/.gitkeep
+/resource/
+!/resource/.gitkeep
+
+# draw.io
+*.bkp
+*.dtmp

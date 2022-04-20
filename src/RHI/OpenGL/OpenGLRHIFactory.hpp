@@ -55,10 +55,10 @@ public:
     [[nodiscard]] std::unique_ptr<Shader>
     CreateShader() const override;
 
-    [[nodiscard]] Texture2D*
+    [[nodiscard]] std::unique_ptr<Texture2D>
     CreateTexutre2D(const Path& imagePath) override;
 
-    [[nodiscard]] Texture2D*
+    [[nodiscard]] std::unique_ptr<Texture2D>
     CreateTexutre2D(int width, int height, TextureFormatType formatType) override;
 
     void DestoryTexture2D(Texture2D* texture) override;

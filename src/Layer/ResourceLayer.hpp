@@ -2,26 +2,17 @@
 #define MARBAS_LAYER_RESOURCE_LAYER_HPP
 
 #include "Common.hpp"
-#include "RHI/Interface/Material.hpp"
-#include "RHI/Interface/Texture.hpp"
+#include "Resource/ResourceManager.hpp"
+#include "Layer/LayerBase.hpp"
 
 namespace Marbas {
 
-class ResourceLayer {
+class ResourceLayer : public LayerBase {
 public:
-    // void LoadReourcesFromPath(const Path& path);
-    //
-    // std::tuple<Texture2D*, int>
-    // AddTexture2D(const Path& imagePath);
-    //
-    // std::tuple<Texture2D*, int>
-    // AddTexture2D(int width, int height, TextureFormatType format);
-    //
-    // Texture2D* FindTexture(int textureId);
-    //
-    // std::tuple<Material*, int> AddMaterial();
+    explicit ResourceLayer(const Window* window);
 
 private:
+    std::unique_ptr<ResourceManager> m_resourceManager;
 
 };
 

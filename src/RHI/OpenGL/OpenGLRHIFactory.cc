@@ -200,7 +200,7 @@ OpenGLRHIFactory::CreateShader() const {
     return std::make_unique<OpenGLShader>();
 }
 
-Texture2D*
+std::unique_ptr<Texture2D>
 OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
     String pathStr = imagePath.string();
 
@@ -218,15 +218,11 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
 
     // get hash code of the image
     auto hashCode = folly::hash::fnv32_buf(data, static_cast<size_t>(width) * height * nrChannels);
-    if(m_texturePool.IsImageTexutreExisted(hashCode)) {
-        return m_texturePool.GetTextureByHashCode(hashCode);
-    }
 
     formatType = nrChannels == 4 ? TextureFormatType::RGBA : TextureFormatType::RGB;
 
     // create textrue
     auto texture = std::make_unique<OpenGLTexture2D>(width, height, formatType);
-    auto texturePtr = texture.get();
     texture->SetData(data, width * height * nrChannels);
     texture->SetImageInfo(imagePath.string(), hashCode);
 
@@ -234,19 +230,16 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
 
     LOG(INFO) << FORMAT("create a opengl texture, the image is {}", pathStr);
 
-    m_texturePool.AddTexture(std::move(texture), hashCode);
-
-    return texturePtr;
+    return texture;
 }
 
-Texture2D*
+std::unique_ptr<Texture2D>
 OpenGLRHIFactory::CreateTexutre2D(int width, int height, TextureFormatType format) {
-    auto texture = std::make_unique<OpenGLTexture2D>(width, height, format);
-    auto texturePtr = texture.get();
+    return std::make_unique<OpenGLTexture2D>(width, height, format);
+    // auto texturePtr = texture.get();
+    //
+    // m_texturePool.AddTexture(std::move(texture));
 
-    m_texturePool.AddTexture(std::move(texture));
-
-    return texturePtr;
 }
 
 
