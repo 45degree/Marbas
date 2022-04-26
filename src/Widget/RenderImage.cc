@@ -46,16 +46,16 @@ void RenderImage::Draw() {
 
     // draw 
     auto camera = renderLayer->GetCamera();
-    auto viewMatrix = camera->GetViewMartix();
-    auto perspectiveMatrix = camera->GetPerspective();
-    auto transform = m_selectedNode->GetModelMatrix();
-
-    ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
-                         ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(transform));
-
-    if(ImGuizmo::IsUsing()) {
-        m_selectedNode->SetModelMatrix(transform);
-    }
+    // auto viewMatrix = camera->GetViewMartix();
+    // auto perspectiveMatrix = camera->GetPerspective();
+    // auto transform = m_selectedNode->GetModelMatrix();
+    //
+    // ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
+    //                      ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(transform));
+    //
+    // if(ImGuizmo::IsUsing()) {
+    //     m_selectedNode->SetModelMatrix(transform);
+    // }
 
 
     /**

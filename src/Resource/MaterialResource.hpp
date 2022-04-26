@@ -30,6 +30,10 @@ public:
         m_material->SetDiffuseTexture(texture);
     }
 
+    [[nodiscard]] Material* GetMaterial() const noexcept {
+        return m_material.get();
+    }
+
 private:
     std::unique_ptr<Material> m_material;
 };

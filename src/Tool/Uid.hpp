@@ -16,6 +16,10 @@ public:
     Uid(const Uid& uid) = default;
     Uid& operator=(const Uid& uid) = default;
 
+    bool operator==(const Uid& uid) const {
+        return m_uid == uid.m_uid;
+    }
+
 private:
     uint64_t m_uid;
 
@@ -30,7 +34,7 @@ private:
 namespace std {
     template<>
     struct hash<Marbas::Uid> {
-        size_t operator()(const Marbas::Uid& uid) {
+        size_t operator()(const Marbas::Uid& uid) const {
             return hash<uint64_t>()(uid.m_uid);
         }
     };

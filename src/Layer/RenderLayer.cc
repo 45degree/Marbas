@@ -105,28 +105,28 @@ void RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
 }
 
 void RenderLayer::RenderScenNode(const SceneNode* node, Shader* shader, MVP& mvp) {
-    if(node == nullptr) return;
-
-    if(!node->IsStatic() && node->GetMeshCount() != 0) {
-        auto drawBatches = node->GetDrawBatches();
-        auto materials = node->GetMaterials();
-        mvp.model = node->GetModelMatrix();
-        shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
-
-        for(auto* material : materials) {
-            material->SetShader(shader);
-        }
-
-        for(auto* drawBatch : drawBatches) {
-            drawBatch->Draw();
-        }
-
-    }
-
-    auto subNodes = node->GetSubSceneNodes();
-    for(const auto* subNode : subNodes) {
-        RenderScenNode(subNode, shader, mvp);
-    }
+    // if(node == nullptr) return;
+    //
+    // if(!node->IsStatic() && node->GetMeshCount() != 0) {
+    //     auto drawBatches = node->GetDrawBatches();
+    //     auto materials = node->GetMaterials();
+    //     mvp.model = node->GetModelMatrix();
+    //     shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
+    //
+    //     for(auto* material : materials) {
+    //         material->SetShader(shader);
+    //     }
+    //
+    //     for(auto* drawBatch : drawBatches) {
+    //         drawBatch->Draw();
+    //     }
+    //
+    // }
+    //
+    // auto subNodes = node->GetSubSceneNodes();
+    // for(const auto* subNode : subNodes) {
+    //     RenderScenNode(subNode, shader, mvp);
+    // }
 }
 
 }  // namespace Marbas

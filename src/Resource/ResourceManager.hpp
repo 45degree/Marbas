@@ -35,15 +35,6 @@ public:
 
     void RemoveResource(const Uid& id);
 
-public:
-
-    // template<std::derived_from<ResourceBase> T = ResourceBase>
-    // T* FindResource(int id) {
-    //     auto* resource = m_resources[id].get();
-    //     T* result = dynamic_cast<T*>(resource);
-    //     return result;
-    // }
-
 private:
     RHIFactory* m_rhiFactory;
 

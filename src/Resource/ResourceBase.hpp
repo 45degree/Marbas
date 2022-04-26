@@ -10,6 +10,7 @@ class ResourceBase {
 protected:
     ResourceBase() = default;
 
+public:
     virtual ~ResourceBase() = default;
 
 public:

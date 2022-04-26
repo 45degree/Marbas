@@ -51,6 +51,7 @@ target("Marbas")
     add_files("$(projectdir)/src/Event/**.cc")
     add_files("$(projectdir)/src/Widget/**.cc")
     add_files("$(projectdir)/src/Layer/**.cc")
+    add_files("$(projectdir)/src/Resource/**.cc")
     add_files("$(projectdir)/src/*.cc")
 
     add_files("$(projectdir)/src/**.glsl")

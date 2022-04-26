@@ -11,6 +11,7 @@ namespace Marbas {
 class Scene;
 class SceneNode {
     friend Scene;
+public:
 
     /**
      * @brief Create a scene node
@@ -47,6 +48,10 @@ public:
         return m_meshes;
     }
 
+    [[nodiscard]] size_t GetMeshesCount() const noexcept {
+        return m_meshes.size();
+    }
+
     void DeleteSubSceneNode(const SceneNode* node) {
         for(int i = 0; i < m_subSceneNode.size(); i++) {
             if(node == m_subSceneNode[i].get()) {
@@ -73,7 +78,7 @@ class Entity;
 class Scene {
     friend Entity;
 public:
-    Scene();
+    Scene(const Path& path, ResourceManager* resourceManager);
 
     ~Scene() = default;
 
@@ -101,6 +106,10 @@ public:
      */
     void GenarateStaticRenderDate();
 
+    [[nodiscard]] const Path& GetPath() const noexcept {
+        return m_path;
+    }
+
 public:
 
     /**
@@ -110,7 +119,12 @@ public:
      *
      * @return Scene
      */
-    static std::unique_ptr<Scene> CreateSceneFromFile(const Path& sceneFile);
+    static std::unique_ptr<Scene> CreateSceneFromFile(const Path& sceneFile,
+                                                      ResourceManager* resourceManager);
+
+private:
+    void ProcessNode(SceneNode* sceneNode, ResourceManager* resourceManager,
+                     const aiScene* aScene, const aiNode* aNode);
 
 private:
 
@@ -118,6 +132,11 @@ private:
 
     // TODO: new
     entt::registry m_registry;
+    ResourceManager* m_resourceManager = nullptr;
+
+    const Path& m_path;
+
+    Vector<Mesh> m_staticMeshes;
 };
 
 }  // namespace Marbas

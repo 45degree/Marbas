@@ -13,7 +13,7 @@ class LayerBase {
 public:
     explicit LayerBase(const Window* window);
 
-    virtual ~LayerBase() = 0;
+    virtual ~LayerBase();
 
 public:
     void AddNextLayer(LayerBase* nextLayer) {

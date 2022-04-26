@@ -11,8 +11,9 @@
 
 namespace Marbas {
 
-DrawLayer::DrawLayer(const Window* window) :
-    LayerBase(window)
+DrawLayer::DrawLayer(const Window* window, ResourceManager* resourceManager) :
+    LayerBase(window),
+    m_resourceManager(resourceManager)
 {}
 
 DrawLayer::~DrawLayer() = default;
@@ -64,7 +65,7 @@ void DrawLayer::DrawMenuBar() {
     });
 
     m_sceneFileDialog->SelectCallback([&](const char* filePathName, const char* fileName) {
-        auto scene = Scene::CreateSceneFromFile(filePathName);
+        auto scene = Scene::CreateSceneFromFile(filePathName, m_resourceManager);
 
         auto widget = m_widgetsMap["SceneTree"];
         auto sceneTree = dynamic_cast<SceneTreeWidget*>(widget);

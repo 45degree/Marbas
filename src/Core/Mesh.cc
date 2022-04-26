@@ -23,14 +23,26 @@ Vector<ElementLayout> GetMeshVertexInfoLayout() {
     };
 };
 
-Mesh MeshCreatePolicy::CreateMeshFromNode(const aiMesh* aMesh, const aiScene* aScene,
-                                          Scene* scene, const Path& relativePath,
-                                          ResourceManager* resourceManager) {
+static Texture2DResource* LoadTexture2D(const aiMaterial* material, aiTextureType type,
+                                        const Path& relatePath, ResourceManager* resourceManager) {
 
-    auto mesh = Entity::CreateEntity<MeshCreatePolicy>(scene);
+    if(material->GetTextureCount(type) == 0) return nullptr;
 
-    auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, mesh);
-    auto& renderComponent = Entity::GetComponent<RenderComponent>(scene, mesh);
+    aiString str;
+    material->GetTexture(type, 0, &str);
+    auto texturePath = (relatePath / str.C_Str()).string();
+#ifdef _WIN32
+    std::replace(texturePath.begin(), texturePath.end(), '/', '\\');
+#elif __linux__
+    std::replace(texturePath.begin(), texturePath.end(), '\\', '/');
+#endif
+
+    auto textureResource = resourceManager->AddTexture(texturePath);
+    return textureResource;
+}
+
+void MeshPolicy::ReadVertexFromNode(const aiMesh* aMesh, const aiScene* aScene,
+                                    MeshComponent& meshComponent) {
 
     // set vertex buffer
     auto* texture = aMesh->mTextureCoords[0];
@@ -57,6 +69,7 @@ Mesh MeshCreatePolicy::CreateMeshFromNode(const aiMesh* aMesh, const aiScene* aS
         meshComponent.m_vertices.push_back(info);
     }
 
+
     // set face (index buffer)
     for(unsigned int i = 0; i < aMesh->mNumFaces; i++) {
         auto face = aMesh->mFaces[i];
@@ -64,39 +77,66 @@ Mesh MeshCreatePolicy::CreateMeshFromNode(const aiMesh* aMesh, const aiScene* aS
             meshComponent.m_indices.push_back(face.mIndices[j]);
         }
     }
+}
 
-    // load texture path
-    if (aMesh->mMaterialIndex >= 0) {
-        auto* material = aScene->mMaterials[aMesh->mMaterialIndex];
+void MeshPolicy::ReadMaterialFromNode(const aiMesh* aMesh, const aiScene* aScene, const Path& path,
+                                      RenderComponent& renderComponent,
+                                      ResourceManager* resourceManager) {
 
-        // diffuse texture
-        renderComponent.m_diffuseTexture = LoadTexture2D(material, aiTextureType_DIFFUSE,
-                                                         relativePath, resourceManager);
+    if (aMesh->mMaterialIndex < 0) return;
 
-        // ambient Textures
-        renderComponent.m_ambientTexture = LoadTexture2D(material, aiTextureType_AMBIENT,
-                                                         relativePath, resourceManager);
+    auto* material = aScene->mMaterials[aMesh->mMaterialIndex];
+
+    // diffuse texture
+    renderComponent.m_material = resourceManager->AddMaterial();
+
+    auto diffuseTexture = LoadTexture2D(material, aiTextureType_DIFFUSE, path, resourceManager);
+
+    // ambient Textures
+    auto ambientTexture = LoadTexture2D(material, aiTextureType_AMBIENT, path, resourceManager);
+
+    if(renderComponent.m_material == nullptr) {
+        renderComponent.m_material = resourceManager->AddMaterial();
     }
 
-    return mesh;
+    renderComponent.m_material->SetDiffuseTexture(diffuseTexture);
+    renderComponent.m_material->SetAmbientTexture(ambientTexture);
 }
-//
-// Texture2DResource* LoadTexture2D(const aiMaterial* material, aiTextureType type,
-//                                  const Path& relatePath, ResourceManager* resourceManager) {
-//
-//     if(material->GetTextureCount(type) == 0) return nullptr;
-//
-//     aiString str;
-//     material->GetTexture(type, 0, &str);
-//     auto texturePath = (relatePath / str.C_Str()).string();
-// #ifdef _WIN32
-//     std::replace(texturePath.begin(), texturePath.end(), '/', '\\');
-// #elif __linux__
-//     std::replace(texturePath.begin(), texturePath.end(), '\\', '/');
-// #endif
-//
-//     auto textureResource = resourceManager->AddTexture(texturePath);
-//     return textureResource;
-// }
+
+void MeshPolicy::LoadMeshToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory) {
+
+    if(!Entity::HasComponent<RenderComponent>(scene, mesh)) return;
+    auto& renderComponent = Entity::GetComponent<RenderComponent>(scene, mesh);
+
+    if(renderComponent.m_drawBatch == nullptr) {
+        renderComponent.m_drawBatch = rhiFactory->CreateDrawBatch();
+    }
+
+    // set vertex
+    auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, mesh);
+    auto vertexCount = meshComponent.m_vertices.size();
+    auto vertexBuffer = rhiFactory->CreateVertexBuffer(vertexCount);
+    vertexBuffer->SetData(meshComponent.m_vertices.data(), vertexCount, 0);
+    vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
+
+    auto indexCount = meshComponent.m_indices.size();
+    auto indexBuffer = rhiFactory->CreateIndexBuffer(indexCount);
+    indexBuffer->SetData(meshComponent.m_indices, 0);
+
+    auto vertexArray = rhiFactory->CreateVertexArray();
+
+    renderComponent.m_drawBatch->SetVertexBuffer(std::move(vertexBuffer));
+    renderComponent.m_drawBatch->SetIndexBuffer(std::move(indexBuffer));
+    renderComponent.m_drawBatch->SetVertexArray(std::move(vertexArray));
+
+    // set material
+    if(renderComponent.m_material == nullptr) {
+        LOG(INFO) << "this mesh don't have a material";
+        return;
+    }
+
+    auto* material = renderComponent.m_material->GetMaterial();
+    renderComponent.m_drawBatch->SetMaterial(material);
+}
 
 }  // namespace Marbas

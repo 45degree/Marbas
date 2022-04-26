@@ -20,12 +20,18 @@ struct MeshComponent {
     Vector<uint32_t> m_indices;
 };
 
+struct TransformComponent {
+    glm::mat4 modelMatrix;
+};
+
 struct StaticMeshComponent {
 };
 
 struct RenderComponent {
     MaterialResource* m_material;
     ShaderResource* m_shader;
+
+    std::unique_ptr<DrawBatch> m_drawBatch = nullptr;
 };
 
 }  // namespace Marbas

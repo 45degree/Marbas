@@ -2,6 +2,7 @@
 #define MARBARS_LAYER_DRAW_H
 
 #include "Layer/LayerBase.hpp"
+#include "Resource/ResourceManager.hpp"
 #include "Widget/Widget.hpp"
 #include "Widget/FileDialog.hpp"
 
@@ -9,7 +10,7 @@ namespace Marbas {
 
 class DrawLayer : public LayerBase {
 public:
-    explicit DrawLayer(const Window* windows);
+    DrawLayer(const Window* windows, ResourceManager* resourceManager);
     ~DrawLayer() override;
 
 public:
@@ -32,6 +33,8 @@ private:
     std::unique_ptr<FileDialog> m_fileDialog;
 
     std::unique_ptr<FileDialog> m_sceneFileDialog;
+
+    ResourceManager* m_resourceManager;
 };
 
 }  // namespace Marbas

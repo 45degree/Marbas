@@ -1,5 +1,4 @@
 #include "Resource/ResourceManager.hpp"
-#include <wingdi.h>
 
 namespace Marbas{
 
