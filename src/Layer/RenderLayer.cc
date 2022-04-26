@@ -6,8 +6,10 @@
 
 namespace Marbas {
 
-RenderLayer::RenderLayer(int width, int height, const Window* window):
-    LayerBase(window)
+RenderLayer::RenderLayer(int width, int height, ResourceManager* resourceManager,
+                         const Window* window):
+    LayerBase(window),
+    m_resourceManager(resourceManager)
 {
    m_rhiFactory = Application::GetRendererFactory();
 

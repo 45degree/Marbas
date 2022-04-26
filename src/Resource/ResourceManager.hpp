@@ -5,10 +5,18 @@
 #include "Resource/ResourceBase.hpp"
 #include "Resource/ShaderResource.hpp"
 #include "Resource/TextureResource.hpp"
+#include "Resource/MaterialResource.hpp"
 
 #include <concepts>
 
 namespace Marbas {
+
+struct ShaderFileInfo {
+    ShaderCodeType type;
+    Path vertexShaderPath;
+    Path fragmentShaderPath;
+};
+
 
 class ResourceManager {
 public:
@@ -21,23 +29,30 @@ public:
 public:
     Texture2DResource* AddTexture(const Path& imagePath);
 
-    ShaderResource* AddShader() {return nullptr;}
+    ShaderResource* AddShader(const ShaderFileInfo& shaderFileInfo);
 
-    Material* AddMaterial() {return nullptr;}
+    MaterialResource* AddMaterial();
+
+    void RemoveResource(const Uid& id);
 
 public:
 
-    template<std::derived_from<ResourceBase> T = ResourceBase>
-    T* FindResource(int id) {
-        auto* resource = m_resources[id].get();
-        T* result = dynamic_cast<T*>(resource);
-        return result;
-    }
+    // template<std::derived_from<ResourceBase> T = ResourceBase>
+    // T* FindResource(int id) {
+    //     auto* resource = m_resources[id].get();
+    //     T* result = dynamic_cast<T*>(resource);
+    //     return result;
+    // }
 
 private:
     RHIFactory* m_rhiFactory;
-    Vector<std::unique_ptr<ResourceBase>> m_resources;
-    std::unordered_map<String, ResourceBase*> m_resourcePath;
+
+    std::unordered_map<Uid, std::unique_ptr<ResourceBase>> m_resources;
+    std::unordered_set<Texture2DResource*> m_texture2DResources;
+    std::unordered_set<MaterialResource*> m_materialResources;
+    std::unordered_set<ShaderResource*> m_shaderResources;
+
+    std::unordered_map<String, Uid> m_staticResourcePath;
 };
 
 }  // namespace Marbas

@@ -3,11 +3,11 @@
 
 namespace Marbas {
 
-ResourceLayer::ResourceLayer( const Window* window) :
-    LayerBase(window)
+ResourceLayer::ResourceLayer(std::unique_ptr<ResourceManager>&& resourceManager,
+                             const Window* window):
+    LayerBase(window),
+    m_resourceManager(std::move(resourceManager))
 {
-    auto rhi = Application::GetRendererFactory();
-    m_resourceManager = std::make_unique<ResourceManager>(rhi);
 }
 
 }  // namespace Marbas

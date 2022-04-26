@@ -9,11 +9,14 @@ namespace Marbas {
 
 class ResourceLayer : public LayerBase {
 public:
-    explicit ResourceLayer(const Window* window);
+    ResourceLayer(std::unique_ptr<ResourceManager>&& resourceManager, const Window* window);
+
+    [[nodiscard]] ResourceManager* GetResourceManager() const noexcept {
+        return m_resourceManager.get();
+    }
 
 private:
     std::unique_ptr<ResourceManager> m_resourceManager;
-
 };
 
 }  // namespace Marbas

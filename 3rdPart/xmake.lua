@@ -45,7 +45,7 @@ target_end();
 
 target("ImGuizmo")
     set_kind("static")
-    set_languages("c11", "cxx11")
+    set_languages("c11", "cxx17")
     add_deps("Imgui")
 
     add_includedirs("$(projectdir)/3rdPart/ImGuizmo", { public = true })

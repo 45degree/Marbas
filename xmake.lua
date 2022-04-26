@@ -14,6 +14,7 @@ add_requires("assimp v5.2.3")
 add_requires("toml++ v3.0.0")
 add_requires("libiconv 1.16")
 add_requires("gtest 1.11.0")
+add_requires("entt v3.9.0")
 add_requires("uchardet")
 
 includes("src/RHI")
@@ -57,6 +58,6 @@ target("Marbas")
     add_deps("Imgui", "ImGuizmo", "ImGuiFileDialog", "Marbas.RHI", "Marbas.Tool")
 
     add_packages("glfw", "glm", "glog", "folly", "assimp",
-                 "toml++", "libiconv", "uchardet")
+                 "toml++", "libiconv", "uchardet", "entt")
 
 target_end()

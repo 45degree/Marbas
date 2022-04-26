@@ -1,25 +1,24 @@
 #ifndef MARBAS_RESOURCE_RESOURCE_BASE_HPP
 #define MARBAS_RESOURCE_RESOURCE_BASE_HPP
 
+#include "Common.hpp"
+#include "Tool/Uid.hpp"
+
 namespace Marbas {
 
-enum class ResourceType {
-    TEXTURE2D,
-    SHADER,
-};
-
 class ResourceBase {
-public:
-    explicit ResourceBase(ResourceType type, int id = 0):
-        m_type(type),
-        m_id(id)
-    {}
+protected:
+    ResourceBase() = default;
 
     virtual ~ResourceBase() = default;
 
+public:
+    [[nodiscard]] Uid GetUid() const noexcept {
+        return m_id;
+    }
+
 protected:
-    int m_id;
-    ResourceType m_type;
+    Uid m_id;
 };
 
 }  // namespace Marbas

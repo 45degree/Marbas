@@ -6,6 +6,7 @@
 #include "Layer/DockspaceLayer.hpp"
 #include "Layer/DrawLayer.hpp"
 #include "Layer/RenderLayer.hpp"
+#include "Layer/ResourceLayer.hpp"
 #include "RHI/RHI.hpp"
 
 #include <glog/logging.h>
@@ -21,16 +22,17 @@ struct WindowData {
     std::unique_ptr<DrawLayer> m_drawLayer;
     std::unique_ptr<ImguiLayer> m_imguiLayer;
     std::unique_ptr<RenderLayer> m_renderLayer;
+    std::unique_ptr<ResourceLayer> m_resourceLayer = nullptr;
 };
 
 Window::Window(const WindowProp& winProp):
         m_windowName(winProp.name),
         windowData(std::make_unique<WindowData>())
 {
+    m_rhiFactory = Application::GetRendererFactory();
     windowData->width = winProp.width;
     windowData->height = winProp.height;
     windowData->eventCollection = std::make_unique<EventCollection>();
-    m_rhiFactory = Application::GetRendererFactory();
 }
 
 Window::~Window() {
@@ -60,23 +62,25 @@ void Window::CreateSingleWindow() {
 
     // attach layer
 
+    auto resourceManager = std::make_unique<ResourceManager>(m_rhiFactory);
+    auto resourceLayer = std::make_unique<ResourceLayer>(std::move(resourceManager), this);
     auto dockSpaceLayer = std::make_unique<DockspaceLayer>(this);
     auto imguiLayer = std::make_unique<ImguiLayer>(this);
     auto drawLayer = std::make_unique<DrawLayer>(this);
-    auto renderLayer = std::make_unique<RenderLayer>(1920, 1080, this);
-
+    auto renderLayer = std::make_unique<RenderLayer>(1920, 1080, resourceLayer->GetResourceManager(), this);
 
     dockSpaceLayer->AddNextLayer(drawLayer.get());
     imguiLayer->AddNextLayer(dockSpaceLayer.get());
     renderLayer->AddNextLayer(imguiLayer.get());
+    resourceLayer->AddNextLayer(renderLayer.get());
 
-
-    firstLayer = renderLayer.get();
+    firstLayer = resourceLayer.get();
 
     windowData->m_imguiLayer =std::move(imguiLayer);
     windowData->m_dockerSpaceLayer = std::move(dockSpaceLayer);
     windowData->m_drawLayer = std::move(drawLayer);
     windowData->m_renderLayer = std::move(renderLayer);
+    windowData->m_resourceLayer = std::move(resourceLayer);
 
 
     firstLayer->Attach();
@@ -99,14 +103,6 @@ void Window::ShowWindow() {
     // clear buffer
     m_rhiFactory->ClearBuffer(ClearBuferBit::COLOR_BUFFER);
 }
-
-// LayerBase* Window::GetLayer(const String &layerName) const {
-//     // auto& layers = windowData->LayerMap;
-//     // if(layers.find(layerName) == layers.end()) return nullptr;
-//
-//     // return layers.at(layerName);
-//     return nullptr;
-// }
 
 RenderLayer* Window::GetRenderLayer() const {
     return windowData->m_renderLayer.get();

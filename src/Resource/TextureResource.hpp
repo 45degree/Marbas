@@ -6,15 +6,10 @@
 
 namespace Marbas {
 
-class TextureResource : public ResourceBase {
-protected:
-    explicit TextureResource(ResourceType type, int id = 0) : ResourceBase(type, id) {}
-};
-
-class Texture2DResource final : public TextureResource {
+class Texture2DResource final : public ResourceBase {
 public:
-    explicit Texture2DResource(std::unique_ptr<Texture2D>&& texture, int id = 0) :
-        TextureResource(ResourceType::TEXTURE2D, id),
+    explicit Texture2DResource(std::unique_ptr<Texture2D>&& texture) :
+        ResourceBase(),
         m_texture(std::move(texture))
     {}
 
@@ -24,7 +19,16 @@ public:
         return m_texture.get();
     }
 
+    [[nodiscard]] const Path& GetPath() const noexcept {
+        return m_path;
+    }
+
+    void SetPath(const Path& path) {
+        m_path = path;
+    }
+
 private:
+    Path m_path;
     std::unique_ptr<Texture2D> m_texture;
 };
 

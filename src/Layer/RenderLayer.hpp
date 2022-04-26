@@ -5,6 +5,7 @@
 #include "RHI/RHI.hpp"
 #include "Core/Camera.hpp"
 #include "Core/Scene.hpp"
+#include "Resource/ResourceManager.hpp"
 
 namespace Marbas {
 
@@ -16,7 +17,7 @@ struct MVP {
 
 class RenderLayer : public LayerBase{
 public:
-    RenderLayer(int width, int height, const  Window* window);
+    RenderLayer(int width, int height, ResourceManager* resourceManager, const Window* window);
     ~RenderLayer() override;
 
 public:
@@ -73,6 +74,7 @@ private:
 
     FrameBufferInfo m_frameBufferInfo;
     RHIFactory* m_rhiFactory;
+    ResourceManager* m_resourceManager;
 
 private:
     bool m_isFrameChanged = false;

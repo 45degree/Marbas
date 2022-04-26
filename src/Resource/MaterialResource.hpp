@@ -9,7 +9,10 @@ namespace Marbas {
 
 class MaterialResource final : public ResourceBase {
 public:
-    MaterialResource();
+    explicit MaterialResource(std::unique_ptr<Material>&& material):
+        ResourceBase(),
+        m_material(std::move(material))
+    {}
 
 public:
     void SetShader(ShaderResource* shaderResource) {

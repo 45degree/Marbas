@@ -1,5 +1,7 @@
 #include "Core/Scene.hpp"
+#include "Core/Mesh.hpp"
 #include "Core/Application.hpp"
+#include "Core/Component.hpp"
 #include "Tool/EncodingConvert.hpp"
 
 #include <assimp/Importer.hpp>
@@ -56,7 +58,21 @@ static void ProcessNode(Scene* scene, SceneNode* sceneNode,
     }
 }
 
+void Scene::CombineStaticEntity() {
+    const auto& entities = m_registry.view<MeshComponent, StaticMeshComponent>();
+    for(const auto& entity : entities) {
+        auto& mesh = entities.get<MeshComponent>(entity);
+    }
+}
+
+Scene::Scene():
+    m_rootNode(std::make_unique<SceneNode>("RootNode"))
+{
+    Mesh staticMesh(this);
+}
+
 void SceneNode::GenerateGPUData(RHIFactory* rhiFactory) {
+
     // TODO: splite the mesh by texture
     if(m_mesh.empty()) return;
 

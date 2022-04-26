@@ -1,4 +1,7 @@
 #include "Core/Mesh.hpp"
+#include "Core/Scene.hpp"
+#include "Core/Entity.hpp"
+#include "Core/Component.hpp"
 #include "Core/Application.hpp"
 #include "RHI/RHI.hpp"
 #include "Common.hpp"
@@ -20,13 +23,20 @@ Vector<ElementLayout> GetMeshVertexInfoLayout() {
     };
 };
 
-void Mesh::ReadFromNode(const aiMesh* mesh, const aiScene* scene) {
+Mesh MeshCreatePolicy::CreateMeshFromNode(const aiMesh* aMesh, const aiScene* aScene,
+                                          Scene* scene, const Path& relativePath,
+                                          ResourceManager* resourceManager) {
+
+    auto mesh = Entity::CreateEntity<MeshCreatePolicy>(scene);
+
+    auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, mesh);
+    auto& renderComponent = Entity::GetComponent<RenderComponent>(scene, mesh);
 
     // set vertex buffer
-    auto* texture = mesh->mTextureCoords[0];
-    for(unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        auto vertex = mesh->mVertices[i];
-        auto normal = mesh->mNormals[i];
+    auto* texture = aMesh->mTextureCoords[0];
+    for(unsigned int i = 0; i < aMesh->mNumVertices; i++) {
+        auto vertex = aMesh->mVertices[i];
+        auto normal = aMesh->mNormals[i];
 
         MeshVertexInfo info;
         info.posX = vertex.x;
@@ -44,49 +54,49 @@ void Mesh::ReadFromNode(const aiMesh* mesh, const aiScene* scene) {
             info.textureU = texture[i].x;
             info.textureV = texture[i].y;
         }
-        m_vertices.push_back(info);
+        meshComponent.m_vertices.push_back(info);
     }
 
     // set face (index buffer)
-    for(unsigned int i = 0; i < mesh->mNumFaces; i++) {
-        auto face = mesh->mFaces[i];
+    for(unsigned int i = 0; i < aMesh->mNumFaces; i++) {
+        auto face = aMesh->mFaces[i];
         for(unsigned int j = 0; j < face.mNumIndices; j++) {
-            m_indices.push_back(face.mIndices[j]);
+            meshComponent.m_indices.push_back(face.mIndices[j]);
         }
     }
 
     // load texture path
-    if (mesh->mMaterialIndex >= 0) {
-        auto* material = scene->mMaterials[mesh->mMaterialIndex];
+    if (aMesh->mMaterialIndex >= 0) {
+        auto* material = aScene->mMaterials[aMesh->mMaterialIndex];
 
         // diffuse texture
-        m_diffuseTextures =  LoadMaterialTexture(material, aiTextureType_DIFFUSE);
+        renderComponent.m_diffuseTexture = LoadTexture2D(material, aiTextureType_DIFFUSE,
+                                                         relativePath, resourceManager);
 
         // ambient Textures
-        m_ambientTextures = LoadMaterialTexture(material, aiTextureType_AMBIENT);
+        renderComponent.m_ambientTexture = LoadTexture2D(material, aiTextureType_AMBIENT,
+                                                         relativePath, resourceManager);
     }
+
+    return mesh;
 }
-
-void Mesh::AddTexturesToMaterial(Material* material) const {
-    material->SetDiffuseTexture(m_diffuseTextures);
-    material->SetAmbientTexture(m_ambientTextures);
-}
-
-Texture2D* Mesh::LoadMaterialTexture(const aiMaterial* material, aiTextureType type) {
-    if(material->GetTextureCount(type) == 0) return nullptr;
-
-    aiString str;
-    material->GetTexture(type, 0, &str);
-    auto texturePath = (m_meshPath / str.C_Str()).string();
-#ifdef _WIN32
-    std::replace(texturePath.begin(), texturePath.end(), '/', '\\');
-#elif __linux__
-    std::replace(texturePath.begin(), texturePath.end(), '\\', '/');
-#endif
-
-    // TODO: need to impove it
-    auto texture = Application::GetRendererFactory()->CreateTexutre2D(texturePath);
-    return nullptr;
-}
+//
+// Texture2DResource* LoadTexture2D(const aiMaterial* material, aiTextureType type,
+//                                  const Path& relatePath, ResourceManager* resourceManager) {
+//
+//     if(material->GetTextureCount(type) == 0) return nullptr;
+//
+//     aiString str;
+//     material->GetTexture(type, 0, &str);
+//     auto texturePath = (relatePath / str.C_Str()).string();
+// #ifdef _WIN32
+//     std::replace(texturePath.begin(), texturePath.end(), '/', '\\');
+// #elif __linux__
+//     std::replace(texturePath.begin(), texturePath.end(), '\\', '/');
+// #endif
+//
+//     auto textureResource = resourceManager->AddTexture(texturePath);
+//     return textureResource;
+// }
 
 }  // namespace Marbas
