@@ -134,7 +134,7 @@ private:
     entt::registry m_registry;
     ResourceManager* m_resourceManager = nullptr;
 
-    const Path& m_path;
+    const Path m_path;
 
     Vector<Mesh> m_staticMeshes;
 };

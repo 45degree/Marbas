@@ -29,6 +29,10 @@ public:
         m_material = material;
     }
 
+    [[nodiscard]] Material* GetMaterial() const noexcept {
+        return m_material;
+    }
+
     void SetVertexArray(std::unique_ptr<VertexArray>&& vertexArray) {
         m_vertexArray = std::move(vertexArray);
     }

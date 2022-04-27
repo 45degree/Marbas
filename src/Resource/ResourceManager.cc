@@ -17,13 +17,14 @@ Texture2DResource* ResourceManager::AddTexture(const Path& imagePath) {
 
     m_staticResourcePath[pathString] = uid;
     m_resources.insert({uid, std::move(texture2DResource)});
+    m_texture2DResources.insert({uid, texture2DResourcePtr});
 
     return texture2DResourcePtr;
 }
 
 ShaderResource* ResourceManager::AddShader(const ShaderFileInfo& shaderFileInfo) {
 
-    auto vertexShaderCode = m_rhiFactory->CreateShaderCode(shaderFileInfo.fragmentShaderPath,
+    auto vertexShaderCode = m_rhiFactory->CreateShaderCode(shaderFileInfo.vertexShaderPath,
                                                            shaderFileInfo.type, 
                                                            ShaderType::VERTEX_SHADER);
 
@@ -41,6 +42,7 @@ ShaderResource* ResourceManager::AddShader(const ShaderFileInfo& shaderFileInfo)
     auto shaderResourcePtr = shaderResource.get();
 
     m_resources.insert({uid, std::move(shaderResource)});
+    m_shaderResources.insert({uid, shaderResourcePtr});
     return shaderResourcePtr;
 }
 
@@ -50,12 +52,71 @@ MaterialResource* ResourceManager::AddMaterial() {
     auto materialResource = std::make_unique<MaterialResource>(std::move(material));
     auto materialResourcePtr = materialResource.get();
     auto uid = materialResource->GetUid();
+
+    materialResource->SetShader(m_defaultShaderResource);
+
     m_resources.insert({uid, std::move(materialResource)});
+    m_materialResources.insert({uid, materialResourcePtr});
 
     return materialResourcePtr;
 }
 
 void ResourceManager::RemoveResource(const Uid& uid) {
+}
+
+Texture2DResource* ResourceManager::FindTexture(const Uid& uid) const noexcept {
+    if(m_texture2DResources.find(uid) == m_texture2DResources.end()) {
+        LOG(WARNING) << FORMAT("can't find texture resource which's uid is {}", uid);
+        return nullptr;
+    }
+
+    return m_texture2DResources.at(uid);
+}
+
+ShaderResource* ResourceManager::FindShaderResource(const Uid& uid) const noexcept {
+    if(m_shaderResources.find(uid) == m_shaderResources.end()) {
+        LOG(WARNING) << FORMAT("can't find shader resource which's uid is is {}", uid);
+        return nullptr;
+    }
+
+    return m_shaderResources.at(uid);
+}
+
+MaterialResource* ResourceManager::FindMaterialResource(const Uid& uid) const noexcept {
+    if(m_materialResources.find(uid) == m_materialResources.end()) {
+        LOG(WARNING) << FORMAT("can't find material resource which's uid is is {}", uid);
+        return nullptr;
+    }
+
+    return m_materialResources.at(uid);
+}
+
+
+Material* MaterialResource::LoadMaterial(ResourceManager* resourceManager) const {
+
+    LOG(INFO) << FORMAT("load material resource, uid is {}", m_id);
+
+    for(const auto& diffuseTexUid : m_diffuseTextureUids) {
+        auto* diffuseTexResource = resourceManager->FindTexture(diffuseTexUid);
+        if(diffuseTexResource != nullptr) {
+            m_material->SetDiffuseTexture(diffuseTexResource->GetTexture());
+        }
+    }
+
+    for(const auto& ambientTexUid : m_ambientTextureUids) {
+        auto* ambientTexResource = resourceManager->FindTexture(ambientTexUid);
+        if(ambientTexResource != nullptr) {
+            m_material->SetAmbientTexture(ambientTexResource->GetTexture());
+        }
+    }
+
+    auto* shaderResource = resourceManager->FindShaderResource(m_shaderResource);
+    LOG_IF(WARNING, shaderResource == nullptr) << FORMAT("can't set shader for material");
+    if(shaderResource != nullptr) {
+        m_material->SetShader(shaderResource->LoadShader());
+    }
+
+    return m_material.get();
 }
 
 }  // namespace Marbas

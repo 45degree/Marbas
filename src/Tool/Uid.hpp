@@ -5,10 +5,13 @@
 #include <functional>
 #include <random>
 
+#include <folly/Format.h>
+
 namespace Marbas {
 
 class Uid {
     friend struct std::hash<Marbas::Uid>;
+    friend class folly::FormatValue<Marbas::Uid>;
 public:
     Uid();
     ~Uid() = default;
@@ -39,5 +42,24 @@ namespace std {
         }
     };
 }
+
+namespace folly {
+
+template <>
+class FormatValue<Marbas::Uid> {
+public:
+    explicit FormatValue(const Marbas::Uid& val) : val_(val) {}
+
+    template <class FormatCallback>
+    void format(FormatArg& arg, FormatCallback& cb) const {
+        FormatValue<uint64_t>(val_.m_uid).format(arg, cb);
+    }
+
+private:
+    const Marbas::Uid& val_;
+};
+
+}  // namespace folly
+
 
 #endif

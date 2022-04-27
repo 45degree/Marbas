@@ -33,11 +33,14 @@ void OpenGLDrawBatch::Draw() {
 
 
     // set textures
-    auto allTextures = m_material->GetAllTextures();
+    auto diffuseTextures = m_material->GetDiffuseTexture();
+    if(diffuseTextures != nullptr) {
+        diffuseTextures->Bind(0);
+    }
 
-    int i = 0;
-    for(auto* texture : allTextures) {
-        texture->Bind(i++);
+    auto ambientTextures = m_material->GetAmbientTexture();
+    if(ambientTextures != nullptr) {
+        ambientTextures->Bind(1);
     }
 
     // set data
@@ -55,8 +58,13 @@ void OpenGLDrawBatch::Draw() {
     // unbind all data
     m_vertexBuffer->UnBind();
     m_indexBuffer->UnBind();
-    for(auto* texture : allTextures) {
-        texture->UnBind();
+
+    if(diffuseTextures != nullptr) {
+        diffuseTextures->UnBind();
+    }
+
+    if(ambientTextures != nullptr) {
+        ambientTextures->UnBind();
     }
 
     if(m_material->IsEnableBlend()) {

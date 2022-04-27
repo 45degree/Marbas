@@ -8,10 +8,7 @@ layout(location = 0) out vec4 FragColor;
 layout(binding = 0) uniform sampler2D ourTextures[32];
 
 void main() {
-    int id = int(texId[0]);
-    if(id != -1) {
-        vec4 texColor = texture(ourTextures[id], ourTex);
+    vec4 texColor = texture(ourTextures[0], ourTex);
 
-        FragColor = texColor;
-    }
+    FragColor = texColor;
 }

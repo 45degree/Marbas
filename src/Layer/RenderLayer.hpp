@@ -62,10 +62,10 @@ private:
     void RenderScenNode(const SceneNode* ndoe, Shader* shader, MVP& mvp);
 
 private:
-    std::unique_ptr<ShaderCode> vertexShader;
-    std::unique_ptr<ShaderCode> fragmentShader;
-
-    std::unique_ptr<Shader> m_shader;
+    // std::unique_ptr<ShaderCode> vertexShader;
+    // std::unique_ptr<ShaderCode> fragmentShader;
+    //
+    // std::unique_ptr<Shader> m_shader;
     std::unique_ptr<FrameBuffer> m_frameBuffer;
     std::unique_ptr<Viewport> m_viewport;
     std::unique_ptr<Camera> m_editorCamera;

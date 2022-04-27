@@ -14,18 +14,7 @@ public:
     {}
 
 public:
-    [[nodiscard]] Shader* GetShader() const noexcept {
-        if(m_shader == nullptr) return nullptr;
-        if(m_vertexShader == nullptr || m_fragmentShader == nullptr) return nullptr;
-        if(m_isLink) return m_shader.get();
-
-        m_shader->AddShaderCode(m_vertexShader.get());
-        m_shader->AddShaderCode(m_fragmentShader.get());
-        m_shader->Link();
-        m_isLink = true;
-
-        return m_shader.get();
-    }
+    [[nodiscard]] Shader* LoadShader();
 
     void SetVertexShader(std::unique_ptr<ShaderCode>&& vertexShader) {
         m_vertexShader = std::move(vertexShader);
@@ -41,7 +30,9 @@ private:
     std::unique_ptr<Shader> m_shader;
     std::unique_ptr<ShaderCode> m_vertexShader;
     std::unique_ptr<ShaderCode> m_fragmentShader;
-    mutable bool m_isLink = false;
+
+    bool m_isLink = false;
+    bool m_isLoad = false;
 };
 
 }  // namespace Marbas

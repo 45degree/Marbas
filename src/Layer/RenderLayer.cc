@@ -1,6 +1,8 @@
 #include "Layer/RenderLayer.hpp"
 #include "Common.hpp"
 #include "Core/Application.hpp"
+#include "Core/Entity.hpp"
+#include "Core/Mesh.hpp"
 #include "RHI/RHI.hpp"
 #include "Event/Input.hpp"
 
@@ -31,17 +33,6 @@ RenderLayer::RenderLayer(int width, int height, ResourceManager* resourceManager
 RenderLayer::~RenderLayer() = default;
 
 void RenderLayer::OnAttach() {
-
-    vertexShader = m_rhiFactory->CreateShaderCode("shader/shader.vert.glsl", ShaderCodeType::FILE,
-                                                   ShaderType::VERTEX_SHADER);
-
-    fragmentShader = m_rhiFactory->CreateShaderCode("shader/shader.frag.glsl", ShaderCodeType::FILE,
-                                                    ShaderType::FRAGMENT_SHADER);
-
-    m_shader = m_rhiFactory->CreateShader();
-    m_shader->AddShaderCode(fragmentShader.get());
-    m_shader->AddShaderCode(vertexShader.get());
-    m_shader->Link();
 }
 
 void RenderLayer::OnDetach() {}
@@ -69,11 +60,19 @@ void RenderLayer::OnUpdate() {
     if(m_scene != nullptr) {
         // TODO: draw static batch
 
-        // draw scene node
-        auto rootScene = m_scene->GetRootSceneNode();
-        if(rootScene != nullptr) {
-            RenderScenNode(rootScene, m_shader.get(), mvp);
-        }
+        auto& registry = m_scene->GetRigister();
+        auto view = registry.view<TransformComponent, RenderComponent>();
+        view.each([&](auto entity, TransformComponent& transform, RenderComponent& render){
+            if(!render.m_isOnGPU) {
+                MeshPolicy::LoadMeshToGPU(entity, m_scene.get(), m_rhiFactory, m_resourceManager);
+                render.m_isOnGPU = true;
+            }
+            auto* material = render.m_drawBatch->GetMaterial();
+            auto* shader = material->GetShader();
+            mvp.model = transform.modelMatrix;
+            shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
+            render.m_drawBatch->Draw();
+        });
     }
 
     m_frameBuffer->UnBind();

@@ -5,8 +5,12 @@
 #include "Resource/TextureResource.hpp"
 #include "Resource/ShaderResource.hpp"
 
+#include <glog/logging.h>
+#include <set>
+
 namespace Marbas {
 
+class ResourceManager;
 class MaterialResource final : public ResourceBase {
 public:
     explicit MaterialResource(std::unique_ptr<Material>&& material):
@@ -15,27 +19,33 @@ public:
     {}
 
 public:
-    void SetShader(ShaderResource* shaderResource) {
-        auto* shader = shaderResource->GetShader();
-        m_material->SetShader(shader);
+    void SetShader(const Uid& shaderResourceId) {
+        m_shaderResource = shaderResourceId;
     }
 
-    void SetAmbientTexture(Texture2DResource* texture2DResource) {
-        auto* texture = texture2DResource->GetTexture();
-        m_material->SetAmbientTexture(texture);
+    void AddAmbientTexture(const Uid& ambientTextureId) {
+        m_ambientTextureUids.insert(ambientTextureId);
     }
 
-    void SetDiffuseTexture(Texture2DResource* texture2DResource) {
-        auto* texture = texture2DResource->GetTexture();
-        m_material->SetDiffuseTexture(texture);
+    void AddAmbientTexture(const Vector<Uid>& ambientTextureIds) {
+        m_ambientTextureUids.insert(ambientTextureIds.begin(), ambientTextureIds.end());
     }
 
-    [[nodiscard]] Material* GetMaterial() const noexcept {
-        return m_material.get();
+    void AddDiffuseTexture(const Uid& diffuseTextureId) {
+        m_diffuseTextureUids.insert(diffuseTextureId);
     }
+
+    void AddDiffuseTextures(const Vector<Uid>& diffuseTextureIds) {
+        m_diffuseTextureUids.insert(diffuseTextureIds.begin(), diffuseTextureIds.end());
+    }
+
+    [[nodiscard]] Material* LoadMaterial(ResourceManager* resourceManager) const;
 
 private:
-    std::unique_ptr<Material> m_material;
+    std::unordered_set<Uid> m_diffuseTextureUids;
+    std::unordered_set<Uid> m_ambientTextureUids;
+    Uid m_shaderResource;
+    mutable std::unique_ptr<Material> m_material;
 };
 
 }  // namespace Marbas

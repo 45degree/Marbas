@@ -36,7 +36,8 @@ public:
                                      RenderComponent& renderComponent, 
                                      ResourceManager* resourceManager);
 
-    static void LoadMeshToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory);
+    static void LoadMeshToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory,
+                              ResourceManager* resourceManager);
 };
 
 }  // namespace Marbas

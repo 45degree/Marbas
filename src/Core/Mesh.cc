@@ -16,10 +16,9 @@ namespace Marbas {
 
 Vector<ElementLayout> GetMeshVertexInfoLayout() {
     return {
-        ElementLayout{0, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
-        ElementLayout{1, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
-        ElementLayout{2, ElementType::FLOAT, sizeof(float), 2, false, 0, 0},
-        ElementLayout{3, ElementType::INT, sizeof(int),     2, false, 0, 0},
+        ElementLayout{0, ElementType::FLOAT, sizeof(float),  3, false, 0, 0},
+        ElementLayout{1, ElementType::FLOAT, sizeof(float),  3, false, 0, 0},
+        ElementLayout{2, ElementType::FLOAT, sizeof(float),  2, false, 0, 0},
     };
 };
 
@@ -50,13 +49,14 @@ void MeshPolicy::ReadVertexFromNode(const aiMesh* aMesh, const aiScene* aScene,
         auto vertex = aMesh->mVertices[i];
         auto normal = aMesh->mNormals[i];
 
-        MeshVertexInfo info;
-        info.posX = vertex.x;
-        info.posY = vertex.y;
-        info.posZ = vertex.z;
-        info.normalX = normal.x;
-        info.normalY = normal.y;
-        info.normalZ = normal.z;
+        MeshVertexInfo info {
+            .posX = vertex.x,
+            .posY = vertex.y,
+            .posZ = vertex.z,
+            .normalX = normal.x,
+            .normalY = normal.y,
+            .normalZ = normal.z,
+        };
 
         if(texture == nullptr) {
             info.textureU = 0;
@@ -66,6 +66,7 @@ void MeshPolicy::ReadVertexFromNode(const aiMesh* aMesh, const aiScene* aScene,
             info.textureU = texture[i].x;
             info.textureV = texture[i].y;
         }
+
         meshComponent.m_vertices.push_back(info);
     }
 
@@ -87,23 +88,31 @@ void MeshPolicy::ReadMaterialFromNode(const aiMesh* aMesh, const aiScene* aScene
 
     auto* material = aScene->mMaterials[aMesh->mMaterialIndex];
 
-    // diffuse texture
-    renderComponent.m_material = resourceManager->AddMaterial();
+    if(!renderComponent.m_materialResource.has_value()) {
+        renderComponent.m_materialResource = resourceManager->AddMaterial()->GetUid();
+    }
 
+    Uid uid = renderComponent.m_materialResource.value();
+    auto* materialResource = resourceManager->FindMaterialResource(uid);
+    if(materialResource == nullptr) return;
+
+    // diffuse texture
     auto diffuseTexture = LoadTexture2D(material, aiTextureType_DIFFUSE, path, resourceManager);
 
     // ambient Textures
     auto ambientTexture = LoadTexture2D(material, aiTextureType_AMBIENT, path, resourceManager);
 
-    if(renderComponent.m_material == nullptr) {
-        renderComponent.m_material = resourceManager->AddMaterial();
+    if(diffuseTexture != nullptr) {
+        materialResource->AddDiffuseTexture(diffuseTexture->GetUid());
     }
 
-    renderComponent.m_material->SetDiffuseTexture(diffuseTexture);
-    renderComponent.m_material->SetAmbientTexture(ambientTexture);
+    if(ambientTexture != nullptr) {
+        materialResource->AddAmbientTexture(ambientTexture->GetUid());
+    }
 }
 
-void MeshPolicy::LoadMeshToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory) {
+void MeshPolicy::LoadMeshToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory,
+                               ResourceManager* resourceManager) {
 
     if(!Entity::HasComponent<RenderComponent>(scene, mesh)) return;
     auto& renderComponent = Entity::GetComponent<RenderComponent>(scene, mesh);
@@ -114,7 +123,7 @@ void MeshPolicy::LoadMeshToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory) 
 
     // set vertex
     auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, mesh);
-    auto vertexCount = meshComponent.m_vertices.size();
+    auto vertexCount = meshComponent.m_vertices.size() * sizeof(MeshVertexInfo);
     auto vertexBuffer = rhiFactory->CreateVertexBuffer(vertexCount);
     vertexBuffer->SetData(meshComponent.m_vertices.data(), vertexCount, 0);
     vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
@@ -130,12 +139,15 @@ void MeshPolicy::LoadMeshToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory) 
     renderComponent.m_drawBatch->SetVertexArray(std::move(vertexArray));
 
     // set material
-    if(renderComponent.m_material == nullptr) {
+    if(!renderComponent.m_materialResource.has_value()) {
         LOG(INFO) << "this mesh don't have a material";
         return;
     }
+    auto materialUid = renderComponent.m_materialResource.value();
 
-    auto* material = renderComponent.m_material->GetMaterial();
+    auto* materialResource = resourceManager->FindMaterialResource(materialUid);
+
+    auto* material = materialResource->LoadMaterial(resourceManager);
     renderComponent.m_drawBatch->SetMaterial(material);
 }
 

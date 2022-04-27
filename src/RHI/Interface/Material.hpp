@@ -28,6 +28,11 @@ enum class BlendFactor {
     ONE_MINUS_CONSTANT_ALPHA,
 };
 
+struct BlendFactorInfo {
+    BlendFactor srcBlendType;
+    BlendFactor dstBlendType;
+};
+
 class Material {
 public:
     Material() = default;
@@ -52,9 +57,9 @@ public:
         m_shader = shader;
     }
 
-    void SetBlendFactor(BlendFactor srcBlendType, BlendFactor dstBlendType) {
-        m_srcBlendFactor = srcBlendType;
-        m_dstBlendFactor = dstBlendType;
+    void SetBlendFactor(const BlendFactorInfo& blendFactorInfo) {
+        m_srcBlendFactor = blendFactorInfo.srcBlendType;
+        m_dstBlendFactor = blendFactorInfo.dstBlendType;
     }
 
     [[nodiscard]] Texture2D* GetAmbientTexture() const {
@@ -99,7 +104,7 @@ private:
     Texture2D* m_ambientTexture;
     Texture2D* m_diffuseTexture;
 
-    bool m_enableBlend = true;
+    bool m_enableBlend = false;
     BlendFactor m_srcBlendFactor = BlendFactor::SRC_ALPHA;
     BlendFactor m_dstBlendFactor = BlendFactor::ONE_MINUS_SRC_ALPHA;
     Shader* m_shader;
