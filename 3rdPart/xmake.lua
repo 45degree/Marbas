@@ -51,3 +51,9 @@ target("ImGuizmo")
     add_includedirs("$(projectdir)/3rdPart/ImGuizmo", { public = true })
     add_files("$(projectdir)/3rdPart/ImGuizmo/*.cpp")
 target_end()
+
+target("IconFontCppHeaders")
+    set_kind("headeronly")
+
+    add_includedirs("$(projectdir)/3rdPart/IconFontCppHeaders/", { public = true })
+target_end()

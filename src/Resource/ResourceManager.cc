@@ -111,7 +111,7 @@ Material* MaterialResource::LoadMaterial(ResourceManager* resourceManager) const
     }
 
     auto* shaderResource = resourceManager->FindShaderResource(m_shaderResource);
-    LOG_IF(WARNING, shaderResource == nullptr) << FORMAT("can't set shader for material");
+    LOG_IF(WARNING, shaderResource == nullptr) << "can't set shader for material";
     if(shaderResource != nullptr) {
         m_material->SetShader(shaderResource->LoadShader());
     }

@@ -2,6 +2,7 @@
 #define MARBARS_WIDGET_WIDGET_H
 
 #include "Common.hpp"
+#include "Core/Scene.hpp"
 
 namespace Marbas {
 
@@ -19,8 +20,13 @@ public:
 
     virtual void Draw() = 0;
 
+    void SetScene(Scene* scene) noexcept {
+        m_scene = scene;
+    }
+
 protected:
     const String m_widgetName;
+    Scene* m_scene;
 };
 
 }  // namespace Marbas

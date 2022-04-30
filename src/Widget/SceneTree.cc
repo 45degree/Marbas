@@ -1,4 +1,7 @@
 #include "Widget/SceneTree.hpp"
+#include "Core/Entity.hpp"
+
+#include <IconsFontAwesome6.h>
 
 #include <imgui.h>
 #include <glog/logging.h>
@@ -18,8 +21,18 @@ void SceneTreeWidget::DrawNode(const SceneNode* node) {
         }
     }
     else {
-        if (ImGui::Selectable(node->GetSceneNodeName())) {
-            m_renderImage->SetSelectedSceneNode(const_cast<SceneNode*>(node));
+        // if (ImGui::Selectable(node->GetSceneNodeName())) {
+        //     m_renderImage->SetSelectedSceneNode(const_cast<SceneNode*>(node));
+        // }
+    }
+
+    auto& meshes =node->GetMeshes();
+    for(auto& mesh : meshes) {
+        auto& tagsComponent = Entity::GetComponent<TagsCompoment>(m_scene, mesh);
+        const auto& tagName = tagsComponent.tags[TagsKey::NAME];
+        String name = String(ICON_FA_CIRCLE_NODES) + tagName.c_str();
+        if(ImGui::Selectable(name.c_str())) {
+            m_renderImage->SetSelectedSceneNode(mesh);
         }
     }
 }

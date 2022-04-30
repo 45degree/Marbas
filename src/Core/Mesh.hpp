@@ -26,6 +26,7 @@ public:
         registry.emplace<MeshComponent>(mesh);
         registry.emplace<RenderComponent>(mesh);
         registry.emplace<TransformComponent>(mesh);
+        registry.emplace<TagsCompoment>(mesh);
         return mesh;
     }
 

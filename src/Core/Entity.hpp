@@ -26,7 +26,7 @@ public:
     }
 
     template<typename T, typename... Args>
-    static void AddComponent(Scene* scene, entt::entity& entityHandle, Args&&... args) {
+    static void AddComponent(Scene* scene, const entt::entity& entityHandle, Args&&... args) {
         if(HasComponent<T>(scene, entityHandle)) {
             LOG(INFO) << FORMAT("this eneity has {}", typeid(T).name());
             return;
@@ -36,7 +36,7 @@ public:
     }
 
     template<typename T>
-    static T& GetComponent(Scene* scene, entt::entity& entityHandle) {
+    static T& GetComponent(Scene* scene, const entt::entity& entityHandle) {
         if(!HasComponent<T>(scene, entityHandle)) {
             String errorMsg = FORMAT("this entity has {}", typeid(T).name());
             LOG(INFO) << errorMsg;

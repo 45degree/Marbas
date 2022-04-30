@@ -4,6 +4,8 @@
 #include "Common.hpp"
 #include "Resource/ResourceManager.hpp"
 
+#include <unordered_map>
+
 namespace Marbas {
 
 #pragma pack(1)
@@ -13,6 +15,14 @@ extern "C" struct MeshVertexInfo {
     float textureU = 0.f, textureV = 0.f;
 };
 #pragma pack()
+
+enum class TagsKey {
+    NAME
+};
+
+struct TagsCompoment {
+    std::unordered_map<TagsKey, String> tags;
+};
 
 struct MeshComponent {
     Vector<MeshVertexInfo> m_vertices;

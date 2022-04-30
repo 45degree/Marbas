@@ -16,17 +16,12 @@ public:
     ~SceneTreeWidget() override = default;
 
 public:
-    void SetScene(Scene* scene) {
-        m_scene = scene;
-    }
-
     void Draw() override;
 
 private:
     void DrawNode(const SceneNode* node);
 
 private:
-    Scene* m_scene = nullptr;
     RenderImage* m_renderImage = nullptr;
 };
 

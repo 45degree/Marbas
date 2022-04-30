@@ -22,12 +22,12 @@ public:
         return imageSize;
     }
 
-    void SetSelectedSceneNode(SceneNode* node) {
-        m_selectedNode = node;
+    void SetSelectedSceneNode(Mesh mesh) {
+        m_selectedMesh = mesh;
     }
 
 private:
-    SceneNode* m_selectedNode = nullptr;
+    std::optional<Mesh> m_selectedMesh;
     ImVec2 imageSize;
 };
 

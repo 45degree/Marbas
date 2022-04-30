@@ -38,6 +38,9 @@ void Scene::ProcessNode(SceneNode* sceneNode, ResourceManager* resourceManager,
 
             auto mesh = Entity::CreateEntity<MeshPolicy>(this);
 
+            auto& tagsComponent = Entity::GetComponent<TagsCompoment>(this, mesh);
+            tagsComponent.tags[TagsKey::NAME] = String(aMesh->mName.C_Str());
+
             auto& meshComponent = Entity::GetComponent<MeshComponent>(this, mesh);
             MeshPolicy::ReadVertexFromNode(aMesh, aScene, meshComponent);
 

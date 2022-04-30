@@ -3,6 +3,8 @@
 #include "Common.hpp"
 #include "Core/Window.hpp"
 #include "Core/Application.hpp"
+#include "Core/Entity.hpp"
+#include "Core/Component.hpp"
 
 #include <ImGuizmo.h>
 
@@ -24,7 +26,7 @@ void RenderImage::Draw() {
      *
      */
 
-    if(m_selectedNode == nullptr) {
+    if(m_scene == nullptr || !m_selectedMesh.has_value()) {
         /**
          * set view matrix for next render
          */
@@ -44,19 +46,16 @@ void RenderImage::Draw() {
     ImGuizmo::SetDrawlist();
     ImGuizmo::SetRect(winPos.x + vMin.x, winPos.y + vMin.y, imageSize.x, imageSize.y);
 
-    // draw 
+    // draw
     auto camera = renderLayer->GetCamera();
-    // auto viewMatrix = camera->GetViewMartix();
-    // auto perspectiveMatrix = camera->GetPerspective();
-    // auto transform = m_selectedNode->GetModelMatrix();
-    //
-    // ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
-    //                      ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(transform));
-    //
-    // if(ImGuizmo::IsUsing()) {
-    //     m_selectedNode->SetModelMatrix(transform);
-    // }
+    auto viewMatrix = camera->GetViewMartix();
+    auto perspectiveMatrix = camera->GetPerspective();
 
+    auto& transform = Entity::GetComponent<TransformComponent>(m_scene, m_selectedMesh.value());
+
+    ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
+                         ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL,
+                         glm::value_ptr(transform.modelMatrix));
 
     /**
      * set view matrix for next render

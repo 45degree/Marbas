@@ -51,8 +51,10 @@ void DrawLayer::OnAttach() {
 }
 
 void DrawLayer::OnUpdate() {
+    auto* scene = m_window->GetRenderLayer()->GetScene();
     for(auto& widget : widgets) {
         ImGui::Begin(widget->GetWidgetName().c_str());
+        widget->SetScene(scene);
         widget->Draw();
         ImGui::End();
     }
@@ -66,13 +68,6 @@ void DrawLayer::DrawMenuBar() {
 
     m_sceneFileDialog->SelectCallback([&](const char* filePathName, const char* fileName) {
         auto scene = Scene::CreateSceneFromFile(filePathName, m_resourceManager);
-
-        auto widget = m_widgetsMap["SceneTree"];
-        auto sceneTree = dynamic_cast<SceneTreeWidget*>(widget);
-        if(sceneTree == nullptr) return;
-
-        sceneTree->SetScene(scene.get());
-
         auto renderLayer = m_window->GetRenderLayer();
         renderLayer->SetSecne(std::move(scene));
     });
