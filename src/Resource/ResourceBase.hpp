@@ -20,6 +20,7 @@ public:
 
 protected:
     Uid m_id;
+    mutable bool m_isLoad = false;
 };
 
 }  // namespace Marbas

@@ -116,6 +116,8 @@ Material* MaterialResource::LoadMaterial(ResourceManager* resourceManager) const
         m_material->SetShader(shaderResource->LoadShader());
     }
 
+    m_isLoad = true;
+
     return m_material.get();
 }
 

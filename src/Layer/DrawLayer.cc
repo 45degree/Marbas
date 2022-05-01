@@ -4,6 +4,7 @@
 #include "Layer/RenderLayer.hpp"
 #include "Widget/RenderImage.hpp"
 #include "Widget/SceneTree.hpp"
+#include "Widget/MeshInfomationWidget.hpp"
 #include "Core/Scene.hpp"
 #include "Common.hpp"
 
@@ -39,15 +40,23 @@ void DrawLayer::OnAttach() {
     }
 
     auto renderImage = std::make_unique<RenderImage>("renderImage");
-    auto sceneTree = std::make_unique<SceneTreeWidget>(renderImage.get());
+    auto sceneTree = std::make_unique<SceneTreeWidget>();
+    auto meshInfomationWidget = std::make_unique<MeshInfomationWidget>();
+
+    sceneTree->AddSelectMeshWidget(renderImage.get());
+    sceneTree->AddSelectMeshWidget(meshInfomationWidget.get());
 
     m_fileDialog= std::make_unique<FileDialog>(info);
     m_sceneFileDialog = std::make_unique<FileDialog>(sceneInfo);
-    // m_fileDialog->SetShow(false);
 
     AddWidget(std::move(renderImage));
     AddWidget(std::move(sceneTree));
+    AddWidget(std::move(meshInfomationWidget));
     // AddWidget(std::move(fileDialog));
+
+    for(auto& widget : widgets){
+        widget->SetResourceManager(m_resourceManager);
+    }
 }
 
 void DrawLayer::OnUpdate() {

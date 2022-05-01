@@ -8,7 +8,7 @@
 
 namespace Marbas {
 
-class RenderImage : public Widget {
+class RenderImage : public Widget, public IChangeMeshAble {
 public:
     explicit RenderImage(const String& title = "Image"):
         Widget(title)
@@ -22,7 +22,7 @@ public:
         return imageSize;
     }
 
-    void SetSelectedSceneNode(Mesh mesh) {
+    void ChangeMesh(const Mesh& mesh) override {
         m_selectedMesh = mesh;
     }
 

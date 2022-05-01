@@ -39,6 +39,12 @@ public:
         m_diffuseTextureUids.insert(diffuseTextureIds.begin(), diffuseTextureIds.end());
     }
 
+    Material* GetMaterial() const noexcept {
+        if(!m_isLoad) return nullptr;
+
+        return m_material.get();
+    }
+
     [[nodiscard]] Material* LoadMaterial(ResourceManager* resourceManager) const;
 
 private:

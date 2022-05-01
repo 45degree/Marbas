@@ -2,27 +2,29 @@
 #define MARBAS_WIDGET_SCENE_TREE
 
 #include "Widget/Widget.hpp"
-#include "Widget/RenderImage.hpp"
 #include "Core/Scene.hpp"
 
 namespace Marbas {
 
 class SceneTreeWidget : public Widget {
 public:
-    explicit SceneTreeWidget(RenderImage* renderImage):
-        Widget("SceneTree"),
-        m_renderImage(renderImage)
+    explicit SceneTreeWidget():
+        Widget("SceneTree")
     {}
     ~SceneTreeWidget() override = default;
 
 public:
     void Draw() override;
 
+    void AddSelectMeshWidget(IChangeMeshAble* widget) {
+        m_selectMeshWidgets.push_back(widget);
+    }
+
 private:
     void DrawNode(const SceneNode* node);
 
 private:
-    RenderImage* m_renderImage = nullptr;
+    Vector<IChangeMeshAble*> m_selectMeshWidgets;
 };
 
 }  // namespace Marbas
