@@ -55,8 +55,6 @@ public:
         return 0;
     }
 
-
-
 protected:
     uint32_t m_textureId = 0;
     std::optional<uint32_t> m_hashCode = std::nullopt;

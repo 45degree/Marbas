@@ -92,7 +92,7 @@ public:
     [[nodiscard]] virtual std::unique_ptr<Texture2D>
     CreateTexutre2D(int width, int height, TextureFormatType formatType) = 0;
 
-    virtual void DestoryTexture2D(Texture2D* texture) = 0;
+    // virtual void DestoryTexture2D(Texture2D* texture) = 0;
 
     [[nodiscard]] virtual std::unique_ptr<DrawBatch>
     CreateDrawBatch() const = 0;

@@ -236,16 +236,6 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
 std::unique_ptr<Texture2D>
 OpenGLRHIFactory::CreateTexutre2D(int width, int height, TextureFormatType format) {
     return std::make_unique<OpenGLTexture2D>(width, height, format);
-    // auto texturePtr = texture.get();
-    //
-    // m_texturePool.AddTexture(std::move(texture));
-
-}
-
-
-void OpenGLRHIFactory::DestoryTexture2D(Texture2D* texture) {
-    auto openGLTexture2D = dynamic_cast<OpenGLTexture2D*>(texture);
-    m_texturePool.DeleteTexture(openGLTexture2D);
 }
 
 std::unique_ptr<DrawBatch>

@@ -61,7 +61,7 @@ public:
     [[nodiscard]] std::unique_ptr<Texture2D>
     CreateTexutre2D(int width, int height, TextureFormatType formatType) override;
 
-    void DestoryTexture2D(Texture2D* texture) override;
+    // void DestoryTexture2D(Texture2D* texture) override;
 
     [[nodiscard]] std::unique_ptr<DrawBatch>
     CreateDrawBatch() const override;
@@ -76,8 +76,6 @@ public:
     CreateViewport() const override;
 
 private:
-    OpenGLTexturePool m_texturePool;
-
     friend RHIFactory;
 };
 

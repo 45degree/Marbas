@@ -78,37 +78,4 @@ void* OpenGLTexture2D::GetTexture() {
     return reinterpret_cast<void*>(textureID);
 }
 
-void OpenGLTexturePool::DeleteTexture(OpenGLTexture2D* texture) {
-    auto iter = std::find_if(m_textures.begin(), m_textures.end(),
-            [&](std::unique_ptr<OpenGLTexture2D>& m_texture) {
-        return m_texture.get() == texture;
-    });
-
-    if(iter == m_textures.end()) return;
-
-    if(!(*iter)->IsImageTexture()) {
-        m_textures.erase(iter);
-        return;
-    }
-
-    uint32_t hashCode = (*iter)->GetHashCode();
-    m_imageTextures.erase(hashCode);
-    m_textures.erase(iter);
-
-    return;
-}
-
-
-void OpenGLTexturePool::AddTexture(std::unique_ptr<OpenGLTexture2D> &&texture, 
-                                    std::optional<uint32_t> hashCode) {
-
-    if(hashCode.has_value()) {
-        auto _hashCode = hashCode.value();
-        m_imageTextures[_hashCode] = texture.get();
-    }
-
-    texture->SetTextureId(m_textures.size());
-    m_textures.push_back(std::move(texture));
-}
-
 } // namespace Marbas
