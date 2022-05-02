@@ -21,6 +21,21 @@ private:
     GLuint textureID;
 };
 
+class OpenGLTextureCubeMap : public TextureCubeMap {
+public:
+    explicit OpenGLTextureCubeMap(int width, int height, TextureFormatType format);
+
+    ~OpenGLTextureCubeMap() override = default;
+
+public:
+    void Bind(int bindingPoint) override;
+    void SetData(void* data, uint32_t size, CubeMapPosition position) override;
+    void UnBind() override;
+
+private:
+    GLuint m_textureID;
+};
+
 }  // namespace Marbas
 
 #endif

@@ -65,6 +65,42 @@ protected:
     TextureFormatType format;
 };
 
+
+/**
+ * @brief 
+ */
+
+enum class CubeMapPosition {
+    BACK,
+    BOTTOM,
+    FRONT,
+    LEFT,
+    RIGHT,
+    TOP,
+};
+
+class TextureCubeMap {
+public:
+    TextureCubeMap(int width, int height, TextureFormatType formatType) :
+        m_width(width),
+        m_height(height),
+        m_format(formatType)
+    {}
+
+    virtual ~TextureCubeMap() = default;
+
+public:
+    virtual void Bind(int bindingPoint) = 0;
+    virtual void SetData(void* data, uint32_t size, CubeMapPosition position) = 0;
+    virtual void UnBind() = 0;
+
+protected:
+    int m_width;
+    int m_height;
+    TextureFormatType m_format;
+
+};
+
 }  // namespace Marbas
 
 #endif
