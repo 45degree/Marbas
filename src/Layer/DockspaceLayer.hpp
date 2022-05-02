@@ -6,18 +6,16 @@
 namespace Marbas {
 
 class DockspaceLayer : public LayerBase {
-public:
-    explicit DockspaceLayer(const Window* window) :
-        LayerBase(window)
-    {}
-    ~DockspaceLayer() override;
+ public:
+  explicit DockspaceLayer(const Window* window) : LayerBase(window) {}
+  ~DockspaceLayer() override;
 
-public:
-    void OnAttach() override;
-    void OnDetach() override;
-    void OnUpdate() override;
-    void OnBegin() override;
-    void OnEnd() override;
+ public:
+  void OnAttach() override;
+  void OnDetach() override;
+  void OnUpdate() override;
+  void OnBegin() override;
+  void OnEnd() override;
 };
 
 }  // namespace Marbas

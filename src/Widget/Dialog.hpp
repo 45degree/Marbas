@@ -5,14 +5,13 @@
 
 namespace Marbas {
 
-class Dialog : public Widget{
-public:
-    explicit Dialog(const String& dialogName): Widget(dialogName) {}
-    ~Dialog() override = default;
+class Dialog : public Widget {
+ public:
+  explicit Dialog(const String& dialogName) : Widget(dialogName) {}
+  ~Dialog() override = default;
 
-public:
-    virtual void Open() = 0;
-
+ public:
+  virtual void Open() = 0;
 };
 
 }  // namespace Marbas

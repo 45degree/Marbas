@@ -6,12 +6,12 @@
 namespace Marbas {
 
 class OpenGLDrawBatch : public DrawBatch {
-public:
-    OpenGLDrawBatch() = default;
-    ~OpenGLDrawBatch() = default;
+ public:
+  OpenGLDrawBatch() = default;
+  ~OpenGLDrawBatch() = default;
 
-public:
-    void Draw() override;
+ public:
+  void Draw() override;
 };
 
 }  // namespace Marbas

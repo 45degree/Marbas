@@ -1,82 +1,73 @@
 #ifndef MARBAS_RHI_OPENGL_RENDERER_FACTORY_H
 #define MARBAS_RHI_OPENGL_RENDERER_FACTORY_H
 
+#include <unordered_map>
+
 #include "RHI/Interface/RHIFactory.hpp"
 #include "RHI/OpenGL/OpenGLTexture.hpp"
-
-#include <unordered_map>
 
 namespace Marbas {
 
 class OpenGLRHIFactory : public RHIFactory {
-private:
-    OpenGLRHIFactory();
+ private:
+  OpenGLRHIFactory();
 
-public:
-    OpenGLRHIFactory(const OpenGLRHIFactory&) = delete;
-    OpenGLRHIFactory& operator=(const OpenGLRHIFactory&) = delete;
-    ~OpenGLRHIFactory() override = default;
+ public:
+  OpenGLRHIFactory(const OpenGLRHIFactory&) = delete;
+  OpenGLRHIFactory& operator=(const OpenGLRHIFactory&) = delete;
+  ~OpenGLRHIFactory() override = default;
 
-public:
+ public:
+  void Enable(EnableItem item) const override;
 
-    void Enable(EnableItem item) const override;
+  void Disable(EnableItem item) const override;
 
-    void Disable(EnableItem item) const override;
+  void ClearColor(float r, float g, float b, float a) const override;
 
-    void ClearColor(float r, float g, float b, float a) const override;
+  void PrintRHIInfo() const override;
 
-    void PrintRHIInfo() const override;
+  void Init(GLFWwindow* window) const override;
 
-    void Init(GLFWwindow *window) const override;
+  void SwapBuffer(GLFWwindow* window) const override;
 
-    void SwapBuffer(GLFWwindow* window) const override;
+  void ClearBuffer(const ClearBuferBit bufferBit) const override;
 
-    void ClearBuffer(const ClearBuferBit bufferBit) const override;
+  [[nodiscard]] std::unique_ptr<VertexBuffer> CreateVertexBuffer(const void* data,
+                                                                 size_t size) const override;
 
-    [[nodiscard]] std::unique_ptr<VertexBuffer>
-    CreateVertexBuffer(const void* data, size_t size) const override;
+  [[nodiscard]] std::unique_ptr<VertexBuffer> CreateVertexBuffer(size_t size) const override;
 
-    [[nodiscard]] std::unique_ptr<VertexBuffer>
-    CreateVertexBuffer(size_t size) const override;
+  [[nodiscard]] std::unique_ptr<VertexArray> CreateVertexArray() const override;
 
-    [[nodiscard]] std::unique_ptr<VertexArray>
-    CreateVertexArray() const override;
+  [[nodiscard]] std::unique_ptr<IndexBuffer> CreateIndexBuffer(
+      const Vector<uint32_t>& indices) const override;
 
-    [[nodiscard]] std::unique_ptr<IndexBuffer>
-    CreateIndexBuffer(const Vector<uint32_t>& indices) const override;
+  [[nodiscard]] std::unique_ptr<IndexBuffer> CreateIndexBuffer(size_t size) const override;
 
-    [[nodiscard]] std::unique_ptr<IndexBuffer>
-    CreateIndexBuffer(size_t size) const override;
+  [[nodiscard]] std::unique_ptr<ShaderCode> CreateShaderCode(
+      const Path& path, const ShaderCodeType type, const ShaderType shaderType) const override;
 
-    [[nodiscard]] std::unique_ptr<ShaderCode>
-    CreateShaderCode(const Path& path, const ShaderCodeType type,
-                     const ShaderType shaderType) const override;
+  [[nodiscard]] std::unique_ptr<Shader> CreateShader() const override;
 
-    [[nodiscard]] std::unique_ptr<Shader>
-    CreateShader() const override;
+  [[nodiscard]] std::unique_ptr<Texture2D> CreateTexutre2D(const Path& imagePath) override;
 
-    [[nodiscard]] std::unique_ptr<Texture2D>
-    CreateTexutre2D(const Path& imagePath) override;
+  [[nodiscard]] std::unique_ptr<Texture2D> CreateTexutre2D(int width, int height,
+                                                           TextureFormatType formatType) override;
 
-    [[nodiscard]] std::unique_ptr<Texture2D>
-    CreateTexutre2D(int width, int height, TextureFormatType formatType) override;
+  // void DestoryTexture2D(Texture2D* texture) override;
 
-    // void DestoryTexture2D(Texture2D* texture) override;
+  [[nodiscard]] std::unique_ptr<DrawBatch> CreateDrawBatch() const override;
 
-    [[nodiscard]] std::unique_ptr<DrawBatch>
-    CreateDrawBatch() const override;
+  [[nodiscard]] std::unique_ptr<UniformBuffer> CreateUniformBuffer(
+      uint32_t size, uint32_t bindingPoint) const override;
 
-    [[nodiscard]] std::unique_ptr<UniformBuffer>
-    CreateUniformBuffer(uint32_t size, uint32_t bindingPoint) const override;
+  [[nodiscard]] std::unique_ptr<FrameBuffer> CreateFrameBuffer(
+      const FrameBufferInfo& info) const override;
 
-    [[nodiscard]] std::unique_ptr<FrameBuffer>
-    CreateFrameBuffer(const FrameBufferInfo& info) const override;
+  [[nodiscard]] std::unique_ptr<Viewport> CreateViewport() const override;
 
-    [[nodiscard]] std::unique_ptr<Viewport>
-    CreateViewport() const override;
-
-private:
-    friend RHIFactory;
+ private:
+  friend RHIFactory;
 };
 
 }  // namespace Marbas

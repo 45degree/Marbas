@@ -1,83 +1,81 @@
 #include "Layer/LayerBase.hpp"
+
 #include "Core/Window.hpp"
 
 namespace Marbas {
 
-LayerBase::LayerBase(const Window* window):
-    m_window(window)
-{}
+LayerBase::LayerBase(const Window* window) : m_window(window) {}
 
 LayerBase::~LayerBase() = default;
 
 void LayerBase::Attach() {
-    OnAttach();
+  OnAttach();
 
-    if(m_nextLayer != nullptr) {
-        m_nextLayer->Attach();
-    }
+  if (m_nextLayer != nullptr) {
+    m_nextLayer->Attach();
+  }
 }
 
 void LayerBase::Detach() {
-    if(m_nextLayer != nullptr) {
-        m_nextLayer->Detach();
-    }
-    OnDetach();
+  if (m_nextLayer != nullptr) {
+    m_nextLayer->Detach();
+  }
+  OnDetach();
 }
 
 void LayerBase::Begin() {
-    OnBegin();
+  OnBegin();
 
-    if(m_nextLayer != nullptr) {
-        m_nextLayer->Begin();
-    }
+  if (m_nextLayer != nullptr) {
+    m_nextLayer->Begin();
+  }
 }
 
 void LayerBase::End() {
-    if(m_nextLayer != nullptr) {
-        m_nextLayer->End();
-    }
+  if (m_nextLayer != nullptr) {
+    m_nextLayer->End();
+  }
 
-    OnEnd();
+  OnEnd();
 }
 
 void LayerBase::Update() {
-    OnUpdate();
+  OnUpdate();
 
-    if(m_nextLayer != nullptr) {
-        m_nextLayer->Update();
-    }
+  if (m_nextLayer != nullptr) {
+    m_nextLayer->Update();
+  }
 }
 
 void LayerBase::BroadcastEvent(const Event& e) {
-    EventDistribution(e);
+  EventDistribution(e);
 
-    if(m_nextLayer != nullptr) {
-        m_nextLayer->BroadcastEvent(e);
-    }
+  if (m_nextLayer != nullptr) {
+    m_nextLayer->BroadcastEvent(e);
+  }
 }
 
 void LayerBase::EventDistribution(const Event& event) {
-    switch(event.GetEventType()) {
+  switch (event.GetEventType()) {
     case EventType::MARBAS_MOUSE_PRESS_EVENT:
-        OnMousePress(static_cast<const MousePressEvent&>(event));
-        break;
+      OnMousePress(static_cast<const MousePressEvent&>(event));
+      break;
     case EventType::MARBAS_MOUSE_MOVE_EVENT:
-        OnMouseMove(static_cast<const MouseMoveEvent&>(event));
-        break;
+      OnMouseMove(static_cast<const MouseMoveEvent&>(event));
+      break;
     case EventType::MARBAS_MOUSE_RELEASE_EVENT:
-        OnMouseRelease(static_cast<const MouseReleaseEvent&>(event));
-        break;
+      OnMouseRelease(static_cast<const MouseReleaseEvent&>(event));
+      break;
     case EventType::MARBAS_MOUSE_SCROLLED_EVENT:
-        OnMouseScrolled(static_cast<const MouseScrolledEvent&>(event));
-        break;
+      OnMouseScrolled(static_cast<const MouseScrolledEvent&>(event));
+      break;
     case EventType::MARBAS_KEY_PRESS_EVENT:
-        OnKeyPress(static_cast<const KeyEvent&>(event));
-        break;
+      OnKeyPress(static_cast<const KeyEvent&>(event));
+      break;
     case EventType::MARBAS_KEY_RELEASE_EVENT:
-        OnKeyRelase(static_cast<const KeyEvent&>(event));
-        break;
-    }
+      OnKeyRelase(static_cast<const KeyEvent&>(event));
+      break;
+  }
 }
 
 }  // namespace Marbas
-

@@ -1,30 +1,29 @@
 #include "RHI/Interface/RHIFactory.hpp"
-#include "RHI/OpenGL/OpenGLRHIFactory.hpp"
-#include "Common.hpp"
 
 #include <glog/logging.h>
+
 #include <mutex>
+
+#include "Common.hpp"
+#include "RHI/OpenGL/OpenGLRHIFactory.hpp"
 
 namespace Marbas {
 
 std::unique_ptr<RHIFactory> RHIFactory::m_rhiFactory = nullptr;
 
 RHIFactory* RHIFactory::GetInstance(const RendererType& rendererType) {
-    static std::once_flag flag;
-    std::call_once(flag, [&]() {
-        if(rendererType == RendererType::OPENGL) {
-            m_rhiFactory.reset(new OpenGLRHIFactory());
-        }
-        else if (rendererType == RendererType::VULKAN) {
-            // TODO(45degree): change to vulkan api
-            m_rhiFactory.reset(new OpenGLRHIFactory());
-        }
-        else {
-            LOG(ERROR) << "can't create the renderer api";
-        }
-    });
-    return m_rhiFactory.get();
+  static std::once_flag flag;
+  std::call_once(flag, [&]() {
+    if (rendererType == RendererType::OPENGL) {
+      m_rhiFactory.reset(new OpenGLRHIFactory());
+    } else if (rendererType == RendererType::VULKAN) {
+      // TODO(45degree): change to vulkan api
+      m_rhiFactory.reset(new OpenGLRHIFactory());
+    } else {
+      LOG(ERROR) << "can't create the renderer api";
+    }
+  });
+  return m_rhiFactory.get();
 }
-
 
 }  // namespace Marbas

@@ -1,9 +1,10 @@
 #ifndef MARBARS_COMMON_H
 #define MARBARS_COMMON_H
 
-#include <folly/FBVector.h>
 #include <folly/FBString.h>
+#include <folly/FBVector.h>
 #include <folly/Format.h>
+
 #include <filesystem>
 
 /**
@@ -14,7 +15,7 @@
 
 namespace Marbas {
 
-template<typename T>
+template <typename T>
 #ifdef DEBUG
 using Vector = std::vector<T>;
 #else

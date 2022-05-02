@@ -6,12 +6,12 @@
 namespace Marbas {
 
 class OpenGLViewport : public Viewport {
-public:
-    OpenGLViewport() = default;
-    ~OpenGLViewport() override = default;
+ public:
+  OpenGLViewport() = default;
+  ~OpenGLViewport() override = default;
 
-public:
-    void UseViewport() const override;
+ public:
+  void UseViewport() const override;
 };
 
 }  // namespace Marbas

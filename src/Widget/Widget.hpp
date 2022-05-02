@@ -7,36 +7,31 @@
 namespace Marbas {
 
 class Widget {
-public:
-    explicit Widget(const String& widgetName);
-    Widget(const Widget&) = default;
-    virtual ~Widget();
+ public:
+  explicit Widget(const String& widgetName);
+  Widget(const Widget&) = default;
+  virtual ~Widget();
 
-public:
+ public:
+  [[nodiscard]] const String& GetWidgetName() const noexcept { return m_widgetName; }
 
-    [[nodiscard]] const String& GetWidgetName() const noexcept {
-        return m_widgetName;
-    }
+  virtual void Draw() = 0;
 
-    virtual void Draw() = 0;
+  void SetScene(Scene* scene) noexcept { m_scene = scene; }
 
-    void SetScene(Scene* scene) noexcept {
-        m_scene = scene;
-    }
+  void SetResourceManager(ResourceManager* resourceManager) noexcept {
+    m_resourceManager = resourceManager;
+  }
 
-    void SetResourceManager(ResourceManager* resourceManager) noexcept {
-        m_resourceManager = resourceManager;
-    }
-
-protected:
-    const String m_widgetName;
-    Scene* m_scene;
-    ResourceManager* m_resourceManager;
+ protected:
+  const String m_widgetName;
+  Scene* m_scene;
+  ResourceManager* m_resourceManager;
 };
 
 class IChangeMeshAble {
-public:
-    virtual void ChangeMesh(const Mesh& mesh) = 0;
+ public:
+  virtual void ChangeMesh(const Mesh& mesh) = 0;
 };
 
 }  // namespace Marbas

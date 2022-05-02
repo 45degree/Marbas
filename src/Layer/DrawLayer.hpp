@@ -3,38 +3,38 @@
 
 #include "Layer/LayerBase.hpp"
 #include "Resource/ResourceManager.hpp"
-#include "Widget/Widget.hpp"
 #include "Widget/FileDialog.hpp"
+#include "Widget/Widget.hpp"
 
 namespace Marbas {
 
 class DrawLayer : public LayerBase {
-public:
-    DrawLayer(const Window* windows, ResourceManager* resourceManager);
-    ~DrawLayer() override;
+ public:
+  DrawLayer(const Window* windows, ResourceManager* resourceManager);
+  ~DrawLayer() override;
 
-public:
-    void OnAttach() override;
+ public:
+  void OnAttach() override;
 
-    void OnUpdate() override;
+  void OnUpdate() override;
 
-    void AddWidget(std::unique_ptr<Widget>&& widget) noexcept {
-        m_widgetsMap[widget->GetWidgetName()] = widget.get();
-        widgets.push_back(std::move(widget));
-    }
+  void AddWidget(std::unique_ptr<Widget>&& widget) noexcept {
+    m_widgetsMap[widget->GetWidgetName()] = widget.get();
+    widgets.push_back(std::move(widget));
+  }
 
-    void DrawMenuBar();
+  void DrawMenuBar();
 
-private:
-    Vector<std::unique_ptr<Widget>> widgets;
+ private:
+  Vector<std::unique_ptr<Widget>> widgets;
 
-    std::unordered_map<String, Widget*> m_widgetsMap;
+  std::unordered_map<String, Widget*> m_widgetsMap;
 
-    std::unique_ptr<FileDialog> m_fileDialog;
+  std::unique_ptr<FileDialog> m_fileDialog;
 
-    std::unique_ptr<FileDialog> m_sceneFileDialog;
+  std::unique_ptr<FileDialog> m_sceneFileDialog;
 
-    ResourceManager* m_resourceManager;
+  ResourceManager* m_resourceManager;
 };
 
 }  // namespace Marbas

@@ -1,25 +1,25 @@
 #ifndef MARBAS_RHI_OPENGL_SHADERCODE_H
 #define MARBAS_RHI_OPENGL_SHADERCODE_H
 
-#include "RHI/OpenGL/OpenGLRHICommon.hpp"
 #include "RHI/Interface/ShaderCode.hpp"
+#include "RHI/OpenGL/OpenGLRHICommon.hpp"
 
 namespace Marbas {
 
 class OpenGLShaderCode : public ShaderCode {
-public:
-    explicit OpenGLShaderCode(const ShaderType& shaderType);
-    ~OpenGLShaderCode() override;
+ public:
+  explicit OpenGLShaderCode(const ShaderType& shaderType);
+  ~OpenGLShaderCode() override;
 
-public:
-    void ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) override;
+ public:
+  void ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) override;
 
-    void ReadFromSource(const FileSystem::path& path);
+  void ReadFromSource(const FileSystem::path& path);
 
-    [[nodiscard]] GLuint GetShaderID() const noexcept { return shaderID; }
+  [[nodiscard]] GLuint GetShaderID() const noexcept { return shaderID; }
 
-private:
-    GLuint shaderID;
+ private:
+  GLuint shaderID;
 };
 
 }  // namespace Marbas

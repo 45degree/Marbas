@@ -6,22 +6,21 @@
 namespace Marbas {
 
 class UniformBuffer {
-public:
-    explicit UniformBuffer(uint32_t size, uint32_t bindingPoint) :
-        m_size(size), m_bindingPoint(bindingPoint) {}
-    virtual ~UniformBuffer() = default;
+ public:
+  explicit UniformBuffer(uint32_t size, uint32_t bindingPoint)
+      : m_size(size), m_bindingPoint(bindingPoint) {}
+  virtual ~UniformBuffer() = default;
 
-public:
+ public:
+  virtual void Bind() const = 0;
 
-    virtual void Bind() const = 0;
+  virtual void UnBind() const = 0;
 
-    virtual void UnBind() const = 0;
+  virtual void SetData(const void* data, uint32_t size, uint32_t offset) = 0;
 
-    virtual void SetData(const void* data, uint32_t size, uint32_t offset) = 0;
-
-protected:
-    uint32_t m_size;
-    uint32_t m_bindingPoint;
+ protected:
+  uint32_t m_size;
+  uint32_t m_bindingPoint;
 };
 
 }  // namespace Marbas
