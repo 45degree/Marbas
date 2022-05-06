@@ -49,12 +49,16 @@ class OpenGLRHIFactory : public RHIFactory {
 
   [[nodiscard]] std::unique_ptr<Shader> CreateShader() const override;
 
-  [[nodiscard]] std::unique_ptr<Texture2D> CreateTexutre2D(const Path& imagePath) override;
+  [[nodiscard]] std::unique_ptr<Texture2D> CreateTexutre2D(const Path& imagePath) const override;
 
-  [[nodiscard]] std::unique_ptr<Texture2D> CreateTexutre2D(int width, int height,
-                                                           TextureFormatType formatType) override;
+  [[nodiscard]] std::unique_ptr<Texture2D> CreateTexutre2D(
+      int width, int height, TextureFormatType formatType) const override;
 
-  // void DestoryTexture2D(Texture2D* texture) override;
+  [[nodiscard]] std::unique_ptr<TextureCubeMap> CreateTextureCubeMap(
+      int width, int height, TextureFormatType format) const override;
+
+  [[nodiscard]]  std::unique_ptr<TextureCubeMap> CreateTextureCubeMap(
+      const CubeMapCreateInfo& createInfo) const override;
 
   [[nodiscard]] std::unique_ptr<DrawBatch> CreateDrawBatch() const override;
 

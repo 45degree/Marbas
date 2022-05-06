@@ -36,6 +36,15 @@ enum class EnableItem {
   BLEND,
 };
 
+struct CubeMapCreateInfo {
+  Path top;
+  Path bottom;
+  Path back;
+  Path front;
+  Path left;
+  Path right;
+};
+
 /**
  * @brief
  */
@@ -81,12 +90,16 @@ class RHIFactory {
 
   [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader() const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<Texture2D> CreateTexutre2D(const Path& imagePath) = 0;
+  [[nodiscard]] virtual std::unique_ptr<Texture2D> CreateTexutre2D(const Path& imagePath) const = 0;
 
   [[nodiscard]] virtual std::unique_ptr<Texture2D> CreateTexutre2D(
-      int width, int height, TextureFormatType formatType) = 0;
+      int width, int height, TextureFormatType formatType) const = 0;
 
-  // virtual void DestoryTexture2D(Texture2D* texture) = 0;
+  [[nodiscard]] virtual std::unique_ptr<TextureCubeMap> CreateTextureCubeMap(
+      int width, int height, TextureFormatType format) const = 0;
+
+  [[nodiscard]] virtual std::unique_ptr<TextureCubeMap> CreateTextureCubeMap(
+      const CubeMapCreateInfo& createInfo) const = 0;
 
   [[nodiscard]] virtual std::unique_ptr<DrawBatch> CreateDrawBatch() const = 0;
 

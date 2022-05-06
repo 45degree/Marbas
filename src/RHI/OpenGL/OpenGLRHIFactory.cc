@@ -233,7 +233,7 @@ std::unique_ptr<Shader> OpenGLRHIFactory::CreateShader() const {
   return std::make_unique<OpenGLShader>();
 }
 
-std::unique_ptr<Texture2D> OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) {
+std::unique_ptr<Texture2D> OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) const {
   String pathStr = imagePath.string();
 
   // load image
@@ -266,8 +266,57 @@ std::unique_ptr<Texture2D> OpenGLRHIFactory::CreateTexutre2D(const Path& imagePa
 }
 
 std::unique_ptr<Texture2D> OpenGLRHIFactory::CreateTexutre2D(int width, int height,
-                                                             TextureFormatType format) {
+                                                             TextureFormatType format) const {
   return std::make_unique<OpenGLTexture2D>(width, height, format);
+}
+
+std::unique_ptr<TextureCubeMap> OpenGLRHIFactory::CreateTextureCubeMap(
+    const CubeMapCreateInfo& createInfo) const {
+  int width, height, nrChannels;
+  TextureFormatType formatType;
+
+  auto* data = stbi_load(createInfo.back.string().c_str(), &width, &height, &nrChannels, 0);
+
+  formatType = nrChannels == 4 ? TextureFormatType::RGBA : TextureFormatType::RGB;
+
+  // create texture cubemap
+  auto textureCubeMap = std::make_unique<OpenGLTextureCubeMap>(width, height, formatType);
+
+  // Set Data
+  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::BACK);
+  stbi_image_free(data);
+
+  data = stbi_load(createInfo.front.string().c_str(), &width, &height, &nrChannels, 0);
+  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::FRONT);
+  stbi_image_free(data);
+
+  data = stbi_load(createInfo.bottom.string().c_str(), &width, &height, &nrChannels, 0);
+  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::BOTTOM);
+  stbi_image_free(data);
+
+  data = stbi_load(createInfo.top.string().c_str(), &width, &height, &nrChannels, 0);
+  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::TOP);
+  stbi_image_free(data);
+
+  data = stbi_load(createInfo.left.string().c_str(), &width, &height, &nrChannels, 0);
+  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::LEFT);
+  stbi_image_free(data);
+
+  data = stbi_load(createInfo.right.string().c_str(), &width, &height, &nrChannels, 0);
+  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::RIGHT);
+  stbi_image_free(data);
+
+  LOG(INFO) << FORMAT(
+      "create a cubemap, back: {}\n front: {}\n bottom: {}\n  top: {}\n left: {}\n right: {}",
+      createInfo.back, createInfo.front, createInfo.bottom, createInfo.top, createInfo.left,
+      createInfo.right);
+
+  return textureCubeMap;
+}
+
+std::unique_ptr<TextureCubeMap> OpenGLRHIFactory::CreateTextureCubeMap(
+    int width, int height, TextureFormatType format) const {
+  return std::make_unique<OpenGLTextureCubeMap>(width, height, format);
 }
 
 std::unique_ptr<DrawBatch> OpenGLRHIFactory::CreateDrawBatch() const {
