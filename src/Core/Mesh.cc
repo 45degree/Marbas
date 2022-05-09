@@ -108,8 +108,8 @@ void MeshPolicy::ReadMaterialFromNode(const aiMesh* aMesh, const aiScene* aScene
   }
 }
 
-void MeshPolicy::LoadMeshToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory,
-                               ResourceManager* resourceManager) {
+void MeshPolicy::LoadToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory,
+                           ResourceManager* resourceManager) {
   if (!Entity::HasComponent<RenderComponent>(scene, mesh)) return;
   auto& renderComponent = Entity::GetComponent<RenderComponent>(scene, mesh);
 
@@ -145,6 +145,74 @@ void MeshPolicy::LoadMeshToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory,
 
   auto* material = materialResource->LoadMaterial(resourceManager);
   renderComponent.m_drawBatch->SetMaterial(material);
+}
+
+CubeMap CubeMapPolicy::Create(entt::registry& registry) {
+  auto cubeMap = registry.create();
+  registry.emplace<MeshComponent>(cubeMap);
+  registry.emplace<CubeMapComponent>(cubeMap);
+
+  auto& meshComponent = registry.get<MeshComponent>(cubeMap);
+  meshComponent.m_vertices = {
+      MeshVertexInfo{.posX = -1, .posY = -1, .posZ = 1},
+      MeshVertexInfo{.posX = 1, .posY = -1, .posZ = 1},
+      MeshVertexInfo{.posX = 1, .posY = 1, .posZ = 1},
+      MeshVertexInfo{.posX = -1, .posY = 1, .posZ = 1},
+      MeshVertexInfo{.posX = -1, .posY = -1, .posZ = -1},
+      MeshVertexInfo{.posX = 1, .posY = -1, .posZ = -1},
+      MeshVertexInfo{.posX = 1, .posY = 1, .posZ = -1},
+      MeshVertexInfo{.posX = -1, .posY = 1, .posZ = 1},
+  };
+  meshComponent.m_indices = {3, 0, 1, 3, 1, 2, 2, 1, 6, 6, 1, 5, 6, 3, 2, 7, 3, 6,
+                             1, 0, 4, 1, 4, 5, 7, 0, 3, 0, 7, 4, 4, 7, 5, 7, 6, 5};
+
+  return cubeMap;
+}
+
+void CubeMapPolicy::LoadToGPU(CubeMap cubeMap, Scene* scene, RHIFactory* rhiFactory,
+                              ResourceManager* resourceManager) {
+  if (!Entity::HasComponent<CubeMapComponent>(scene, cubeMap)) return;
+  auto& cubeMapComponent = Entity::GetComponent<CubeMapComponent>(scene, cubeMap);
+
+  if (cubeMapComponent.m_drawBatch == nullptr) {
+    cubeMapComponent.m_drawBatch = rhiFactory->CreateDrawBatch();
+  }
+
+  // set vertex
+  auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, cubeMap);
+  auto vertexCount = meshComponent.m_vertices.size() * sizeof(MeshVertexInfo);
+  auto vertexBuffer = rhiFactory->CreateVertexBuffer(vertexCount);
+  vertexBuffer->SetData(meshComponent.m_vertices.data(), vertexCount, 0);
+  vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
+
+  auto indexCount = meshComponent.m_indices.size();
+  auto indexBuffer = rhiFactory->CreateIndexBuffer(indexCount);
+  indexBuffer->SetData(meshComponent.m_indices, 0);
+
+  auto vertexArray = rhiFactory->CreateVertexArray();
+
+  cubeMapComponent.m_drawBatch->SetVertexBuffer(std::move(vertexBuffer));
+  cubeMapComponent.m_drawBatch->SetIndexBuffer(std::move(indexBuffer));
+  cubeMapComponent.m_drawBatch->SetVertexArray(std::move(vertexArray));
+
+  // set material
+  if (!cubeMapComponent.m_cubeMapResource.has_value()) {
+    LOG(INFO) << "this mesh don't have a material";
+    return;
+  }
+  auto materialUid = cubeMapComponent.m_cubeMapResource.value();
+
+  auto* materialResource = resourceManager->FindCubeMapMaterialResource(materialUid);
+
+  auto* material = materialResource->LoadMaterial(resourceManager);
+  cubeMapComponent.m_drawBatch->SetMaterial(material);
+}
+
+void CubeMapPolicy::ReadCubeMapFromFile(const CubeMapCreateInfo& createInfo,
+                                        CubeMapComponent& component,
+                                        ResourceManager* resourceManager) {
+  auto* cubeMapTextureResource = resourceManager->AddCubeMapMaterialResource(createInfo);
+  component.m_cubeMapResource = cubeMapTextureResource->GetUid();
 }
 
 }  // namespace Marbas

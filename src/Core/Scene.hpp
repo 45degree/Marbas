@@ -118,8 +118,9 @@ class Scene {
   entt::registry m_registry;
   ResourceManager* m_resourceManager = nullptr;
 
-  const Path m_path;
+  std::optional<CubeMap> m_cubeMap = std::nullopt;
 
+  const Path m_path;
   Vector<Mesh> m_staticMeshes;
 };
 

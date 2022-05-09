@@ -70,90 +70,9 @@ void Scene::CombineStaticEntity() {
 Scene::Scene(const Path& path, ResourceManager* resourceManager)
     : m_rootNode(std::make_unique<SceneNode>("RootNode")),
       m_path(path),
-      m_resourceManager(resourceManager) {}
-
-// void SceneNode::GenerateGPUData(RHIFactory* rhiFactory) {
-//
-//     // TODO: splite the mesh by texture
-//     if(m_mesh.empty()) return;
-//
-//     std::map<std::pair<Texture2D*, Texture2D*>, Vector<Mesh*>> textures;
-//     for(const auto& mesh : m_mesh) {
-//         auto ambientTexture = mesh->GetAmbientTexture();
-//         auto diffuseTexture = mesh->GetDiffuseTexture();
-//
-//         auto texturePair = std::make_pair(ambientTexture, diffuseTexture);
-//         if(textures.find(texturePair) == textures.end()) {
-//             textures.insert({texturePair, Vector<Mesh*>()});
-//         }
-//         textures.at(texturePair).push_back(mesh.get());
-//     }
-//
-//     for(auto& texture : textures) {
-//         auto meshes = texture.second;
-//
-//         auto material = std::make_unique<Material>();
-//         auto drawBatch = rhiFactory->CreateDrawBatch();
-//
-//         material->SetAmbientTexture(texture.first.first);
-//         material->SetDiffuseTexture(texture.first.second);
-//         drawBatch->SetMaterial(material.get());
-//
-//         /**
-//          * TODO: the material can't add any texture after this function called
-//          */
-//
-//         // calculate the size of the vertex data
-//         size_t totalVertexSize = std::accumulate(meshes.begin(), meshes.end(), 0,
-//             [](size_t size, const Mesh* mesh){
-//                 return size + mesh->GetVertexByte();
-//             }
-//         );
-//
-//         size_t totalIndexCount = std::accumulate(meshes.begin(), meshes.end(), 0,
-//             [](size_t count, const Mesh* mesh) {
-//                 return count + mesh->GetIndicesCount();
-//             }
-//         );
-//
-//         auto vertexBuffer = rhiFactory->CreateVertexBuffer(totalVertexSize);
-//         auto vertexArray = rhiFactory->CreateVertexArray();
-//         auto indexBuffer = rhiFactory->CreateIndexBuffer(totalIndexCount);
-//
-//         size_t vertexoOffset = 0, indexOffset = 0;
-//         for(auto& mesh : meshes) {
-//             auto vertices = mesh->GetVertices();
-//             auto indices = mesh->GetIndices();
-//             std::transform(indices.begin(), indices.end(), indices.begin(),
-//                 [&indexOffset](uint32_t index) {
-//                     return index + indexOffset;
-//                 }
-//             );
-//
-//             // TODO: need to file the texture id
-//             auto diffuseId = material->GetTextureBindPoint(mesh->GetDiffuseTexture());
-//             auto ambientId = material->GetTextureBindPoint(mesh->GetAmbientTexture());
-//             for(auto& vertex : vertices) {
-//                 vertex.diffuseTextureId = diffuseId;
-//                 vertex.ambientTextureId = ambientId;
-//             }
-//
-//             vertexBuffer->SetData(vertices.data(), mesh->GetVertexByte(), vertexoOffset);
-//             indexBuffer->SetData(indices, indexOffset);
-//             vertexoOffset += mesh->GetVertexByte();
-//             indexOffset += indices.size();
-//         }
-//
-//         vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
-//
-//         drawBatch->SetVertexBuffer(std::move(vertexBuffer));
-//         drawBatch->SetVertexArray(std::move(vertexArray));
-//         drawBatch->SetIndexBuffer(std::move(indexBuffer));
-//
-//         m_drawBatches.push_back(std::move(drawBatch));
-//         m_materials.push_back(std::move(material));
-//     }
-// }
+      m_resourceManager(resourceManager) {
+  m_cubeMap = CubeMapPolicy::Create(m_registry);
+}
 
 std::unique_ptr<Scene> Scene::CreateSceneFromFile(const Path& sceneFile,
                                                   ResourceManager* resourceManager) {

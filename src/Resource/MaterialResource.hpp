@@ -51,6 +51,21 @@ class MaterialResource final : public ResourceBase {
   mutable std::unique_ptr<Material> m_material;
 };
 
+class CubeMapMaterialResource final : public ResourceBase {
+ public:
+  explicit CubeMapMaterialResource(std::unique_ptr<TextureCubeMap>&& cubeMap)
+      : ResourceBase(), m_cubeMap(std::move(cubeMap)) {}
+
+  TextureCubeMap* GetCubeMapTexture() const noexcept { return m_cubeMap.get(); }
+
+ public:
+  void SetShader(const Uid& shaderResourceId) { m_shaderResource = shaderResourceId; }
+
+ private:
+  std::unique_ptr<TextureCubeMap> m_cubeMap;
+  Uid m_shaderResource;
+};
+
 }  // namespace Marbas
 
 #endif

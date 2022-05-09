@@ -59,6 +59,22 @@ MaterialResource* ResourceManager::AddMaterial() {
 
 void ResourceManager::RemoveResource(const Uid& uid) {}
 
+CubeMapMaterialResource* ResourceManager::AddCubeMapMaterialResource(
+    const CubeMapCreateInfo& createInfo) {
+  auto cubeMapTexture = m_rhiFactory->CreateTextureCubeMap(createInfo);
+  auto cubeMapTextureResource =
+      std::make_unique<CubeMapMaterialResource>(std::move(cubeMapTexture));
+  cubeMapTextureResource->SetShader(m_defaultCubeMapShaderResource);
+
+  auto cubeMapTextureResourcePtr = cubeMapTextureResource.get();
+
+  auto uid = cubeMapTextureResource->GetUid();
+  m_resources.insert({uid, std::move(cubeMapTextureResource)});
+  m_cubeMapMaterialResources.insert({uid, cubeMapTextureResourcePtr});
+
+  return cubeMapTextureResourcePtr;
+}
+
 Texture2DResource* ResourceManager::FindTexture(const Uid& uid) const noexcept {
   if (m_texture2DResources.find(uid) == m_texture2DResources.end()) {
     LOG(WARNING) << FORMAT("can't find texture resource which's uid is {}", uid);
@@ -84,6 +100,16 @@ MaterialResource* ResourceManager::FindMaterialResource(const Uid& uid) const no
   }
 
   return m_materialResources.at(uid);
+}
+
+CubeMapMaterialResource* ResourceManager::FindCubeMapMaterialResource(
+    const Uid& uid) const noexcept {
+  if (m_cubeMapMaterialResources.find(uid) == m_cubeMapMaterialResources.end()) {
+    LOG(WARNING) << FORMAT("can't find cubemap material resource which's uid is is {}", uid);
+    return nullptr;
+  }
+
+  return m_cubeMapMaterialResources.at(uid);
 }
 
 Material* MaterialResource::LoadMaterial(ResourceManager* resourceManager) const {

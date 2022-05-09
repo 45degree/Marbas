@@ -39,6 +39,12 @@ struct RenderComponent {
   std::unique_ptr<DrawBatch> m_drawBatch = nullptr;
 };
 
+struct CubeMapComponent {
+  bool m_isOnGPU = false;
+  std::unique_ptr<DrawBatch> m_drawBatch = nullptr;
+  std::optional<Uid> m_cubeMapResource = std::nullopt;
+};
+
 }  // namespace Marbas
 
 #endif

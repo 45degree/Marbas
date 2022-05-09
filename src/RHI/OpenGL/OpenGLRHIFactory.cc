@@ -117,6 +117,9 @@ void OpenGLRHIFactory::Enable(EnableItem item) const {
     case EnableItem::DEPTH:
       glEnable(GL_DEPTH_TEST);
       break;
+    case EnableItem::DEPTH_MASK:
+      glDepthMask(TRUE);
+      break;
     case EnableItem::BLEND:
       glEnable(GL_BLEND);
       break;
@@ -127,6 +130,9 @@ void OpenGLRHIFactory::Disable(EnableItem item) const {
   switch (item) {
     case EnableItem::DEPTH:
       glDisable(GL_DEPTH_TEST);
+      break;
+    case EnableItem::DEPTH_MASK:
+      glDepthMask(FALSE);
       break;
     case EnableItem::BLEND:
       glDisable(GL_BLEND);
@@ -308,8 +314,8 @@ std::unique_ptr<TextureCubeMap> OpenGLRHIFactory::CreateTextureCubeMap(
 
   LOG(INFO) << FORMAT(
       "create a cubemap, back: {}\n front: {}\n bottom: {}\n  top: {}\n left: {}\n right: {}",
-      createInfo.back, createInfo.front, createInfo.bottom, createInfo.top, createInfo.left,
-      createInfo.right);
+      createInfo.back.string(), createInfo.front.string(), createInfo.bottom.string(),
+      createInfo.top.string(), createInfo.left.string(), createInfo.right.string());
 
   return textureCubeMap;
 }

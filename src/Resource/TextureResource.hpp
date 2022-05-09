@@ -26,16 +26,6 @@ class Texture2DResource final : public ResourceBase {
   std::unique_ptr<Texture2D> m_texture;
 };
 
-class TextureCubeMapResource final : public ResourceBase {
- public:
-  explicit TextureCubeMapResource(std::unique_ptr<TextureCubeMap>&& cubeMap)
-      : ResourceBase(), m_cubeMap(std::move(cubeMap)) {}
-  TextureCubeMap* GetCubeMap() const noexcept { return m_cubeMap.get(); }
-
- private:
-  std::unique_ptr<TextureCubeMap> m_cubeMap;
-};
-
 }  // namespace Marbas
 
 #endif
