@@ -2,141 +2,125 @@
 #define MARBAS_CORE_SCENE_H
 
 #include "Common.hpp"
+#include "Core/Mesh.hpp"
 #include "RHI/RHI.hpp"
 #include "entt/entt.hpp"
-#include "Core/Mesh.hpp"
 
 namespace Marbas {
 
 class Scene;
 class SceneNode {
-    friend Scene;
-public:
+  friend Scene;
 
-    /**
-     * @brief Create a scene node
-     *
-     * @param[in] nodeName the node's name
-     * @param[in] isStatic whether the node is a statis node, 
-     *            all static node in scnen will in one
-     * drawcall
-     */
-    explicit SceneNode(const String& nodeName) :
-        m_sceneNodeName(nodeName)
-    {}
-    virtual ~SceneNode() = default;
+ public:
+  /**
+   * @brief Create a scene node
+   *
+   * @param[in] nodeName the node's name
+   * @param[in] isStatic whether the node is a statis node,
+   *            all static node in scnen will in one
+   * drawcall
+   */
+  explicit SceneNode(const String& nodeName) : m_sceneNodeName(nodeName) {}
+  virtual ~SceneNode() = default;
 
-public:
-    [[nodiscard]] const char* GetSceneNodeName() const {
-        return m_sceneNodeName.c_str();
-    }
+ public:
+  [[nodiscard]] const char* GetSceneNodeName() const { return m_sceneNodeName.c_str(); }
 
-    [[nodiscard]] Vector<const SceneNode*> GetSubSceneNodes() const {
-        Vector<const SceneNode*> result;
-        std::transform(m_subSceneNode.begin(), m_subSceneNode.end(), std::back_inserter(result),
-            [](const std::unique_ptr<SceneNode>& node)->const SceneNode* { return node.get(); }
-        );
+  [[nodiscard]] Vector<const SceneNode*> GetSubSceneNodes() const {
+    Vector<const SceneNode*> result;
+    std::transform(
+        m_subSceneNode.begin(), m_subSceneNode.end(), std::back_inserter(result),
+        [](const std::unique_ptr<SceneNode>& node) -> const SceneNode* { return node.get(); });
 
-        return result;
-    }
+    return result;
+  }
 
-    void AddSubSceneNode(std::unique_ptr<SceneNode>&& node) {
-        m_subSceneNode.push_back(std::move(node));
-    }
+  void AddSubSceneNode(std::unique_ptr<SceneNode>&& node) {
+    m_subSceneNode.push_back(std::move(node));
+  }
 
-    [[nodiscard]] const Vector<Mesh>& GetMeshes() const noexcept {
-        return m_meshes;
-    }
+  [[nodiscard]] const Vector<Mesh>& GetMeshes() const noexcept { return m_meshes; }
 
-    [[nodiscard]] size_t GetMeshesCount() const noexcept {
-        return m_meshes.size();
-    }
+  [[nodiscard]] size_t GetMeshesCount() const noexcept { return m_meshes.size(); }
 
-    void DeleteSubSceneNode(const SceneNode* node) {
-        for(int i = 0; i < m_subSceneNode.size(); i++) {
-            if(node == m_subSceneNode[i].get()) {
-                m_subSceneNode.erase(m_subSceneNode.begin() + i);
-                return;
-            }
-        }
+  void DeleteSubSceneNode(const SceneNode* node) {
+    for (int i = 0; i < m_subSceneNode.size(); i++) {
+      if (node == m_subSceneNode[i].get()) {
+        m_subSceneNode.erase(m_subSceneNode.begin() + i);
         return;
+      }
     }
+    return;
+  }
 
-protected:
-    String m_sceneNodeName;
-    Vector<Mesh> m_meshes;
-    Vector<std::unique_ptr<SceneNode>> m_subSceneNode;
+ protected:
+  String m_sceneNodeName;
+  Vector<Mesh> m_meshes;
+  Vector<std::unique_ptr<SceneNode>> m_subSceneNode;
 };
 
 /**
- * @brief 
+ * @brief
  *
  * @note a scene tree's root node always has three child node, which are light node, model node, and
  *       camera node;
  */
 class Entity;
 class Scene {
-    friend Entity;
-public:
-    Scene(const Path& path, ResourceManager* resourceManager);
+  friend Entity;
 
-    ~Scene() = default;
+ public:
+  Scene(const Path& path, ResourceManager* resourceManager);
 
-public:
-    void AddLight();
+  ~Scene() = default;
 
-    void AddCamera();
+ public:
+  void AddLight();
 
-    [[nodiscard]] SceneNode* GetRootSceneNode() const noexcept {
-        return m_rootNode.get();
-    }
+  void AddCamera();
 
-    void DeleteSceneNode(SceneNode* sceneNode);
+  [[nodiscard]] SceneNode* GetRootSceneNode() const noexcept { return m_rootNode.get(); }
 
-    entt::registry& GetRigister() {
-        return m_registry;
-    }
+  void DeleteSceneNode(SceneNode* sceneNode);
 
-public:
+  entt::registry& GetRigister() { return m_registry; }
 
-    void CombineStaticEntity();
+ public:
+  void CombineStaticEntity();
 
-    /**
-     * @brief collection all static node and push them in a drawCollection;
-     */
-    void GenarateStaticRenderDate();
+  /**
+   * @brief collection all static node and push them in a drawCollection;
+   */
+  void GenarateStaticRenderDate();
 
-    [[nodiscard]] const Path& GetPath() const noexcept {
-        return m_path;
-    }
+  [[nodiscard]] const Path& GetPath() const noexcept { return m_path; }
 
-public:
+ public:
+  /**
+   * @brief Create the Scene Tree from the scene file(such glTF)
+   *
+   * @param sceneFile scene file which needs to be supported bu assimp
+   *
+   * @return Scene
+   */
+  static std::unique_ptr<Scene> CreateSceneFromFile(const Path& sceneFile,
+                                                    ResourceManager* resourceManager);
 
-    /**
-     * @brief Create the Scene Tree from the scene file(such glTF)
-     *
-     * @param sceneFile scene file which needs to be supported bu assimp
-     *
-     * @return Scene
-     */
-    static std::unique_ptr<Scene> CreateSceneFromFile(const Path& sceneFile,
-                                                      ResourceManager* resourceManager);
+ private:
+  void ProcessNode(SceneNode* sceneNode, ResourceManager* resourceManager, const aiScene* aScene,
+                   const aiNode* aNode);
 
-private:
-    void ProcessNode(SceneNode* sceneNode, ResourceManager* resourceManager,
-                     const aiScene* aScene, const aiNode* aNode);
+ private:
+  std::unique_ptr<SceneNode> m_rootNode = nullptr;
 
-private:
+  // TODO: new
+  entt::registry m_registry;
+  ResourceManager* m_resourceManager = nullptr;
 
-    std::unique_ptr<SceneNode> m_rootNode = nullptr;
+  const Path m_path;
 
-    // TODO: new
-    entt::registry m_registry;
-    ResourceManager* m_resourceManager = nullptr;
-
-    const Path m_path;
-
-    Vector<Mesh> m_staticMeshes;
+  Vector<Mesh> m_staticMeshes;
 };
 
 }  // namespace Marbas

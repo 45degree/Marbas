@@ -1,33 +1,34 @@
 #ifndef MARBAS_RHI_INTERFACE_VERTEX_BUFFER_H
 #define MARBAS_RHI_INTERFACE_VERTEX_BUFFER_H
 
-#include "Common.hpp"
 #include <cstdint>
 #include <glm/glm.hpp>
 #include <numeric>
 
+#include "Common.hpp"
+
 namespace Marbas {
 
 enum class ElementType {
-    BYTE,
-    UNSIGNED_BYTE,
-    SHORT,
-    UNSIGNED_SHORT,
-    INT,
-    UNSIGNED_INT,
-    FLOAT,
-    HALF_FLOAT,
-    DOUBLE
+  BYTE,
+  UNSIGNED_BYTE,
+  SHORT,
+  UNSIGNED_SHORT,
+  INT,
+  UNSIGNED_INT,
+  FLOAT,
+  HALF_FLOAT,
+  DOUBLE
 };
 
 struct ElementLayout {
-    int index;        /// Specifies the index of the generic vertex attribute
-    ElementType mateType;
-    size_t typeBytes;
-    size_t count;     // Specifies the number of components per generic vertex attribute
-    bool normalized;  // Specifies whether fixed-point data values should be normalized
-    size_t stride;    // Specifies the byte offset between consecutive generic vertex attributes.
-    size_t offset;    // Specifies the offset of the first component in the array.
+  int index;  /// Specifies the index of the generic vertex attribute
+  ElementType mateType;
+  size_t typeBytes;
+  size_t count;     // Specifies the number of components per generic vertex attribute
+  bool normalized;  // Specifies whether fixed-point data values should be normalized
+  size_t stride;    // Specifies the byte offset between consecutive generic vertex attributes.
+  size_t offset;    // Specifies the offset of the first component in the array.
 };
 
 /**
@@ -42,33 +43,28 @@ struct ElementLayout {
  *
  */
 class VertexBuffer {
-public:
-    explicit VertexBuffer(size_t size) : m_size(size) {}
-    virtual ~VertexBuffer() = default;
-public:
+ public:
+  explicit VertexBuffer(size_t size) : m_size(size) {}
+  virtual ~VertexBuffer() = default;
 
-    /**
-     * @brief set the layout for each vertex buffer's element
-     */
-    void SetLayout(const Vector<ElementLayout>& layout);
+ public:
+  /**
+   * @brief set the layout for each vertex buffer's element
+   */
+  void SetLayout(const Vector<ElementLayout>& layout);
 
-    virtual void SetData(const void* data, size_t size, size_t offset) const = 0;
-    virtual void Bind() const = 0;
-    virtual void UnBind() const = 0;
+  virtual void SetData(const void* data, size_t size, size_t offset) const = 0;
+  virtual void Bind() const = 0;
+  virtual void UnBind() const = 0;
 
-    [[nodiscard]] size_t GetSize() const {
-        return m_size;
-    }
+  [[nodiscard]] size_t GetSize() const { return m_size; }
 
-    [[nodiscard]] const Vector<ElementLayout>& Getlayout() const {
-        return m_layout;
-    }
+  [[nodiscard]] const Vector<ElementLayout>& Getlayout() const { return m_layout; }
 
-protected:
-    Vector<ElementLayout> m_layout;
-    size_t m_size;
+ protected:
+  Vector<ElementLayout> m_layout;
+  size_t m_size;
 };
-
 
 }  // namespace Marbas
 

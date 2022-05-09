@@ -1,34 +1,28 @@
 #ifndef MARBARS_WIDGET_IMAGE_H
 #define MARBARS_WIDGET_IMAGE_H
 
+#include <imgui.h>
+
 #include "Layer/RenderLayer.hpp"
 #include "Widget/Widget.hpp"
-
-#include <imgui.h>
 
 namespace Marbas {
 
 class RenderImage : public Widget, public IChangeMeshAble {
-public:
-    explicit RenderImage(const String& title = "Image"):
-        Widget(title)
-    {}
+ public:
+  explicit RenderImage(const String& title = "Image") : Widget(title) {}
 
-    ~RenderImage() override = default;
+  ~RenderImage() override = default;
 
-    void Draw() override;
+  void Draw() override;
 
-    [[nodiscard]] const ImVec2 GetImageSize() const noexcept {
-        return imageSize;
-    }
+  [[nodiscard]] const ImVec2 GetImageSize() const noexcept { return imageSize; }
 
-    void ChangeMesh(const Mesh& mesh) override {
-        m_selectedMesh = mesh;
-    }
+  void ChangeMesh(const Mesh& mesh) override { m_selectedMesh = mesh; }
 
-private:
-    std::optional<Mesh> m_selectedMesh;
-    ImVec2 imageSize;
+ private:
+  std::optional<Mesh> m_selectedMesh;
+  ImVec2 imageSize;
 };
 
 }  // namespace Marbas

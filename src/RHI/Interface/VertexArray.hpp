@@ -7,15 +7,15 @@
 namespace Marbas {
 
 class VertexArray {
-public:
-    VertexArray() = default;
-    virtual ~VertexArray() = default;
+ public:
+  VertexArray() = default;
+  virtual ~VertexArray() = default;
 
-public:
-    virtual void Bind() const = 0;
-    virtual void UnBind() const = 0;
+ public:
+  virtual void Bind() const = 0;
+  virtual void UnBind() const = 0;
 
-    virtual void EnableVertexAttribArray(const VertexBuffer* vertexBuffer) const = 0;
+  virtual void EnableVertexAttribArray(const VertexBuffer* vertexBuffer) const = 0;
 };
 
 }  // namespace Marbas

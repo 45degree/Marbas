@@ -6,19 +6,17 @@
 namespace Marbas {
 
 class MeshInfomationWidget : public Widget, public IChangeMeshAble {
-public:
-    MeshInfomationWidget(): Widget("MeshInfomation") {}
-    ~MeshInfomationWidget() override = default;
+ public:
+  MeshInfomationWidget() : Widget("MeshInfomation") {}
+  ~MeshInfomationWidget() override = default;
 
-public:
-    void Draw() override;
+ public:
+  void Draw() override;
 
-    void ChangeMesh(const Mesh& mesh) override {
-        m_selectedMesh = mesh;
-    }
+  void ChangeMesh(const Mesh& mesh) override { m_selectedMesh = mesh; }
 
-private:
-    std::optional<Mesh> m_selectedMesh;
+ private:
+  std::optional<Mesh> m_selectedMesh;
 };
 
 }  // namespace Marbas

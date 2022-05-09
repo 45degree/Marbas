@@ -7,20 +7,18 @@
 namespace Marbas {
 
 class ResourceBase {
-protected:
-    ResourceBase() = default;
+ protected:
+  ResourceBase() = default;
 
-public:
-    virtual ~ResourceBase() = default;
+ public:
+  virtual ~ResourceBase() = default;
 
-public:
-    [[nodiscard]] Uid GetUid() const noexcept {
-        return m_id;
-    }
+ public:
+  [[nodiscard]] Uid GetUid() const noexcept { return m_id; }
 
-protected:
-    Uid m_id;
-    mutable bool m_isLoad = false;
+ protected:
+  Uid m_id;
+  mutable bool m_isLoad = false;
 };
 
 }  // namespace Marbas

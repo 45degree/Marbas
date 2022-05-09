@@ -5,9 +5,9 @@ namespace Marbas {
 
 // TODO: need to impl
 class RenderPass {
-public:
+ public:
 };
 
-}
+}  // namespace Marbas
 
 #endif
