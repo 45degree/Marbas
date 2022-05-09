@@ -1,12 +1,12 @@
 #ifndef MARBAS_CORE_MESH_H
 #define MARBAS_CORE_MESH_H
 
-#include "Common.hpp"
-#include "RHI/RHI.hpp"
-#include "Core/Component.hpp"
-#include "entt/entt.hpp"
-
 #include <assimp/scene.h>
+
+#include "Common.hpp"
+#include "Core/Component.hpp"
+#include "RHI/RHI.hpp"
+#include "entt/entt.hpp"
 
 namespace Marbas {
 
@@ -34,7 +34,7 @@ public:
                                    MeshComponent& meshComponent);
 
     static void ReadMaterialFromNode(const aiMesh* aMesh, const aiScene* aScene, const Path& path,
-                                     RenderComponent& renderComponent, 
+                                     RenderComponent& renderComponent,
                                      ResourceManager* resourceManager);
 
     static void LoadMeshToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory,
