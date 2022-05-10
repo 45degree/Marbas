@@ -60,9 +60,11 @@ void RenderLayer::OnUpdate() {
     auto& registry = m_scene->GetRigister();
 
     // TODO: draw sky box
-    auto cubeMap = registry.view<MeshComponent, CubeMapPolicy>();
+    auto cubeMap = registry.view<MeshComponent, CubeMapComponent>();
     cubeMap.each([&](auto entity, MeshComponent& mesh, CubeMapComponent& cubeMapComponent) {
       if (!cubeMapComponent.m_isOnGPU) {
+        if (!cubeMapComponent.m_cubeMapResource.has_value()) return;
+
         CubeMapPolicy::LoadToGPU(entity, m_scene.get(), m_rhiFactory, m_resourceManager);
         cubeMapComponent.m_isOnGPU = true;
       }
@@ -71,9 +73,9 @@ void RenderLayer::OnUpdate() {
       mvp.model = glm::mat4(1.0);
       shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
 
-      m_rhiFactory->Enable(EnableItem::DEPTH_MASK);
-      cubeMapComponent.m_drawBatch->Draw();
       m_rhiFactory->Disable(EnableItem::DEPTH_MASK);
+      cubeMapComponent.m_drawBatch->Draw();
+      m_rhiFactory->Enable(EnableItem::DEPTH_MASK);
     });
 
     auto view = registry.view<TransformComponent, RenderComponent>();

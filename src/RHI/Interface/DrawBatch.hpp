@@ -25,12 +25,21 @@ class DrawBatch {
     m_indexBuffer = std::move(indexBuffer);
   }
 
-  void SetMaterial(Material* material) noexcept { m_material = material; }
-
-  [[nodiscard]] Material* GetMaterial() const noexcept { return m_material; }
-
   void SetVertexArray(std::unique_ptr<VertexArray>&& vertexArray) {
     m_vertexArray = std::move(vertexArray);
+  }
+
+  void SetMaterial(MaterialBase* material) noexcept { m_material = material; }
+
+  [[nodiscard]] MaterialBase* GetMaterial() const noexcept { return m_material; }
+
+  void EnableBlend(bool isEnable) noexcept { m_enableBlend = isEnable; }
+
+  [[nodiscard]] bool IsEnableBlend() const noexcept { return m_enableBlend; }
+
+  void SetBlendFactor(const BlendFactorInfo& blendFactorInfo) {
+    m_srcBlendFactor = blendFactorInfo.srcBlendType;
+    m_dstBlendFactor = blendFactorInfo.dstBlendType;
   }
 
   [[nodiscard]] bool IsComplete() const noexcept {
@@ -43,7 +52,11 @@ class DrawBatch {
   std::unique_ptr<VertexArray> m_vertexArray = nullptr;
   std::unique_ptr<IndexBuffer> m_indexBuffer = nullptr;
 
-  Material* m_material;
+  MaterialBase* m_material;
+
+  bool m_enableBlend = false;
+  BlendFactor m_srcBlendFactor = BlendFactor::SRC_ALPHA;
+  BlendFactor m_dstBlendFactor = BlendFactor::ONE_MINUS_SRC_ALPHA;
 };
 
 }  // namespace Marbas

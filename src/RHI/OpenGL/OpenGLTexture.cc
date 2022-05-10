@@ -126,7 +126,7 @@ void OpenGLTextureCubeMap::SetData(void* data, uint32_t size, CubeMapPosition po
       break;
   }
 
-  glTextureSubImage3D(m_textureID, 1, 0, 0, layer, m_width, m_height, 1, dataFormat,
+  glTextureSubImage3D(m_textureID, 0, 0, 0, layer, m_width, m_height, 1, dataFormat,
                       GL_UNSIGNED_BYTE, data);
 
   auto error = glGetError();

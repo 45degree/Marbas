@@ -118,7 +118,7 @@ void OpenGLRHIFactory::Enable(EnableItem item) const {
       glEnable(GL_DEPTH_TEST);
       break;
     case EnableItem::DEPTH_MASK:
-      glDepthMask(TRUE);
+      glDepthMask(GL_TRUE);
       break;
     case EnableItem::BLEND:
       glEnable(GL_BLEND);
@@ -132,7 +132,7 @@ void OpenGLRHIFactory::Disable(EnableItem item) const {
       glDisable(GL_DEPTH_TEST);
       break;
     case EnableItem::DEPTH_MASK:
-      glDepthMask(FALSE);
+      glDepthMask(GL_FALSE);
       break;
     case EnableItem::BLEND:
       glDisable(GL_BLEND);

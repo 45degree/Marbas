@@ -44,7 +44,7 @@ ShaderResource* ResourceManager::AddShader(const ShaderFileInfo& shaderFileInfo)
 }
 
 MaterialResource* ResourceManager::AddMaterial() {
-  auto material = std::make_unique<Material>();
+  auto material = std::make_unique<DefaultMaterial>();
   auto materialResource = std::make_unique<MaterialResource>(std::move(material));
   auto materialResourcePtr = materialResource.get();
   auto uid = materialResource->GetUid();
@@ -59,17 +59,19 @@ MaterialResource* ResourceManager::AddMaterial() {
 
 void ResourceManager::RemoveResource(const Uid& uid) {}
 
-CubeMapMaterialResource* ResourceManager::AddCubeMapMaterialResource(
-    const CubeMapCreateInfo& createInfo) {
+CubeMapMaterialResource* ResourceManager::AddCubeMapMaterial(const CubeMapCreateInfo& createInfo) {
+  auto cubeMapMaterial = std::make_unique<CubeMapMaterial>();
+  auto cubeMapMaterialResource =
+      std::make_unique<CubeMapMaterialResource>(std::move(cubeMapMaterial));
+  cubeMapMaterialResource->SetShader(m_defaultCubeMapShaderResource);
+
   auto cubeMapTexture = m_rhiFactory->CreateTextureCubeMap(createInfo);
-  auto cubeMapTextureResource =
-      std::make_unique<CubeMapMaterialResource>(std::move(cubeMapTexture));
-  cubeMapTextureResource->SetShader(m_defaultCubeMapShaderResource);
+  cubeMapMaterialResource->SetCubeMapTexture(std::move(cubeMapTexture));
 
-  auto cubeMapTextureResourcePtr = cubeMapTextureResource.get();
+  auto cubeMapTextureResourcePtr = cubeMapMaterialResource.get();
 
-  auto uid = cubeMapTextureResource->GetUid();
-  m_resources.insert({uid, std::move(cubeMapTextureResource)});
+  auto uid = cubeMapMaterialResource->GetUid();
+  m_resources.insert({uid, std::move(cubeMapMaterialResource)});
   m_cubeMapMaterialResources.insert({uid, cubeMapTextureResourcePtr});
 
   return cubeMapTextureResourcePtr;
@@ -112,7 +114,7 @@ CubeMapMaterialResource* ResourceManager::FindCubeMapMaterialResource(
   return m_cubeMapMaterialResources.at(uid);
 }
 
-Material* MaterialResource::LoadMaterial(ResourceManager* resourceManager) const {
+DefaultMaterial* MaterialResource::LoadMaterial(ResourceManager* resourceManager) const {
   LOG(INFO) << FORMAT("load material resource, uid is {}", m_id);
 
   for (const auto& diffuseTexUid : m_diffuseTextureUids) {
@@ -137,6 +139,21 @@ Material* MaterialResource::LoadMaterial(ResourceManager* resourceManager) const
 
   m_isLoad = true;
 
+  return m_material.get();
+}
+
+CubeMapMaterial* CubeMapMaterialResource::LoadResource(ResourceManager* resourceManager) const {
+  LOG(INFO) << FORMAT("load cubemap material, uid is {}", m_id);
+
+  m_material->SetCubeMapTexture(m_cubeMapTexture.get());
+
+  auto* shaderResource = resourceManager->FindShaderResource(m_shaderResource);
+  LOG_IF(WARNING, shaderResource == nullptr) << "can't set shader for material";
+  if (shaderResource != nullptr) {
+    m_material->SetShader(shaderResource->LoadShader());
+  }
+
+  m_isLoad = true;
   return m_material.get();
 }
 

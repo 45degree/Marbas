@@ -40,22 +40,13 @@ constexpr GLenum GetOpenGLBlendFactor(BlendFactor type) {
 void OpenGLDrawBatch::Draw() {
   if (!IsComplete()) return;
 
-  if (m_material->IsEnableBlend()) {
+  if (m_enableBlend) {
     glEnable(GL_BLEND);
-    auto [srcBlendFactor, dstBlendFactor] = m_material->GetBlendFactor();
-    glBlendFunc(GetOpenGLBlendFactor(srcBlendFactor), GetOpenGLBlendFactor(dstBlendFactor));
+    glBlendFunc(GetOpenGLBlendFactor(m_srcBlendFactor), GetOpenGLBlendFactor(m_dstBlendFactor));
   }
 
   // set textures
-  auto diffuseTextures = m_material->GetDiffuseTexture();
-  if (diffuseTextures != nullptr) {
-    diffuseTextures->Bind(0);
-  }
-
-  auto ambientTextures = m_material->GetAmbientTexture();
-  if (ambientTextures != nullptr) {
-    ambientTextures->Bind(1);
-  }
+  m_material->Bind();
 
   // set data
   m_vertexArray->EnableVertexAttribArray(m_vertexBuffer.get());
@@ -73,15 +64,9 @@ void OpenGLDrawBatch::Draw() {
   m_vertexBuffer->UnBind();
   m_indexBuffer->UnBind();
 
-  if (diffuseTextures != nullptr) {
-    diffuseTextures->UnBind();
-  }
+  m_material->UnBind();
 
-  if (ambientTextures != nullptr) {
-    ambientTextures->UnBind();
-  }
-
-  if (m_material->IsEnableBlend()) {
+  if (m_enableBlend) {
     glDisable(GL_BLEND);
   }
 }

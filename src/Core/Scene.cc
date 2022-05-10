@@ -72,6 +72,17 @@ Scene::Scene(const Path& path, ResourceManager* resourceManager)
       m_path(path),
       m_resourceManager(resourceManager) {
   m_cubeMap = CubeMapPolicy::Create(m_registry);
+  auto& componnent = Entity::GetComponent<CubeMapComponent>(this, m_cubeMap.value());
+
+  CubeMapCreateInfo defaultCreateInfo = {
+      .top = Path("assert/skybox/top.jpg"),
+      .bottom = Path("assert/skybox/bottom.jpg"),
+      .back = Path("assert/skybox/back.jpg"),
+      .front = Path("assert/skybox/front.jpg"),
+      .left = Path("assert/skybox/left.jpg"),
+      .right = Path("assert/skybox/right.jpg"),
+  };
+  componnent.m_cubeMapResource = m_resourceManager->AddCubeMapMaterial(defaultCreateInfo)->GetUid();
 }
 
 std::unique_ptr<Scene> Scene::CreateSceneFromFile(const Path& sceneFile,

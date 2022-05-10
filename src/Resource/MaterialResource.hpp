@@ -14,7 +14,7 @@ namespace Marbas {
 class ResourceManager;
 class MaterialResource final : public ResourceBase {
  public:
-  explicit MaterialResource(std::unique_ptr<Material>&& material)
+  explicit MaterialResource(std::unique_ptr<DefaultMaterial>&& material)
       : ResourceBase(), m_material(std::move(material)) {}
 
  public:
@@ -36,33 +36,38 @@ class MaterialResource final : public ResourceBase {
     m_diffuseTextureUids.insert(diffuseTextureIds.begin(), diffuseTextureIds.end());
   }
 
-  Material* GetMaterial() const noexcept {
+  DefaultMaterial* GetMaterial() const noexcept {
     if (!m_isLoad) return nullptr;
 
     return m_material.get();
   }
 
-  [[nodiscard]] Material* LoadMaterial(ResourceManager* resourceManager) const;
+  [[nodiscard]] DefaultMaterial* LoadMaterial(ResourceManager* resourceManager) const;
 
  private:
   std::unordered_set<Uid> m_diffuseTextureUids;
   std::unordered_set<Uid> m_ambientTextureUids;
   Uid m_shaderResource;
-  mutable std::unique_ptr<Material> m_material;
+  mutable std::unique_ptr<DefaultMaterial> m_material;
 };
 
 class CubeMapMaterialResource final : public ResourceBase {
  public:
-  explicit CubeMapMaterialResource(std::unique_ptr<TextureCubeMap>&& cubeMap)
-      : ResourceBase(), m_cubeMap(std::move(cubeMap)) {}
-
-  TextureCubeMap* GetCubeMapTexture() const noexcept { return m_cubeMap.get(); }
+  explicit CubeMapMaterialResource(std::unique_ptr<CubeMapMaterial>&& cubeMap)
+      : ResourceBase(), m_material(std::move(cubeMap)) {}
 
  public:
   void SetShader(const Uid& shaderResourceId) { m_shaderResource = shaderResourceId; }
 
+  void SetCubeMapTexture(std::unique_ptr<TextureCubeMap>&& cubeMapTexture) {
+    m_cubeMapTexture = std::move(cubeMapTexture);
+  }
+
+  [[nodiscard]] CubeMapMaterial* LoadResource(ResourceManager* resourceManager) const;
+
  private:
-  std::unique_ptr<TextureCubeMap> m_cubeMap;
+  std::unique_ptr<TextureCubeMap> m_cubeMapTexture;
+  std::unique_ptr<CubeMapMaterial> m_material;
   Uid m_shaderResource;
 };
 

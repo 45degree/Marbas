@@ -33,10 +33,23 @@ struct BlendFactorInfo {
   BlendFactor dstBlendType;
 };
 
-class Material {
+class MaterialBase {
  public:
-  Material() = default;
-  ~Material() = default;
+  virtual void Bind() = 0;
+  virtual void UnBind() = 0;
+
+  Shader* GetShader() { return m_shader; }
+
+  void SetShader(Shader* shader) { m_shader = shader; }
+
+ protected:
+  Shader* m_shader = nullptr;
+};
+
+class DefaultMaterial : public MaterialBase {
+ public:
+  DefaultMaterial() = default;
+  ~DefaultMaterial() = default;
 
  public:
   void SetAmbientTexture(Texture2D* texture) {
@@ -53,22 +66,11 @@ class Material {
     m_allTextures.push_back(texture);
   }
 
-  void SetShader(Shader* shader) { m_shader = shader; }
-
-  void SetBlendFactor(const BlendFactorInfo& blendFactorInfo) {
-    m_srcBlendFactor = blendFactorInfo.srcBlendType;
-    m_dstBlendFactor = blendFactorInfo.dstBlendType;
-  }
-
   [[nodiscard]] Texture2D* GetAmbientTexture() const { return m_ambientTexture; }
 
   [[nodiscard]] Texture2D* GetDiffuseTexture() const { return m_diffuseTexture; }
 
   [[nodiscard]] Vector<Texture2D*> GetAllTextures() const { return m_allTextures; }
-
-  void EnableBlend(bool isEnable) noexcept { m_enableBlend = isEnable; }
-
-  [[nodiscard]] bool IsEnableBlend() const noexcept { return m_enableBlend; }
 
   int GetTextureBindPoint(const Texture2D* texture) {
     if (texture == nullptr) return -1;
@@ -79,21 +81,54 @@ class Material {
     return static_cast<int>(std::distance(m_allTextures.begin(), iter));
   }
 
-  [[nodiscard]] Shader* GetShader() const noexcept { return m_shader; }
+  void Bind() override {
+    if (m_diffuseTexture != nullptr) {
+      m_diffuseTexture->Bind(0);
+    }
 
-  [[nodiscard]] std::tuple<BlendFactor, BlendFactor> GetBlendFactor() const noexcept {
-    return {m_srcBlendFactor, m_dstBlendFactor};
+    if (m_ambientTexture != nullptr) {
+      m_ambientTexture->Bind(1);
+    }
+  }
+
+  void UnBind() override {
+    if (m_diffuseTexture != nullptr) {
+      m_diffuseTexture->UnBind();
+    }
+
+    if (m_ambientTexture != nullptr) {
+      m_ambientTexture->UnBind();
+    }
   }
 
  private:
   Vector<Texture2D*> m_allTextures;
   Texture2D* m_ambientTexture;
   Texture2D* m_diffuseTexture;
+};
 
-  bool m_enableBlend = false;
-  BlendFactor m_srcBlendFactor = BlendFactor::SRC_ALPHA;
-  BlendFactor m_dstBlendFactor = BlendFactor::ONE_MINUS_SRC_ALPHA;
-  Shader* m_shader;
+class CubeMapMaterial : public MaterialBase {
+ public:
+  CubeMapMaterial() = default;
+  ~CubeMapMaterial() = default;
+
+ public:
+  void Bind() override {
+    if (m_cubeMapTexture != nullptr) {
+      m_cubeMapTexture->Bind(0);
+    }
+  }
+
+  void UnBind() override {
+    if (m_cubeMapTexture != nullptr) {
+    m_cubeMapTexture->UnBind();
+    }
+  }
+
+  void SetCubeMapTexture(TextureCubeMap* cubeMaptexture) { m_cubeMapTexture = cubeMaptexture; }
+
+ private:
+  TextureCubeMap* m_cubeMapTexture;
 };
 
 }  // namespace Marbas

@@ -161,7 +161,7 @@ CubeMap CubeMapPolicy::Create(entt::registry& registry) {
       MeshVertexInfo{.posX = -1, .posY = -1, .posZ = -1},
       MeshVertexInfo{.posX = 1, .posY = -1, .posZ = -1},
       MeshVertexInfo{.posX = 1, .posY = 1, .posZ = -1},
-      MeshVertexInfo{.posX = -1, .posY = 1, .posZ = 1},
+      MeshVertexInfo{.posX = -1, .posY = 1, .posZ = -1},
   };
   meshComponent.m_indices = {3, 0, 1, 3, 1, 2, 2, 1, 6, 6, 1, 5, 6, 3, 2, 7, 3, 6,
                              1, 0, 4, 1, 4, 5, 7, 0, 3, 0, 7, 4, 4, 7, 5, 7, 6, 5};
@@ -204,14 +204,14 @@ void CubeMapPolicy::LoadToGPU(CubeMap cubeMap, Scene* scene, RHIFactory* rhiFact
 
   auto* materialResource = resourceManager->FindCubeMapMaterialResource(materialUid);
 
-  auto* material = materialResource->LoadMaterial(resourceManager);
+  auto* material = materialResource->LoadResource(resourceManager);
   cubeMapComponent.m_drawBatch->SetMaterial(material);
 }
 
 void CubeMapPolicy::ReadCubeMapFromFile(const CubeMapCreateInfo& createInfo,
                                         CubeMapComponent& component,
                                         ResourceManager* resourceManager) {
-  auto* cubeMapTextureResource = resourceManager->AddCubeMapMaterialResource(createInfo);
+  auto* cubeMapTextureResource = resourceManager->AddCubeMapMaterial(createInfo);
   component.m_cubeMapResource = cubeMapTextureResource->GetUid();
 }
 

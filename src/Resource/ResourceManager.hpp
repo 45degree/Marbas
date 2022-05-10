@@ -38,7 +38,7 @@ class ResourceManager {
 
   MaterialResource* AddMaterial();
 
-  CubeMapMaterialResource* AddCubeMapMaterialResource(const CubeMapCreateInfo& createInfo);
+  CubeMapMaterialResource* AddCubeMapMaterial(const CubeMapCreateInfo& createInfo);
 
   void RemoveResource(const Uid& id);
 
