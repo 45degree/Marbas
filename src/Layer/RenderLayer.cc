@@ -50,14 +50,27 @@ void RenderLayer::OnUpdate() {
   auto viewMatrix = m_editorCamera->GetViewMartix();
   auto projectionMatrix = m_editorCamera->GetPerspective();
 
-  MVP mvp;
-  mvp.projection = projectionMatrix;
-  mvp.view = viewMatrix;
-
   if (m_scene != nullptr) {
     // TODO: draw static batch
 
     auto& registry = m_scene->GetRigister();
+
+    auto view = registry.view<TransformComponent, RenderComponent>();
+    view.each([&](auto entity, TransformComponent& transform, RenderComponent& render) {
+      MVP mvp;
+      mvp.projection = projectionMatrix;
+      mvp.view = viewMatrix;
+
+      if (!render.m_isOnGPU) {
+        MeshPolicy::LoadToGPU(entity, m_scene.get(), m_rhiFactory, m_resourceManager);
+        render.m_isOnGPU = true;
+      }
+      auto* material = render.m_drawBatch->GetMaterial();
+      auto* shader = material->GetShader();
+      mvp.model = transform.modelMatrix;
+      shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
+      render.m_drawBatch->Draw();
+    });
 
     // TODO: draw sky box
     auto cubeMap = registry.view<MeshComponent, CubeMapComponent>();
@@ -68,27 +81,18 @@ void RenderLayer::OnUpdate() {
         CubeMapPolicy::LoadToGPU(entity, m_scene.get(), m_rhiFactory, m_resourceManager);
         cubeMapComponent.m_isOnGPU = true;
       }
+
+      MVP mvp;
+      mvp.projection = projectionMatrix;
+      mvp.view = glm::mat4(glm::mat3(viewMatrix));
+      mvp.model = glm::mat4(1.0);
+
       auto* material = cubeMapComponent.m_drawBatch->GetMaterial();
       auto* shader = material->GetShader();
-      mvp.model = glm::mat4(1.0);
-      shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
+      shader->AddUniformDataBlock(1, &mvp, sizeof(MVP));
 
-      m_rhiFactory->Disable(EnableItem::DEPTH_MASK);
+      cubeMapComponent.m_drawBatch->SetDepthFunc(DepthFunc::LEQUAL);
       cubeMapComponent.m_drawBatch->Draw();
-      m_rhiFactory->Enable(EnableItem::DEPTH_MASK);
-    });
-
-    auto view = registry.view<TransformComponent, RenderComponent>();
-    view.each([&](auto entity, TransformComponent& transform, RenderComponent& render) {
-      if (!render.m_isOnGPU) {
-        MeshPolicy::LoadToGPU(entity, m_scene.get(), m_rhiFactory, m_resourceManager);
-        render.m_isOnGPU = true;
-      }
-      auto* material = render.m_drawBatch->GetMaterial();
-      auto* shader = material->GetShader();
-      mvp.model = transform.modelMatrix;
-      shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
-      render.m_drawBatch->Draw();
     });
   }
 

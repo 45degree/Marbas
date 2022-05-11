@@ -37,8 +37,25 @@ constexpr GLenum GetOpenGLBlendFactor(BlendFactor type) {
   }
 }
 
+constexpr GLenum GetOpenGLDepthFunc(DepthFunc func) {
+  switch (func) {
+    case DepthFunc::LESS:
+      return GL_LESS;
+    case DepthFunc::LEQUAL:
+      return GL_LEQUAL;
+    default:
+      return GL_LESS;
+  }
+}
+
 void OpenGLDrawBatch::Draw() {
   if (!IsComplete()) return;
+
+  glDepthFunc(GetOpenGLDepthFunc(m_depthFunc));
+
+  if (!m_enableDepth) {
+    glDepthMask(GL_TRUE);
+  }
 
   if (m_enableBlend) {
     glEnable(GL_BLEND);
@@ -69,6 +86,12 @@ void OpenGLDrawBatch::Draw() {
   if (m_enableBlend) {
     glDisable(GL_BLEND);
   }
+
+  if (!m_enableDepth) {
+    glDepthMask(GL_TRUE);
+  }
+
+  glDepthFunc(GL_LESS);
 }
 
 }  // namespace Marbas

@@ -9,6 +9,11 @@
 
 namespace Marbas {
 
+enum class DepthFunc {
+  LESS,
+  LEQUAL,
+};
+
 class DrawBatch {
  public:
   DrawBatch() = default;
@@ -42,6 +47,10 @@ class DrawBatch {
     m_dstBlendFactor = blendFactorInfo.dstBlendType;
   }
 
+  void DisableDepth() noexcept { m_enableDepth = false; }
+
+  void SetDepthFunc(DepthFunc func) {m_depthFunc = func;}
+
   [[nodiscard]] bool IsComplete() const noexcept {
     return !(m_vertexBuffer == nullptr || m_vertexArray == nullptr || m_indexBuffer == nullptr ||
              m_material == nullptr);
@@ -54,9 +63,14 @@ class DrawBatch {
 
   MaterialBase* m_material;
 
+  // blend
   bool m_enableBlend = false;
   BlendFactor m_srcBlendFactor = BlendFactor::SRC_ALPHA;
   BlendFactor m_dstBlendFactor = BlendFactor::ONE_MINUS_SRC_ALPHA;
+
+  // depth mask
+  bool m_enableDepth = true;
+  DepthFunc m_depthFunc = DepthFunc::LESS;
 };
 
 }  // namespace Marbas

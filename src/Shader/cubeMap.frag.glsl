@@ -5,6 +5,6 @@ layout(location = 0)out vec4 FragColor;
 
 layout(binding = 0) uniform samplerCube skybox;
 
-void main() {    
+void main() {
     FragColor = texture(skybox, TexCoords);
 }

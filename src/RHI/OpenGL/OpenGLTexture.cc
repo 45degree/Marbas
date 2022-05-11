@@ -107,10 +107,10 @@ void OpenGLTextureCubeMap::SetData(void* data, uint32_t size, CubeMapPosition po
   int layer = 0;
   switch (position) {
     case CubeMapPosition::BACK:
-      layer = 4;
+      layer = 5;
       break;  // GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
     case CubeMapPosition::FRONT:
-      layer = 5;
+      layer = 4;
       break;  // GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
     case CubeMapPosition::TOP:
       layer = 2;
@@ -119,10 +119,10 @@ void OpenGLTextureCubeMap::SetData(void* data, uint32_t size, CubeMapPosition po
       layer = 3;
       break;
     case CubeMapPosition::LEFT:
-      layer = 0;
+      layer = 1;
       break;
     case CubeMapPosition::RIGHT:
-      layer = 1;
+      layer = 0;
       break;
   }
 
