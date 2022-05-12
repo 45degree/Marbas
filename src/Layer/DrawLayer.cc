@@ -18,18 +18,6 @@ DrawLayer::DrawLayer(const Window* window, ResourceManager* resourceManager)
 DrawLayer::~DrawLayer() = default;
 
 void DrawLayer::OnAttach() {
-  FileDialogCrateInfo info{
-      "TextureOpenDialog",
-      "Open a texture",
-      "model file (*.off *.obj *.ply *.pmx){.off,.obj,.ply,.pmx}",
-  };
-
-  FileDialogCrateInfo sceneInfo{
-      "Scene",
-      "Open A Scene",
-      "scene file (*.obj *.pmx *.glTF){.pmx,.obj,.glTF}",
-  };
-
   auto renderLayer = m_window->GetRenderLayer();
   if (renderLayer == nullptr) {
     LOG(ERROR) << "can't find renderLayer";
@@ -43,13 +31,9 @@ void DrawLayer::OnAttach() {
   sceneTree->AddSelectMeshWidget(renderImage.get());
   sceneTree->AddSelectMeshWidget(meshInfomationWidget.get());
 
-  m_fileDialog = std::make_unique<FileDialog>(info);
-  m_sceneFileDialog = std::make_unique<FileDialog>(sceneInfo);
-
   AddWidget(std::move(renderImage));
   AddWidget(std::move(sceneTree));
   AddWidget(std::move(meshInfomationWidget));
-  // AddWidget(std::move(fileDialog));
 
   for (auto& widget : widgets) {
     widget->SetResourceManager(m_resourceManager);
@@ -68,33 +52,12 @@ void DrawLayer::OnUpdate() {
 }
 
 void DrawLayer::DrawMenuBar() {
-  m_fileDialog->SelectCallback([](const char* filePathName, const char* fileName) {});
-
-  m_sceneFileDialog->SelectCallback([&](const char* filePathName, const char* fileName) {
-    auto scene = Scene::CreateSceneFromFile(filePathName, m_resourceManager);
-    auto renderLayer = m_window->GetRenderLayer();
-    renderLayer->SetSecne(std::move(scene));
-  });
-
   if (ImGui::BeginMenuBar()) {
     if (ImGui::BeginMenu("File")) {
-      if (ImGui::MenuItem("Open..", "Ctrl+O")) {
-        m_fileDialog->Open();
-      }
-
-      if (ImGui::MenuItem("打开", "Ctrl+S")) {
-        m_sceneFileDialog->Open();
-      }
-
-      if (ImGui::MenuItem("Close", "Ctrl+W")) {
-      }
       ImGui::EndMenu();
     }
     ImGui::EndMenuBar();
   }
-
-  m_fileDialog->Draw();
-  m_sceneFileDialog->Draw();
 }
 
 }  // namespace Marbas

@@ -151,6 +151,11 @@ CubeMap CubeMapPolicy::Create(entt::registry& registry) {
   auto cubeMap = registry.create();
   registry.emplace<MeshComponent>(cubeMap);
   registry.emplace<CubeMapComponent>(cubeMap);
+  registry.emplace<TagsCompoment>(cubeMap);
+
+  auto& tagsCompoment = registry.get<TagsCompoment>(cubeMap);
+  tagsCompoment.name = "CubeMap";
+  tagsCompoment.type = EntityType::CubeMap;
 
   auto& meshComponent = registry.get<MeshComponent>(cubeMap);
   meshComponent.m_vertices = {

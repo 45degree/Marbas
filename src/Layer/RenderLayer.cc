@@ -27,6 +27,8 @@ RenderLayer::RenderLayer(int width, int height, ResourceManager* resourceManager
 
   m_editorCamera = std::make_unique<Camera>();
   m_editorCamera->SetFixPoint(glm::vec3(0, 0, 0));
+
+  m_scene = std::make_unique<Scene>("", m_resourceManager);
 }
 
 RenderLayer::~RenderLayer() = default;

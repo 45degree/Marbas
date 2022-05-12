@@ -27,6 +27,9 @@ class MeshPolicy {
     registry.emplace<RenderComponent>(mesh);
     registry.emplace<TransformComponent>(mesh);
     registry.emplace<TagsCompoment>(mesh);
+
+    auto& tagsCompoment = registry.get<TagsCompoment>(mesh);
+    tagsCompoment.type = EntityType::Mesh;
     return mesh;
   }
 
@@ -38,7 +41,7 @@ class MeshPolicy {
                                    ResourceManager* resourceManager);
 
   static void LoadToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory,
-                            ResourceManager* resourceManager);
+                        ResourceManager* resourceManager);
 };
 
 using CubeMap = entt::entity;

@@ -16,9 +16,21 @@ extern "C" struct MeshVertexInfo {
 };
 #pragma pack()
 
-enum class TagsKey { NAME };
+enum class TagsKey {
+  Name,
+  EntityType,
+};
+
+enum class EntityType {
+  Mesh,
+  CubeMap,
+  Light,
+};
 
 struct TagsCompoment {
+  String name;
+  EntityType type;
+
   std::unordered_map<TagsKey, String> tags;
 };
 

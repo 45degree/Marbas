@@ -8,6 +8,20 @@
 
 namespace Marbas {
 
+String AddIconForStringByTag(const char* str, const TagsCompoment& tag) {
+  const auto& type = tag.type;
+  String result;
+  switch (type) {
+    case EntityType::Mesh:
+      result = String(ICON_FA_CIRCLE_NODES) + str;
+      break;
+    default:
+      result = str;
+  }
+
+  return result;
+}
+
 void SceneTreeWidget::DrawNode(const SceneNode* node) {
   if (node == nullptr) return;
 
@@ -15,11 +29,15 @@ void SceneTreeWidget::DrawNode(const SceneNode* node) {
     auto& meshes = node->GetMeshes();
     for (auto& mesh : meshes) {
       auto& tagsComponent = Entity::GetComponent<TagsCompoment>(m_scene, mesh);
-      const auto& tagName = tagsComponent.tags[TagsKey::NAME];
-      String name = String(ICON_FA_CIRCLE_NODES) + tagName.c_str();
+      const auto& tagName = tagsComponent.tags[TagsKey::Name];
+      const auto& type = tagsComponent.type;
+
+      String name = AddIconForStringByTag(tagName.c_str(), tagsComponent);
       if (ImGui::Selectable(name.c_str())) {
-        for (auto* widget : m_selectMeshWidgets) {
-          widget->ChangeMesh(mesh);
+        if (type == EntityType::Mesh) {
+          for (auto* widget : m_selectMeshWidgets) {
+            widget->ChangeMesh(mesh);
+          }
         }
       }
     }
@@ -49,7 +67,7 @@ void SceneTreeWidget::DrawNode(const SceneNode* node) {
 
     ImGui::TreePop();
   }
-}
+}  // namespace Marbas
 
 void SceneTreeWidget::Draw() {
   if (m_scene == nullptr) return;
@@ -72,6 +90,9 @@ SceneTreeWidget::SceneTreeWidget() : Widget("SceneTree") {
     // auto scene = Scene::CreateSceneFromFile(filePathName, m_resourceManager);
     // auto renderLayer = m_window->GetRenderLayer();
     // renderLayer->SetSecne(std::move(scene));
+    auto subNode = SceneNode::ReadModelFromFile(filePathName, m_scene, m_resourceManager);
+    m_selectedNode->AddSubSceneNode(std::move(subNode));
+    m_selectedNode = nullptr;
   });
 }
 
