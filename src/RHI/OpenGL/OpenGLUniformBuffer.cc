@@ -21,6 +21,8 @@ OpenGLUniformBuffer::~OpenGLUniformBuffer() {
 }
 
 void OpenGLUniformBuffer::Bind() const {
+
+  glBindBufferBase(GL_UNIFORM_BUFFER, m_bindingPoint, UBO);
   glBindBuffer(GL_UNIFORM_BUFFER, UBO);
 
   auto error = glGetError();

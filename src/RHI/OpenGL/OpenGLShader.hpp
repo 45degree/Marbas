@@ -22,6 +22,8 @@ class OpenGLShader : public Shader {
 
   void AddUniformDataBlock(uint32_t bindingPoint, const void* data, uint32_t size) override;
 
+  void UnBind() const override;
+
  private:
   GLuint programID;
 

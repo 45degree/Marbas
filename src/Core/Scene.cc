@@ -108,7 +108,7 @@ Scene::Scene(const Path& path, ResourceManager* resourceManager)
       .left = Path("assert/skybox/left.jpg"),
       .right = Path("assert/skybox/right.jpg"),
   };
-  componnent.m_cubeMapResource = m_resourceManager->AddCubeMapMaterial(defaultCreateInfo)->GetUid();
+  componnent.m_cubeMapResource = m_resourceManager->AddCubeMap(defaultCreateInfo);
 }
 
 void Scene::DeleteSceneNode(SceneNode* sceneNode) {

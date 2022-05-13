@@ -11,12 +11,6 @@
 
 namespace Marbas {
 
-struct ShaderFileInfo {
-  ShaderCodeType type;
-  Path vertexShaderPath;
-  Path fragmentShaderPath;
-};
-
 class ResourceManager {
  public:
   explicit ResourceManager(RHIFactory* rhiFactory) : m_rhiFactory(rhiFactory) {
@@ -25,8 +19,8 @@ class ResourceManager {
     auto* cubeMapShaderResource =
         AddShader({ShaderCodeType::FILE, "shader/cubeMap.vert.glsl", "shader/cubeMap.frag.glsl"});
 
-    m_defaultShaderResource = shaderResource->GetUid();
-    m_defaultCubeMapShaderResource = cubeMapShaderResource->GetUid();
+    m_defaultShaderResource = shaderResource;
+    m_defaultCubeMapShaderResource = cubeMapShaderResource;
   }
 
   ~ResourceManager() = default;
@@ -38,7 +32,7 @@ class ResourceManager {
 
   MaterialResource* AddMaterial();
 
-  CubeMapMaterialResource* AddCubeMapMaterial(const CubeMapCreateInfo& createInfo);
+  CubeMapResource* AddCubeMap(const CubeMapCreateInfo& createInfo);
 
   void RemoveResource(const Uid& id);
 
@@ -48,21 +42,21 @@ class ResourceManager {
 
   [[nodiscard]] MaterialResource* FindMaterialResource(const Uid& uid) const noexcept;
 
-  [[nodiscard]] CubeMapMaterialResource* FindCubeMapMaterialResource(const Uid& uid) const noexcept;
+  [[nodiscard]] CubeMapResource* FindCubeMapResource(const Uid& uid) const noexcept;
 
  private:
   RHIFactory* m_rhiFactory;
 
   std::unordered_map<Uid, std::unique_ptr<ResourceBase>> m_resources;
   std::unordered_map<Uid, Texture2DResource*> m_texture2DResources;
-  std::unordered_map<Uid, CubeMapMaterialResource*> m_cubeMapMaterialResources;
+  std::unordered_map<Uid, CubeMapResource*> m_cubeMapMaterialResources;
   std::unordered_map<Uid, MaterialResource*> m_materialResources;
   std::unordered_map<Uid, ShaderResource*> m_shaderResources;
 
   std::unordered_map<String, Uid> m_staticResourcePath;
 
-  Uid m_defaultShaderResource;
-  Uid m_defaultCubeMapShaderResource;
+  ShaderResource* m_defaultShaderResource;
+  ShaderResource* m_defaultCubeMapShaderResource;
 };
 
 }  // namespace Marbas

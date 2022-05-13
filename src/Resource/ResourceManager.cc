@@ -10,8 +10,7 @@ Texture2DResource* ResourceManager::AddTexture(const Path& imagePath) {
     return dynamic_cast<Texture2DResource*>(resouce.get());
   }
 
-  auto texture = m_rhiFactory->CreateTexutre2D(imagePath);
-  auto texture2DResource = std::make_unique<Texture2DResource>(std::move(texture));
+  auto texture2DResource = std::make_unique<Texture2DResource>(imagePath);
   auto* texture2DResourcePtr = texture2DResource.get();
   auto uid = texture2DResource->GetUid();
 
@@ -23,18 +22,7 @@ Texture2DResource* ResourceManager::AddTexture(const Path& imagePath) {
 }
 
 ShaderResource* ResourceManager::AddShader(const ShaderFileInfo& shaderFileInfo) {
-  auto vertexShaderCode = m_rhiFactory->CreateShaderCode(
-      shaderFileInfo.vertexShaderPath, shaderFileInfo.type, ShaderType::VERTEX_SHADER);
-
-  auto fragmentShaderCode = m_rhiFactory->CreateShaderCode(
-      shaderFileInfo.fragmentShaderPath, shaderFileInfo.type, ShaderType::FRAGMENT_SHADER);
-
-  auto shader = m_rhiFactory->CreateShader();
-
-  auto shaderResource = std::make_unique<ShaderResource>(std::move(shader));
-  shaderResource->SetVertexShader(std::move(vertexShaderCode));
-  shaderResource->SetFragmentShader(std::move(fragmentShaderCode));
-
+  auto shaderResource = std::make_unique<ShaderResource>(shaderFileInfo);
   auto uid = shaderResource->GetUid();
   auto shaderResourcePtr = shaderResource.get();
 
@@ -44,8 +32,7 @@ ShaderResource* ResourceManager::AddShader(const ShaderFileInfo& shaderFileInfo)
 }
 
 MaterialResource* ResourceManager::AddMaterial() {
-  auto material = std::make_unique<DefaultMaterial>();
-  auto materialResource = std::make_unique<MaterialResource>(std::move(material));
+  auto materialResource = std::make_unique<MaterialResource>();
   auto materialResourcePtr = materialResource.get();
   auto uid = materialResource->GetUid();
 
@@ -59,19 +46,13 @@ MaterialResource* ResourceManager::AddMaterial() {
 
 void ResourceManager::RemoveResource(const Uid& uid) {}
 
-CubeMapMaterialResource* ResourceManager::AddCubeMapMaterial(const CubeMapCreateInfo& createInfo) {
-  auto cubeMapMaterial = std::make_unique<CubeMapMaterial>();
-  auto cubeMapMaterialResource =
-      std::make_unique<CubeMapMaterialResource>(std::move(cubeMapMaterial));
-  cubeMapMaterialResource->SetShader(m_defaultCubeMapShaderResource);
+CubeMapResource* ResourceManager::AddCubeMap(const CubeMapCreateInfo& createInfo) {
+  auto cubeMapResource = std::make_unique<CubeMapResource>(createInfo);
 
-  auto cubeMapTexture = m_rhiFactory->CreateTextureCubeMap(createInfo);
-  cubeMapMaterialResource->SetCubeMapTexture(std::move(cubeMapTexture));
+  auto cubeMapTextureResourcePtr = cubeMapResource.get();
 
-  auto cubeMapTextureResourcePtr = cubeMapMaterialResource.get();
-
-  auto uid = cubeMapMaterialResource->GetUid();
-  m_resources.insert({uid, std::move(cubeMapMaterialResource)});
+  auto uid = cubeMapResource->GetUid();
+  m_resources.insert({uid, std::move(cubeMapResource)});
   m_cubeMapMaterialResources.insert({uid, cubeMapTextureResourcePtr});
 
   return cubeMapTextureResourcePtr;
@@ -104,57 +85,13 @@ MaterialResource* ResourceManager::FindMaterialResource(const Uid& uid) const no
   return m_materialResources.at(uid);
 }
 
-CubeMapMaterialResource* ResourceManager::FindCubeMapMaterialResource(
-    const Uid& uid) const noexcept {
+CubeMapResource* ResourceManager::FindCubeMapResource(const Uid& uid) const noexcept {
   if (m_cubeMapMaterialResources.find(uid) == m_cubeMapMaterialResources.end()) {
     LOG(WARNING) << FORMAT("can't find cubemap material resource which's uid is is {}", uid);
     return nullptr;
   }
 
   return m_cubeMapMaterialResources.at(uid);
-}
-
-DefaultMaterial* MaterialResource::LoadMaterial(ResourceManager* resourceManager) const {
-  LOG(INFO) << FORMAT("load material resource, uid is {}", m_id);
-
-  for (const auto& diffuseTexUid : m_diffuseTextureUids) {
-    auto* diffuseTexResource = resourceManager->FindTexture(diffuseTexUid);
-    if (diffuseTexResource != nullptr) {
-      m_material->SetDiffuseTexture(diffuseTexResource->GetTexture());
-    }
-  }
-
-  for (const auto& ambientTexUid : m_ambientTextureUids) {
-    auto* ambientTexResource = resourceManager->FindTexture(ambientTexUid);
-    if (ambientTexResource != nullptr) {
-      m_material->SetAmbientTexture(ambientTexResource->GetTexture());
-    }
-  }
-
-  auto* shaderResource = resourceManager->FindShaderResource(m_shaderResource);
-  LOG_IF(WARNING, shaderResource == nullptr) << "can't set shader for material";
-  if (shaderResource != nullptr) {
-    m_material->SetShader(shaderResource->LoadShader());
-  }
-
-  m_isLoad = true;
-
-  return m_material.get();
-}
-
-CubeMapMaterial* CubeMapMaterialResource::LoadResource(ResourceManager* resourceManager) const {
-  LOG(INFO) << FORMAT("load cubemap material, uid is {}", m_id);
-
-  m_material->SetCubeMapTexture(m_cubeMapTexture.get());
-
-  auto* shaderResource = resourceManager->FindShaderResource(m_shaderResource);
-  LOG_IF(WARNING, shaderResource == nullptr) << "can't set shader for material";
-  if (shaderResource != nullptr) {
-    m_material->SetShader(shaderResource->LoadShader());
-  }
-
-  m_isLoad = true;
-  return m_material.get();
 }
 
 }  // namespace Marbas

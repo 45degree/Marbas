@@ -11,64 +11,51 @@
 
 namespace Marbas {
 
-class ResourceManager;
 class MaterialResource final : public ResourceBase {
  public:
-  explicit MaterialResource(std::unique_ptr<DefaultMaterial>&& material)
-      : ResourceBase(), m_material(std::move(material)) {}
+  explicit MaterialResource() : ResourceBase() {}
 
  public:
-  void SetShader(const Uid& shaderResourceId) { m_shaderResource = shaderResourceId; }
+  void SetShader(ShaderResource* shaderResource) { m_shaderResource = shaderResource; }
 
-  void AddAmbientTexture(const Uid& ambientTextureId) {
-    m_ambientTextureUids.insert(ambientTextureId);
-  }
+  void SetAmbientTexture(Texture2DResource* ambientTexture) { m_ambientTexture = ambientTexture; }
 
-  void AddAmbientTexture(const Vector<Uid>& ambientTextureIds) {
-    m_ambientTextureUids.insert(ambientTextureIds.begin(), ambientTextureIds.end());
-  }
+  void SetDiffuseTexture(Texture2DResource* diffuseTexture) { m_diffuseTexture = diffuseTexture; }
 
-  void AddDiffuseTexture(const Uid& diffuseTextureId) {
-    m_diffuseTextureUids.insert(diffuseTextureId);
-  }
-
-  void AddDiffuseTextures(const Vector<Uid>& diffuseTextureIds) {
-    m_diffuseTextureUids.insert(diffuseTextureIds.begin(), diffuseTextureIds.end());
-  }
-
-  DefaultMaterial* GetMaterial() const noexcept {
+  [[nodiscard]] Material* GetMaterial() const noexcept {
     if (!m_isLoad) return nullptr;
 
     return m_material.get();
   }
 
-  [[nodiscard]] DefaultMaterial* LoadMaterial(ResourceManager* resourceManager) const;
+  void LoadResource(RHIFactory* rhiFactory) override;
 
  private:
-  std::unordered_set<Uid> m_diffuseTextureUids;
-  std::unordered_set<Uid> m_ambientTextureUids;
-  Uid m_shaderResource;
-  mutable std::unique_ptr<DefaultMaterial> m_material;
+  Texture2DResource* m_diffuseTexture = nullptr;
+  Texture2DResource* m_ambientTexture = nullptr;
+
+  ShaderResource* m_shaderResource = nullptr;
+  std::unique_ptr<Material> m_material;
 };
 
-class CubeMapMaterialResource final : public ResourceBase {
- public:
-  explicit CubeMapMaterialResource(std::unique_ptr<CubeMapMaterial>&& cubeMap)
-      : ResourceBase(), m_material(std::move(cubeMap)) {}
+class CubeMapResource final : public ResourceBase {
+
+public:
+  explicit CubeMapResource(const CubeMapCreateInfo& createInfo) : ResourceBase() {}
 
  public:
-  void SetShader(const Uid& shaderResourceId) { m_shaderResource = shaderResourceId; }
+  void LoadResource(RHIFactory* rhiFactory) override;
 
-  void SetCubeMapTexture(std::unique_ptr<TextureCubeMap>&& cubeMapTexture) {
-    m_cubeMapTexture = std::move(cubeMapTexture);
+  [[nodiscard]] TextureCubeMap* GetCubeMapTexture() const noexcept {
+    if (!m_isLoad) return nullptr;
+    if (m_cubeMapTexture == nullptr) return nullptr;
+    return m_cubeMapTexture.get();
   }
 
-  [[nodiscard]] CubeMapMaterial* LoadResource(ResourceManager* resourceManager) const;
-
  private:
+  CubeMapCreateInfo m_createInfo;
+
   std::unique_ptr<TextureCubeMap> m_cubeMapTexture;
-  std::unique_ptr<CubeMapMaterial> m_material;
-  Uid m_shaderResource;
 };
 
 }  // namespace Marbas

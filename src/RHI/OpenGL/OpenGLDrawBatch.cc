@@ -54,13 +54,18 @@ void OpenGLDrawBatch::Draw() {
   glDepthFunc(GetOpenGLDepthFunc(m_depthFunc));
 
   if (!m_enableDepth) {
-    glDepthMask(GL_TRUE);
+    // glDepthMask(GL_FALSE);
+    glDisable(GL_DEPTH_TEST);
   }
 
   if (m_enableBlend) {
     glEnable(GL_BLEND);
     glBlendFunc(GetOpenGLBlendFactor(m_srcBlendFactor), GetOpenGLBlendFactor(m_dstBlendFactor));
   }
+
+  // draw
+  const auto* shader = m_material->GetShader();
+  shader->Use();
 
   // set textures
   m_material->Bind();
@@ -71,11 +76,10 @@ void OpenGLDrawBatch::Draw() {
   m_vertexBuffer->Bind();
   m_indexBuffer->Bind();
 
-  // draw
-  const auto* shader = m_material->GetShader();
-  shader->Use();
   auto count = static_cast<GLsizei>(m_indexBuffer->GetIndexCount());
   glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+
+  // shader->UnBind();
 
   // unbind all data
   m_vertexBuffer->UnBind();
@@ -88,7 +92,9 @@ void OpenGLDrawBatch::Draw() {
   }
 
   if (!m_enableDepth) {
-    glDepthMask(GL_TRUE);
+    // glDepthMask(GL_TRUE);
+
+    glEnable(GL_DEPTH_TEST);
   }
 
   glDepthFunc(GL_LESS);

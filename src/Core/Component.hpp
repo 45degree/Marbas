@@ -47,14 +47,15 @@ struct StaticMeshComponent {};
 
 struct RenderComponent {
   bool m_isOnGPU = false;
-  std::optional<Uid> m_materialResource = std::nullopt;
+  MaterialResource* m_materialResource = nullptr;
   std::unique_ptr<DrawBatch> m_drawBatch = nullptr;
 };
 
 struct CubeMapComponent {
   bool m_isOnGPU = false;
   std::unique_ptr<DrawBatch> m_drawBatch = nullptr;
-  std::optional<Uid> m_cubeMapResource = std::nullopt;
+  CubeMapResource* m_cubeMapResource = nullptr;
+  MaterialResource* m_materialResource = nullptr;
 };
 
 }  // namespace Marbas

@@ -22,6 +22,8 @@ class Shader {
   virtual void Link() = 0;
 
   virtual void Use() const = 0;
+
+  virtual void UnBind() const = 0;
 };
 
 }  // namespace Marbas

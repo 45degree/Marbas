@@ -8,8 +8,7 @@ namespace Marbas {
 
 class Texture2DResource final : public ResourceBase {
  public:
-  explicit Texture2DResource(std::unique_ptr<Texture2D>&& texture)
-      : ResourceBase(), m_texture(std::move(texture)) {}
+  explicit Texture2DResource(const Path& path) : ResourceBase(), m_path(path) {}
 
  public:
   [[nodiscard]] Texture2D* GetTexture() const noexcept {
@@ -19,7 +18,13 @@ class Texture2DResource final : public ResourceBase {
 
   [[nodiscard]] const Path& GetPath() const noexcept { return m_path; }
 
-  void SetPath(const Path& path) { m_path = path; }
+  void LoadResource(RHIFactory* rhiFactory) override {
+    if (m_isLoad) return;
+
+    m_texture = rhiFactory->CreateTexutre2D(m_path);
+
+    m_isLoad = true;
+  }
 
  private:
   Path m_path;

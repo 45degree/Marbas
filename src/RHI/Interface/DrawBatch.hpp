@@ -34,9 +34,9 @@ class DrawBatch {
     m_vertexArray = std::move(vertexArray);
   }
 
-  void SetMaterial(MaterialBase* material) noexcept { m_material = material; }
+  void SetMaterial(Material* material) noexcept { m_material = material; }
 
-  [[nodiscard]] MaterialBase* GetMaterial() const noexcept { return m_material; }
+  [[nodiscard]] Material* GetMaterial() const noexcept { return m_material; }
 
   void EnableBlend(bool isEnable) noexcept { m_enableBlend = isEnable; }
 
@@ -47,9 +47,13 @@ class DrawBatch {
     m_dstBlendFactor = blendFactorInfo.dstBlendType;
   }
 
+  void SetCubeMapTexture(TextureCubeMap* cubeMapTexture) {
+    m_cubeMapTexture = cubeMapTexture;
+  }
+
   void DisableDepth() noexcept { m_enableDepth = false; }
 
-  void SetDepthFunc(DepthFunc func) {m_depthFunc = func;}
+  void SetDepthFunc(DepthFunc func) { m_depthFunc = func; }
 
   [[nodiscard]] bool IsComplete() const noexcept {
     return !(m_vertexBuffer == nullptr || m_vertexArray == nullptr || m_indexBuffer == nullptr ||
@@ -61,7 +65,8 @@ class DrawBatch {
   std::unique_ptr<VertexArray> m_vertexArray = nullptr;
   std::unique_ptr<IndexBuffer> m_indexBuffer = nullptr;
 
-  MaterialBase* m_material;
+  Material* m_material;
+  TextureCubeMap* m_cubeMapTexture = nullptr;
 
   // blend
   bool m_enableBlend = false;

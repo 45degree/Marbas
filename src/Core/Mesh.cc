@@ -85,13 +85,9 @@ void MeshPolicy::ReadMaterialFromNode(const aiMesh* aMesh, const aiScene* aScene
 
   auto* material = aScene->mMaterials[aMesh->mMaterialIndex];
 
-  if (!renderComponent.m_materialResource.has_value()) {
-    renderComponent.m_materialResource = resourceManager->AddMaterial()->GetUid();
+  if (renderComponent.m_materialResource == nullptr) {
+    renderComponent.m_materialResource = resourceManager->AddMaterial();
   }
-
-  Uid uid = renderComponent.m_materialResource.value();
-  auto* materialResource = resourceManager->FindMaterialResource(uid);
-  if (materialResource == nullptr) return;
 
   // diffuse texture
   auto diffuseTexture = LoadTexture2D(material, aiTextureType_DIFFUSE, path, resourceManager);
@@ -100,11 +96,11 @@ void MeshPolicy::ReadMaterialFromNode(const aiMesh* aMesh, const aiScene* aScene
   auto ambientTexture = LoadTexture2D(material, aiTextureType_AMBIENT, path, resourceManager);
 
   if (diffuseTexture != nullptr) {
-    materialResource->AddDiffuseTexture(diffuseTexture->GetUid());
+    renderComponent.m_materialResource->SetDiffuseTexture(diffuseTexture);
   }
 
   if (ambientTexture != nullptr) {
-    materialResource->AddAmbientTexture(ambientTexture->GetUid());
+    renderComponent.m_materialResource->SetAmbientTexture(ambientTexture);
   }
 }
 
@@ -135,15 +131,13 @@ void MeshPolicy::LoadToGPU(Mesh mesh, Scene* scene, RHIFactory* rhiFactory,
   renderComponent.m_drawBatch->SetVertexArray(std::move(vertexArray));
 
   // set material
-  if (!renderComponent.m_materialResource.has_value()) {
+  if (renderComponent.m_materialResource == nullptr) {
     LOG(INFO) << "this mesh don't have a material";
     return;
   }
-  auto materialUid = renderComponent.m_materialResource.value();
 
-  auto* materialResource = resourceManager->FindMaterialResource(materialUid);
-
-  auto* material = materialResource->LoadMaterial(resourceManager);
+  renderComponent.m_materialResource->LoadResource(rhiFactory);
+  auto* material = renderComponent.m_materialResource->GetMaterial();
   renderComponent.m_drawBatch->SetMaterial(material);
 }
 
@@ -201,23 +195,21 @@ void CubeMapPolicy::LoadToGPU(CubeMap cubeMap, Scene* scene, RHIFactory* rhiFact
   cubeMapComponent.m_drawBatch->SetVertexArray(std::move(vertexArray));
 
   // set material
-  if (!cubeMapComponent.m_cubeMapResource.has_value()) {
+  if (cubeMapComponent.m_cubeMapResource == nullptr) {
     LOG(INFO) << "this mesh don't have a material";
     return;
   }
-  auto materialUid = cubeMapComponent.m_cubeMapResource.value();
 
-  auto* materialResource = resourceManager->FindCubeMapMaterialResource(materialUid);
-
-  auto* material = materialResource->LoadResource(resourceManager);
+  cubeMapComponent.m_materialResource->LoadResource(rhiFactory);
+  auto* material = cubeMapComponent.m_materialResource->GetMaterial();
   cubeMapComponent.m_drawBatch->SetMaterial(material);
 }
 
 void CubeMapPolicy::ReadCubeMapFromFile(const CubeMapCreateInfo& createInfo,
                                         CubeMapComponent& component,
                                         ResourceManager* resourceManager) {
-  auto* cubeMapTextureResource = resourceManager->AddCubeMapMaterial(createInfo);
-  component.m_cubeMapResource = cubeMapTextureResource->GetUid();
+  auto* cubeMapTextureResource = resourceManager->AddCubeMap(createInfo);
+  component.m_cubeMapResource = cubeMapTextureResource;
 }
 
 }  // namespace Marbas

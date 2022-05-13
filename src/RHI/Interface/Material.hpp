@@ -33,23 +33,10 @@ struct BlendFactorInfo {
   BlendFactor dstBlendType;
 };
 
-class MaterialBase {
+class Material {
  public:
-  virtual void Bind() = 0;
-  virtual void UnBind() = 0;
-
-  Shader* GetShader() { return m_shader; }
-
-  void SetShader(Shader* shader) { m_shader = shader; }
-
- protected:
-  Shader* m_shader = nullptr;
-};
-
-class DefaultMaterial : public MaterialBase {
- public:
-  DefaultMaterial() = default;
-  ~DefaultMaterial() = default;
+  Material() = default;
+  ~Material() = default;
 
  public:
   void SetAmbientTexture(Texture2D* texture) {
@@ -81,7 +68,7 @@ class DefaultMaterial : public MaterialBase {
     return static_cast<int>(std::distance(m_allTextures.begin(), iter));
   }
 
-  void Bind() override {
+  void Bind() {
     if (m_diffuseTexture != nullptr) {
       m_diffuseTexture->Bind(0);
     }
@@ -91,7 +78,7 @@ class DefaultMaterial : public MaterialBase {
     }
   }
 
-  void UnBind() override {
+  void UnBind() {
     if (m_diffuseTexture != nullptr) {
       m_diffuseTexture->UnBind();
     }
@@ -101,34 +88,16 @@ class DefaultMaterial : public MaterialBase {
     }
   }
 
+  Shader* GetShader() { return m_shader; }
+
+  void SetShader(Shader* shader) { m_shader = shader; }
+
  private:
   Vector<Texture2D*> m_allTextures;
   Texture2D* m_ambientTexture;
   Texture2D* m_diffuseTexture;
-};
 
-class CubeMapMaterial : public MaterialBase {
- public:
-  CubeMapMaterial() = default;
-  ~CubeMapMaterial() = default;
-
- public:
-  void Bind() override {
-    if (m_cubeMapTexture != nullptr) {
-      m_cubeMapTexture->Bind(0);
-    }
-  }
-
-  void UnBind() override {
-    if (m_cubeMapTexture != nullptr) {
-    m_cubeMapTexture->UnBind();
-    }
-  }
-
-  void SetCubeMapTexture(TextureCubeMap* cubeMaptexture) { m_cubeMapTexture = cubeMaptexture; }
-
- private:
-  TextureCubeMap* m_cubeMapTexture;
+  Shader* m_shader = nullptr;
 };
 
 }  // namespace Marbas

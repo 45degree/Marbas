@@ -6,31 +6,38 @@
 
 namespace Marbas {
 
+struct ShaderFileInfo {
+  ShaderCodeType type;
+  Path vertexShaderPath;
+  Path fragmentShaderPath;
+};
+
 class ShaderResource final : public ResourceBase {
  public:
-  explicit ShaderResource(std::unique_ptr<Shader>&& shader)
-      : ResourceBase(), m_shader(std::move(shader)) {}
+  explicit ShaderResource(const ShaderFileInfo& shaderFileInfo)
+      : ResourceBase(), m_shaderFileInfo(shaderFileInfo) {}
 
  public:
-  [[nodiscard]] Shader* LoadShader();
+  void LoadResource(RHIFactory* rhiFactory) override;
 
   void SetVertexShader(std::unique_ptr<ShaderCode>&& vertexShader) {
     m_vertexShader = std::move(vertexShader);
-    m_isLink = false;
   }
 
   void SetFragmentShader(std::unique_ptr<ShaderCode>&& fragmentShader) {
     m_fragmentShader = std::move(fragmentShader);
-    m_isLink = false;
   }
+
+  [[nodiscard]] Shader* GetShader() const noexcept { return m_shader.get(); }
 
  private:
   std::unique_ptr<Shader> m_shader;
   std::unique_ptr<ShaderCode> m_vertexShader;
   std::unique_ptr<ShaderCode> m_fragmentShader;
 
-  bool m_isLink = false;
   bool m_isLoad = false;
+
+  const ShaderFileInfo& m_shaderFileInfo;
 };
 
 }  // namespace Marbas

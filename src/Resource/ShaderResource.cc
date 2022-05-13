@@ -4,22 +4,23 @@
 
 namespace Marbas {
 
-Shader* ShaderResource::LoadShader() {
-  if (m_isLoad) return m_shader.get();
+void ShaderResource::LoadResource(RHIFactory* rhiFactory) {
+  if (m_isLoad) return;
 
   LOG(INFO) << FORMAT("load shader resource, uid is {}", m_id);
 
-  if (m_shader == nullptr) return nullptr;
-  if (m_vertexShader == nullptr || m_fragmentShader == nullptr) return nullptr;
-  if (m_isLink) return m_shader.get();
+  m_vertexShader = rhiFactory->CreateShaderCode(m_shaderFileInfo.vertexShaderPath,
+                                                m_shaderFileInfo.type, ShaderType::VERTEX_SHADER);
+
+  m_fragmentShader = rhiFactory->CreateShaderCode(
+      m_shaderFileInfo.fragmentShaderPath, m_shaderFileInfo.type, ShaderType::FRAGMENT_SHADER);
+
+  m_shader = rhiFactory->CreateShader();
 
   m_shader->AddShaderCode(m_vertexShader.get());
   m_shader->AddShaderCode(m_fragmentShader.get());
   m_shader->Link();
-  m_isLink = true;
   m_isLoad = true;
-
-  return m_shader.get();
 }
 
 }  // namespace Marbas

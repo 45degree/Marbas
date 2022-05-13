@@ -50,4 +50,10 @@ void OpenGLShader::Use() const {
   }
 }
 
+void OpenGLShader::UnBind() const {
+  for (const auto& [bindingPoint, buffer] : m_uniformDataBlocks) {
+    buffer->UnBind();
+  }
+}
+
 }  // namespace Marbas
