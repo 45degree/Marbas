@@ -19,6 +19,7 @@ class SceneTreeWidget : public Widget {
 
  private:
   void DrawNode(const SceneNode* node);
+  void DrawScene();
 
  private:
   SceneNode* m_selectedNode = nullptr;

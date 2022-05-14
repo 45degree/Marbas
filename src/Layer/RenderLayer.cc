@@ -80,7 +80,7 @@ void RenderLayer::OnUpdate() {
     shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
     shader->AddUniformDataBlock(1, &sceneInfo, sizeof(RenderSceneInfo));
 
-    CubeMap cubeMap = m_scene->GetCubeMap();
+    CubeMap cubeMap = m_scene->GetSkyBox();
     if (Entity::HasComponent<CubeMapComponent>(m_scene.get(), cubeMap)) {
       auto& component = Entity::GetComponent<CubeMapComponent>(m_scene.get(), cubeMap);
       auto* cubeMapResource = component.m_cubeMapResource;

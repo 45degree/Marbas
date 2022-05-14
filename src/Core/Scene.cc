@@ -97,8 +97,8 @@ Scene::Scene(const Path& path, ResourceManager* resourceManager)
     : m_rootNode(std::make_unique<SceneNode>(this, "RootNode")),
       m_path(path),
       m_resourceManager(resourceManager) {
-  m_cubeMap = CubeMapPolicy::Create(m_registry);
-  auto& component = Entity::GetComponent<CubeMapComponent>(this, m_cubeMap);
+  m_skybox = CubeMapPolicy::Create(m_registry);
+  auto& component = Entity::GetComponent<CubeMapComponent>(this, m_skybox);
 
   CubeMapCreateInfo defaultCreateInfo = {
       .top = Path("assert/skybox/top.jpg"),

@@ -47,9 +47,9 @@ class SceneNode {
 
   void AddEntity(const entt::entity entity) { m_entity.push_back(entity); }
 
-  [[nodiscard]] const Vector<entt::entity>& GetMeshes() const noexcept { return m_entity; }
+  [[nodiscard]] const Vector<entt::entity>& GetEntities() const noexcept { return m_entity; }
 
-  [[nodiscard]] size_t GetMeshesCount() const noexcept { return m_entity.size(); }
+  [[nodiscard]] size_t GetEntitiesCount() const noexcept { return m_entity.size(); }
 
   void DeleteSubSceneNode(const SceneNode* node) {
     for (int i = 0; i < m_subSceneNode.size(); i++) {
@@ -117,7 +117,7 @@ class Scene {
    */
   void GenarateStaticRenderDate();
 
-  [[nodiscard]] CubeMap GetCubeMap() const noexcept { return m_cubeMap; }
+  [[nodiscard]] CubeMap GetSkyBox() const noexcept { return m_skybox; }
 
  public:
   /**
@@ -141,7 +141,7 @@ class Scene {
   entt::registry m_registry;
   ResourceManager* m_resourceManager = nullptr;
 
-  CubeMap m_cubeMap;
+  CubeMap m_skybox;
 
   const Path m_path;
   Vector<Mesh> m_staticMeshes;
