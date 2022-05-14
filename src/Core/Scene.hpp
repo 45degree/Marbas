@@ -117,6 +117,8 @@ class Scene {
    */
   void GenarateStaticRenderDate();
 
+  [[nodiscard]] CubeMap GetCubeMap() const noexcept { return m_cubeMap; }
+
  public:
   /**
    * @brief Create the Scene Tree from the scene file(such glTF)
@@ -139,7 +141,7 @@ class Scene {
   entt::registry m_registry;
   ResourceManager* m_resourceManager = nullptr;
 
-  std::optional<CubeMap> m_cubeMap = std::nullopt;
+  CubeMap m_cubeMap;
 
   const Path m_path;
   Vector<Mesh> m_staticMeshes;

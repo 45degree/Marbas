@@ -28,7 +28,7 @@ void OpenGLShader::Link() {
   if (!success) {
     char infoLog[512];
     glGetProgramInfoLog(programID, 512, nullptr, infoLog);
-    LOG(ERROR) << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog;
+    LOG(ERROR) << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << String(infoLog);
   }
 
   m_isLink = true;

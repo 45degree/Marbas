@@ -23,6 +23,15 @@ class Camera {
     return glm::lookAt(m_fixPoint + distance * direction, m_fixPoint, m_upDirection);
   }
 
+  [[nodiscard]] glm::vec3 GetPosition() const noexcept {
+    auto direction = glm::vec3(0, 0, 0);
+    direction.x = std::cos(glm::radians(m_pitch)) * std::sin(glm::radians(m_yaw));
+    direction.y = std::sin(glm::radians(m_pitch));
+    direction.z = std::cos(glm::radians(m_pitch)) * std::cos(glm::radians(m_yaw));
+
+    return m_fixPoint + direction * distance;
+  }
+
   [[nodiscard]] glm::mat4 GetPerspective() const noexcept {
     return glm::perspective(glm::radians(fov), m_aspect, m_near, m_far);
   }

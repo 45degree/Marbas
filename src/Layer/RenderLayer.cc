@@ -9,6 +9,10 @@
 
 namespace Marbas {
 
+struct RenderSceneInfo {
+  glm::vec3 cameraPos = glm::vec3(0, 0, 0);
+};
+
 RenderLayer::RenderLayer(int width, int height, ResourceManager* resourceManager,
                          const Window* window)
     : LayerBase(window), m_resourceManager(resourceManager) {
@@ -52,6 +56,9 @@ void RenderLayer::OnUpdate() {
   auto viewMatrix = m_editorCamera->GetViewMartix();
   auto projectionMatrix = m_editorCamera->GetPerspective();
 
+  RenderSceneInfo sceneInfo;
+  sceneInfo.cameraPos = m_editorCamera->GetPosition();
+
   // TODO: draw static batch
 
   auto& registry = m_scene->GetRigister();
@@ -66,10 +73,23 @@ void RenderLayer::OnUpdate() {
       MeshPolicy::LoadToGPU(entity, m_scene.get(), m_rhiFactory, m_resourceManager);
       render.m_isOnGPU = true;
     }
+
     auto* material = render.m_drawBatch->GetMaterial();
     auto* shader = material->GetShader();
     mvp.model = transform.modelMatrix;
     shader->AddUniformDataBlock(0, &mvp, sizeof(MVP));
+    shader->AddUniformDataBlock(1, &sceneInfo, sizeof(RenderSceneInfo));
+
+    CubeMap cubeMap = m_scene->GetCubeMap();
+    if (Entity::HasComponent<CubeMapComponent>(m_scene.get(), cubeMap)) {
+      auto& component = Entity::GetComponent<CubeMapComponent>(m_scene.get(), cubeMap);
+      auto* cubeMapResource = component.m_cubeMapResource;
+      if (!cubeMapResource->IsLoad()) {
+        cubeMapResource->LoadResource(m_rhiFactory);
+      }
+      render.m_drawBatch->SetCubeMapTexture(cubeMapResource->GetCubeMapTexture());
+    }
+
     render.m_drawBatch->Draw();
   });
 

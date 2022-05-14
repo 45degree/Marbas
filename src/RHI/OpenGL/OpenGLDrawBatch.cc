@@ -54,8 +54,8 @@ void OpenGLDrawBatch::Draw() {
   glDepthFunc(GetOpenGLDepthFunc(m_depthFunc));
 
   if (!m_enableDepth) {
-    // glDepthMask(GL_FALSE);
-    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    // glDisable(GL_DEPTH_TEST);
   }
 
   if (m_enableBlend) {
@@ -69,6 +69,10 @@ void OpenGLDrawBatch::Draw() {
 
   // set textures
   m_material->Bind();
+
+  if (m_cubeMapTexture != nullptr) {
+    m_cubeMapTexture->Bind(0);
+  }
 
   // set data
   m_vertexArray->EnableVertexAttribArray(m_vertexBuffer.get());
@@ -92,9 +96,9 @@ void OpenGLDrawBatch::Draw() {
   }
 
   if (!m_enableDepth) {
-    // glDepthMask(GL_TRUE);
+    glDepthMask(GL_TRUE);
 
-    glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_DEPTH_TEST);
   }
 
   glDepthFunc(GL_LESS);

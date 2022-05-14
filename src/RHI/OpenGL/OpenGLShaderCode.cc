@@ -15,8 +15,7 @@ static GLenum ConvertToOpenGLShaderType(const ShaderType& type) noexcept {
   }
 }
 
-void OpenGLShaderCode::ReadSPIR_V(const FileSystem::path& path,
-                                  const String& enterPoint) {
+void OpenGLShaderCode::ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) {
   std::ifstream file;
   file.open(path, std::ios_base::in | std::ios_base::binary);
   if (!file.is_open()) return;
@@ -36,8 +35,7 @@ void OpenGLShaderCode::ReadSPIR_V(const FileSystem::path& path,
   }
 
   auto contentSize = static_cast<GLsizei>(content.size());
-  glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V, content.data(),
-                 contentSize);
+  glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V, content.data(), contentSize);
   glSpecializeShader(shaderID, enterPoint.c_str(), 0, nullptr, nullptr);
 
   // Specialization is equivalent to compilation.
@@ -97,13 +95,13 @@ void OpenGLShaderCode::ReadFromSource(const FileSystem::path& path) {
   if (!success) {
     GLchar infoLog[1024];
     glGetShaderInfoLog(shaderID, 1024, nullptr, infoLog);
-    LOG(ERROR) << "failed to compile shader, info: \n" << infoLog;
-  } else
+    LOG(ERROR) << "failed to compile shader, info: \n" << String(infoLog);
+  } else {
     LOG(INFO) << "compiled shader";
+  }
 }
 
-OpenGLShaderCode::OpenGLShaderCode(const ShaderType& shaderType)
-    : ShaderCode(shaderType) {
+OpenGLShaderCode::OpenGLShaderCode(const ShaderType& shaderType) : ShaderCode(shaderType) {
   GLenum openglShaderType = ConvertToOpenGLShaderType(shaderType);
   shaderID = glCreateShader(openglShaderType);
 }

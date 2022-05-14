@@ -201,7 +201,12 @@ void CubeMapPolicy::LoadToGPU(CubeMap cubeMap, Scene* scene, RHIFactory* rhiFact
   }
 
   cubeMapComponent.m_materialResource->LoadResource(rhiFactory);
+  cubeMapComponent.m_cubeMapResource->LoadResource(rhiFactory);
+
   auto* material = cubeMapComponent.m_materialResource->GetMaterial();
+  auto* cubeMapTexture = cubeMapComponent.m_cubeMapResource->GetCubeMapTexture();
+
+  cubeMapComponent.m_drawBatch->SetCubeMapTexture(cubeMapTexture);
   cubeMapComponent.m_drawBatch->SetMaterial(material);
 }
 

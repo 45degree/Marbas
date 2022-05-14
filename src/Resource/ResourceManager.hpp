@@ -13,15 +13,7 @@ namespace Marbas {
 
 class ResourceManager {
  public:
-  explicit ResourceManager(RHIFactory* rhiFactory) : m_rhiFactory(rhiFactory) {
-    auto* shaderResource =
-        AddShader({ShaderCodeType::FILE, "shader/shader.vert.glsl", "shader/shader.frag.glsl"});
-    auto* cubeMapShaderResource =
-        AddShader({ShaderCodeType::FILE, "shader/cubeMap.vert.glsl", "shader/cubeMap.frag.glsl"});
-
-    m_defaultShaderResource = shaderResource;
-    m_defaultCubeMapShaderResource = cubeMapShaderResource;
-  }
+  explicit ResourceManager(RHIFactory* rhiFactory);
 
   ~ResourceManager() = default;
 
@@ -35,6 +27,14 @@ class ResourceManager {
   CubeMapResource* AddCubeMap(const CubeMapCreateInfo& createInfo);
 
   void RemoveResource(const Uid& id);
+
+  [[nodiscard]] ShaderResource* GetDefaultCubeMapShader() const noexcept {
+    return m_defaultCubeMapShaderResource;
+  }
+
+  [[nodiscard]] ShaderResource* GetDefaultShader() const noexcept {
+    return m_defaultShaderResource;
+  }
 
   [[nodiscard]] Texture2DResource* FindTexture(const Uid& uid) const noexcept;
 

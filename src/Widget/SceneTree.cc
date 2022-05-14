@@ -29,7 +29,7 @@ void SceneTreeWidget::DrawNode(const SceneNode* node) {
     auto& meshes = node->GetMeshes();
     for (auto& mesh : meshes) {
       auto& tagsComponent = Entity::GetComponent<TagsCompoment>(m_scene, mesh);
-      const auto& tagName = tagsComponent.tags[TagsKey::Name];
+      const auto& tagName = tagsComponent.name;
       const auto& type = tagsComponent.type;
 
       String name = AddIconForStringByTag(tagName.c_str(), tagsComponent);

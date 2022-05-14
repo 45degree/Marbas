@@ -70,11 +70,11 @@ class Material {
 
   void Bind() {
     if (m_diffuseTexture != nullptr) {
-      m_diffuseTexture->Bind(0);
+      m_diffuseTexture->Bind(1);
     }
 
     if (m_ambientTexture != nullptr) {
-      m_ambientTexture->Bind(1);
+      m_ambientTexture->Bind(2);
     }
   }
 

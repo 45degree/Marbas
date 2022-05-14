@@ -40,7 +40,7 @@ static void ProcessSubNode(SceneNode* node, ResourceManager* resourceManager, co
       auto mesh = Entity::CreateEntity<MeshPolicy>(scene);
 
       auto& tagsComponent = Entity::GetComponent<TagsCompoment>(scene, mesh);
-      tagsComponent.tags[TagsKey::Name] = String(aMesh->mName.C_Str());
+      tagsComponent.name = String(aMesh->mName.C_Str());
 
       auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, mesh);
       MeshPolicy::ReadVertexFromNode(aMesh, aScene, meshComponent);
@@ -98,7 +98,7 @@ Scene::Scene(const Path& path, ResourceManager* resourceManager)
       m_path(path),
       m_resourceManager(resourceManager) {
   m_cubeMap = CubeMapPolicy::Create(m_registry);
-  auto& componnent = Entity::GetComponent<CubeMapComponent>(this, m_cubeMap.value());
+  auto& component = Entity::GetComponent<CubeMapComponent>(this, m_cubeMap);
 
   CubeMapCreateInfo defaultCreateInfo = {
       .top = Path("assert/skybox/top.jpg"),
@@ -108,7 +108,10 @@ Scene::Scene(const Path& path, ResourceManager* resourceManager)
       .left = Path("assert/skybox/left.jpg"),
       .right = Path("assert/skybox/right.jpg"),
   };
-  componnent.m_cubeMapResource = m_resourceManager->AddCubeMap(defaultCreateInfo);
+  component.m_cubeMapResource = m_resourceManager->AddCubeMap(defaultCreateInfo);
+  component.m_materialResource = m_resourceManager->AddMaterial();
+  auto shader = m_resourceManager->GetDefaultCubeMapShader();
+  component.m_materialResource->SetShader(shader);
 }
 
 void Scene::DeleteSceneNode(SceneNode* sceneNode) {

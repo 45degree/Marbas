@@ -2,6 +2,20 @@
 
 namespace Marbas {
 
+ResourceManager::ResourceManager(RHIFactory* rhiFactory) : m_rhiFactory(rhiFactory) {
+  auto* shaderResource = AddShader(ShaderFileInfo{.type = ShaderCodeType::FILE,
+                                                  .vertexShaderPath = "shader/shader.vert.glsl",
+                                                  .fragmentShaderPath = "shader/shader.frag.glsl"});
+
+  auto* cubeMapShaderResource =
+      AddShader(ShaderFileInfo{.type = ShaderCodeType::FILE,
+                               .vertexShaderPath = "shader/cubeMap.vert.glsl",
+                               .fragmentShaderPath = "shader/cubeMap.frag.glsl"});
+
+  m_defaultShaderResource = shaderResource;
+  m_defaultCubeMapShaderResource = cubeMapShaderResource;
+}
+
 Texture2DResource* ResourceManager::AddTexture(const Path& imagePath) {
   const auto pathString = imagePath.string();
   if (m_staticResourcePath.find(pathString) != m_staticResourcePath.end()) {

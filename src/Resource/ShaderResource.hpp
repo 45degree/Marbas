@@ -37,7 +37,7 @@ class ShaderResource final : public ResourceBase {
 
   bool m_isLoad = false;
 
-  const ShaderFileInfo& m_shaderFileInfo;
+  const ShaderFileInfo m_shaderFileInfo;
 };
 
 }  // namespace Marbas

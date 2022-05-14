@@ -41,7 +41,7 @@ class MaterialResource final : public ResourceBase {
 class CubeMapResource final : public ResourceBase {
 
 public:
-  explicit CubeMapResource(const CubeMapCreateInfo& createInfo) : ResourceBase() {}
+  explicit CubeMapResource(const CubeMapCreateInfo& createInfo) : ResourceBase(), m_createInfo(createInfo) {}
 
  public:
   void LoadResource(RHIFactory* rhiFactory) override;
