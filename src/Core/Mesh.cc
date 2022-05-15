@@ -10,7 +10,7 @@
 #include "Core/Application.hpp"
 #include "Core/Component.hpp"
 #include "Core/Entity.hpp"
-#include "Core/Scene.hpp"
+#include "Core/Scene/Scene.hpp"
 #include "RHI/RHI.hpp"
 #include "Tool/EncodingConvert.hpp"
 
@@ -24,8 +24,9 @@ Vector<ElementLayout> GetMeshVertexInfoLayout() {
   };
 };
 
-static Texture2DResource* LoadTexture2D(const aiMaterial* material, aiTextureType type,
-                                        const Path& relatePath, ResourceManager* resourceManager) {
+static std::shared_ptr<Texture2DResource> LoadTexture2D(const aiMaterial* material,
+                                                        aiTextureType type, const Path& relatePath,
+                                                        ResourceManager* resourceManager) {
   if (material->GetTextureCount(type) == 0) return nullptr;
 
   aiString str;
@@ -213,7 +214,7 @@ void CubeMapPolicy::LoadToGPU(CubeMap cubeMap, Scene* scene, RHIFactory* rhiFact
 void CubeMapPolicy::ReadCubeMapFromFile(const CubeMapCreateInfo& createInfo,
                                         CubeMapComponent& component,
                                         ResourceManager* resourceManager) {
-  auto* cubeMapTextureResource = resourceManager->AddCubeMap(createInfo);
+  auto cubeMapTextureResource = resourceManager->AddCubeMap(createInfo);
   component.m_cubeMapResource = cubeMapTextureResource;
 }
 

@@ -4,7 +4,7 @@
 
 #include "Common.hpp"
 #include "Core/Application.hpp"
-#include "Core/Scene.hpp"
+#include "Core/Scene/Scene.hpp"
 #include "Layer/RenderLayer.hpp"
 #include "Widget/MeshInfomationWidget.hpp"
 #include "Widget/RenderImage.hpp"

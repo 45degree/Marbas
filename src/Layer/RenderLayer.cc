@@ -83,7 +83,7 @@ void RenderLayer::OnUpdate() {
     CubeMap cubeMap = m_scene->GetSkyBox();
     if (Entity::HasComponent<CubeMapComponent>(m_scene.get(), cubeMap)) {
       auto& component = Entity::GetComponent<CubeMapComponent>(m_scene.get(), cubeMap);
-      auto* cubeMapResource = component.m_cubeMapResource;
+      const auto& cubeMapResource = component.m_cubeMapResource;
       if (!cubeMapResource->IsLoad()) {
         cubeMapResource->LoadResource(m_rhiFactory);
       }

@@ -37,7 +37,7 @@ void MeshInfomationWidget::Draw() {
 
   if (ImGui::TreeNode("Material")) {
     if (renderComponent.m_materialResource != nullptr) {
-      auto* resource = renderComponent.m_materialResource;
+      const auto& resource = renderComponent.m_materialResource;
       auto* material = resource->GetMaterial();
       if (material != nullptr) {
         auto regionSize = ImGui::GetContentRegionAvail();

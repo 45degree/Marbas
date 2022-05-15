@@ -61,7 +61,7 @@ void Window::CreateSingleWindow() {
 
   // attach layer
 
-  auto resourceManager = std::make_unique<ResourceManager>(m_rhiFactory);
+  auto resourceManager = std::make_unique<ResourceManager>();
   auto drawLayer = std::make_unique<DrawLayer>(this, resourceManager.get());
   auto renderLayer = std::make_unique<RenderLayer>(1920, 1080, resourceManager.get(), this);
   auto dockSpaceLayer = std::make_unique<DockspaceLayer>(this);

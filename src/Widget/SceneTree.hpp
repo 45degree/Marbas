@@ -1,7 +1,7 @@
 #ifndef MARBAS_WIDGET_SCENE_TREE
 #define MARBAS_WIDGET_SCENE_TREE
 
-#include "Core/Scene.hpp"
+#include "Core/Scene/Scene.hpp"
 #include "Widget/FileDialog.hpp"
 #include "Widget/Widget.hpp"
 

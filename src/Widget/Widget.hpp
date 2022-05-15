@@ -2,7 +2,7 @@
 #define MARBARS_WIDGET_WIDGET_H
 
 #include "Common.hpp"
-#include "Core/Scene.hpp"
+#include "Core/Scene/Scene.hpp"
 
 namespace Marbas {
 

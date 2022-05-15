@@ -6,7 +6,7 @@
 #include <entt/entt.hpp>
 #include <exception>
 
-#include "Core/Scene.hpp"
+#include "Core/Scene/Scene.hpp"
 
 namespace Marbas {
 
