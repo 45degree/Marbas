@@ -9,4 +9,6 @@ std::mt19937_64 Uid::s_gen64(s_randomDevice());
 
 Uid::Uid() : m_uid(s_gen64()) {}
 
+Uid::Uid(uint64_t uid) : m_uid(uid) {}
+
 }  // namespace Marbas

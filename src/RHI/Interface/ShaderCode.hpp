@@ -1,16 +1,15 @@
-#ifndef MARBARS_RHI_INTERFACE_SHADERCODE_H
-#define MARBARS_RHI_INTERFACE_SHADERCODE_H
+#pragma once
 
-#include "Common.hpp"
+#include "Common/Common.hpp"
 
 namespace Marbas {
 
 enum class ShaderType { VERTEX_SHADER, FRAGMENT_SHADER };
 
-class ShaderCode {
+class ShaderStage {
  public:
-  explicit ShaderCode(const ShaderType& shaderType) : shaderType(shaderType){};
-  virtual ~ShaderCode() = default;
+  explicit ShaderStage(const ShaderType& shaderType) : shaderType(shaderType){};
+  virtual ~ShaderStage() = default;
 
  public:
   /**
@@ -31,14 +30,16 @@ class ShaderCode {
    *
    * @note we assume the spri-v file don't have specialization constants.
    */
-  virtual void ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) = 0;
+  virtual void
+  ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) = 0;
 
-  [[nodiscard]] ShaderType GetShaderType() const noexcept { return shaderType; };
+  [[nodiscard]] ShaderType
+  GetShaderType() const noexcept {
+    return shaderType;
+  };
 
  protected:
   ShaderType shaderType;
 };
 
 }  // namespace Marbas
-
-#endif

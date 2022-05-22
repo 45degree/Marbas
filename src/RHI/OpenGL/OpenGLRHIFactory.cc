@@ -1,5 +1,12 @@
 #include <GLFW/glfw3.h>
 
+#include "OpenGLSwapChain.hpp"
+#include "RHI/OpenGL/OpenGLCommandFactory.hpp"
+#include "RHI/OpenGL/OpenGLDescriptorSet.hpp"
+#include "RHI/OpenGL/OpenGLImguiInterface.hpp"
+#include "RHI/OpenGL/OpenGLPipeline.hpp"
+#include "RHI/OpenGL/OpenGLRenderPass.hpp"
+
 #ifndef GLEW_STATIC
 #define GLEW_STATIC
 #endif
@@ -22,7 +29,6 @@
 #include "RHI/OpenGL/OpenGLRHIFactory.hpp"
 #include "RHI/OpenGL/OpenGLShader.hpp"
 #include "RHI/OpenGL/OpenGLShaderCode.hpp"
-#include "RHI/OpenGL/OpenGLVertexArray.hpp"
 #include "RHI/OpenGL/OpenGLVertexBuffer.hpp"
 #include "RHI/OpenGL/OpenGLViewport.hpp"
 
@@ -33,8 +39,9 @@
 namespace Marbas {
 
 // TODO: need to make it more readable
-static void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
-                          GLsizei length, const char* message, const void* userParam) {
+static void
+glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length,
+              const char* message, const void* userParam) {
   // ignore these non-significant error codes
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
@@ -112,43 +119,44 @@ static void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum se
   std::cout << std::endl;
 }
 
-void OpenGLRHIFactory::Enable(EnableItem item) const {
-  switch (item) {
-    case EnableItem::DEPTH:
-      glEnable(GL_DEPTH_TEST);
-      break;
-  }
-}
+// void OpenGLRHIFactory::Enable(EnableItem item) const {
+//   switch (item) {
+//     case EnableItem::DEPTH:
+//       glEnable(GL_DEPTH_TEST);
+//       break;
+//   }
+// }
+//
+// void OpenGLRHIFactory::Disable(EnableItem item) const {
+//   switch (item) {
+//     case EnableItem::DEPTH:
+//       glDisable(GL_DEPTH_TEST);
+//       break;
+//   }
+// }
+//
+// void OpenGLRHIFactory::ClearColor(float r, float g, float b, float a) const {
+//   glClearColor(r, g, b, a);
+// }
+//
+// void OpenGLRHIFactory::PrintRHIInfo() const {
+//   auto vendor = glGetString(GL_VENDOR);
+//   auto version = glGetString(GL_VERSION);
+//
+//   LOG(INFO) << "vendor is " << vendor;
+//   LOG(INFO) << "version is " << version;
+// }
 
-void OpenGLRHIFactory::Disable(EnableItem item) const {
-  switch (item) {
-    case EnableItem::DEPTH:
-      glDisable(GL_DEPTH_TEST);
-      break;
-  }
-}
-
-void OpenGLRHIFactory::ClearColor(float r, float g, float b, float a) const {
-  glClearColor(r, g, b, a);
-}
-
-void OpenGLRHIFactory::PrintRHIInfo() const {
-  auto vendor = glGetString(GL_VENDOR);
-  auto version = glGetString(GL_VERSION);
-
-  LOG(INFO) << "vendor is " << vendor;
-  LOG(INFO) << "version is " << version;
-}
-
-OpenGLRHIFactory::OpenGLRHIFactory() {
+OpenGLRHIFactory::OpenGLRHIFactory() : RHIFactory() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 }
 
-void OpenGLRHIFactory::Init(GLFWwindow* window) const {
-  glfwMakeContextCurrent(window);
+void
+OpenGLRHIFactory::Init() const {
+  glfwMakeContextCurrent(m_glfwWindow);
   glfwSwapInterval(1);
 
   glewExperimental = true;
@@ -170,50 +178,35 @@ void OpenGLRHIFactory::Init(GLFWwindow* window) const {
   }
 }
 
-void OpenGLRHIFactory::SwapBuffer(GLFWwindow* window) const { glfwSwapBuffers(window); }
-
-void OpenGLRHIFactory::ClearBuffer(const ClearBuferBit bufferBit) const {
-  switch (bufferBit) {
-    case ClearBuferBit::COLOR_BUFFER:
-      glClear(GL_COLOR_BUFFER_BIT);
-      break;
-    case ClearBuferBit::DEPTH_BUFFER:
-      glClear(GL_DEPTH_BUFFER_BIT);
-      break;
-  }
+std::shared_ptr<ImguiInterface>
+OpenGLRHIFactory::CreateImguiInterface() const {
+  return std::make_shared<OpenGLImguiInterface>();
 }
 
-std::unique_ptr<FrameBuffer> OpenGLRHIFactory::CreateFrameBuffer(
-    const FrameBufferInfo& info) const {
-  return std::make_unique<OpenGLFrameBuffer>(info);
+std::shared_ptr<FrameBuffer>
+OpenGLRHIFactory::CreateFrameBuffer(const FrameBufferInfo& info) const {
+  return std::make_shared<OpenGLFrameBuffer>(info);
 }
 
-std::unique_ptr<VertexBuffer> OpenGLRHIFactory::CreateVertexBuffer(const void* data,
-                                                                   size_t size) const {
-  return std::make_unique<OpenGLVertexBuffer>(data, size);
+std::shared_ptr<VertexBuffer>
+OpenGLRHIFactory::CreateVertexBuffer(const void* data, size_t size) const {
+  return std::make_shared<OpenGLVertexBuffer>(data, size);
 }
 
-std::unique_ptr<VertexBuffer> OpenGLRHIFactory::CreateVertexBuffer(size_t size) const {
-  return std::make_unique<OpenGLVertexBuffer>(size);
+std::shared_ptr<VertexBuffer>
+OpenGLRHIFactory::CreateVertexBuffer(size_t size) const {
+  return std::make_shared<OpenGLVertexBuffer>(size);
 }
 
-std::unique_ptr<VertexArray> OpenGLRHIFactory::CreateVertexArray() const {
-  return std::make_unique<OpenGLVertexArray>();
+std::shared_ptr<IndexBuffer>
+OpenGLRHIFactory::CreateIndexBuffer(const Vector<uint32_t>& indices) const {
+  return std::make_shared<OpenGLIndexBuffer>(indices);
 }
 
-std::unique_ptr<IndexBuffer> OpenGLRHIFactory::CreateIndexBuffer(
-    const Vector<uint32_t>& indices) const {
-  return std::make_unique<OpenGLIndexBuffer>(indices);
-}
-
-std::unique_ptr<IndexBuffer> OpenGLRHIFactory::CreateIndexBuffer(size_t size) const {
-  return std::make_unique<OpenGLIndexBuffer>(size);
-}
-
-std::unique_ptr<ShaderCode> OpenGLRHIFactory::CreateShaderCode(const Path& path,
-                                                               const ShaderCodeType type,
-                                                               const ShaderType shaderType) const {
-  auto shaderCode = std::make_unique<OpenGLShaderCode>(shaderType);
+std::shared_ptr<ShaderStage>
+OpenGLRHIFactory::CreateShaderStage(const Path& path, const ShaderCodeType type,
+                                    const ShaderType shaderType) const {
+  auto shaderCode = std::make_shared<OpenGLShaderStage>(shaderType);
   if (type == ShaderCodeType::FILE) {
     shaderCode->ReadFromSource(path);
   } else if (type == ShaderCodeType::BINARY) {
@@ -223,18 +216,27 @@ std::unique_ptr<ShaderCode> OpenGLRHIFactory::CreateShaderCode(const Path& path,
   return shaderCode;
 }
 
-std::unique_ptr<Shader> OpenGLRHIFactory::CreateShader() const {
-  return std::make_unique<OpenGLShader>();
+std::shared_ptr<Shader>
+OpenGLRHIFactory::CreateShader() const {
+  return std::make_shared<OpenGLShader>();
 }
 
-std::unique_ptr<Texture2D> OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) const {
+std::shared_ptr<Texture2D>
+OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) const {
   String pathStr = imagePath.string();
 
   // load image
   int width, height, nrChannels;
-  TextureFormatType formatType;
+  TextureFormat formatType;
 
   auto filename = imagePath.string();
+
+#ifdef _WIN32
+  std::replace(filename.begin(), filename.end(), '/', '\\');
+#elif __linux__
+  std::replace(filename.begin(), filename.end(), '\\', '/');
+#endif
+
   unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
 
   if (data == nullptr) {
@@ -243,14 +245,14 @@ std::unique_ptr<Texture2D> OpenGLRHIFactory::CreateTexutre2D(const Path& imagePa
   }
 
   // get hash code of the image
-  auto hashCode = folly::hash::fnv32_buf(data, static_cast<size_t>(width) * height * nrChannels);
+  // auto hashCode = folly::hash::fnv32_buf(data, static_cast<size_t>(width) * height * nrChannels);
 
-  formatType = nrChannels == 4 ? TextureFormatType::RGBA : TextureFormatType::RGB;
+  formatType = nrChannels == 4 ? TextureFormat::RGBA : TextureFormat::RGB;
 
   // create textrue
   auto texture = std::make_unique<OpenGLTexture2D>(width, height, formatType);
   texture->SetData(data, width * height * nrChannels);
-  texture->SetImageInfo(imagePath.string(), hashCode);
+  // texture->SetImageInfo(imagePath.string(), hashCode);
 
   stbi_image_free(data);
 
@@ -259,22 +261,22 @@ std::unique_ptr<Texture2D> OpenGLRHIFactory::CreateTexutre2D(const Path& imagePa
   return texture;
 }
 
-std::unique_ptr<Texture2D> OpenGLRHIFactory::CreateTexutre2D(int width, int height,
-                                                             TextureFormatType format) const {
-  return std::make_unique<OpenGLTexture2D>(width, height, format);
+std::shared_ptr<Texture2D>
+OpenGLRHIFactory::CreateTexutre2D(int width, int height, TextureFormat format) const {
+  return std::make_shared<OpenGLTexture2D>(width, height, format);
 }
 
-std::unique_ptr<TextureCubeMap> OpenGLRHIFactory::CreateTextureCubeMap(
-    const CubeMapCreateInfo& createInfo) const {
+std::shared_ptr<TextureCubeMap>
+OpenGLRHIFactory::CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) const {
   int width, height, nrChannels;
-  TextureFormatType formatType;
+  TextureFormat formatType;
 
   auto* data = stbi_load(createInfo.back.string().c_str(), &width, &height, &nrChannels, 0);
 
-  formatType = nrChannels == 4 ? TextureFormatType::RGBA : TextureFormatType::RGB;
+  formatType = nrChannels == 4 ? TextureFormat::RGBA : TextureFormat::RGB;
 
   // create texture cubemap
-  auto textureCubeMap = std::make_unique<OpenGLTextureCubeMap>(width, height, formatType);
+  auto textureCubeMap = std::make_shared<OpenGLTextureCubeMap>(width, height, formatType);
 
   // Set Data
   textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::BACK);
@@ -308,22 +310,51 @@ std::unique_ptr<TextureCubeMap> OpenGLRHIFactory::CreateTextureCubeMap(
   return textureCubeMap;
 }
 
-std::unique_ptr<TextureCubeMap> OpenGLRHIFactory::CreateTextureCubeMap(
-    int width, int height, TextureFormatType format) const {
-  return std::make_unique<OpenGLTextureCubeMap>(width, height, format);
+std::shared_ptr<TextureCubeMap>
+OpenGLRHIFactory::CreateTextureCubeMap(int width, int height, TextureFormat format) const {
+  return std::make_shared<OpenGLTextureCubeMap>(width, height, format);
 }
 
-std::unique_ptr<DrawBatch> OpenGLRHIFactory::CreateDrawBatch() const {
-  return std::make_unique<OpenGLDrawBatch>();
+std::shared_ptr<UniformBuffer>
+OpenGLRHIFactory::CreateUniformBuffer(uint32_t size) const {
+  return std::make_shared<OpenGLUniformBuffer>(size);
 }
 
-std::unique_ptr<UniformBuffer> OpenGLRHIFactory::CreateUniformBuffer(uint32_t size,
-                                                                     uint32_t bindingPoint) const {
-  return std::make_unique<OpenGLUniformBuffer>(size, bindingPoint);
+std::shared_ptr<DynamicUniformBuffer>
+OpenGLRHIFactory::CreateDynamicUniforBuffer(uint32_t size) const {
+  return std::make_shared<OpenGLDynamicUniformBuffer>(size);
 }
 
-std::unique_ptr<Viewport> OpenGLRHIFactory::CreateViewport() const {
-  return std::make_unique<OpenGLViewport>();
+std::shared_ptr<CommandFactory>
+OpenGLRHIFactory::CreateCommandFactory() const {
+  return std::make_shared<OpenGLCommandFactory>();
+}
+
+std::shared_ptr<SwapChain>
+OpenGLRHIFactory::CreateSwapChain() {
+  int width, height;
+  glfwGetFramebufferSize(m_glfwWindow, &width, &height);
+  return std::make_shared<OpenGLSwapChain>(m_glfwWindow, width, height);
+}
+
+std::shared_ptr<RenderPass>
+OpenGLRHIFactory::CreateRenderPass(const RenderPassCreateInfo& createInfo) {
+  return std::make_shared<OpenGLRenderPass>(createInfo);
+}
+
+std::shared_ptr<GraphicsPipeLine>
+OpenGLRHIFactory::CreateGraphicsPipeLine() {
+  return std::make_unique<OpenGLGraphicsPipeline>();
+}
+
+std::shared_ptr<DescriptorSet>
+OpenGLRHIFactory::CreateDescriptorSet(const DescriptorSetInfo& info) const {
+  return std::make_shared<OpenGLDescriptorSet>(info);
+}
+
+std::shared_ptr<DynamicDescriptorSet>
+OpenGLRHIFactory::CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const {
+  return std::make_shared<OpenGLDynamicDescriptorSet>(bindingPoints);
 }
 
 }  // namespace Marbas

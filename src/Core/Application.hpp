@@ -1,5 +1,4 @@
-#ifndef MARBARS_CORE_APPLICATION_H
-#define MARBARS_CORE_APPLICATION_H
+#pragma once
 
 #include <glog/logging.h>
 
@@ -20,16 +19,21 @@ class Application {
   static std::unique_ptr<Application> app;
 
  public:
-  static Application* GetInstace(std::unique_ptr<ApplicationData>&& appData = nullptr) {
+  static Application*
+  GetInstace(std::unique_ptr<ApplicationData>&& appData = nullptr) {
     static std::once_flag flag;
     std::call_once(flag, [&]() { app.reset(new Application(std::move(appData))); });
 
     return app.get();
   }
 
-  static const Window* GetApplicationsWindow() { return app->GetWindow(); }
+  static std::shared_ptr<Window>
+  GetApplicationsWindow() {
+    return app->GetWindow();
+  }
 
-  static RHIFactory* GetRendererFactory() {
+  static RHIFactory*
+  GetRendererFactory() {
     if (!app->m_isInitialized) {
       String errorMsg = "can't get renderer factory before the application initialized";
       LOG(ERROR) << errorMsg;
@@ -40,18 +44,25 @@ class Application {
   }
 
  public:
-  void Init();
+  void
+  Init();
 
-  void CreateSingleWindow(const WindowProp& winProp);
+  void
+  CreateAppWindow(const WindowProp& winProp);
 
-  void Run();
+  void
+  Run();
 
-  void Destroy() {
+  void
+  Destroy() {
     auto* origin = app.release();
     delete origin;
   }
 
-  [[nodiscard]] const Window* GetWindow() const { return appWindow.get(); }
+  [[nodiscard]] std::shared_ptr<Window>
+  GetWindow() const {
+    return m_appWindow;
+  }
 
  private:
   explicit Application(std::unique_ptr<ApplicationData>&& appData)
@@ -59,15 +70,15 @@ class Application {
 
  public:
   Application(const Application&) = delete;
-  Application& operator=(const Application&) = delete;
+
+  Application&
+  operator=(const Application&) = delete;
 
  private:
-  std::unique_ptr<Window> appWindow;
+  std::shared_ptr<Window> m_appWindow;
   std::unique_ptr<ApplicationData> m_applicationData;
 
   bool m_isInitialized = false;
 };
 
 }  // namespace Marbas
-
-#endif

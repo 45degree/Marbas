@@ -4,14 +4,15 @@
 
 #include <mutex>
 
-#include "Common.hpp"
+#include "Common/Common.hpp"
 #include "RHI/OpenGL/OpenGLRHIFactory.hpp"
 
 namespace Marbas {
 
 std::unique_ptr<RHIFactory> RHIFactory::m_rhiFactory = nullptr;
 
-RHIFactory* RHIFactory::GetInstance(const RendererType& rendererType) {
+RHIFactory*
+RHIFactory::GetInstance(const RendererType& rendererType) {
   static std::once_flag flag;
   std::call_once(flag, [&]() {
     if (rendererType == RendererType::OPENGL) {

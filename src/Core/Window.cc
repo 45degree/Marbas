@@ -5,13 +5,11 @@
 #include <unordered_map>
 
 #include "Core/Application.hpp"
+#include "Core/Layer/DockspaceLayer.hpp"
+#include "Core/Layer/ImguiLayer.hpp"
+#include "Core/Layer/RenderLayer.hpp"
 #include "Event/KeyEvent.hpp"
 #include "Event/MouseEvent.hpp"
-#include "Layer/DockspaceLayer.hpp"
-#include "Layer/DrawLayer.hpp"
-#include "Layer/ImguiLayer.hpp"
-#include "Layer/RenderLayer.hpp"
-#include "Layer/ResourceLayer.hpp"
 #include "RHI/RHI.hpp"
 
 namespace Marbas {
@@ -20,31 +18,35 @@ struct WindowData {
   uint32_t height;
   uint32_t width;
   std::unique_ptr<EventCollection> eventCollection = nullptr;
-  std::unique_ptr<DockspaceLayer> m_dockerSpaceLayer;
-  std::unique_ptr<DrawLayer> m_drawLayer;
-  std::unique_ptr<ImguiLayer> m_imguiLayer;
-  std::unique_ptr<RenderLayer> m_renderLayer;
-  std::unique_ptr<ResourceLayer> m_resourceLayer = nullptr;
+  std::shared_ptr<LayerBase> customLayer = nullptr;
+
+  std::shared_ptr<DockspaceLayer> dockerSpaceLayer = nullptr;
+  std::shared_ptr<ImguiLayer> imguiLayer = nullptr;
+  std::shared_ptr<RenderLayer> renderLayer = nullptr;
 };
 
 Window::Window(const WindowProp& winProp)
     : m_windowName(winProp.name), windowData(std::make_unique<WindowData>()) {
   m_rhiFactory = Application::GetRendererFactory();
+  m_resourceManager = std::make_shared<ResourceManager>();
   windowData->width = winProp.width;
   windowData->height = winProp.height;
   windowData->eventCollection = std::make_unique<EventCollection>();
 }
 
 Window::~Window() {
-  firstLayer->Detach();
+  m_firstLayer->Detach();
 
   glfwTerminate();
-  // LOG(INFO) << "destroy windows";
 }
 
-void Window::CreateSingleWindow() {
-  m_rhiFactory = Application::GetRendererFactory();
+void
+Window::SetCustomLayer(const std::shared_ptr<LayerBase>& customLayer) {
+  windowData->customLayer = customLayer;
+}
 
+void
+Window::InitializeWindow() {
   int width = static_cast<int>(windowData->width);
   int height = static_cast<int>(windowData->height);
   glfwWindow = glfwCreateWindow(width, height, m_windowName.c_str(), nullptr, nullptr);
@@ -53,62 +55,63 @@ void Window::CreateSingleWindow() {
     throw std::runtime_error("failed to create window");
   }
 
-  m_rhiFactory->Init(glfwWindow);
-  m_rhiFactory->PrintRHIInfo();
+  m_rhiFactory->SetGLFWwindow(glfwWindow);
+  m_rhiFactory->Init();
 
-  // setup callback function
+  // TODO: need to impove it
+  m_swapChain = m_rhiFactory->CreateSwapChain();
+
+  /**
+   * setup callback function
+   */
   SetUpEventCallBackFun();
 
-  // attach layer
+  /**
+   * set layer chain
+   */
+  windowData->renderLayer = std::make_shared<RenderLayer>(1920, 1080, shared_from_this());
+  windowData->imguiLayer = std::make_shared<ImguiLayer>(shared_from_this());
+  windowData->renderLayer->AddNextLayer(windowData->imguiLayer);
+  windowData->dockerSpaceLayer = std::make_shared<DockspaceLayer>(shared_from_this());
+  windowData->imguiLayer->AddNextLayer(windowData->dockerSpaceLayer);
+  std::shared_ptr<LayerBase> lastLayer = windowData->dockerSpaceLayer;
 
-  auto resourceManager = std::make_unique<ResourceManager>();
-  auto drawLayer = std::make_unique<DrawLayer>(this, resourceManager.get());
-  auto renderLayer = std::make_unique<RenderLayer>(1920, 1080, resourceManager.get(), this);
-  auto dockSpaceLayer = std::make_unique<DockspaceLayer>(this);
-  auto imguiLayer = std::make_unique<ImguiLayer>(this);
+  if (windowData->customLayer) {
+    lastLayer->AddNextLayer(windowData->customLayer);
+  }
 
-  auto resourceLayer = std::make_unique<ResourceLayer>(std::move(resourceManager), this);
+  // windowData->resourceLayer->AddNextLayer(windowData->renderLayer);
+  m_firstLayer = windowData->renderLayer;
+  LOG(INFO) << "setup toolchain successful";
 
-  dockSpaceLayer->AddNextLayer(drawLayer.get());
-  imguiLayer->AddNextLayer(dockSpaceLayer.get());
-  renderLayer->AddNextLayer(imguiLayer.get());
-  resourceLayer->AddNextLayer(renderLayer.get());
-
-  firstLayer = resourceLayer.get();
-
-  windowData->m_imguiLayer = std::move(imguiLayer);
-  windowData->m_dockerSpaceLayer = std::move(dockSpaceLayer);
-  windowData->m_drawLayer = std::move(drawLayer);
-  windowData->m_renderLayer = std::move(renderLayer);
-  windowData->m_resourceLayer = std::move(resourceLayer);
-
-  firstLayer->Attach();
   glfwSetWindowUserPointer(glfwWindow, windowData.get());
+  LOG(INFO) << "windows initialized successful";
 }
 
-void Window::ShowWindow() {
+void
+Window::ShowWindow() {
   // push all event to every layer
-  windowData->eventCollection->BroadcastEventFromLayer(firstLayer);
+  windowData->eventCollection->BroadcastEventFromLayer(m_firstLayer.get());
   windowData->eventCollection->ClearEvent();
 
-  firstLayer->Begin();
-  firstLayer->Update();
-  firstLayer->End();
-
-  // swap buffer
-  m_rhiFactory->SwapBuffer(glfwWindow);
-
-  // clear buffer
-  m_rhiFactory->ClearBuffer(ClearBuferBit::COLOR_BUFFER);
+  m_firstLayer->Begin();
+  m_firstLayer->Update();
+  m_firstLayer->End();
+  m_swapChain->Present();
 }
 
-RenderLayer* Window::GetRenderLayer() const { return windowData->m_renderLayer.get(); }
+std::shared_ptr<RenderLayer>
+Window::GetRenderLayer() const {
+  return windowData->renderLayer;
+}
 
-DrawLayer* Window::GetDrawLayer() const { return windowData->m_drawLayer.get(); }
+std::shared_ptr<ImguiLayer>
+Window::GetImGuiLayer() const {
+  return windowData->imguiLayer;
+}
 
-ImguiLayer* Window::GetImGuiLayer() const { return windowData->m_imguiLayer.get(); }
-
-void Window::SetUpEventCallBackFun() {
+void
+Window::SetUpEventCallBackFun() {
   glfwSetCursorPosCallback(glfwWindow, [](GLFWwindow* glfwWindow, double xpos, double ypos) {
     auto windowData = static_cast<WindowData*>(glfwGetWindowUserPointer(glfwWindow));
     auto event = std::make_unique<MouseMoveEvent>();
@@ -163,9 +166,12 @@ void Window::SetUpEventCallBackFun() {
     windowData->width = width;
     windowData->height = height;
   });
+
+  LOG(INFO) << "setup callback function successful";
 }
 
-std::tuple<uint32_t, uint32_t> Window::GetWindowsSize() const {
+std::tuple<uint32_t, uint32_t>
+Window::GetWindowsSize() const {
   return std::make_tuple(windowData->width, windowData->height);
 }
 

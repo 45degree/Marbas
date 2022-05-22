@@ -1,15 +1,14 @@
-#ifndef MARBAS_RHI_OPENGL_SHADERCODE_H
-#define MARBAS_RHI_OPENGL_SHADERCODE_H
+#pragma once
 
 #include "RHI/Interface/ShaderCode.hpp"
 #include "RHI/OpenGL/OpenGLRHICommon.hpp"
 
 namespace Marbas {
 
-class OpenGLShaderCode : public ShaderCode {
+class OpenGLShaderStage : public ShaderStage {
  public:
-  explicit OpenGLShaderCode(const ShaderType& shaderType);
-  ~OpenGLShaderCode() override;
+  explicit OpenGLShaderStage(const ShaderType& shaderType);
+  ~OpenGLShaderStage() override;
 
  public:
   void ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) override;
@@ -23,5 +22,3 @@ class OpenGLShaderCode : public ShaderCode {
 };
 
 }  // namespace Marbas
-
-#endif

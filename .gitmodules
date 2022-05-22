@@ -13,3 +13,6 @@
 [submodule "3rdPart/IconFontCppHeaders"]
 	path = 3rdPart/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders.git
+[submodule "3rdPart/nameof"]
+	path = 3rdPart/nameof
+	url = https://github.com/Neargye/nameof.git

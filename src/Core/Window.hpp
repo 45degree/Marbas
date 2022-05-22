@@ -1,54 +1,79 @@
-#ifndef MARBARS_CORE_WINDOW_H
-#define MARBARS_CORE_WINDOW_H
+#pragma once
 
 #include <GLFW/glfw3.h>
 
+#include <optional>
 #include <tuple>
 
-#include "Common.hpp"
-#include "Layer/Layer.hpp"
+#include "Common/Common.hpp"
+#include "Core/Layer/Layer.hpp"
 #include "RHI/RHI.hpp"
 
 namespace Marbas {
 
 struct WindowProp {
-  folly::fbstring name;
-  size_t width;
-  size_t height;
+  String name;
+  size_t width = 800;
+  size_t height = 600;
 };
 
 struct WindowData;
-class Window {
+class Window : public std::enable_shared_from_this<Window> {
  public:
   explicit Window(const WindowProp& winProp);
   ~Window();
 
  public:
-  void CreateSingleWindow();
+  void
+  InitializeWindow();
 
-  void ShowWindow();
+  void
+  ShowWindow();
 
-  void SetUpEventCallBackFun();
+  void
+  SetUpEventCallBackFun();
 
-  [[nodiscard]] GLFWwindow* GetGlfwWinow() const noexcept { return glfwWindow; }
+  [[nodiscard]] GLFWwindow*
+  GetGlfwWinow() const noexcept {
+    return glfwWindow;
+  }
 
-  // [[nodiscard]] LayerBase* GetLayer(const String& layerName) const;
+  [[nodiscard]] std::tuple<uint32_t, uint32_t>
+  GetWindowsSize() const;
 
-  [[nodiscard]] std::tuple<uint32_t, uint32_t> GetWindowsSize() const;
+  void
+  SetCustomLayer(const std::shared_ptr<LayerBase>& customLayer);
 
-  [[nodiscard]] RenderLayer* GetRenderLayer() const;
-  [[nodiscard]] DrawLayer* GetDrawLayer() const;
-  [[nodiscard]] ImguiLayer* GetImGuiLayer() const;
+  void
+  InitLayer() {
+    m_firstLayer->Attach();
+  }
+
+  [[nodiscard]] std::shared_ptr<RenderLayer>
+  GetRenderLayer() const;
+
+  [[nodiscard]] std::shared_ptr<ImguiLayer>
+  GetImGuiLayer() const;
+
+  std::shared_ptr<ResourceManager>
+  GetResourceManager() const {
+    return m_resourceManager;
+  }
+
+  RHIFactory*
+  GetRHIFactory() const noexcept {
+    return m_rhiFactory;
+  }
 
  private:
   String m_windowName;
   GLFWwindow* glfwWindow;
   std::unique_ptr<WindowData> windowData;
 
-  LayerBase* firstLayer;
-  RHIFactory* m_rhiFactory;
+  std::shared_ptr<LayerBase> m_firstLayer;
+  RHIFactory* m_rhiFactory = nullptr;
+  std::shared_ptr<ResourceManager> m_resourceManager = nullptr;
+  std::shared_ptr<SwapChain> m_swapChain;
 };
 
 }  // namespace Marbas
-
-#endif

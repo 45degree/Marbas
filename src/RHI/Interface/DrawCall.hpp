@@ -1,12 +1,12 @@
-#ifndef MARBAS_RHI_INTERFACE_DRAWCALL_H
-#define MARBAS_RHI_INTERFACE_DRAWCALL_H
-
-// namespace Marbas {
+// #ifndef MARBAS_RHI_INTERFACE_DRAWCALL_H
+// #define MARBAS_RHI_INTERFACE_DRAWCALL_H
 //
-// class DrawCall {
-// public:
-// };
+// // namespace Marbas {
+// //
+// // class DrawCall {
+// // public:
+// // };
+// //
+// // }
 //
-// }
-
-#endif
+// #endif

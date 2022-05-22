@@ -1,28 +1,37 @@
-#ifndef MARBAS_RHI_INTERFACE_UNIFORMBUFFER_H
-#define MARBAS_RHI_INTERFACE_UNIFORMBUFFER_H
+#pragma once
 
 #include <cstdint>
+#include <memory>
+
+#include "RHI/Interface/IBuffer.hpp"
+#include "RHI/Interface/IDescriptor.hpp"
 
 namespace Marbas {
 
-class UniformBuffer {
+class UniformBuffer : public IBuffer {
  public:
-  explicit UniformBuffer(uint32_t size, uint32_t bindingPoint)
-      : m_size(size), m_bindingPoint(bindingPoint) {}
+  explicit UniformBuffer(uint32_t size) : m_size(size) {}
   virtual ~UniformBuffer() = default;
 
  public:
-  virtual void Bind() const = 0;
-
-  virtual void UnBind() const = 0;
-
-  virtual void SetData(const void* data, uint32_t size, uint32_t offset) = 0;
+  virtual std::shared_ptr<IBufferDescriptor>
+  GetIBufferDescriptor() const = 0;
 
  protected:
   uint32_t m_size;
-  uint32_t m_bindingPoint;
+};
+
+class DynamicUniformBuffer : public IBuffer {
+ public:
+  explicit DynamicUniformBuffer(uint32_t size) : m_size(size) {}
+  virtual ~DynamicUniformBuffer() = default;
+
+ public:
+  virtual std::shared_ptr<IDynamicBufferDescriptor>
+  GetIDynamicBufferDescriptor() const = 0;
+
+ protected:
+  uint32_t m_size;
 };
 
 }  // namespace Marbas
-
-#endif

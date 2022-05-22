@@ -4,20 +4,25 @@
 
 namespace Marbas {
 
-OpenGLVertexBuffer::OpenGLVertexBuffer(std::size_t size) : VertexBuffer(size), VBO(0) {
+OpenGLVertexBuffer::OpenGLVertexBuffer(uint32_t size) : VertexBuffer(size), VBO(0) {
   LOG(INFO) << "create an opengl vertex buffer";
+
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), nullptr, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
   LOG(INFO) << "opengl vertex buffer create finish";
 }
 
-OpenGLVertexBuffer::OpenGLVertexBuffer(const void* data, size_t size) : VertexBuffer(size), VBO(0) {
+OpenGLVertexBuffer::OpenGLVertexBuffer(const void* data, uint32_t size)
+    : VertexBuffer(size), VBO(0) {
   LOG(INFO) << "create an opengl vertex buffer";
 
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   LOG(INFO) << "opengl vertex buffer create finish";
 }
@@ -27,21 +32,25 @@ OpenGLVertexBuffer::~OpenGLVertexBuffer() {
   glDeleteBuffers(1, &VBO);
 }
 
-void OpenGLVertexBuffer::Bind() const {
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+void
+OpenGLVertexBuffer::Bind() const {
+  // glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBindVertexBuffer(0, VBO, 0, m_stride);
 
   auto error = glGetError();
   LOG_IF(ERROR, error) << FORMAT("can't bind vertex buffer: {}, error code is {}", VBO, error);
 }
 
-void OpenGLVertexBuffer::UnBind() const {
+void
+OpenGLVertexBuffer::UnBind() const {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   auto error = glGetError();
   LOG_IF(ERROR, error) << FORMAT("can't unbind vertex buffer {}, error code is {}", VBO, error);
 }
 
-void OpenGLVertexBuffer::SetData(const void* data, size_t size, size_t offset) const {
+void
+OpenGLVertexBuffer::SetData(const void* data, uint32_t size, uint32_t offset) {
   LOG(INFO) << FORMAT("set vertex buffer data, the buffer size is {}, offset is {}", m_size,
                       offset);
 
@@ -53,6 +62,7 @@ void OpenGLVertexBuffer::SetData(const void* data, size_t size, size_t offset) c
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferSubData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(offset), static_cast<GLsizeiptr>(size),
                   data);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 }  // namespace Marbas

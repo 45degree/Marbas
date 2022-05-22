@@ -3,7 +3,7 @@
 #include <glog/logging.h>
 #include <iconv.h>
 #include <toml++/toml.h>
-#include <uchardet/uchardet.h>
+// #include <uchardet/uchardet.h>
 
 #include <iostream>
 

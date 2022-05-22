@@ -1,12 +1,13 @@
 #include "Core/Application.hpp"
 
-#include "Common.hpp"
+#include "Common/Common.hpp"
 
 namespace Marbas {
 
-std::unique_ptr<Application> Application::app;
+std::unique_ptr<Application> Application::app = nullptr;
 
-void Application::Init() {
+void
+Application::Init() {
   glfwSetErrorCallback([](int error, const char* descriptor) {
     LOG(ERROR) << FORMAT("glfw error {}: {}", error, descriptor);
   });
@@ -19,22 +20,23 @@ void Application::Init() {
   LOG(INFO) << "initialized glfw successful!";
 }
 
-void Application::CreateSingleWindow(const WindowProp& winProp) {
-  appWindow = std::make_unique<Window>(winProp);
-  appWindow->CreateSingleWindow();
-
+void
+Application::CreateAppWindow(const WindowProp& winProp) {
+  m_appWindow = std::make_unique<Window>(winProp);
   LOG(INFO) << "create window successful!";
 }
 
-void Application::Run() {
-  auto glfwWindow = appWindow->GetGlfwWinow();
+void
+Application::Run() {
+  auto glfwWindow = m_appWindow->GetGlfwWinow();
 
+  m_appWindow->InitLayer();
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(glfwWindow)) {
     /* Poll for and process events */
     glfwPollEvents();
 
-    appWindow->ShowWindow();
+    m_appWindow->ShowWindow();
   }
 }
 

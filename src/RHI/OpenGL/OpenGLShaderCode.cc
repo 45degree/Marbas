@@ -6,7 +6,8 @@
 
 namespace Marbas {
 
-static GLenum ConvertToOpenGLShaderType(const ShaderType& type) noexcept {
+static GLenum
+ConvertToOpenGLShaderType(const ShaderType& type) noexcept {
   switch (type) {
     case ShaderType::VERTEX_SHADER:
       return GL_VERTEX_SHADER;
@@ -15,7 +16,8 @@ static GLenum ConvertToOpenGLShaderType(const ShaderType& type) noexcept {
   }
 }
 
-void OpenGLShaderCode::ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) {
+void
+OpenGLShaderStage::ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) {
   std::ifstream file;
   file.open(path, std::ios_base::in | std::ios_base::binary);
   if (!file.is_open()) return;
@@ -61,7 +63,8 @@ void OpenGLShaderCode::ReadSPIR_V(const FileSystem::path& path, const String& en
   }
 }
 
-void OpenGLShaderCode::ReadFromSource(const FileSystem::path& path) {
+void
+OpenGLShaderStage::ReadFromSource(const FileSystem::path& path) {
   std::ifstream file;
   file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
@@ -77,7 +80,7 @@ void OpenGLShaderCode::ReadFromSource(const FileSystem::path& path) {
 
     content = stringStream.str();
   } catch (const std::exception& e) {
-    LOG(ERROR) << e.what();
+    LOG(ERROR) << FORMAT("can't read the file {}, and cause an exception: {}", path, e.what());
 
     if (file.is_open()) {
       file.close();
@@ -101,11 +104,11 @@ void OpenGLShaderCode::ReadFromSource(const FileSystem::path& path) {
   }
 }
 
-OpenGLShaderCode::OpenGLShaderCode(const ShaderType& shaderType) : ShaderCode(shaderType) {
+OpenGLShaderStage::OpenGLShaderStage(const ShaderType& shaderType) : ShaderStage(shaderType) {
   GLenum openglShaderType = ConvertToOpenGLShaderType(shaderType);
   shaderID = glCreateShader(openglShaderType);
 }
 
-OpenGLShaderCode::~OpenGLShaderCode() { glDeleteShader(shaderID); }
+OpenGLShaderStage::~OpenGLShaderStage() { glDeleteShader(shaderID); }
 
 }  // namespace Marbas

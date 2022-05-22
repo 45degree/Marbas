@@ -1,5 +1,4 @@
-#ifndef MARBAS_RHI_OPENGL_SHADER_H
-#define MARBAS_RHI_OPENGL_SHADER_H
+#pragma once
 
 #include "RHI/Interface/IndexBuffer.hpp"
 #include "RHI/Interface/Shader.hpp"
@@ -8,21 +7,17 @@
 
 namespace Marbas {
 
-class OpenGLShader : public Shader {
+class OpenGLShader final : public Shader {
  public:
   OpenGLShader();
   ~OpenGLShader() override;
 
  public:
-  void AddShaderCode(const ShaderCode* shaderCode) override;
+  void AddShaderStage(const std::shared_ptr<ShaderStage>& shaderCode) override;
 
   void Link() override;
 
-  void Use() const override;
-
-  void AddUniformDataBlock(uint32_t bindingPoint, const void* data, uint32_t size) override;
-
-  void UnBind() const override;
+  void Use() const;
 
  private:
   GLuint programID;
@@ -32,5 +27,3 @@ class OpenGLShader : public Shader {
 };
 
 }  // namespace Marbas
-
-#endif

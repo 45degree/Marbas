@@ -1,66 +1,172 @@
-#ifndef MARBAS_RESOURCE_RESOURCE_MANAGER_HPP
-#define MARBAS_RESOURCE_RESOURCE_MANAGER_HPP
+#pragma once
 
 #include <glog/logging.h>
 
 #include <concepts>
+#include <mutex>
 
-#include "Common.hpp"
+#include "Common/Common.hpp"
 #include "Resource/MaterialResource.hpp"
+#include "Resource/ModelResource.hpp"
 #include "Resource/ResourceBase.hpp"
 #include "Resource/ShaderResource.hpp"
 #include "Resource/TextureResource.hpp"
 
 namespace Marbas {
 
+template <typename T>
+requires(std::derived_from<T, ResourceBase>) class IResourceContainer {
+  using ElementType = T;
+
+ public:
+  template <typename... ArgsT>
+  std::shared_ptr<T>
+  CreateResource(ArgsT&&... args) {
+    auto resource = std::make_shared<T>(args...);
+    return resource;
+  }
+
+  virtual Uid
+  AddResource(const std::shared_ptr<T>& resource) = 0;
+
+  virtual void
+  RemoveResource(Uid uid) = 0;
+
+  virtual std::shared_ptr<T>
+  GetResource(Uid uid) const = 0;
+
+  virtual uint32_t
+  GetResourceCount() const = 0;
+};
+
+template <typename T>
+class DefaultResourceContainer final : public IResourceContainer<T> {
+ public:
+  Uid
+  AddResource(const std::shared_ptr<T>& resource) override {
+    Uid uid;
+    while (this->m_resources.find(uid) != this->m_resources.end()) {
+      uid = Uid();
+    }
+
+    this->m_resources[uid] = resource;
+    return uid;
+  }
+
+  std::shared_ptr<T>
+  GetResource(Uid uid) const override {
+    if (this->m_resources.find(uid) != this->m_resources.cend()) {
+      return this->m_resources.at(uid);
+    }
+    return nullptr;
+  }
+
+  uint32_t
+  GetResourceCount() const override {
+    return m_resources.size();
+  }
+
+  void
+  RemoveResource(Uid uid) override {
+    auto iter = m_resources.find(uid);
+    if (iter != m_resources.cend()) {
+      m_resources.erase(iter);
+    }
+    return;
+  }
+
+ private:
+  std::unordered_map<Uid, std::shared_ptr<T>> m_resources;
+};
+
+using DefaultShaderResourceContainer = DefaultResourceContainer<ShaderResource>;
+using DefaultTexture2DResourceContainer = DefaultResourceContainer<Texture2DResource>;
+using DefaultCubeMapResourceContainer = DefaultResourceContainer<CubeMapResource>;
+using DefaultModelResourceContainer = DefaultResourceContainer<ModelResource>;
+using DefaultMaterialResourceContainer = DefaultResourceContainer<MaterialResource>;
+
 class ResourceManager {
  public:
   ResourceManager();
+  ResourceManager(const ResourceManager&) = delete;
+  ResourceManager(const ResourceManager&&) = delete;
+
+  ResourceManager&
+  operator=(const ResourceManager&) = delete;
+
+  ResourceManager&
+  operator=(const ResourceManager&&) = delete;
 
   ~ResourceManager() = default;
 
  public:
-  std::shared_ptr<Texture2DResource> AddTexture(const Path& imagePath);
+  void
+  SetShaderResourceContainer(
+      const std::shared_ptr<IResourceContainer<ShaderResource>>& shaderResourceConteiner) {
+    m_shaderResourceContainer = shaderResourceConteiner;
+  }
 
-  std::shared_ptr<ShaderResource> AddShader(const ShaderFileInfo& shaderFileInfo);
+  virtual std::shared_ptr<IResourceContainer<ShaderResource>>
+  GetShaderResourceContainer() const {
+    return m_shaderResourceContainer;
+  }
 
-  std::shared_ptr<MaterialResource> AddMaterial();
+  void
+  SetModelResourceContainer(
+      const std::shared_ptr<IResourceContainer<ModelResource>>& modelResourceContainer) {
+    m_modelResourceContainer = modelResourceContainer;
+  }
 
-  std::shared_ptr<CubeMapResource> AddCubeMap(const CubeMapCreateInfo& createInfo);
+  virtual std::shared_ptr<IResourceContainer<ModelResource>>
+  GetModelResourceContainer() const {
+    return m_modelResourceContainer;
+  }
 
-  void RemoveResource(const Uid& id);
+  virtual void
+  SetTexture2DResourceContainer(
+      const std::shared_ptr<IResourceContainer<Texture2DResource>>& texture2DResourceContainer) {
+    m_texture2DResourceContainer = texture2DResourceContainer;
+  }
+
+  virtual std::shared_ptr<IResourceContainer<Texture2DResource>>
+  GetTexture2DResourceContainer() const {
+    return m_texture2DResourceContainer;
+  }
+
+  virtual std::shared_ptr<IResourceContainer<MaterialResource>>
+  GetMaterialResourceContainer() const {
+    return m_materialResourceContainer;
+  }
+
+  void
+  SetMaterialResourceContainer(
+      const std::shared_ptr<IResourceContainer<MaterialResource>>& materialResourceContainer) {
+    m_materialResourceContainer = materialResourceContainer;
+  }
 
   template <typename T>
-  std::shared_ptr<T> FindResource(const Uid& uid) requires std::derived_from<T, ResourceBase> {
-    if (m_resources.find(uid) == m_resources.end()) {
-      LOG(WARNING) << FORMAT("can't find resurce {}", uid);
-      return nullptr;
+  std::shared_ptr<IResourceContainer<T>>
+  GetContainer() requires(std::derived_from<T, ResourceBase>) {
+    if constexpr (std::is_same_v<T, ShaderResource>) {
+      return this->GetShaderResourceContainer();
+    } else if constexpr (std::is_same_v<T, Texture2DResource>) {
+      return m_texture2DResourceContainer;
+    } else if constexpr (std::is_same_v<T, CubeMapResource>) {
+      return m_cubeMapResourceContainer;
+    } else if constexpr (std::is_same_v<T, ModelResource>) {
+      return this->GetModelResourceContainer();
     }
-
-    auto& resource = m_resources.at(uid);
-    std::shared_ptr<T> res = std::dynamic_pointer_cast<T>(resource);
-    LOG_IF(WARNING, res == nullptr)
-        << FORMAT(" can't convert resource {} to {}, will return nullptr", uid, typeid(T).name());
-
-    return res;
-  }
-
-  [[nodiscard]] std::shared_ptr<ShaderResource> GetDefaultCubeMapShader() const noexcept {
-    return m_defaultCubeMapShaderResource;
-  }
-
-  [[nodiscard]] std::shared_ptr<ShaderResource> GetDefaultShader() const noexcept {
-    return m_defaultShaderResource;
+    return nullptr;
   }
 
  private:
-  std::unordered_map<Uid, std::shared_ptr<ResourceBase>> m_resources;
-  std::unordered_map<String, Uid> m_staticResourcePath;
-
-  std::shared_ptr<ShaderResource> m_defaultShaderResource;
-  std::shared_ptr<ShaderResource> m_defaultCubeMapShaderResource;
+  std::shared_ptr<IResourceContainer<ShaderResource>> m_shaderResourceContainer;
+  std::shared_ptr<IResourceContainer<Texture2DResource>> m_texture2DResourceContainer;
+  std::shared_ptr<IResourceContainer<CubeMapResource>> m_cubeMapResourceContainer;
+  std::shared_ptr<IResourceContainer<ModelResource>> m_modelResourceContainer;
+  std::shared_ptr<IResourceContainer<MaterialResource>> m_materialResourceContainer;
+  Uid m_defaultShaderResourceUid;
+  Uid m_defaultCubeMapShaderResourceUid;
 };
 
 }  // namespace Marbas
-
-#endif

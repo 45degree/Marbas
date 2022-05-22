@@ -1,5 +1,4 @@
-#ifndef MARBAS_RHI_OPENGL_COMMON_H
-#define MARBAS_RHI_OPENGL_COMMON_H
+#pragma once
 
 #include <GLFW/glfw3.h>
 
@@ -12,6 +11,4 @@
 #include <GL/GL.h>
 #else
 #include <GL/gl.h>
-#endif
-
 #endif

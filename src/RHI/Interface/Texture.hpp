@@ -1,58 +1,57 @@
-#ifndef MARBARS_RHI_INTERFACE_TEXTURE_H
-#define MARBARS_RHI_INTERFACE_TEXTURE_H
+#pragma once
 
 #include <optional>
 
-#include "Common.hpp"
+#include "Common/Common.hpp"
+#include "RHI/Interface/IDescriptor.hpp"
 
 namespace Marbas {
 
-enum class TextureFormatType {
+enum class TextureFormat {
   RED,
   RG,
   RGB,
   BGR,
   RGBA,
   BGRA,
+  DEPTH,
 };
 
 class Texture2D {
  public:
-  Texture2D(int width, int height, TextureFormatType formatType)
-      : width(width), height(height), format(formatType) {}
+  Texture2D(uint32_t width, uint32_t height, TextureFormat formatType)
+      : m_width(width), m_height(height), m_format(formatType) {}
 
   virtual ~Texture2D() = default;
-  virtual void Bind(int uniformBind) = 0;
-  virtual void SetData(void* data, uint32_t size) = 0;
-  virtual void UnBind() = 0;
-  virtual void* GetTexture() = 0;
 
-  void SetImageInfo(const String& imagePath, uint32_t hashCode) {
-    m_imagePath = imagePath;
-    m_hashCode = hashCode;
+  virtual void
+  SetData(void* data, uint32_t size) = 0;
+
+  virtual void*
+  GetTexture() = 0;
+
+  virtual std::shared_ptr<IImageDescriptor>
+  GetDescriptor() const = 0;
+
+  uint32_t
+  GetWidth() const noexcept {
+    return m_width;
   }
 
-  void SetTextureId(uint32_t textureId) noexcept { m_textureId = textureId; }
+  uint32_t
+  GetHeight() const noexcept {
+    return m_height;
+  }
 
-  [[nodiscard]] uint32_t GetTextureId() const noexcept { return m_textureId; }
-
-  [[nodiscard]] String GetImagePath() const { return m_imagePath; }
-
-  [[nodiscard]] bool IsImageTexture() const noexcept { return m_hashCode.has_value(); }
-
-  [[nodiscard]] uint32_t GetHashCode() const noexcept {
-    if (m_hashCode.has_value()) return m_hashCode.value();
-    return 0;
+  TextureFormat
+  GetFormat() const noexcept {
+    return m_format;
   }
 
  protected:
-  uint32_t m_textureId = 0;
-  std::optional<uint32_t> m_hashCode = std::nullopt;
-  String m_imagePath;
-
-  int width;
-  int height;
-  TextureFormatType format;
+  uint32_t m_width;
+  uint32_t m_height;
+  TextureFormat m_format;
 };
 
 /**
@@ -70,22 +69,21 @@ enum class CubeMapPosition {
 
 class TextureCubeMap {
  public:
-  TextureCubeMap(int width, int height, TextureFormatType formatType)
+  TextureCubeMap(int width, int height, TextureFormat formatType)
       : m_width(width), m_height(height), m_format(formatType) {}
 
   virtual ~TextureCubeMap() = default;
 
  public:
-  virtual void Bind(int bindingPoint) = 0;
-  virtual void SetData(void* data, uint32_t size, CubeMapPosition position) = 0;
-  virtual void UnBind() = 0;
+  virtual void
+  SetData(void* data, uint32_t size, CubeMapPosition position) = 0;
+  virtual std::shared_ptr<IImageDescriptor>
+  GetDescriptor() const = 0;
 
  protected:
   int m_width;
   int m_height;
-  TextureFormatType m_format;
+  TextureFormat m_format;
 };
 
 }  // namespace Marbas
-
-#endif

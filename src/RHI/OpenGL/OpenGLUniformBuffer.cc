@@ -2,15 +2,17 @@
 
 #include <glog/logging.h>
 
+#include <memory>
+
 namespace Marbas {
 
-OpenGLUniformBuffer::OpenGLUniformBuffer(uint32_t size, uint32_t bindingPoint)
-    : UniformBuffer(size, bindingPoint) {
+OpenGLUniformBuffer::OpenGLUniformBuffer(uint32_t size) : UniformBuffer(size) {
   glCreateBuffers(1, &UBO);
-  Bind();
-  glBufferData(GL_UNIFORM_BUFFER, m_size, nullptr, GL_DYNAMIC_DRAW);
-  glBindBufferBase(GL_UNIFORM_BUFFER, m_bindingPoint, UBO);
-  UnBind();
+  glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+  glNamedBufferData(UBO, m_size, nullptr, GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+  m_bufferDescriptor = std::make_shared<OpenGLUniformBufferDescriptor>(UBO);
 
   LOG(INFO) << "create uniform buffer";
 }
@@ -20,31 +22,30 @@ OpenGLUniformBuffer::~OpenGLUniformBuffer() {
   LOG(INFO) << "delete uniform buffer";
 }
 
-void OpenGLUniformBuffer::Bind() const {
-
-  glBindBufferBase(GL_UNIFORM_BUFFER, m_bindingPoint, UBO);
-  glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't bind uniform buffer, the error code is {}", error);
+void
+OpenGLUniformBuffer::SetData(const void* data, uint32_t size, uint32_t offset) {
+  glNamedBufferSubData(UBO, offset, size, data);
 }
 
-void OpenGLUniformBuffer::UnBind() const {
+OpenGLDynamicUniformBuffer::OpenGLDynamicUniformBuffer(uint32_t size) : DynamicUniformBuffer(size) {
+  glCreateBuffers(1, &m_ubo);
+  glBindBuffer(GL_UNIFORM_BUFFER, m_ubo);
+  glNamedBufferData(m_ubo, m_size, nullptr, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't unbind uniform buffer, the error code is {}", error);
+  m_dynamicBufferDescriptor = std::make_shared<OpenGLDynamicUniformBufferDescriptor>(m_ubo);
+
+  LOG(INFO) << "create dynamic uniform buffer";
 }
 
-void OpenGLUniformBuffer::SetData(const void* data, uint32_t size, uint32_t offset) {
-  Bind();
+OpenGLDynamicUniformBuffer::~OpenGLDynamicUniformBuffer() {
+  glDeleteBuffers(1, &m_ubo);
+  LOG(INFO) << "delete dynamic uniform buffer";
+}
 
-  glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
-
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't set data for uniform buffer, the error code is {}", error);
-
-  UnBind();
+void
+OpenGLDynamicUniformBuffer::SetData(const void* data, uint32_t size, uint32_t offset) {
+  glNamedBufferSubData(m_ubo, offset, size, data);
 }
 
 }  // namespace Marbas

@@ -1,5 +1,4 @@
-#ifndef MARBAS_TOOL_UID_HPP
-#define MARBAS_TOOL_UID_HPP
+#pragma once
 
 #include <folly/Format.h>
 
@@ -15,12 +14,18 @@ class Uid {
 
  public:
   Uid();
+  explicit Uid(uint64_t uidNum);
+
   ~Uid() = default;
 
   Uid(const Uid& uid) = default;
-  Uid& operator=(const Uid& uid) = default;
+  Uid&
+  operator=(const Uid& uid) = default;
 
-  bool operator==(const Uid& uid) const { return m_uid == uid.m_uid; }
+  bool
+  operator==(const Uid& uid) const {
+    return m_uid == uid.m_uid;
+  }
 
  private:
   uint64_t m_uid;
@@ -35,7 +40,10 @@ class Uid {
 namespace std {
 template <>
 struct hash<Marbas::Uid> {
-  size_t operator()(const Marbas::Uid& uid) const { return hash<uint64_t>()(uid.m_uid); }
+  size_t
+  operator()(const Marbas::Uid& uid) const {
+    return hash<uint64_t>()(uid.m_uid);
+  }
 };
 }  // namespace std
 
@@ -47,7 +55,8 @@ class FormatValue<Marbas::Uid> {
   explicit FormatValue(const Marbas::Uid& val) : val_(val) {}
 
   template <class FormatCallback>
-  void format(FormatArg& arg, FormatCallback& cb) const {
+  void
+  format(FormatArg& arg, FormatCallback& cb) const {
     FormatValue<uint64_t>(val_.m_uid).format(arg, cb);
   }
 
@@ -56,5 +65,3 @@ class FormatValue<Marbas::Uid> {
 };
 
 }  // namespace folly
-
-#endif

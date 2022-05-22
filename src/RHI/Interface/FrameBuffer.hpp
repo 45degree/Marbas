@@ -1,34 +1,32 @@
-#ifndef MARBARS_RHI_INTERFACE_FRAMEBUFFER_H
-#define MARBARS_RHI_INTERFACE_FRAMEBUFFER_H
+#pragma once
 
+#include "RHI/Interface/RenderPass.hpp"
 namespace Marbas {
 
 struct FrameBufferInfo {
-  int width = 0;
-  int height = 0;
-  bool depthAttach = false;
-  bool templateAttach = false;
+  uint32_t width = 0;
+  uint32_t height = 0;
+
+  // if the renderpass is null, means the frame buffer is a default frame buffer
+  const RenderPass* renderPass = nullptr;
+  Vector<std::shared_ptr<Texture2D>> attachments;
 };
 
 class FrameBuffer {
  public:
-  explicit FrameBuffer(const FrameBufferInfo& info) : frameBufferInfo(info){};
+  explicit FrameBuffer(const FrameBufferInfo& info) : m_width(info.width), m_height(info.height){};
   virtual ~FrameBuffer() = default;
 
  public:
-  virtual void Bind() const = 0;
-  virtual void UnBind() const = 0;
+  virtual void
+  Bind() const = 0;
 
-  virtual void Create() = 0;
-  virtual void ReCreate() = 0;
-  virtual void Resize(int width, int height) = 0;
-
-  [[nodiscard]] virtual const void* GetColorAttachTexture() const = 0;
+  virtual void
+  UnBind() const = 0;
 
  protected:
-  FrameBufferInfo frameBufferInfo;
+  uint32_t m_width;
+  uint32_t m_height;
 };
 
 }  // namespace Marbas
-
-#endif

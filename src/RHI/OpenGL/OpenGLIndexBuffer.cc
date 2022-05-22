@@ -2,7 +2,7 @@
 
 #include <glog/logging.h>
 
-#include "Common.hpp"
+#include "Common/Common.hpp"
 #include "RHI/OpenGL/OpenGLRHICommon.hpp"
 
 namespace Marbas {
@@ -30,21 +30,24 @@ OpenGLIndexBuffer::~OpenGLIndexBuffer() {
   glDeleteBuffers(1, &EBO);
 }
 
-void OpenGLIndexBuffer::Bind() const {
+void
+OpenGLIndexBuffer::Bind() const {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
   auto error = glGetError();
   LOG_IF(ERROR, error) << FORMAT("can't bind index buffer: {}", EBO);
 }
 
-void OpenGLIndexBuffer::UnBind() const {
+void
+OpenGLIndexBuffer::UnBind() const {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   auto error = glGetError();
   LOG_IF(ERROR, error) << FORMAT("can't unbind index buffer: {}", EBO);
 }
 
-void OpenGLIndexBuffer::SetData(const Vector<uint32_t>& data, size_t offsetCount) {
+void
+OpenGLIndexBuffer::SetData(const Vector<uint32_t>& data, size_t offsetCount) {
   LOG(INFO) << FORMAT(
       "set data for opengl index buffer, the buffer count is {},"
       " offset count is {}",

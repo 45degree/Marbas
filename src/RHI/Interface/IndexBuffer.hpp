@@ -1,7 +1,6 @@
-#ifndef MARBARS_RHI_INTERFACE_INDEX_BUFFER_H
-#define MARBARS_RHI_INTERFACE_INDEX_BUFFER_H
+#pragma once
 
-#include "Common.hpp"
+#include "Common/Common.hpp"
 
 namespace Marbas {
 
@@ -11,16 +10,22 @@ class IndexBuffer {
   virtual ~IndexBuffer() = default;
 
  public:
-  virtual void Bind() const = 0;
-  virtual void UnBind() const = 0;
-  virtual void SetData(const Vector<uint32_t>& data, size_t offsetCount) = 0;
+  virtual void
+  Bind() const = 0;
 
-  [[nodiscard]] size_t GetIndexCount() const noexcept { return m_indexCount; }
+  virtual void
+  UnBind() const = 0;
+
+  virtual void
+  SetData(const Vector<uint32_t>& data, size_t offsetCount) = 0;
+
+  [[nodiscard]] size_t
+  GetIndexCount() const noexcept {
+    return m_indexCount;
+  }
 
  protected:
   size_t m_indexCount = 0;
 };
 
 }  // namespace Marbas
-
-#endif

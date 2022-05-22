@@ -1,16 +1,20 @@
-#ifndef MARBAS_RHI_INTERFACE_RENDERER_FACETORY_H
-#define MARBAS_RHI_INTERFACE_RENDERER_FACETORY_H
+#pragma once
 
 #include <GLFW/glfw3.h>
 
 #include <memory>
 
+#include "RHI/Interface/Command.hpp"
+#include "RHI/Interface/CommandBuffer.hpp"
+#include "RHI/Interface/CommandFactory.hpp"
 #include "RHI/Interface/DrawBatch.hpp"
 #include "RHI/Interface/FrameBuffer.hpp"
+#include "RHI/Interface/ImguiInterface.hpp"
+#include "RHI/Interface/Pipeline.hpp"
 #include "RHI/Interface/Shader.hpp"
 #include "RHI/Interface/ShaderCode.hpp"
+#include "RHI/Interface/SwapChain.hpp"
 #include "RHI/Interface/UniformBuffer.hpp"
-#include "RHI/Interface/VertexArray.hpp"
 #include "RHI/Interface/VertexBuffer.hpp"
 #include "RHI/Interface/Viewport.hpp"
 
@@ -49,74 +53,91 @@ struct CubeMapCreateInfo {
  */
 class RHIFactory {
  protected:
-  RHIFactory() = default;
+  RHIFactory() {}
 
  public:
   RHIFactory(const RHIFactory&) = delete;
-  RHIFactory& operator=(const RHIFactory&) = delete;
+  RHIFactory&
+  operator=(const RHIFactory&) = delete;
 
   virtual ~RHIFactory() = default;
 
  public:
-  virtual void Enable(EnableItem item) const = 0;
+  void
+  SetGLFWwindow(GLFWwindow* glfwWindow) {
+    m_glfwWindow = glfwWindow;
+  }
 
-  virtual void Disable(EnableItem item) const = 0;
+  virtual void
+  Init() const = 0;
 
-  virtual void ClearColor(float r, float g, float b, float a) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<ImguiInterface>
+  CreateImguiInterface() const = 0;
 
-  virtual void PrintRHIInfo() const = 0;
+  [[nodiscard]] virtual std::shared_ptr<VertexBuffer>
+  CreateVertexBuffer(const void* data, size_t size) const = 0;
 
-  virtual void Init(GLFWwindow* window) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<VertexBuffer>
+  CreateVertexBuffer(size_t size) const = 0;
 
-  virtual void SwapBuffer(GLFWwindow* window) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<IndexBuffer>
+  CreateIndexBuffer(const Vector<uint32_t>& indices) const = 0;
 
-  virtual void ClearBuffer(const ClearBuferBit bufferBit) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<ShaderStage>
+  CreateShaderStage(const Path& path, const ShaderCodeType codeType,
+                    const ShaderType shaderType) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<VertexBuffer> CreateVertexBuffer(const void* data,
-                                                                         size_t size) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<Shader>
+  CreateShader() const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<VertexBuffer> CreateVertexBuffer(size_t size) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<SwapChain>
+  CreateSwapChain() = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<VertexArray> CreateVertexArray() const = 0;
+  [[nodiscard]] virtual std::shared_ptr<RenderPass>
+  CreateRenderPass(const RenderPassCreateInfo& createInfo) = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<IndexBuffer> CreateIndexBuffer(
-      const Vector<uint32_t>& indices) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<GraphicsPipeLine>
+  CreateGraphicsPipeLine() = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<IndexBuffer> CreateIndexBuffer(size_t size) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<Texture2D>
+  CreateTexutre2D(const Path& imagePath) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<ShaderCode> CreateShaderCode(
-      const Path& path, const ShaderCodeType codeType, const ShaderType shaderType) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<Texture2D>
+  CreateTexutre2D(int width, int height, TextureFormat formatType) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader() const = 0;
+  [[nodiscard]] virtual std::shared_ptr<TextureCubeMap>
+  CreateTextureCubeMap(int width, int height, TextureFormat format) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<Texture2D> CreateTexutre2D(const Path& imagePath) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<TextureCubeMap>
+  CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<Texture2D> CreateTexutre2D(
-      int width, int height, TextureFormatType formatType) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<CommandFactory>
+  CreateCommandFactory() const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<TextureCubeMap> CreateTextureCubeMap(
-      int width, int height, TextureFormatType format) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<UniformBuffer>
+  CreateUniformBuffer(uint32_t size) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<TextureCubeMap> CreateTextureCubeMap(
-      const CubeMapCreateInfo& createInfo) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<DynamicUniformBuffer>
+  CreateDynamicUniforBuffer(uint32_t size) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<DrawBatch> CreateDrawBatch() const = 0;
+  [[nodiscard]] virtual std::shared_ptr<FrameBuffer>
+  CreateFrameBuffer(const FrameBufferInfo& info) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<UniformBuffer> CreateUniformBuffer(
-      uint32_t size, uint32_t bindingPoint) const = 0;
+  [[nodiscard]] virtual std::shared_ptr<DescriptorSet>
+  CreateDescriptorSet(const DescriptorSetInfo& createInfo) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<FrameBuffer> CreateFrameBuffer(
-      const FrameBufferInfo& info) const = 0;
-
-  [[nodiscard]] virtual std::unique_ptr<Viewport> CreateViewport() const = 0;
+  [[nodiscard]] virtual std::shared_ptr<DynamicDescriptorSet>
+  CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const = 0;
 
  public:
-  static RHIFactory* GetInstance(const RendererType& rendererType);
+  static RHIFactory*
+  GetInstance(const RendererType& rendererType);
 
  private:
   static std::unique_ptr<RHIFactory> m_rhiFactory;
+
+ protected:
+  GLFWwindow* m_glfwWindow = nullptr;
 };
 
 }  // namespace Marbas
-
-#endif

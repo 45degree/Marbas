@@ -4,7 +4,8 @@
 
 namespace Marbas {
 
-static int GetTypeSize(ElementType type) {
+static int
+GetTypeSize(ElementType type) {
   switch (type) {
     case ElementType::BYTE:
     case ElementType::UNSIGNED_BYTE:
@@ -23,22 +24,41 @@ static int GetTypeSize(ElementType type) {
   return 0;
 }
 
-void VertexBuffer::SetLayout(const Vector<ElementLayout>& layout) {
-  m_layout = layout;
-
-  // calculate the stride and offset for each element
+void
+ElementLayout::CalculateLayout(Vector<ElementLayout>& layouts) {
   size_t stride = 0;
-  for (auto& layout : m_layout) {
+  for (auto& layout : layouts) {
     layout.typeBytes = GetTypeSize(layout.mateType);
     stride += layout.typeBytes * layout.count;
   }
 
   std::size_t offset = 0;
-  for (int i = 0; i < this->m_layout.size(); i++) {
-    m_layout[i].offset = offset;
-    m_layout[i].stride = stride;
-    offset += m_layout[i].typeBytes * m_layout[i].count;
+  for (int i = 0; i < layouts.size(); i++) {
+    layouts[i].offset = offset;
+    layouts[i].stride = stride;
+    offset += layouts[i].typeBytes * layouts[i].count;
   }
+}
+
+void
+VertexBuffer::SetLayout(const Vector<ElementLayout>& layout) {
+  m_layout = layout;
+  m_stride = layout[0].stride;
+
+  // calculate the stride and offset for each element
+  // size_t stride = 0;
+  // for (auto& layout : m_layout) {
+  //   layout.typeBytes = GetTypeSize(layout.mateType);
+  //   stride += layout.typeBytes * layout.count;
+  // }
+  // m_stride = stride;
+  //
+  // std::size_t offset = 0;
+  // for (int i = 0; i < this->m_layout.size(); i++) {
+  //   m_layout[i].offset = offset;
+  //   m_layout[i].stride = stride;
+  //   offset += m_layout[i].typeBytes * m_layout[i].count;
+  // }
 }
 
 }  // namespace Marbas

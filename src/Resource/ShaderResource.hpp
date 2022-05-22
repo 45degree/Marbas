@@ -1,6 +1,6 @@
-#ifndef MARBAS_RESOURCE_SHADER_RESOURCE_HPP
-#define MARBAS_RESOURCE_SHADER_RESOURCE_HPP
+#pragma once
 
+#include "Common/Common.hpp"
 #include "RHI/RHI.hpp"
 #include "Resource/ResourceBase.hpp"
 
@@ -18,22 +18,28 @@ class ShaderResource final : public ResourceBase {
       : ResourceBase(), m_shaderFileInfo(shaderFileInfo) {}
 
  public:
-  void LoadResource(RHIFactory* rhiFactory) override;
+  void
+  LoadResource(RHIFactory* rhiFactory, std::shared_ptr<ResourceManager>& resourceManager) override;
 
-  void SetVertexShader(std::unique_ptr<ShaderCode>&& vertexShader) {
+  void
+  SetVertexShader(std::unique_ptr<ShaderStage>&& vertexShader) {
     m_vertexShader = std::move(vertexShader);
   }
 
-  void SetFragmentShader(std::unique_ptr<ShaderCode>&& fragmentShader) {
+  void
+  SetFragmentShader(std::unique_ptr<ShaderStage>&& fragmentShader) {
     m_fragmentShader = std::move(fragmentShader);
   }
 
-  [[nodiscard]] Shader* GetShader() const noexcept { return m_shader.get(); }
+  [[nodiscard]] std::shared_ptr<Shader>
+  GetShader() const noexcept {
+    return m_shader;
+  }
 
  private:
-  std::unique_ptr<Shader> m_shader;
-  std::unique_ptr<ShaderCode> m_vertexShader;
-  std::unique_ptr<ShaderCode> m_fragmentShader;
+  std::shared_ptr<Shader> m_shader;
+  std::shared_ptr<ShaderStage> m_vertexShader;
+  std::shared_ptr<ShaderStage> m_fragmentShader;
 
   bool m_isLoad = false;
 
@@ -41,5 +47,3 @@ class ShaderResource final : public ResourceBase {
 };
 
 }  // namespace Marbas
-
-#endif
