@@ -31,8 +31,7 @@ class CubeMapRenderPass final : public ForwardRenderPass {
           const std::shared_ptr<ResourceManager>& resourceMnager) override;
 
  private:
-  std::shared_ptr<DynamicUniformBuffer> m_dynamicUniforBuffer = nullptr;
-  std::shared_ptr<DynamicDescriptorSet> m_dynamicDescriptorSet = nullptr;
+  std::shared_ptr<UniformBuffer> m_uniformBuffer = nullptr;
 };
 
 }  // namespace Marbas

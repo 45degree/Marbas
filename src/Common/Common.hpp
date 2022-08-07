@@ -16,17 +16,17 @@
 namespace Marbas {
 
 template <typename T>
-#ifdef DEBUG
-using Vector = std::vector<T>;
-#else
+// #ifdef DEBUG
+// using Vector = std::vector<T>;
+// #else
 using Vector = folly::fbvector<T>;
-#endif
+// #endif
 
-#ifdef DEBUG
-using String = std::string;
-#else
+// #ifdef DEBUG
+// using String = std::string;
+// #else
 using String = folly::fbstring;
-#endif
+// #endif
 
 namespace FileSystem = std::filesystem;
 using Path = std::filesystem::path;

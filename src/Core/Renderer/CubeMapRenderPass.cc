@@ -16,7 +16,6 @@ struct CubeMapComponent_Impl {
   std::shared_ptr<TextureCubeMapResource> textureCubeMapResource;
 };
 
-// TODO: need to change
 static Vector<ElementLayout>
 GetMeshVertexInfoLayout() {
   Vector<ElementLayout> layouts{
@@ -87,8 +86,9 @@ CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createIn
   });
   m_pipeline->Create();
 
-  // create desciriptorSet
-  m_dynamicDescriptorSet = m_rhiFactory->CreateDynamicDescriptorSet({0});
+  // create uniform buffer
+  auto bufferSize = sizeof(CubeMapComponent::UniformBufferBlockData);
+  m_uniformBuffer = m_rhiFactory->CreateUniformBuffer(bufferSize);
 }
 
 void
@@ -109,16 +109,11 @@ CubeMapRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
       << FORMAT("{}'s pipeline is null, can't record command", NAMEOF_TYPE(CubeMapRenderPass));
 
   // recreate dynamic uniform buffer
-  Vector<CubeMapComponent::UniformBufferBlockData> uniformBufferData;
-  for (auto&& [entity, cubeMapComponent] : view.each()) {
-    const auto& implData = cubeMapComponent.m_implData;
-    if (implData == nullptr) continue;
-    uniformBufferData.push_back(cubeMapComponent.m_uniformBufferData);
-  }
-  auto bufferSize = uniformBufferData.size() * sizeof(CubeMapComponent::UniformBufferBlockData);
+  auto entity = view.front();
+  auto& cubeMapComponent = Entity::GetComponent<CubeMapComponent>(scene, entity);
 
-  m_dynamicUniforBuffer = m_rhiFactory->CreateDynamicUniforBuffer(bufferSize);
-  m_dynamicUniforBuffer->SetData(uniformBufferData.data(), bufferSize, 0);
+  auto bufferSize = sizeof(CubeMapComponent::UniformBufferBlockData);
+  m_uniformBuffer->SetData(&cubeMapComponent.m_uniformBufferData, bufferSize, 0);
 
   /**
    * set command
@@ -138,10 +133,6 @@ CubeMapRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
   auto bindPipeline = m_commandFactory->CreateBindPipelineCMD();
   bindPipeline->SetPipeLine(m_pipeline);
 
-  // set dynamic descriptor set
-  auto dynamicBufferDescriptor = m_dynamicUniforBuffer->GetIDynamicBufferDescriptor();
-  m_dynamicDescriptorSet->BindDynamicBuffer(0, std::move(dynamicBufferDescriptor));
-
   /**
    * begin to record command
    */
@@ -150,34 +141,25 @@ CubeMapRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
   m_commandBuffer->AddCommand(std::move(beginRenderPass));
   m_commandBuffer->AddCommand(std::move(bindPipeline));
 
-  auto entity = view.front();
-  auto& cubeMapComponent = Entity::GetComponent<CubeMapComponent>(scene, entity);
   const auto& implData = cubeMapComponent.m_implData;
   DLOG_ASSERT(implData->vertexBuffer != nullptr);
   DLOG_ASSERT(implData->indexBuffer != nullptr);
 
   auto bindVertexBuffer = m_commandFactory->CreateBindVertexBufferCMD();
   auto bindIndexBuffer = m_commandFactory->CreateBindIndexBufferCMD();
-  auto bindDynamicBuffer = m_commandFactory->CreateBindDynamicDescriptorSetCMD();
+  auto bindDescriptorSet = m_commandFactory->CreateBindDescriptorSetCMD();
   auto drawIndex = m_commandFactory->CreateDrawIndexCMD();
 
   bindVertexBuffer->SetVertexBuffer(implData->vertexBuffer);
   bindIndexBuffer->SetIndexBuffer(implData->indexBuffer);
-  bindDynamicBuffer->SetDescriptorSet(m_dynamicDescriptorSet);
-  bindDynamicBuffer->SetOffset(0);
-  bindDynamicBuffer->SetSize(sizeof(CubeMapComponent::UniformBufferBlockData));
 
-  if (implData->textureCubeMapResource != nullptr) {
-    auto bindDescriptorSet = m_commandFactory->CreateBindDescriptorSetCMD();
-    bindDescriptorSet->SetDescriptor(implData->descriptorSet);
-    m_commandBuffer->AddCommand(std::move(bindDescriptorSet));
-  }
+  bindDescriptorSet->SetDescriptor(implData->descriptorSet);
 
   drawIndex->SetIndexCount(implData->indexBuffer->GetIndexCount());
 
   m_commandBuffer->AddCommand(std::move(bindVertexBuffer));
   m_commandBuffer->AddCommand(std::move(bindIndexBuffer));
-  m_commandBuffer->AddCommand(std::move(bindDynamicBuffer));
+  m_commandBuffer->AddCommand(std::move(bindDescriptorSet));
   m_commandBuffer->AddCommand(std::move(drawIndex));
 
   m_commandBuffer->AddCommand(std::move(endRenderPass));
@@ -214,12 +196,18 @@ CubeMapRenderPass::CreateBufferForEveryEntity(const entt::entity cubeMap,
 
     DescriptorSetInfo descriptorSetInfo{
         DescriptorInfo{
+            .isBuffer = true,
+            .type = BufferDescriptorType::UNIFORM_BUFFER,
+            .bindingPoint = 0,
+        },
+        DescriptorInfo{
             .isBuffer = false,
             .bindingPoint = 0,
         },
     };
     auto descriptor = m_rhiFactory->CreateDescriptorSet(descriptorSetInfo);
     descriptor->BindImage(0, cubeMapResource->GetTextureCubeMap()->GetDescriptor());
+    descriptor->BindBuffer(0, m_uniformBuffer->GetIBufferDescriptor());
 
     implData->descriptorSet = descriptor;
     implData->textureCubeMapResource = cubeMapResource;
@@ -235,21 +223,16 @@ CubeMapRenderPass::SetUniformBuffer(const std::shared_ptr<Scene>& scene) {
   const auto viewMatrix = editorCamera->GetViewMartix();
   const auto perspectiveMatrix = editorCamera->GetPerspective();
 
-  uint32_t index = 0;
   auto view = Entity::GetAllEntity<CubeMapComponent>(scene);
-  for (const auto& [entity, cubeMapComponent] : view.each()) {
-    if (cubeMapComponent.m_implData == nullptr) continue;
-    auto offset = index * sizeof(MeshComponent::UniformBufferBlockData);
-    auto size = sizeof(MeshComponent::UniformBufferBlockData);
+  auto entity = view.front();
+  auto& cubeMapComponent = Entity::GetComponent<CubeMapComponent>(scene, entity);
+  cubeMapComponent.m_uniformBufferData.model = glm::mat4(1);
 
-    cubeMapComponent.m_uniformBufferData.model = glm::mat4(1);
+  cubeMapComponent.m_uniformBufferData.view = glm::mat4(glm::mat3(viewMatrix));
+  cubeMapComponent.m_uniformBufferData.projective = perspectiveMatrix;
 
-    cubeMapComponent.m_uniformBufferData.view = glm::mat4(glm::mat3(viewMatrix));
-    cubeMapComponent.m_uniformBufferData.projective = perspectiveMatrix;
-
-    m_dynamicUniforBuffer->SetData(&cubeMapComponent.m_uniformBufferData, size, offset);
-    index++;
-  }
+  auto bufferSize = sizeof(CubeMapComponent::UniformBufferBlockData);
+  m_uniformBuffer->SetData(&cubeMapComponent.m_uniformBufferData, bufferSize, 0);
 }
 
 void
