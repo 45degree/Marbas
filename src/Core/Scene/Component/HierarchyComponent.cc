@@ -3,4 +3,32 @@
 #include "Core/Scene/Entity/Entity.hpp"
 #include "Core/Scene/Scene.hpp"
 
-namespace Marbas {}  // namespace Marbas
+namespace Marbas {
+
+void
+HierarchyComponent::AddChild(const entt::entity parent, const std::shared_ptr<Scene>& scene,
+                             entt::entity child) {
+  auto& registry = const_cast<entt::registry&>(scene->GetWorld());
+  AddChild(parent, registry, child);
+}
+
+void
+HierarchyComponent::AddChild(const entt::entity parent, entt::registry& registry,
+                             entt::entity child) {
+  auto& parentComponent = registry.get<HierarchyComponent>(parent);
+  auto& childComponent = registry.get<HierarchyComponent>(child);
+  childComponent.parent = parent;
+
+  if (parentComponent.children.empty()) {
+    parentComponent.children.push_back(child);
+    return;
+  }
+
+  auto lastChildEntity = parentComponent.children[parentComponent.children.size() - 1];
+  auto& lastChildComponent = registry.get<HierarchyComponent>(lastChildEntity);
+  lastChildComponent.next = child;
+
+  childComponent.prew = lastChildEntity;
+}
+
+}  // namespace Marbas

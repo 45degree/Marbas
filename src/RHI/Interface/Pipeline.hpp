@@ -46,13 +46,20 @@ struct RasterizationInfo {
 };
 
 enum class DepthCompareOp {
-
+  ALWAYS,
+  NEVER,
+  LESS,
+  EQUAL,
+  LEQUAL,
+  GREATER,
+  NOTEQUAL,
+  GEQUAL,
 };
 
 struct DepthStencilInfo {
   bool depthTestEnable = true;
   bool depthWriteEnable = true;
-  DepthCompareOp depthCompareOp;
+  DepthCompareOp depthCompareOp = DepthCompareOp::LESS;
   bool depthBoundsTestEnable = true;
   bool stencilTestEnable = true;
 };

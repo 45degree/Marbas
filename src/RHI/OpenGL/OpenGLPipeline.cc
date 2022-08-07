@@ -28,6 +28,30 @@ ConvertToOpenGLType(ElementType type) {
   }
 }
 
+constexpr static GLenum
+ConvertToOpenGLDepthCompareFunc(DepthCompareOp depthCompare) {
+  switch (depthCompare) {
+    case DepthCompareOp::ALWAYS:
+      return GL_ALWAYS;
+    case DepthCompareOp::NEVER:
+      return GL_NEVER;
+    case DepthCompareOp::LESS:
+      return GL_LESS;
+    case DepthCompareOp::EQUAL:
+      return GL_EQUAL;
+    case DepthCompareOp::LEQUAL:
+      return GL_LEQUAL;
+    case DepthCompareOp::GREATER:
+      return GL_GREATER;
+    case DepthCompareOp::NOTEQUAL:
+      return GL_NOTEQUAL;
+    case DepthCompareOp::GEQUAL:
+      return GL_GEQUAL;
+    default:
+      return GL_LESS;
+  }
+}
+
 OpenGLGraphicsPipeline::OpenGLGraphicsPipeline() { glCreateVertexArrays(1, &m_VAO); }
 
 OpenGLGraphicsPipeline::~OpenGLGraphicsPipeline() { glDeleteVertexArrays(1, &m_VAO); }
@@ -40,7 +64,6 @@ OpenGLGraphicsPipeline::SetShader(const std::shared_ptr<Shader>& shader) {
 
 void
 OpenGLGraphicsPipeline::SetVertexBufferLayout(const Vector<ElementLayout>& vertexBufferLayout) {
-
   for (const auto& elementInfo : vertexBufferLayout) {
     GLuint index = elementInfo.index;
     auto size = static_cast<GLint>(elementInfo.count);
@@ -87,7 +110,6 @@ OpenGLGraphicsPipeline::SetRastreizationInfo(const RasterizationInfo& rasterizat
 void
 OpenGLGraphicsPipeline::SetDepthStencilInfo(const DepthStencilInfo& depthStencilInfo) {
   m_depthStencilInfo = depthStencilInfo;
-  LOG(INFO) << m_depthStencilInfo.depthTestEnable;
 }
 
 void
@@ -114,6 +136,9 @@ OpenGLGraphicsPipeline::Bind() const {
   // glScissor(m_scissorInfo.x, m_scissorInfo.y, m_scissorInfo.x, m_scissorInfo.y);
   if (m_depthStencilInfo.depthTestEnable) {
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(ConvertToOpenGLDepthCompareFunc(m_depthStencilInfo.depthCompareOp));
+  } else {
+    glDisable(GL_DEPTH_TEST);
   }
 
   m_shader->Use();

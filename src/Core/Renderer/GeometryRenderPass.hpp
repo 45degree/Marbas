@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Renderer/DeferredRenderPass.hpp"
 #include "Core/Renderer/RenderPassNode.hpp"
 #include "Core/Scene/Component/MeshComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
@@ -8,33 +9,19 @@
 
 namespace Marbas {
 
-struct GeometryRenderPassCreatInfo : public RenderPassNodeCreateInfo {
-  // std::shared_ptr<IResourceContainer<MaterialResource>> materialResourceContainer;
-  std::shared_ptr<ResourceManager> resourceManager;
+struct GeometryRenderPassCreatInfo final : public DeferredRenderPassNodeCreateInfo {
   GeometryRenderPassCreatInfo();
 };
 
-class GeometryRenderPass final : public RenderPassNode {
-  using ResourceContainerInfo = std::tuple<MaterialResource>;
-
+class GeometryRenderPass final : public DeferredRenderPass {
  public:
+  const static String renderPassName;
   const static String geometryTargetName;
   const static String depthTargetName;
 
  public:
   explicit GeometryRenderPass(const GeometryRenderPassCreatInfo& createInfo);
-
- private:
-  std::shared_ptr<CommandFactory> m_commandFactory = nullptr;
-  std::shared_ptr<GraphicsPipeLine> m_pipeline = nullptr;
-  std::unique_ptr<CommandBuffer> m_commandBuffer = nullptr;
-  std::shared_ptr<DynamicDescriptorSet> m_dynamicDescriptorSet = nullptr;
-
-  // this buffer used to store all mesh's MVP matrix
-  std::shared_ptr<DynamicUniformBuffer> m_dynamicUniforBuffer = nullptr;
-  // std::shared_ptr<IResourceContainer<MaterialResource>> m_materialResourceContainer = nullptr;
-  std::shared_ptr<ResourceManager> m_resourceManager = nullptr;
-  bool m_needToRecordComand = false;
+  virtual ~GeometryRenderPass() = default;
 
  public:
   void
@@ -44,7 +31,7 @@ class GeometryRenderPass final : public RenderPassNode {
    * @brief record the command
    */
   void
-  RecordCommand(const std::shared_ptr<Scene>& scene);
+  RecordCommand(const std::shared_ptr<Scene>& scene) override;
 
   void
   CreateBufferForEveryEntity(const MeshEntity& mesh, const std::shared_ptr<Scene>& scene);
@@ -55,6 +42,12 @@ class GeometryRenderPass final : public RenderPassNode {
   void
   Execute(const std::shared_ptr<Scene>& scene,
           const std::shared_ptr<ResourceManager>& resourceMnager) override;
+
+ private:
+  std::shared_ptr<DynamicDescriptorSet> m_dynamicDescriptorSet = nullptr;
+
+  // this buffer used to store all mesh's MVP matrix
+  std::shared_ptr<DynamicUniformBuffer> m_dynamicUniforBuffer = nullptr;
 };
 
 }  // namespace Marbas

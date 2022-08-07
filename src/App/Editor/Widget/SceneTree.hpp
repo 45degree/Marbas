@@ -24,9 +24,14 @@ class SceneTreeWidget : public Widget {
 
  private:
   void
+  DrawPopup();
+
+  void
   DrawNode(const entt::entity& rootEntity);
 
  private:
+  entt::entity m_selectEntity = entt::null;
+  String m_popUpName = "";
   entt::sigh<void(ModelEntity, const ModelComponent&)> m_signal;
   entt::sink<decltype(m_signal)> m_sink{m_signal};
 };

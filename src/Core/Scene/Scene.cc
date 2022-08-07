@@ -4,11 +4,13 @@
 #include <assimp/scene.h>
 #include <glog/logging.h>
 
-#include <algorithm> #include <assimp/Importer.hpp>
+#include <algorithm>
+#include <assimp/Importer.hpp>
 
 #include "Common/Common.hpp"
 #include "Core/Scene/Component/HierarchyComponent.hpp"
 #include "Core/Scene/Component/TagComponent.hpp"
+#include "Core/Scene/Entity/CubeMapEntity.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
 #include "Core/Scene/Entity/MeshEntity.hpp"
 #include "Core/Scene/Entity/ModelEntity.hpp"
@@ -77,11 +79,30 @@ Scene::Scene(const std::shared_ptr<ResourceManager>& resourceManager)
   m_rootEntity = m_world.create();
   m_world.emplace<HierarchyComponent>(m_rootEntity);
   m_world.emplace<UniqueTagComponent>(m_rootEntity);
-
   m_editorCamera = std::make_shared<EditorCamera>();
 
   auto& tagComponent = m_world.get<UniqueTagComponent>(m_rootEntity);
   tagComponent.tagName = m_name;
+
+  /**
+   * add default cubemap
+   */
+
+  // create default cubeMap texture
+  auto cubeMapResourceContainer = m_resourceManager->GetCubeMapResourceContainer();
+  auto cubeMapResource = cubeMapResourceContainer->CreateResource(CubeMapCreateInfo{
+      .top = "assert/skybox/top.jpg",
+      .bottom = "assert/skybox/bottom.jpg",
+      .back = "assert/skybox/back.jpg",
+      .front = "assert/skybox/front.jpg",
+      .left = "assert/skybox/left.jpg",
+      .right = "assert/skybox/right.jpg",
+  });
+  auto cubeMapResourceId = cubeMapResourceContainer->AddResource(cubeMapResource);
+
+  // create Entity
+  auto cubeMap = CubeMapPolicy::Create(m_world, cubeMapResourceId);
+  HierarchyComponent::AddChild(m_rootEntity, m_world, cubeMap);
 }
 
 void

@@ -8,7 +8,8 @@
 namespace Marbas {
 
 const String GeometryRenderPass::depthTargetName = "GeometryDepthTexture";
-const String GeometryRenderPass::geometryTargetName = "GeometryColorTexture";
+const String GeometryRenderPass::geometryTargetName = "GeometryColorNormalTexture";
+const String GeometryRenderPass::renderPassName = "GeometryRenderPass";
 
 struct MeshComponent_Impl {
   std::shared_ptr<VertexBuffer> vertexBuffer;
@@ -30,17 +31,14 @@ GetMeshVertexInfoLayout() {
   return layouts;
 };
 
-GeometryRenderPassCreatInfo::GeometryRenderPassCreatInfo() : RenderPassNodeCreateInfo() {
-  passName = "GeometryRenderPass";
+GeometryRenderPassCreatInfo::GeometryRenderPassCreatInfo() : DeferredRenderPassNodeCreateInfo() {
+  passName = GeometryRenderPass::renderPassName;
   inputResource = {};
-  outputResource = {
-      GeometryRenderPass::depthTargetName,
-      GeometryRenderPass::geometryTargetName,
-  };
+  outputResource = {GeometryRenderPass::depthTargetName, GeometryRenderPass::geometryTargetName};
 }
 
 GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& createInfo)
-    : RenderPassNode(createInfo), m_resourceManager(createInfo.resourceManager) {
+    : DeferredRenderPass(createInfo) {
   DLOG_ASSERT(m_rhiFactory != nullptr)
       << "can't Initialize the geometryRenderPass, because the rhiFactory isn't been set";
 
@@ -89,13 +87,10 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
   m_pipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = m_width, .height = m_height});
   m_pipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout());
-  // m_pipeline->SetDescriptorSetInfo(m_descriptorSetInfo);
   m_pipeline->SetShader(meshShader);
   m_pipeline->Create();
 
   // create desciriptorSet
-  // m_descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetInfo);
-
   m_dynamicDescriptorSet = m_rhiFactory->CreateDynamicDescriptorSet({0});
 }
 
@@ -109,7 +104,7 @@ GeometryRenderPass::CreateFrameBuffer() {
   auto depthBuffer = depthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
 
   if (normalBuffer == nullptr || colorBuffer == nullptr) {
-    LOG(ERROR) << "can't get normal buffer pr color buffer from the gbuffer";
+    LOG(ERROR) << "can't get normal buffer or color buffer from the gbuffer";
     throw std::runtime_error("normal buffer and color buffer is needed by geometry render pass");
   }
 
@@ -227,8 +222,6 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh,
   if (meshComponent.m_impldata != nullptr) return;
 
   auto implData = std::make_shared<MeshComponent_Impl>();
-
-  auto commandBuffer = m_commandFactory->CreateCommandBuffer();
 
   auto _mesh = meshComponent.m_mesh;
 

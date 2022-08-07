@@ -6,9 +6,8 @@ ResourceManager::ResourceManager()
     : m_shaderResourceContainer(std::make_shared<DefaultShaderResourceContainer>()),
       m_modelResourceContainer(std::make_shared<DefaultModelResourceContainer>()),
       m_texture2DResourceContainer(std::make_shared<DefaultTexture2DResourceContainer>()),
-      m_cubeMapResourceContainer(std::make_shared<DefaultCubeMapResourceContainer>()),
-      m_materialResourceContainer(std::make_shared<DefaultMaterialResourceContainer>())
-  {
+      m_textureCubeMapResourceContainer(std::make_shared<DefaultTextureCubeMapResourceContainer>()),
+      m_materialResourceContainer(std::make_shared<DefaultMaterialResourceContainer>()) {
   auto defaultShaderResource = m_shaderResourceContainer->CreateResource(ShaderFileInfo{
       .type = ShaderCodeType::FILE,
       .vertexShaderPath = "Shader/shader.vert.glsl",

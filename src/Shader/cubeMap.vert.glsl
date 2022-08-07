@@ -11,7 +11,7 @@ layout(std140, binding = 0) uniform Matrices {
 };
 
 void main() {
-    TexCoords = aPos;
-    vec4 pos = projection * view * vec4(aPos, 1.0);
-    gl_Position = pos.xyww;
+  TexCoords = aPos;
+  vec4 pos = projection * view * vec4(aPos, 1.0);
+  gl_Position = pos.xyww;
 }

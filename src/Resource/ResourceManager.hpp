@@ -81,7 +81,7 @@ class DefaultResourceContainer final : public IResourceContainer<T> {
 
 using DefaultShaderResourceContainer = DefaultResourceContainer<ShaderResource>;
 using DefaultTexture2DResourceContainer = DefaultResourceContainer<Texture2DResource>;
-using DefaultCubeMapResourceContainer = DefaultResourceContainer<CubeMapResource>;
+using DefaultTextureCubeMapResourceContainer = DefaultResourceContainer<TextureCubeMapResource>;
 using DefaultModelResourceContainer = DefaultResourceContainer<ModelResource>;
 using DefaultMaterialResourceContainer = DefaultResourceContainer<MaterialResource>;
 
@@ -138,6 +138,11 @@ class ResourceManager {
     return m_materialResourceContainer;
   }
 
+  virtual std::shared_ptr<IResourceContainer<TextureCubeMapResource>>
+  GetCubeMapResourceContainer() const {
+    return m_textureCubeMapResourceContainer;
+  }
+
   void
   SetMaterialResourceContainer(
       const std::shared_ptr<IResourceContainer<MaterialResource>>& materialResourceContainer) {
@@ -151,8 +156,8 @@ class ResourceManager {
       return this->GetShaderResourceContainer();
     } else if constexpr (std::is_same_v<T, Texture2DResource>) {
       return m_texture2DResourceContainer;
-    } else if constexpr (std::is_same_v<T, CubeMapResource>) {
-      return m_cubeMapResourceContainer;
+    } else if constexpr (std::is_same_v<T, TextureCubeMapResource>) {
+      return m_textureCubeMapResourceContainer;
     } else if constexpr (std::is_same_v<T, ModelResource>) {
       return this->GetModelResourceContainer();
     }
@@ -162,7 +167,7 @@ class ResourceManager {
  private:
   std::shared_ptr<IResourceContainer<ShaderResource>> m_shaderResourceContainer;
   std::shared_ptr<IResourceContainer<Texture2DResource>> m_texture2DResourceContainer;
-  std::shared_ptr<IResourceContainer<CubeMapResource>> m_cubeMapResourceContainer;
+  std::shared_ptr<IResourceContainer<TextureCubeMapResource>> m_textureCubeMapResourceContainer;
   std::shared_ptr<IResourceContainer<ModelResource>> m_modelResourceContainer;
   std::shared_ptr<IResourceContainer<MaterialResource>> m_materialResourceContainer;
   Uid m_defaultShaderResourceUid;

@@ -67,26 +67,4 @@ class MaterialResource final : public ResourceBase {
   // std::unique_ptr<Material> m_material;
 };
 
-class CubeMapResource final : public ResourceBase {
- public:
-  explicit CubeMapResource(const CubeMapCreateInfo& createInfo)
-      : ResourceBase(), m_createInfo(createInfo) {}
-
- public:
-  void
-  LoadResource(RHIFactory* rhiFactory, std::shared_ptr<ResourceManager>&) override;
-
-  [[nodiscard]] TextureCubeMap*
-  GetCubeMapTexture() const noexcept {
-    if (!m_isLoad) return nullptr;
-    if (m_cubeMapTexture == nullptr) return nullptr;
-    return m_cubeMapTexture.get();
-  }
-
- private:
-  CubeMapCreateInfo m_createInfo;
-
-  std::shared_ptr<TextureCubeMap> m_cubeMapTexture;
-};
-
 }  // namespace Marbas

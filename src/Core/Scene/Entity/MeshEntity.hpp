@@ -35,19 +35,19 @@ class MeshPolicy {
             ResourceManager* resourceManager);
 };
 
-using CubeMap = entt::entity;
-class CubeMapPolicy {
- public:
-  static CubeMap
-  Create(entt::registry& registry);
-
-  static void
-  LoadToGPU(CubeMap cubeMap, Scene* scene, RHIFactory* rhiFactory,
-            ResourceManager* resourceManager);
-
-  // static void
-  // ReadCubeMapFromFile(const CubeMapCreateInfo& creteInfo, CubeMapComponent& component,
-  //                     ResourceManager* resourceManager);
-};
+// using CubeMap = entt::entity;
+// class CubeMapPolicy {
+//  public:
+//   static CubeMap
+//   Create(entt::registry& registry);
+//
+//   static void
+//   LoadToGPU(CubeMap cubeMap, Scene* scene, RHIFactory* rhiFactory,
+//             ResourceManager* resourceManager);
+//
+//   // static void
+//   // ReadCubeMapFromFile(const CubeMapCreateInfo& creteInfo, CubeMapComponent& component,
+//   //                     ResourceManager* resourceManager);
+// };
 
 }  // namespace Marbas

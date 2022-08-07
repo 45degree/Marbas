@@ -64,6 +64,9 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(const FrameBufferInfo& info) : FrameBuffer(
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     LOG(ERROR) << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!";
 
+  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_DEPTH_BUFFER_BIT);
+
   UnBind();
 }
 

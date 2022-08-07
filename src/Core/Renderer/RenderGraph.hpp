@@ -3,6 +3,8 @@
 #include <memory>
 
 #include "Common/Common.hpp"
+#include "Core/Renderer/DeferredRenderPass.hpp"
+#include "Core/Renderer/ForwardRenderPass.hpp"
 #include "Core/Renderer/RenderPassNode.hpp"
 #include "Core/Renderer/RenderTargetNode.hpp"
 #include "Core/Scene/Scene.hpp"
@@ -17,11 +19,15 @@ class RenderGraph final {
 
  public:
   void
-  RegisterRenderPassNode(const std::shared_ptr<RenderPassNode>& renderPassNode);
+  RegisterDeferredRenderPassNode(const std::shared_ptr<DeferredRenderPass>& renderPassNode);
 
   void
   RegisterRenderTargetNode(const std::shared_ptr<RenderTargetNode>& renderTargetNode);
 
+  void
+  RegisterForwardRenderPassNode(const std::shared_ptr<ForwardRenderPass>& renderPassNode);
+
+  // TODO: need to transparent sorting
   void
   Compile();
 
@@ -33,10 +39,12 @@ class RenderGraph final {
   GetRenderTarget(const String& renderTargetName) const;
 
  private:
-  std::unordered_map<String, int> m_renderPassMap;
+  std::unordered_map<String, int> m_deferredRenderPassMap;
   std::unordered_map<String, int> m_renderTargetMap;
-  Vector<std::shared_ptr<RenderPassNode>> m_renderPassNodes;
+  Vector<std::shared_ptr<DeferredRenderPass>> m_deferredRenderPassNodes;
   Vector<std::shared_ptr<RenderTargetNode>> m_renderTargetNode;
+  Vector<std::shared_ptr<ForwardRenderPass>> m_forwardRendererPassNodes;
+
   Vector<int> m_renderOrder;
 
   RHIFactory* m_rhiFactory;

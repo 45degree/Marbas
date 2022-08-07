@@ -3,7 +3,8 @@
 namespace Marbas {
 
 void
-RenderGraph::RegisterRenderPassNode(const std::shared_ptr<RenderPassNode> &renderPassNode) {
+RenderGraph::RegisterDeferredRenderPassNode(
+    const std::shared_ptr<DeferredRenderPass> &renderPassNode) {
   const String &passNodeName = renderPassNode->GetNodeName();
   DLOG_ASSERT(m_renderTargetMap.find(passNodeName) == m_renderTargetMap.cend())
       << FORMAT("the resource target node: {} has beed added into the render graph", passNodeName);
@@ -20,7 +21,7 @@ RenderGraph::RegisterRenderPassNode(const std::shared_ptr<RenderPassNode> &rende
     const auto &resource = m_renderTargetNode[m_renderTargetMap[outputName]];
     renderPassNode->SetOutputTarget(resource);
   }
-  m_renderPassNodes.push_back(renderPassNode);
+  m_deferredRenderPassNodes.push_back(renderPassNode);
 }
 
 void
@@ -34,6 +35,12 @@ RenderGraph::RegisterRenderTargetNode(const std::shared_ptr<RenderTargetNode> &r
   m_renderTargetMap.insert({targetNodeName, size});
 }
 
+void
+RenderGraph::RegisterForwardRenderPassNode(
+    const std::shared_ptr<ForwardRenderPass> &renderPassNode) {
+  m_forwardRendererPassNodes.push_back(renderPassNode);
+}
+
 std::shared_ptr<RenderTargetNode>
 RenderGraph::GetRenderTarget(const String &renderTargetName) const {
   DLOG_ASSERT(m_renderTargetMap.find(renderTargetName) != m_renderTargetMap.end())
@@ -45,7 +52,7 @@ RenderGraph::GetRenderTarget(const String &renderTargetName) const {
 
 void
 RenderGraph::Compile() {
-  for (auto &&renderPassNode : m_renderPassNodes) {
+  for (auto &&renderPassNode : m_deferredRenderPassNodes) {
     renderPassNode->CreateFrameBuffer();
   }
 
@@ -58,13 +65,13 @@ RenderGraph::Compile() {
   // create the graph
   // in order to make a unique graph node id, all renderPass target node's id will add the
   // renderPass nodes count;
-  int passCount = m_renderPassNodes.size();
+  int passCount = m_deferredRenderPassNodes.size();
   int targetCount = m_renderTargetNode.size();
   Vector<std::unordered_set<int>> graph(passCount + targetCount);
   Vector<int> degree(passCount + targetCount, 0);
 
   for (int i = 0; i < passCount; i++) {
-    auto renderPass = m_renderPassNodes[i];
+    auto renderPass = m_deferredRenderPassNodes[i];
     auto outputs = renderPass->GetAllOutputTargetName();
     auto inputs = renderPass->GetAllInputTargetName();
     for (const auto &output : outputs) {
@@ -104,13 +111,26 @@ RenderGraph::Compile() {
       m_renderOrder.push_back(id);
     }
   }
+
+  // set framebuffer for forward render
+  for (auto &forwardRenderPass : m_forwardRendererPassNodes) {
+    auto inputName = forwardRenderPass->GetInputTargetName();
+    auto id = m_deferredRenderPassMap[std::move(inputName)];
+    auto frameBuffer = m_deferredRenderPassNodes[id]->GetFrameBuffer();
+    forwardRenderPass->SetFrameBuffer(std::move(frameBuffer));
+  }
 }
 
 void
 RenderGraph::Execute(const std::shared_ptr<ResourceManager> &resourceManager,
                      const std::shared_ptr<Scene> &scene) {
   for (int i = 0; i < m_renderOrder.size(); i++) {
-    m_renderPassNodes[m_renderOrder[i]]->Execute(scene, resourceManager);
+    m_deferredRenderPassNodes[m_renderOrder[i]]->Execute(scene, resourceManager);
+  }
+
+  // execute forward rendering
+  for (const auto &forwardRenderPass : m_forwardRendererPassNodes) {
+    forwardRenderPass->Execute(scene, resourceManager);
   }
 }
 

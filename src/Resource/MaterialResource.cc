@@ -28,13 +28,4 @@ MaterialResource::LoadResource(RHIFactory* rhiFactory,
   m_isLoad = true;
 }
 
-void
-CubeMapResource::LoadResource(RHIFactory* rhiFactory, std::shared_ptr<ResourceManager>&) {
-  if (m_cubeMapTexture == nullptr) {
-    m_cubeMapTexture = rhiFactory->CreateTextureCubeMap(m_createInfo);
-  }
-
-  m_isLoad = true;
-}
-
 }  // namespace Marbas

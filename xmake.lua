@@ -34,12 +34,12 @@ includes("src/Core")
 includes("src/Resource")
 
 target("Marbas")
-    set_kind("phony")
-    add_deps(
-      "Marbas.Core",
-      "Marbas.RHI",
-      "Marbas.Common",
-      "Marbas.Editor",
-      "Marbas.Resource"
-    )
+  set_kind("phony")
+  add_deps(
+    "Marbas.Core",
+    "Marbas.RHI",
+    "Marbas.Common",
+    "Marbas.Editor",
+    "Marbas.Resource"
+  )
 target_end()

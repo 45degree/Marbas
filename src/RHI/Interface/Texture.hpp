@@ -77,6 +77,7 @@ class TextureCubeMap {
  public:
   virtual void
   SetData(void* data, uint32_t size, CubeMapPosition position) = 0;
+
   virtual std::shared_ptr<IImageDescriptor>
   GetDescriptor() const = 0;
 
