@@ -7,7 +7,8 @@ namespace Marbas {
 
 class Texture2DResource final : public ResourceBase {
  public:
-  explicit Texture2DResource(const Path& path) : ResourceBase(), m_path(path) {}
+  explicit Texture2DResource(const Path& path, uint32_t levels = 1)
+      : ResourceBase(), m_path(path), m_levels(levels) {}
 
  public:
   [[nodiscard]] std::shared_ptr<Texture2D>
@@ -24,13 +25,14 @@ class Texture2DResource final : public ResourceBase {
   LoadResource(RHIFactory* rhiFactory, std::shared_ptr<ResourceManager>&) override {
     if (m_isLoad) return;
 
-    m_texture = rhiFactory->CreateTexutre2D(m_path);
+    m_texture = rhiFactory->CreateTexutre2D(m_path, m_levels);
 
     m_isLoad = true;
   }
 
  private:
   Path m_path;
+  uint32_t m_levels;
   std::shared_ptr<Texture2D> m_texture = nullptr;
 };
 

@@ -119,34 +119,6 @@ glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsi
   std::cout << std::endl;
 }
 
-// void OpenGLRHIFactory::Enable(EnableItem item) const {
-//   switch (item) {
-//     case EnableItem::DEPTH:
-//       glEnable(GL_DEPTH_TEST);
-//       break;
-//   }
-// }
-//
-// void OpenGLRHIFactory::Disable(EnableItem item) const {
-//   switch (item) {
-//     case EnableItem::DEPTH:
-//       glDisable(GL_DEPTH_TEST);
-//       break;
-//   }
-// }
-//
-// void OpenGLRHIFactory::ClearColor(float r, float g, float b, float a) const {
-//   glClearColor(r, g, b, a);
-// }
-//
-// void OpenGLRHIFactory::PrintRHIInfo() const {
-//   auto vendor = glGetString(GL_VENDOR);
-//   auto version = glGetString(GL_VERSION);
-//
-//   LOG(INFO) << "vendor is " << vendor;
-//   LOG(INFO) << "version is " << version;
-// }
-
 OpenGLRHIFactory::OpenGLRHIFactory() : RHIFactory() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -222,7 +194,7 @@ OpenGLRHIFactory::CreateShader() const {
 }
 
 std::shared_ptr<Texture2D>
-OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) const {
+OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath, uint32_t level) const {
   String pathStr = imagePath.string();
 
   // load image
@@ -250,7 +222,7 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) const {
   formatType = nrChannels == 4 ? TextureFormat::RGBA : TextureFormat::RGB;
 
   // create textrue
-  auto texture = std::make_unique<OpenGLTexture2D>(width, height, formatType);
+  auto texture = std::make_unique<OpenGLTexture2D>(width, height, level, formatType);
   texture->SetData(data, width * height * nrChannels);
   // texture->SetImageInfo(imagePath.string(), hashCode);
 
@@ -262,8 +234,9 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath) const {
 }
 
 std::shared_ptr<Texture2D>
-OpenGLRHIFactory::CreateTexutre2D(int width, int height, TextureFormat format) const {
-  return std::make_shared<OpenGLTexture2D>(width, height, format);
+OpenGLRHIFactory::CreateTexutre2D(int width, int height, uint32_t level,
+                                  TextureFormat format) const {
+  return std::make_shared<OpenGLTexture2D>(width, height, level, format);
 }
 
 std::shared_ptr<TextureCubeMap>

@@ -45,7 +45,7 @@ class OpenGLTextureCubeMapDescriptor final : public IOpenGLImageDescriptor {
 
 class OpenGLTexture2D : public Texture2D {
  public:
-  OpenGLTexture2D(int width, int height, TextureFormat format);
+  OpenGLTexture2D(int width, int height, uint32_t level, TextureFormat format);
   ~OpenGLTexture2D() override;
 
  public:
@@ -59,6 +59,9 @@ class OpenGLTexture2D : public Texture2D {
   GetOpenGLTexture() const noexcept {
     return textureID;
   }
+
+  GLenum
+  GetOpenGLFormat() const noexcept;
 
   std::shared_ptr<IImageDescriptor>
   GetDescriptor() const override {

@@ -86,13 +86,24 @@ struct GraphicsPipeLineCreateInfo {
   MultisampleInfo multisampleInfo;
 };
 
+enum class VertexInputRate {
+  VERTEX = 0,
+  INSTANCE = 1,
+};
+
 class GraphicsPipeLine {
+ protected:
+  using BindingDivisorInfo = std::tuple<uint32_t, uint32_t>;
+
  public:
   virtual void
   SetShader(const std::shared_ptr<Shader>& shader) = 0;
 
   virtual void
-  SetVertexBufferLayout(const Vector<ElementLayout>& vertexBufferLayout) = 0;
+  SetVertexBufferLayout(const Vector<ElementLayout>& vertexBufferLayout, VertexInputRate rate) = 0;
+
+  virtual void
+  SetVertexInputBindingDivisor(const Vector<BindingDivisorInfo>& divisorDescription) = 0;
 
   virtual void
   SetViewPort(const ViewportInfo& viewportInfo) = 0;

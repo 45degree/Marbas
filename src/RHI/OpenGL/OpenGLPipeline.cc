@@ -63,33 +63,16 @@ OpenGLGraphicsPipeline::SetShader(const std::shared_ptr<Shader>& shader) {
 }
 
 void
-OpenGLGraphicsPipeline::SetVertexBufferLayout(const Vector<ElementLayout>& vertexBufferLayout) {
-  for (const auto& elementInfo : vertexBufferLayout) {
-    GLuint index = elementInfo.index;
-    auto size = static_cast<GLint>(elementInfo.count);
-    GLboolean isNormalized = elementInfo.normalized;
-    auto stride = static_cast<GLsizei>(elementInfo.stride);
-    auto offset = elementInfo.offset;
+OpenGLGraphicsPipeline::SetVertexBufferLayout(const Vector<ElementLayout>& vertexBufferLayout,
+                                              VertexInputRate rate) {
+  m_vertexBufferLayout = vertexBufferLayout;
+  m_vertexInputRate = rate;
+}
 
-    glEnableVertexArrayAttrib(m_VAO, index);
-    switch (elementInfo.mateType) {
-      case ElementType::BYTE:
-      case ElementType::UNSIGNED_BYTE:
-      case ElementType::SHORT:
-      case ElementType::UNSIGNED_SHORT:
-      case ElementType::INT:
-      case ElementType::UNSIGNED_INT:
-        glVertexArrayAttribIFormat(m_VAO, index, size, ConvertToOpenGLType(elementInfo.mateType),
-                                   offset);
-        break;
-      case ElementType::FLOAT:
-      case ElementType::DOUBLE:
-      case ElementType::HALF_FLOAT:
-        glVertexArrayAttribFormat(m_VAO, index, size, ConvertToOpenGLType(elementInfo.mateType),
-                                  isNormalized, offset);
-    }
-    glVertexArrayAttribBinding(m_VAO, index, 0);
-  }
+void
+OpenGLGraphicsPipeline::SetVertexInputBindingDivisor(
+    const Vector<BindingDivisorInfo>& divisorDescription) {
+  m_bindingDivisorInfo = divisorDescription;
 }
 
 void
@@ -128,7 +111,41 @@ OpenGLGraphicsPipeline::SetDescriptorSetInfo(const DescriptorSetInfo& descriptor
 }
 
 void
-OpenGLGraphicsPipeline::Create() {}
+OpenGLGraphicsPipeline::Create() {
+  for (const auto& elementInfo : m_vertexBufferLayout) {
+    GLuint index = elementInfo.index;
+    auto size = static_cast<GLint>(elementInfo.count);
+    GLboolean isNormalized = elementInfo.normalized;
+    auto stride = static_cast<GLsizei>(elementInfo.stride);
+    auto offset = elementInfo.offset;
+
+    glEnableVertexArrayAttrib(m_VAO, index);
+    switch (elementInfo.mateType) {
+      case ElementType::BYTE:
+      case ElementType::UNSIGNED_BYTE:
+      case ElementType::SHORT:
+      case ElementType::UNSIGNED_SHORT:
+      case ElementType::INT:
+      case ElementType::UNSIGNED_INT:
+        glVertexArrayAttribIFormat(m_VAO, index, size, ConvertToOpenGLType(elementInfo.mateType),
+                                   offset);
+        break;
+      case ElementType::FLOAT:
+      case ElementType::DOUBLE:
+      case ElementType::HALF_FLOAT:
+        glVertexArrayAttribFormat(m_VAO, index, size, ConvertToOpenGLType(elementInfo.mateType),
+                                  isNormalized, offset);
+    }
+    glVertexArrayAttribBinding(m_VAO, index, 0);
+  }
+  if (m_vertexInputRate == VertexInputRate::INSTANCE) {
+    for (const auto& [binding, divisor] : m_bindingDivisorInfo) {
+      // https://stackoverflow.com/questions/50650457/what-is-the-difference-between-glvertexattribdivisor-and-glvertexbindingdivisor
+      glVertexArrayBindingDivisor(m_VAO, binding, divisor);
+      glVertexArrayAttribBinding(m_VAO, binding, binding);
+    }
+  }
+}
 
 void
 OpenGLGraphicsPipeline::Bind() const {

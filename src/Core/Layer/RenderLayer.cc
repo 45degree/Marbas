@@ -4,6 +4,7 @@
 #include "Common/EditorCamera.hpp"
 #include "Core/Application.hpp"
 #include "Core/Event/Input.hpp"
+#include "Core/Renderer/BillBoardRenderPass.hpp"
 #include "Core/Renderer/CubeMapRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "RHI/RHI.hpp"
@@ -30,14 +31,18 @@ RenderLayer::OnAttach() {
   // create geometry render pass and target
   auto geometryDepthTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
       .targetName = GeometryRenderPass::depthTargetName,
-      .buffersType = {GBufferTexutreType::DEPTH},
+      .buffersType = {{GBufferTexutreType::DEPTH, 1}},
       .rhiFactory = m_rhiFactory,
       .width = m_width,
       .height = m_height,
   });
   auto geometryTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
       .targetName = GeometryRenderPass::geometryTargetName,
-      .buffersType = {GBufferTexutreType::COLOR, GBufferTexutreType::NORMALS},
+      .buffersType =
+          {
+              {GBufferTexutreType::COLOR, 1},
+              {GBufferTexutreType::NORMALS, 1},
+          },
       .rhiFactory = m_rhiFactory,
       .width = m_width,
       .height = m_height,
@@ -56,14 +61,16 @@ RenderLayer::OnAttach() {
   }());
   m_renderGraph->RegisterDeferredRenderPassNode(geometryRenderPass);
 
-  // create cube map render pass and target
-  auto cubeMapColorTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
-      .buffersType = {GBufferTexutreType::COLOR},
-      .rhiFactory = m_rhiFactory,
-      .width = m_width,
-      .height = m_height,
-  });
-  m_renderGraph->RegisterRenderTargetNode(cubeMapColorTarget);
+  // create cube map render pass
+  auto billBoardRenderPass = std::make_shared<BillBoardRenderPass>([&]() {
+    BillBoardRenderPassCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = m_width;
+    createInfo.height = m_height;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterForwardRenderPassNode(billBoardRenderPass);
 
   auto cubeMapRenderPass = std::make_shared<CubeMapRenderPass>([&]() {
     CubeMapRenderPassCreateInfo createInfo;

@@ -44,12 +44,14 @@ ConvertToOpenglInternalFormat(TextureFormat type) {
   }
 }
 
-OpenGLTexture2D::OpenGLTexture2D(int width, int height, TextureFormat format)
-    : Texture2D(width, height, format) {
+OpenGLTexture2D::OpenGLTexture2D(int width, int height, uint32_t level, TextureFormat format)
+    : Texture2D(width, height, level, format) {
   auto internalFormat = ConvertToOpenglInternalFormat(format);
 
+  if (m_format == TextureFormat::DEPTH) m_level = 1;
+
   glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
-  glTextureStorage2D(textureID, 1, internalFormat, width, height);
+  glTextureStorage2D(textureID, m_level, internalFormat, width, height);
 
   glTextureParameteri(textureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTextureParameteri(textureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -61,6 +63,11 @@ OpenGLTexture2D::OpenGLTexture2D(int width, int height, TextureFormat format)
 }
 
 OpenGLTexture2D::~OpenGLTexture2D() { glDeleteTextures(1, &textureID); }
+
+GLenum
+OpenGLTexture2D::GetOpenGLFormat() const noexcept {
+  return ConvertToOpenglInternalFormat(m_format);
+}
 
 void
 OpenGLTexture2D::SetData(void* data, uint32_t size) {

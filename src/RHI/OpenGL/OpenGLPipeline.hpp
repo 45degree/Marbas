@@ -6,10 +6,10 @@
 
 namespace Marbas {
 
-class OpenGLGraphicsPipeline : public GraphicsPipeLine {
+class OpenGLGraphicsPipeline final : public GraphicsPipeLine {
  public:
   OpenGLGraphicsPipeline();
-  ~OpenGLGraphicsPipeline();
+  virtual ~OpenGLGraphicsPipeline();
 
   OpenGLGraphicsPipeline(const OpenGLGraphicsPipeline&) = delete;
   OpenGLGraphicsPipeline&
@@ -20,7 +20,16 @@ class OpenGLGraphicsPipeline : public GraphicsPipeLine {
   SetShader(const std::shared_ptr<Shader>& shader) override;
 
   void
-  SetVertexBufferLayout(const Vector<ElementLayout>& vertexBufferLayout) override;
+  SetVertexBufferLayout(const Vector<ElementLayout>& vertexBufferLayout,
+                        VertexInputRate rate) override;
+
+  VertexInputRate
+  GetVertexInputRate() const {
+    return m_vertexInputRate;
+  }
+
+  void
+  SetVertexInputBindingDivisor(const Vector<BindingDivisorInfo>& divisorDescription) override;
 
   void
   SetViewPort(const ViewportInfo& viewportInfo) override;
@@ -59,6 +68,10 @@ class OpenGLGraphicsPipeline : public GraphicsPipeLine {
   MultisampleInfo m_multisampleInfo;
   BlendInfo m_blendInfo;
   DescriptorSetInfo m_descriptorSetInfo;
+
+  Vector<ElementLayout> m_vertexBufferLayout;
+  Vector<BindingDivisorInfo> m_bindingDivisorInfo;
+  VertexInputRate m_vertexInputRate;
 
   std::shared_ptr<OpenGLShader> m_shader = nullptr;
 };

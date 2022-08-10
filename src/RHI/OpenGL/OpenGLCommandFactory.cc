@@ -47,13 +47,17 @@ OpenGLCommandFactory::CreateBindIndexBufferCMD() {
 }
 
 std::unique_ptr<DrawIndex>
-OpenGLCommandFactory::CreateDrawIndexCMD() {
-  return std::make_unique<OpenGLDrawIndex>();
+OpenGLCommandFactory::CreateDrawIndexCMD(const std::shared_ptr<GraphicsPipeLine>& pipeline) {
+  auto cmd = std::make_unique<OpenGLDrawIndex>();
+  cmd->SetPipeline(std::dynamic_pointer_cast<OpenGLGraphicsPipeline>(pipeline));
+  return cmd;
 }
 
 std::unique_ptr<DrawArray>
-OpenGLCommandFactory::CreateDrawArrayCMD() {
-  return std::make_unique<OpenGLDrawArray>();
+OpenGLCommandFactory::CreateDrawArrayCMD(const std::shared_ptr<GraphicsPipeLine>& pipeline) {
+  auto cmd = std::make_unique<OpenGLDrawArray>();
+  cmd->SetPipeline(std::dynamic_pointer_cast<OpenGLGraphicsPipeline>(pipeline));
+  return cmd;
 }
 
 }  // namespace Marbas

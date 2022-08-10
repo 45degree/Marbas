@@ -20,7 +20,7 @@ class GBuffer final {
 
  public:
   void
-  AddTexture(GBufferTexutreType type, RHIFactory* rhiFactory);
+  AddTexture(GBufferTexutreType type, uint32_t level, RHIFactory* rhiFactory);
 
   Vector<std::tuple<GBufferTexutreType, std::shared_ptr<Texture2D>>>
   GetAllTextures() const;

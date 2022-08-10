@@ -100,10 +100,10 @@ class RHIFactory {
   CreateGraphicsPipeLine() = 0;
 
   [[nodiscard]] virtual std::shared_ptr<Texture2D>
-  CreateTexutre2D(const Path& imagePath) const = 0;
+  CreateTexutre2D(const Path& imagePath, uint32_t level) const = 0;
 
   [[nodiscard]] virtual std::shared_ptr<Texture2D>
-  CreateTexutre2D(int width, int height, TextureFormat formatType) const = 0;
+  CreateTexutre2D(int width, int height, uint32_t level, TextureFormat formatType) const = 0;
 
   [[nodiscard]] virtual std::shared_ptr<TextureCubeMap>
   CreateTextureCubeMap(int width, int height, TextureFormat format) const = 0;

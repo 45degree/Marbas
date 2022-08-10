@@ -33,11 +33,28 @@ class CommandFactory {
   virtual std::unique_ptr<BindIndexBuffer>
   CreateBindIndexBufferCMD() = 0;
 
+  /**
+   * @brief create draw index cmd
+   *
+   * @param pipeline the graphics pipeline
+   *
+   * @note this command is comming from the vulkan, and in vulkan, this command can also draw the
+   *       instance, but in opengl, we use the glDrawElementsInstanced not glDrawElements to draw
+   *       the instance, so, in ordered to judge whether to draw the instance in opengl, we need to
+   *       pass the pipeline to the command.
+   */
   virtual std::unique_ptr<DrawIndex>
-  CreateDrawIndexCMD() = 0;
+  CreateDrawIndexCMD(const std::shared_ptr<GraphicsPipeLine>& pipeline) = 0;
 
+  /**
+   * @brief create draw array cmd
+   *
+   * @param pipeline the graphics pipeline
+   *
+   * @see CreateDrawIndexCMD
+   */
   virtual std::unique_ptr<DrawArray>
-  CreateDrawArrayCMD() = 0;
+  CreateDrawArrayCMD(const std::shared_ptr<GraphicsPipeLine>& pipeline) = 0;
 };
 
 }  // namespace Marbas

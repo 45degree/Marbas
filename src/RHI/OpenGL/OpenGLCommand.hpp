@@ -251,18 +251,35 @@ class OpenGLBindIndexBuffer final : public BindIndexBuffer {
 class OpenGLDrawIndex final : public DrawIndex {
  public:
   OpenGLDrawIndex() = default;
-  OpenGLDrawIndex(const OpenGLDrawIndex& command) : m_indexCount(command.m_indexCount) {}
+  OpenGLDrawIndex(const OpenGLDrawIndex& command)
+      : m_indexCount(command.m_indexCount),
+        m_instanceCount(command.m_instanceCount),
+        m_pipeline(command.m_pipeline) {}
   virtual ~OpenGLDrawIndex() = default;
 
  public:
+  void
+  SetPipeline(const std::shared_ptr<OpenGLGraphicsPipeline>& pipeline) {
+    m_pipeline = pipeline;
+  }
+
   void
   SetIndexCount(int count) override {
     m_indexCount = count;
   }
 
   void
+  SetInstanceCount(int count) override {
+    m_instanceCount = count;
+  }
+
+  void
   Execute() const override {
-    glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0);
+    if (m_pipeline->GetVertexInputRate() == VertexInputRate::INSTANCE) {
+      glDrawElementsInstanced(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0, m_instanceCount);
+    } else {
+      glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0);
+    }
   }
 
   std::unique_ptr<ICommand>
@@ -271,7 +288,9 @@ class OpenGLDrawIndex final : public DrawIndex {
   }
 
  private:
+  std::shared_ptr<OpenGLGraphicsPipeline> m_pipeline;
   uint32_t m_indexCount = 0;
+  uint32_t m_instanceCount = 0;
 };
 
 class OpenGLDrawArray final : public DrawArray {
@@ -282,13 +301,27 @@ class OpenGLDrawArray final : public DrawArray {
 
  public:
   void
+  SetPipeline(const std::shared_ptr<OpenGLGraphicsPipeline>& pipeline) {
+    m_pipeline = pipeline;
+  }
+
+  void
   SetVertexCount(int count) override {
     m_vertexCount = count;
   }
 
   void
+  SetInstanceCount(int count) override {
+    m_instanceCount = count;
+  }
+
+  void
   Execute() const override {
-    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+    if (m_pipeline->GetVertexInputRate() == VertexInputRate::INSTANCE) {
+      glDrawArraysInstanced(GL_TRIANGLES, 0, m_vertexCount, m_instanceCount);
+    } else {
+      glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+    }
   }
 
   std::unique_ptr<ICommand>
@@ -297,7 +330,99 @@ class OpenGLDrawArray final : public DrawArray {
   }
 
  private:
+  std::shared_ptr<OpenGLGraphicsPipeline> m_pipeline;
   uint32_t m_vertexCount = 0;
+  uint32_t m_instanceCount = 0;
+};
+
+class OpenGLCopyImageToImage final : public CopyImageToImage {
+ public:
+  OpenGLCopyImageToImage() = default;
+  OpenGLCopyImageToImage(const OpenGLCopyImageToImage& command)
+      : m_srcTexture(command.m_srcTexture), m_dstTexture(command.m_dstTexture) {}
+
+  virtual ~OpenGLCopyImageToImage() = default;
+
+ public:
+  void
+  SetSrcImage(const std::shared_ptr<Texture2D>& srcTexture) override {
+    m_srcTexture = std::dynamic_pointer_cast<OpenGLTexture2D>(srcTexture);
+  }
+
+  void
+  SetDstImage(const std::shared_ptr<Texture2D>& dstTexture) override {
+    m_dstTexture = std::dynamic_pointer_cast<OpenGLTexture2D>(dstTexture);
+  }
+
+  void
+  Execute() const override {
+    auto srcTex = m_srcTexture->GetOpenGLTexture();
+    auto srcLevel = m_srcTexture->GetLevel();
+    auto width = m_srcTexture->GetWidth();
+    auto height = m_srcTexture->GetHeight();
+    auto depth = m_srcTexture->GetDepth();
+    auto dstTex = m_dstTexture->GetOpenGLTexture();
+    auto dstLevel = m_dstTexture->GetLevel();
+    glCopyImageSubData(srcTex, GL_TEXTURE_2D, srcLevel, 0, 0, 0, dstTex, GL_TEXTURE_2D, dstLevel, 0,
+                       0, 0, width, height, depth);
+  }
+
+  std::unique_ptr<ICommand>
+  Clone() const override {
+    return std::make_unique<OpenGLCopyImageToImage>(*this);
+  }
+
+ private:
+  std::shared_ptr<OpenGLTexture2D> m_srcTexture = nullptr;
+  std::shared_ptr<OpenGLTexture2D> m_dstTexture = nullptr;
+};
+
+// TODO
+class OpenGLCopyImageToFrameBuffer final : public CopyImageToFrameBuffer {
+ public:
+  OpenGLCopyImageToFrameBuffer() = default;
+  OpenGLCopyImageToFrameBuffer(const OpenGLCopyImageToFrameBuffer& command)
+      : m_texture(command.m_texture),
+        m_frameBuffer(command.m_frameBuffer),
+        m_type(command.m_type),
+        m_attachmentIndex(command.m_attachmentIndex) {}
+
+  virtual ~OpenGLCopyImageToFrameBuffer() = default;
+
+ public:
+  void
+  SetImage(const std::shared_ptr<Texture2D>& texture) override {
+    m_texture = std::dynamic_pointer_cast<OpenGLTexture2D>(texture);
+  }
+
+  void
+  SetFrameBuffer(const std::shared_ptr<FrameBuffer>& frameBuffer) override {
+    m_frameBuffer = std::dynamic_pointer_cast<OpenGLFrameBuffer>(frameBuffer);
+  }
+
+  void
+  ChooseAttachment(AttachmentType attachmentType, uint32_t index) override {
+    m_type = attachmentType;
+    m_attachmentIndex = index;
+  }
+
+  void
+  Execute() const override {
+    if (m_type == AttachmentType::Depth) {
+      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    }
+  }
+
+  std::unique_ptr<ICommand>
+  Clone() const override {
+    return std::make_unique<OpenGLCopyImageToFrameBuffer>(*this);
+  }
+
+ private:
+  std::shared_ptr<OpenGLTexture2D> m_texture;
+  std::shared_ptr<OpenGLFrameBuffer> m_frameBuffer;
+  AttachmentType m_type;
+  uint32_t m_attachmentIndex = 0;
 };
 
 }  // namespace Marbas

@@ -17,21 +17,21 @@ GBuffer::GetTexture(GBufferTexutreType type) const {
 }
 
 void
-GBuffer::AddTexture(GBufferTexutreType type, RHIFactory* rhiFactory) {
+GBuffer::AddTexture(GBufferTexutreType type, uint32_t level, RHIFactory* rhiFactory) {
   LOG_IF(WARNING, m_textures.find(type) != m_textures.end())
       << "the texture has add to gbuffer, this will override it";
 
   std::shared_ptr<Texture2D> texture = nullptr;
   switch (type) {
     case GBufferTexutreType::COLOR:
-      texture = rhiFactory->CreateTexutre2D(m_width, m_height, TextureFormat::RGBA);
+      texture = rhiFactory->CreateTexutre2D(m_width, m_height, level, TextureFormat::RGBA);
       break;
     case GBufferTexutreType::NORMALS:
     case GBufferTexutreType::POSITION:
-      texture = rhiFactory->CreateTexutre2D(m_width, m_height, TextureFormat::RGB);
+      texture = rhiFactory->CreateTexutre2D(m_width, m_height, level, TextureFormat::RGB);
       break;
     case GBufferTexutreType::DEPTH:
-      texture = rhiFactory->CreateTexutre2D(m_width, m_height, TextureFormat::DEPTH);
+      texture = rhiFactory->CreateTexutre2D(m_width, m_height, level, TextureFormat::DEPTH);
       break;
   }
   m_textures[type] = texture;

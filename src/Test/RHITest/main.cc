@@ -133,8 +133,8 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   Marbas::ElementLayout::CalculateLayout(quadVertexBufferLayout);
   quadVertexBuffer->SetLayout(quadVertexBufferLayout);
 
-  auto cubeTexture = rhiFactory->CreateTexutre2D("Test/container.jpg");
-  auto floorTexture = rhiFactory->CreateTexutre2D("Test/metal.png");
+  auto cubeTexture = rhiFactory->CreateTexutre2D("Test/container.jpg", 1);
+  auto floorTexture = rhiFactory->CreateTexutre2D("Test/metal.png", 1);
 
   auto frameVertexShaderStage = rhiFactory->CreateShaderStage(
       "Test/showBox.vert.glsl", Marbas::ShaderCodeType::FILE, Marbas::ShaderType::VERTEX_SHADER);
@@ -198,8 +198,8 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   // create resource
   auto cubeRenderPass = rhiFactory->CreateRenderPass(cubeRenderPassCreateInfo);
   auto cubePipeline = rhiFactory->CreateGraphicsPipeLine();
-  auto textureColorBuffer = rhiFactory->CreateTexutre2D(800, 600, Marbas::TextureFormat::RGB);
-  auto textureDepthBuffer = rhiFactory->CreateTexutre2D(800, 600, Marbas::TextureFormat::DEPTH);
+  auto textureColorBuffer = rhiFactory->CreateTexutre2D(800, 600, 1, Marbas::TextureFormat::RGB);
+  auto textureDepthBuffer = rhiFactory->CreateTexutre2D(800, 600, 1, Marbas::TextureFormat::DEPTH);
   Marbas::FrameBufferInfo frameBufferInfo{
       .width = 800,
       .height = 600,
@@ -220,7 +220,8 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
       },
   };
   auto cubeDescriptorSet = rhiFactory->CreateDescriptorSet(cubeDescriptorSetInfo);
-  cubePipeline->SetVertexBufferLayout(cubeVertexBuffer->Getlayout());
+  cubePipeline->SetVertexBufferLayout(cubeVertexBuffer->Getlayout(),
+                                      Marbas::VertexInputRate::VERTEX);
   cubePipeline->SetShader(frameShader);
   cubePipeline->SetBlendInfo(Marbas::BlendInfo{.blendEnable = false});
   cubePipeline->SetViewPort(Marbas::ViewportInfo{
@@ -245,7 +246,7 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   cubeBindPipeLine->SetPipeLine(cubePipeline);
   auto cubeBindDesciptor = commandFactory->CreateBindDescriptorSetCMD();
   cubeBindDesciptor->SetDescriptor(cubeDescriptorSet);
-  auto cubeDrawArray = commandFactory->CreateDrawArrayCMD();
+  auto cubeDrawArray = commandFactory->CreateDrawArrayCMD(cubePipeline);
   cubeDrawArray->SetVertexCount(36);
 
   // add command to command buffer
@@ -291,7 +292,8 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   auto planePipeline = rhiFactory->CreateGraphicsPipeLine();
   auto planeDescriptorSet = rhiFactory->CreateDescriptorSet(planeDescriptorSetInfo);
   auto planeCommandBuffer = commandFactory->CreateCommandBuffer();
-  planePipeline->SetVertexBufferLayout(planeVertexBuffer->Getlayout());
+  planePipeline->SetVertexBufferLayout(planeVertexBuffer->Getlayout(),
+                                       Marbas::VertexInputRate::VERTEX);
   planePipeline->SetShader(frameShader);
   planePipeline->SetBlendInfo(Marbas::BlendInfo{.blendEnable = false});
   planePipeline->SetViewPort(Marbas::ViewportInfo{
@@ -300,6 +302,7 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
       .width = 800,
       .height = 600,
   });
+  planePipeline->Create();
   planeDescriptorSet->BindBuffer(0, uniformBuffer->GetIBufferDescriptor());
   planeDescriptorSet->BindImage(0, floorTexture->GetDescriptor());
 
@@ -314,7 +317,7 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   planeBindPipeLine->SetPipeLine(planePipeline);
   auto planeBindDescriptorSet = commandFactory->CreateBindDescriptorSetCMD();
   planeBindDescriptorSet->SetDescriptor(planeDescriptorSet);
-  auto planeDrawArray = commandFactory->CreateDrawArrayCMD();
+  auto planeDrawArray = commandFactory->CreateDrawArrayCMD(planePipeline);
   planeDrawArray->SetVertexCount(6);
 
   // add command to command buffer
@@ -357,7 +360,8 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   auto screenDescriptorSet = rhiFactory->CreateDescriptorSet(screenDescriptorSetInfo);
   auto screenCommandBuffer = commandFactory->CreateCommandBuffer();
   screenDescriptorSet->BindImage(0, textureColorBuffer->GetDescriptor());
-  screenPipeLine->SetVertexBufferLayout(quadVertexBuffer->Getlayout());
+  screenPipeLine->SetVertexBufferLayout(quadVertexBuffer->Getlayout(),
+                                        Marbas::VertexInputRate::VERTEX);
   screenPipeLine->SetBlendInfo(Marbas::BlendInfo{.blendEnable = false});
   screenPipeLine->SetViewPort(Marbas::ViewportInfo{
       .x = 0,
@@ -370,6 +374,7 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
       .depthBoundsTestEnable = false,
   });
   screenPipeLine->SetShader(screenShader);
+  screenPipeLine->Create();
 
   // create command
   auto screenBeginRenderPass = commandFactory->CreateBeginRenderPassCMD();
@@ -382,7 +387,7 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   screenBindPipeLine->SetPipeLine(screenPipeLine);
   auto screenBindDescriptor = commandFactory->CreateBindDescriptorSetCMD();
   screenBindDescriptor->SetDescriptor(screenDescriptorSet);
-  auto screenDrawArray = commandFactory->CreateDrawArrayCMD();
+  auto screenDrawArray = commandFactory->CreateDrawArrayCMD(screenPipeLine);
   screenDrawArray->SetVertexCount(6);
 
   // add command to command buffer
@@ -402,12 +407,6 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDisable(GL_DEPTH_TEST);  // disable depth test so screen-space quad isn't discarded due to
                                // depth test.
-    // clear all relevant buffers
-    // glClearColor(1.0f, 1.0f, 1.0f,
-    //              1.0f);  // set clear color to white (not really necessary actually, since we
-    //              won't
-    //                      // be able to see behind the quad anyways)
-    // glClear(GL_COLOR_BUFFER_BIT);
 
     screenCommandBuffer->SubmitCommand();
 

@@ -50,10 +50,10 @@ class OpenGLRHIFactory final : public RHIFactory {
   CreateGraphicsPipeLine() override;
 
   [[nodiscard]] std::shared_ptr<Texture2D>
-  CreateTexutre2D(const Path& imagePath) const override;
+  CreateTexutre2D(const Path& imagePath, uint32_t level) const override;
 
   [[nodiscard]] std::shared_ptr<Texture2D>
-  CreateTexutre2D(int width, int height, TextureFormat formatType) const override;
+  CreateTexutre2D(int width, int height, uint32_t level, TextureFormat formatType) const override;
 
   [[nodiscard]] std::shared_ptr<TextureCubeMap>
   CreateTextureCubeMap(int width, int height, TextureFormat format) const override;

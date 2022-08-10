@@ -31,10 +31,10 @@ class OpenGLCommandFactory final : public CommandFactory {
   CreateBindIndexBufferCMD() override;
 
   std::unique_ptr<DrawIndex>
-  CreateDrawIndexCMD() override;
+  CreateDrawIndexCMD(const std::shared_ptr<GraphicsPipeLine>& pipeline) override;
 
   std::unique_ptr<DrawArray>
-  CreateDrawArrayCMD() override;
+  CreateDrawArrayCMD(const std::shared_ptr<GraphicsPipeLine>& pipeline) override;
 };
 
 }  // namespace Marbas

@@ -19,8 +19,8 @@ enum class TextureFormat {
 
 class Texture2D {
  public:
-  Texture2D(uint32_t width, uint32_t height, TextureFormat formatType)
-      : m_width(width), m_height(height), m_format(formatType) {}
+  Texture2D(uint32_t width, uint32_t height, uint32_t level, TextureFormat formatType)
+      : m_width(width), m_height(height), m_level(level), m_format(formatType) {}
 
   virtual ~Texture2D() = default;
 
@@ -43,14 +43,38 @@ class Texture2D {
     return m_height;
   }
 
+  uint32_t
+  GetDepth() const noexcept {
+    switch (m_format) {
+      case TextureFormat::DEPTH:
+      case TextureFormat::RED:
+        return 1;
+      case TextureFormat::RG:
+        return 2;
+      case TextureFormat::BGR:
+      case TextureFormat::RGB:
+        return 3;
+      case TextureFormat::BGRA:
+      case TextureFormat::RGBA:
+        return 4;
+    }
+    return 3;
+  }
+
   TextureFormat
   GetFormat() const noexcept {
     return m_format;
   }
 
+  uint32_t
+  GetLevel() const noexcept {
+    return m_level;
+  }
+
  protected:
   uint32_t m_width;
   uint32_t m_height;
+  uint32_t m_level;
   TextureFormat m_format;
 };
 

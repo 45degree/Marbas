@@ -115,6 +115,9 @@ class DrawIndex : public ICommand {
  public:
   virtual void
   SetIndexCount(int count) = 0;
+
+  virtual void
+  SetInstanceCount(int count) = 0;
 };
 
 class DrawArray : public ICommand {
@@ -124,6 +127,36 @@ class DrawArray : public ICommand {
  public:
   virtual void
   SetVertexCount(int count) = 0;
+
+  virtual void
+  SetInstanceCount(int count) = 0;
+};
+
+class CopyImageToImage : public ICommand {
+ public:
+  virtual ~CopyImageToImage() = default;
+
+ public:
+  virtual void
+  SetSrcImage(const std::shared_ptr<Texture2D>& srcTexture);
+
+  virtual void
+  SetDstImage(const std::shared_ptr<Texture2D>& dstTexture);
+};
+
+class CopyImageToFrameBuffer : public ICommand {
+ public:
+  virtual ~CopyImageToFrameBuffer() = default;
+
+ public:
+  virtual void
+  SetImage(const std::shared_ptr<Texture2D>& texture) = 0;
+
+  virtual void
+  SetFrameBuffer(const std::shared_ptr<FrameBuffer>& frameBuffer) = 0;
+
+  virtual void
+  ChooseAttachment(AttachmentType attachmentType, uint32_t index) = 0;
 };
 
 }  // namespace Marbas
