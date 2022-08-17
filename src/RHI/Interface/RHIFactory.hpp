@@ -12,7 +12,7 @@
 #include "RHI/Interface/ImguiInterface.hpp"
 #include "RHI/Interface/Pipeline.hpp"
 #include "RHI/Interface/Shader.hpp"
-#include "RHI/Interface/ShaderCode.hpp"
+#include "RHI/Interface/ShaderStage.hpp"
 #include "RHI/Interface/SwapChain.hpp"
 #include "RHI/Interface/UniformBuffer.hpp"
 #include "RHI/Interface/VertexBuffer.hpp"
@@ -23,11 +23,6 @@ namespace Marbas {
 enum class RendererType {
   OPENGL,
   VULKAN,
-};
-
-enum class ShaderCodeType {
-  FILE,
-  BINARY,
 };
 
 enum class ClearBuferBit {
@@ -46,6 +41,14 @@ struct CubeMapCreateInfo {
   Path front;
   Path left;
   Path right;
+};
+
+struct OpenGLRHICreateInfo {
+  bool useSPIRV = false;
+};
+
+struct RHICreateInfo {
+  OpenGLRHICreateInfo m_openglRHICreateInfo;
 };
 
 /**
@@ -69,7 +72,7 @@ class RHIFactory {
   }
 
   virtual void
-  Init() const = 0;
+  Init(const RHICreateInfo& extraInfo) const = 0;
 
   [[nodiscard]] virtual std::shared_ptr<ImguiInterface>
   CreateImguiInterface() const = 0;
@@ -84,8 +87,7 @@ class RHIFactory {
   CreateIndexBuffer(const Vector<uint32_t>& indices) const = 0;
 
   [[nodiscard]] virtual std::shared_ptr<ShaderStage>
-  CreateShaderStage(const Path& path, const ShaderCodeType codeType,
-                    const ShaderType shaderType) const = 0;
+  CreateShaderStage(const ShaderType shaderType) const = 0;
 
   [[nodiscard]] virtual std::shared_ptr<Shader>
   CreateShader() const = 0;

@@ -87,11 +87,18 @@ SceneTreeWidget::DrawPopup() {
         auto modelResourceContainer = m_resourceManager->GetModelResourceContainer();
         auto modelResource = modelResourceContainer->CreateResource(modelPath);
         auto modelResourceId = modelResourceContainer->AddResource(modelResource);
-        modelResource->LoadResource(m_rhiFactory, m_resourceManager);
+        modelResource->LoadResource(m_rhiFactory, m_resourceManager.get());
 
         m_scene->AddModel(modelResourceId, modelResource->GetModel()->GetModelName(),
                           m_selectEntity);
       }
+    }
+
+    if (ImGui::MenuItem(ICON_FA_CIRCLE_NODES " Add BillBoard")) {
+      auto textureResourceContainer = m_resourceManager->GetTexture2DResourceContainer();
+      auto resource = textureResourceContainer->CreateResource("assert/lightbulb.png");
+      auto id = textureResourceContainer->AddResource(resource);
+      m_scene->AddBillBoard(id, glm::vec3(0, 0, 0), m_selectEntity);
     }
 
     ImGui::EndPopup();

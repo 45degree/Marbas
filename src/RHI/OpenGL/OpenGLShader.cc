@@ -2,7 +2,7 @@
 
 #include <glog/logging.h>
 
-#include "RHI/OpenGL/OpenGLShaderCode.hpp"
+#include "RHI/OpenGL/OpenGLShaderStage.hpp"
 #include "RHI/OpenGL/OpenGLTexture.hpp"
 
 namespace Marbas {

@@ -31,12 +31,14 @@ target_end()
 target("Marbas.RHITest")
   set_kind("binary")
   set_languages("c11", "cxx20")
+  -- add_rules("utils.glsl2spv", {
+  --     outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "Test/")
+  -- })
+
   add_files("$(projectdir)/src/Test/RHITest/*.cc");
+  -- add_files("$(projectdir)/src/Test/RHITest/*.glsl");
   add_includedirs("$(projectdir)/src")
 
-  add_rules("utils.glsl2spv", {
-      outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "Test/")
-  })
 
   on_load(function()
     local executedir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)")

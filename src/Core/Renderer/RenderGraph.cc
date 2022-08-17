@@ -22,6 +22,7 @@ RenderGraph::RegisterDeferredRenderPassNode(
     renderPassNode->SetOutputTarget(resource);
   }
   m_deferredRenderPassNodes.push_back(renderPassNode);
+  m_deferredRenderPassMap[passNodeName] = m_deferredRenderPassNodes.size() - 1;
 }
 
 void

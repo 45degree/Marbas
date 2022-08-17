@@ -1,3 +1,5 @@
+---@diagnostic disable: undefined-global
+
 target("Marbas.Resource")
   set_kind("static")
   set_languages("c11", "cxx20")

@@ -22,13 +22,7 @@ class Texture2DResource final : public ResourceBase {
   }
 
   void
-  LoadResource(RHIFactory* rhiFactory, std::shared_ptr<ResourceManager>&) override {
-    if (m_isLoad) return;
-
-    m_texture = rhiFactory->CreateTexutre2D(m_path, m_levels);
-
-    m_isLoad = true;
-  }
+  LoadResource(RHIFactory* rhiFactory, const ResourceManager* resourceManager) override;
 
  private:
   Path m_path;
@@ -53,7 +47,7 @@ class TextureCubeMapResource final : public ResourceBase {
   }
 
   void
-  LoadResource(RHIFactory* rhiFactory, std::shared_ptr<ResourceManager>&) override {
+  LoadResource(RHIFactory* rhiFactory, const ResourceManager*) override {
     if (m_isLoad) return;
 
     m_textureCubeMap = rhiFactory->CreateTextureCubeMap(m_createInfo);

@@ -29,7 +29,7 @@ LoadTexturesFromMaterial(
 
 static std::shared_ptr<Mesh>
 ReadMeshFromNode(const aiMesh* aMesh, const aiScene* aScene, const Path& current,
-                 std::shared_ptr<ResourceManager>& resourceManager) {
+                 const ResourceManager* resourceManager) {
   auto mesh = std::make_shared<Mesh>();
   mesh->m_name = String(aMesh->mName.C_Str());
 
@@ -100,8 +100,7 @@ ReadMeshFromNode(const aiMesh* aMesh, const aiScene* aScene, const Path& current
 
 static void
 ProcessSubNode(const aiScene* aScene, const aiNode* aNode, const Path& currentDir,
-               Vector<std::shared_ptr<Mesh>>& meshes,
-               std::shared_ptr<ResourceManager>& resourceManager) {
+               Vector<std::shared_ptr<Mesh>>& meshes, const ResourceManager* resourceManager) {
   if (aNode->mNumMeshes > 0) {
     for (int i = 0; i < aNode->mNumMeshes; i++) {
       auto aMesh = aScene->mMeshes[aNode->mMeshes[i]];
@@ -115,8 +114,7 @@ ProcessSubNode(const aiScene* aScene, const aiNode* aNode, const Path& currentDi
 }
 
 void
-ModelResource::LoadResource(RHIFactory* rhiFactory,
-                            std::shared_ptr<ResourceManager>& resourceManager) {
+ModelResource::LoadResource(RHIFactory* rhiFactory, const ResourceManager* resourceManager) {
   if (m_isLoad) return;
 
   Assimp::Importer importer;

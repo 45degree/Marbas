@@ -18,6 +18,9 @@ class ICommand {
   virtual void
   Execute() const = 0;
 
+  virtual void
+  OnEndRenderPass() const {}
+
   virtual std::unique_ptr<ICommand>
   Clone() const = 0;
 };
@@ -138,10 +141,10 @@ class CopyImageToImage : public ICommand {
 
  public:
   virtual void
-  SetSrcImage(const std::shared_ptr<Texture2D>& srcTexture);
+  SetSrcImage(const std::shared_ptr<Texture2D>& srcTexture) = 0;
 
   virtual void
-  SetDstImage(const std::shared_ptr<Texture2D>& dstTexture);
+  SetDstImage(const std::shared_ptr<Texture2D>& dstTexture) = 0;
 };
 
 class CopyImageToFrameBuffer : public ICommand {

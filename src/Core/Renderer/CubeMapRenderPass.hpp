@@ -7,7 +7,7 @@
 
 namespace Marbas {
 
-struct CubeMapRenderPassCreateInfo final : public RenderPassNodeCreateInfo {
+struct CubeMapRenderPassCreateInfo final : public ForwardRenderPassNodeCreateInfo {
   CubeMapRenderPassCreateInfo();
 };
 
@@ -32,6 +32,7 @@ class CubeMapRenderPass final : public ForwardRenderPass {
 
  private:
   std::shared_ptr<UniformBuffer> m_uniformBuffer = nullptr;
+  Uid m_shaderId;
 };
 
 }  // namespace Marbas

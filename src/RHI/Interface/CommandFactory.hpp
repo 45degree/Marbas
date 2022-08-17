@@ -12,6 +12,9 @@ class CommandFactory {
   virtual std::unique_ptr<CommandBuffer>
   CreateCommandBuffer() = 0;
 
+  virtual std::unique_ptr<CopyImageToImage>
+  CreateCopyImageToImageCMD() = 0;
+
   virtual std::unique_ptr<BindDescriptorSet>
   CreateBindDescriptorSetCMD() = 0;
 

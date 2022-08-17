@@ -136,21 +136,20 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   auto cubeTexture = rhiFactory->CreateTexutre2D("Test/container.jpg", 1);
   auto floorTexture = rhiFactory->CreateTexutre2D("Test/metal.png", 1);
 
-  auto frameVertexShaderStage = rhiFactory->CreateShaderStage(
-      "Test/showBox.vert.glsl", Marbas::ShaderCodeType::FILE, Marbas::ShaderType::VERTEX_SHADER);
-  auto frameFragmentShaderStage = rhiFactory->CreateShaderStage(
-      "Test/showBox.frag.glsl", Marbas::ShaderCodeType::FILE, Marbas::ShaderType::FRAGMENT_SHADER);
+  auto frameVertexShaderStage = rhiFactory->CreateShaderStage(Marbas::ShaderType::VERTEX_SHADER);
+  frameVertexShaderStage->ReadSPIR_V("Test/showBox.vert.glsl.spv", "main");
+  auto frameFragmentShaderStage =
+      rhiFactory->CreateShaderStage(Marbas::ShaderType::FRAGMENT_SHADER);
+  frameFragmentShaderStage->ReadSPIR_V("Test/showBox.frag.glsl.spv", "main");
   auto frameShader = rhiFactory->CreateShader();
   frameShader->AddShaderStage(frameVertexShaderStage);
   frameShader->AddShaderStage(frameFragmentShaderStage);
   frameShader->Link();
 
-  auto screenVertexShaderStage =
-      rhiFactory->CreateShaderStage("Test/showBoxScreen.vert.glsl", Marbas::ShaderCodeType::FILE,
-                                    Marbas::ShaderType::VERTEX_SHADER);
-  auto screenFragShaderStage =
-      rhiFactory->CreateShaderStage("Test/showBoxScreen.frag.glsl", Marbas::ShaderCodeType::FILE,
-                                    Marbas::ShaderType::FRAGMENT_SHADER);
+  auto screenVertexShaderStage = rhiFactory->CreateShaderStage(Marbas::ShaderType::VERTEX_SHADER);
+  screenVertexShaderStage->ReadSPIR_V("Test/showBoxScreen.vert.glsl.spv", "main");
+  auto screenFragShaderStage = rhiFactory->CreateShaderStage(Marbas::ShaderType::FRAGMENT_SHADER);
+  screenFragShaderStage->ReadSPIR_V("Test/showBoxScreen.frag.glsl.spv", "main");
   auto screenShader = rhiFactory->CreateShader();
   screenShader->AddShaderStage(screenVertexShaderStage);
   screenShader->AddShaderStage(screenFragShaderStage);
@@ -223,7 +222,7 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   cubePipeline->SetVertexBufferLayout(cubeVertexBuffer->Getlayout(),
                                       Marbas::VertexInputRate::VERTEX);
   cubePipeline->SetShader(frameShader);
-  cubePipeline->SetBlendInfo(Marbas::BlendInfo{.blendEnable = false});
+  // cubePipeline->SetBlendInfo(Marbas::BlendInfo{.logicOpEnable = false});
   cubePipeline->SetViewPort(Marbas::ViewportInfo{
       .x = 0,
       .y = 0,
@@ -295,7 +294,7 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   planePipeline->SetVertexBufferLayout(planeVertexBuffer->Getlayout(),
                                        Marbas::VertexInputRate::VERTEX);
   planePipeline->SetShader(frameShader);
-  planePipeline->SetBlendInfo(Marbas::BlendInfo{.blendEnable = false});
+  // planePipeline->SetBlendInfo(Marbas::BlendInfo{.blendEnable = false});
   planePipeline->SetViewPort(Marbas::ViewportInfo{
       .x = 0,
       .y = 0,
@@ -362,7 +361,7 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   screenDescriptorSet->BindImage(0, textureColorBuffer->GetDescriptor());
   screenPipeLine->SetVertexBufferLayout(quadVertexBuffer->Getlayout(),
                                         Marbas::VertexInputRate::VERTEX);
-  screenPipeLine->SetBlendInfo(Marbas::BlendInfo{.blendEnable = false});
+  // screenPipeLine->SetBlendInfo(Marbas::BlendInfo{.blendEnable = false});
   screenPipeLine->SetViewPort(Marbas::ViewportInfo{
       .x = 0,
       .y = 0,
@@ -428,7 +427,9 @@ main(int argc, char* argv[]) {
 
   auto* glfwWindow = glfwCreateWindow(width, height, "Test Window", nullptr, nullptr);
   rhiFactory->SetGLFWwindow(glfwWindow);
-  rhiFactory->Init();
+  rhiFactory->Init(Marbas::RHICreateInfo{
+      .m_openglRHICreateInfo = Marbas::OpenGLRHICreateInfo{.useSPIRV = true},
+  });
 
   ShowBox(glfwWindow, rhiFactory);
 

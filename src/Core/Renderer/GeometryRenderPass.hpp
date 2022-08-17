@@ -48,6 +48,8 @@ class GeometryRenderPass final : public DeferredRenderPass {
 
   // this buffer used to store all mesh's MVP matrix
   std::shared_ptr<DynamicUniformBuffer> m_dynamicUniforBuffer = nullptr;
+
+  Uid m_shaderId;
 };
 
 }  // namespace Marbas

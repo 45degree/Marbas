@@ -55,7 +55,7 @@ class MaterialResource final : public ResourceBase {
   }
 
   void
-  LoadResource(RHIFactory* rhiFactory, std::shared_ptr<ResourceManager>&) override;
+  LoadResource(RHIFactory* rhiFactory, const ResourceManager*) override;
 
  private:
   std::shared_ptr<Texture2DResource> m_diffuseTexture = nullptr;

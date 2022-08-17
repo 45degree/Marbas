@@ -10,8 +10,8 @@ namespace Marbas {
 
 struct RenderPassNodeCreateInfo {
   String passName;
-  Vector<String> inputResource;
-  Vector<String> outputResource;
+  // Vector<String> inputResource;
+  // Vector<String> outputResource;
   std::shared_ptr<ResourceManager> resourceManager;
   RHIFactory* rhiFactory;
   uint32_t width;
@@ -52,7 +52,7 @@ class RenderPassNode {
   String m_passName;
   uint32_t m_width;
   uint32_t m_height;
-  bool m_needToRecordComand = false;
+  bool m_needToRecordComand = true;
   std::shared_ptr<FrameBuffer> m_framebuffer = nullptr;
   std::shared_ptr<RenderPass> m_renderPass = nullptr;
   std::shared_ptr<CommandFactory> m_commandFactory = nullptr;

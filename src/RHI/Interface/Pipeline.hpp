@@ -70,12 +70,62 @@ struct MultisampleInfo {
 };
 
 enum class BlendOp {
+  ADD,               // result = src + dst
+  SUBTRACT,          // result = src - dst
+  REVERSE_SUBTRACT,  // resutl = dst - src
+};
 
+enum class LogicOp {
+  CLEAR,          // 0
+  SET,            // 1
+  COPY,           // S
+  COPY_INVERTED,  //~S
+  NOOP,           // D
+  INVERT,         // ~D
+  AND,            // S & D
+  NAND,           // ~(S & D)
+  OR,             // S | D
+  NOR,            // ~(S | D)
+  XOR,            // S ^ D
+  EQUIV,          // ~(S ^ D)
+  AND_REVERSE,    // S & ~D
+  AND_INVERTED,   // ~S & D
+  OR_REVERSE,     // S | ~D
+  OR_INVERTED,    // ~S | D
+};
+
+enum class BlendFactor {
+  ZERO,                      // factor equal 0
+  ONE,                       // factor equal 1
+  SRC_COLOR,                 // factor equal src
+  ONE_MINUS_SRC_COLOR,       // factor equal 1 - src
+  DST_COLOR,                 // factor equal dst
+  ONE_MINUS_DST_COLOR,       // factor equal 1 − dst
+  SRC_ALPHA,                 // factor equal alpha's value of src
+  ONE_MINUS_SRC_ALPHA,       // factor equal 1 - alpha's value of src
+  DST_ALPHA,                 // factor equal alpha's value of dst
+  ONE_MINUS_DST_ALPHA,       // factor equal 1 - alpha's value of dst
+  CONSTANT_COLOR,            // factor equal a const
+  ONE_MINUS_CONSTANT_COLOR,  // factor equal 1 - the const vaule
+  CONSTANT_ALPHA,            // factor equal alpha's value of the const
+  ONE_MINUS_CONSTANT_ALPHA,  // factor equal 1 - alpha's value of the const
+};
+
+struct BlendAttachment {
+  bool blendEnable = false;
+  BlendFactor srcColorBlendFactor = BlendFactor::SRC_ALPHA;
+  BlendFactor dstColorBlendFactor = BlendFactor::ONE_MINUS_SRC_ALPHA;
+  BlendOp colorBlendOp = BlendOp::ADD;
+  BlendFactor srcAlphaBlendFactor = BlendFactor::SRC_ALPHA;
+  BlendFactor dstAlphaBlendFactor = BlendFactor::ONE_MINUS_SRC_ALPHA;
+  BlendOp alphaBlendOp = BlendOp::ADD;
 };
 
 struct BlendInfo {
-  bool blendEnable;
-  BlendOp logicOp;
+  bool logicOpEnable = false;
+  LogicOp logicOp = LogicOp::COPY;
+  Vector<BlendAttachment> attachments;
+  std::array<float, 4> constances = {0, 0, 0, 0};
 };
 
 struct GraphicsPipeLineCreateInfo {

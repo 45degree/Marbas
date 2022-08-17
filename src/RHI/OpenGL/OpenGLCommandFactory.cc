@@ -11,6 +11,11 @@ OpenGLCommandFactory::CreateCommandBuffer() {
   return std::make_unique<OpenGLCommandBuffer>();
 }
 
+std::unique_ptr<CopyImageToImage>
+OpenGLCommandFactory::CreateCopyImageToImageCMD() {
+  return std::make_unique<OpenGLCopyImageToImage>();
+}
+
 std::unique_ptr<BindDescriptorSet>
 OpenGLCommandFactory::CreateBindDescriptorSetCMD() {
   return std::make_unique<OpenGLBindDescriptorSet>();

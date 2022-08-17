@@ -29,12 +29,18 @@ GetMeshVertexInfoLayout() {
   return layouts;
 };
 
-CubeMapRenderPassCreateInfo::CubeMapRenderPassCreateInfo() { passName = "CubeMapRenderPass"; }
+CubeMapRenderPassCreateInfo::CubeMapRenderPassCreateInfo() {
+  passName = "CubeMapRenderPass";
+  inputPassNode = GeometryRenderPass::renderPassName;
+}
 
 CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createInfo)
     : ForwardRenderPass(createInfo) {
   DLOG_ASSERT(m_rhiFactory != nullptr)
       << FORMAT("can't Initialize the {}, because the rhiFactory isn't been set",
+                NAMEOF_TYPE(CubeMapRenderPass));
+  DLOG_ASSERT(m_resourceManager != nullptr)
+      << FORMAT("can't Initialize the {}, because the resource manager isn't been set",
                 NAMEOF_TYPE(CubeMapRenderPass));
 
   /**
@@ -66,20 +72,28 @@ CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createIn
   m_commandBuffer = m_commandFactory->CreateCommandBuffer();
 
   // read shader
-  auto fragmentShader = m_rhiFactory->CreateShaderStage(
-      "Shader/cubeMap.frag.glsl", ShaderCodeType::FILE, ShaderType::FRAGMENT_SHADER);
-  auto vertexShader = m_rhiFactory->CreateShaderStage(
-      "Shader/cubeMap.vert.glsl", ShaderCodeType::FILE, ShaderType::VERTEX_SHADER);
-  auto cubeMapShader = m_rhiFactory->CreateShader();
-  cubeMapShader->AddShaderStage(vertexShader);
-  cubeMapShader->AddShaderStage(fragmentShader);
-  cubeMapShader->Link();
+  // auto fragmentShader =
+  //     m_rhiFactory->CreateShaderStage("Shader/cubeMap.frag.glsl.spv",
+  //     ShaderType::FRAGMENT_SHADER);
+  // auto vertexShader =
+  //     m_rhiFactory->CreateShaderStage("Shader/cubeMap.vert.glsl.spv", ShaderType::VERTEX_SHADER);
+  // auto cubeMapShader = m_rhiFactory->CreateShader();
+  // cubeMapShader->AddShaderStage(vertexShader);
+  // cubeMapShader->AddShaderStage(fragmentShader);
+  // cubeMapShader->Link();
+
+  auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
+  auto shaderResource = shaderContainer->CreateResource();
+  shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/cubeMap.vert.glsl");
+  shaderResource->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/cubeMap.frag.glsl");
+  shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
+  m_shaderId = shaderContainer->AddResource(shaderResource);
 
   // create Pipeline
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
   m_pipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = m_width, .height = m_height});
-  m_pipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout());
-  m_pipeline->SetShader(cubeMapShader);
+  m_pipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout(), VertexInputRate::VERTEX);
+  m_pipeline->SetShader(shaderResource->GetShader());
   m_pipeline->SetDepthStencilInfo(DepthStencilInfo{
       .depthTestEnable = true,
       .depthCompareOp = DepthCompareOp::LEQUAL,
@@ -108,7 +122,7 @@ CubeMapRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
   DLOG_ASSERT(m_pipeline != nullptr)
       << FORMAT("{}'s pipeline is null, can't record command", NAMEOF_TYPE(CubeMapRenderPass));
 
-  // recreate dynamic uniform buffer
+  // recreate uniform buffer
   auto entity = view.front();
   auto& cubeMapComponent = Entity::GetComponent<CubeMapComponent>(scene, entity);
 
@@ -148,7 +162,7 @@ CubeMapRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
   auto bindVertexBuffer = m_commandFactory->CreateBindVertexBufferCMD();
   auto bindIndexBuffer = m_commandFactory->CreateBindIndexBufferCMD();
   auto bindDescriptorSet = m_commandFactory->CreateBindDescriptorSetCMD();
-  auto drawIndex = m_commandFactory->CreateDrawIndexCMD();
+  auto drawIndex = m_commandFactory->CreateDrawIndexCMD(m_pipeline);
 
   bindVertexBuffer->SetVertexBuffer(implData->vertexBuffer);
   bindIndexBuffer->SetIndexBuffer(implData->indexBuffer);
@@ -192,7 +206,7 @@ CubeMapRenderPass::CreateBufferForEveryEntity(const entt::entity cubeMap,
   if (cubeMapComponent.cubeMapResourceId.has_value()) {
     auto id = cubeMapComponent.cubeMapResourceId.value();
     auto cubeMapResource = m_resourceManager->GetCubeMapResourceContainer()->GetResource(id);
-    cubeMapResource->LoadResource(m_rhiFactory, m_resourceManager);
+    cubeMapResource->LoadResource(m_rhiFactory, m_resourceManager.get());
 
     DescriptorSetInfo descriptorSetInfo{
         DescriptorInfo{

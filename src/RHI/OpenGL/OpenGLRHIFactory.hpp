@@ -19,7 +19,7 @@ class OpenGLRHIFactory final : public RHIFactory {
 
  public:
   void
-  Init() const override;
+  Init(const RHICreateInfo& createInfo) const override;
 
   [[nodiscard]] std::shared_ptr<ImguiInterface>
   CreateImguiInterface() const override;
@@ -34,8 +34,7 @@ class OpenGLRHIFactory final : public RHIFactory {
   CreateIndexBuffer(const Vector<uint32_t>& indices) const override;
 
   [[nodiscard]] std::shared_ptr<ShaderStage>
-  CreateShaderStage(const Path& path, const ShaderCodeType type,
-                    const ShaderType shaderType) const override;
+  CreateShaderStage(const ShaderType shaderType) const override;
 
   [[nodiscard]] std::shared_ptr<Shader>
   CreateShader() const override;
@@ -80,6 +79,7 @@ class OpenGLRHIFactory final : public RHIFactory {
   CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const override;
 
  private:
+  mutable bool m_enableSpriv = true;
   friend RHIFactory;
 };
 

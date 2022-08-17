@@ -1,10 +1,12 @@
+---@diagnostic disable: undefined-global
+
 target("Marbas.Core")
   set_kind("static")
   set_languages("c11", "cxx20")
 
-  add_rules("utils.glsl2spv", {
-      outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "shader")
-  })
+  -- add_rules("utils.glsl2spv", {
+  --   outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "Shader")
+  -- })
 
   add_includedirs("$(projectdir)/src")
   add_files("$(projectdir)/src/Core/**.cc")

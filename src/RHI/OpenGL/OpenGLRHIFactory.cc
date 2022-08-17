@@ -28,7 +28,7 @@
 #include "RHI/OpenGL/OpenGLIndexBuffer.hpp"
 #include "RHI/OpenGL/OpenGLRHIFactory.hpp"
 #include "RHI/OpenGL/OpenGLShader.hpp"
-#include "RHI/OpenGL/OpenGLShaderCode.hpp"
+#include "RHI/OpenGL/OpenGLShaderStage.hpp"
 #include "RHI/OpenGL/OpenGLVertexBuffer.hpp"
 #include "RHI/OpenGL/OpenGLViewport.hpp"
 
@@ -127,7 +127,9 @@ OpenGLRHIFactory::OpenGLRHIFactory() : RHIFactory() {
 }
 
 void
-OpenGLRHIFactory::Init() const {
+OpenGLRHIFactory::Init(const RHICreateInfo& createInfo) const {
+  m_enableSpriv = createInfo.m_openglRHICreateInfo.useSPIRV;
+
   glfwMakeContextCurrent(m_glfwWindow);
   glfwSwapInterval(1);
 
@@ -147,6 +149,13 @@ OpenGLRHIFactory::Init() const {
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
   } else {
     LOG(INFO) << "disable debug";
+  }
+
+  // check extension
+  if (!glfwExtensionSupported("GL_ARB_gl_spirv") && m_enableSpriv) {
+    // The extension is supported by the current context
+    LOG(WARNING) << "opengl dont't support spirv";
+    m_enableSpriv = false;
   }
 }
 
@@ -176,16 +185,10 @@ OpenGLRHIFactory::CreateIndexBuffer(const Vector<uint32_t>& indices) const {
 }
 
 std::shared_ptr<ShaderStage>
-OpenGLRHIFactory::CreateShaderStage(const Path& path, const ShaderCodeType type,
-                                    const ShaderType shaderType) const {
-  auto shaderCode = std::make_shared<OpenGLShaderStage>(shaderType);
-  if (type == ShaderCodeType::FILE) {
-    shaderCode->ReadFromSource(path);
-  } else if (type == ShaderCodeType::BINARY) {
-    shaderCode->ReadSPIR_V(path, "main");
-  }
-
-  return shaderCode;
+OpenGLRHIFactory::CreateShaderStage(const ShaderType shaderType) const {
+  auto shaderStage = std::make_shared<OpenGLShaderStage>(shaderType);
+  shaderStage->EnableSpriv(m_enableSpriv);
+  return shaderStage;
 }
 
 std::shared_ptr<Shader>

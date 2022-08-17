@@ -44,6 +44,9 @@ class Scene : public std::enable_shared_from_this<Scene> {
   void
   AddModel(Uid modelResourceId, const String& modelName, const entt::entity& parent);
 
+  void
+  AddBillBoard(Uid texture2DResourceId, glm::vec3 point, const entt::entity& parent);
+
   std::shared_ptr<EditorCamera>
   GetEditorCamrea() {
     return m_editorCamera;

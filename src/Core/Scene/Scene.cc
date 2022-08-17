@@ -10,6 +10,7 @@
 #include "Common/Common.hpp"
 #include "Core/Scene/Component/HierarchyComponent.hpp"
 #include "Core/Scene/Component/TagComponent.hpp"
+#include "Core/Scene/Entity/BillBoardEntity.hpp"
 #include "Core/Scene/Entity/CubeMapEntity.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
 #include "Core/Scene/Entity/MeshEntity.hpp"
@@ -166,6 +167,20 @@ Scene::AddModel(Uid modelResourceId, const String& modelName, const entt::entity
   modelTagComponent.tagName = modelName;
 
   hierarchyComponent.children.push_back(modelEntity);
+}
+
+void
+Scene::AddBillBoard(Uid texture2DResourceId, glm::vec3 point, const entt::entity& parent) {
+  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(shared_from_this(), parent))
+      << "can't find the HierarchyComponent from the entity";
+
+  auto scene = shared_from_this();
+  auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(scene, parent);
+  auto billBoardEntity = Entity::CreateEntity<BillBoardPolicy>(scene, texture2DResourceId);
+  auto& billBoardTagComponent =
+      Entity::GetComponent<UniqueTagComponent>(shared_from_this(), billBoardEntity);
+
+  HierarchyComponent::AddChild(parent, m_world, billBoardEntity);
 }
 
 // static bool DeleteNode(SceneNode* sceneNode) {

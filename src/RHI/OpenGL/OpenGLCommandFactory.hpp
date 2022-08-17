@@ -9,6 +9,9 @@ class OpenGLCommandFactory final : public CommandFactory {
   std::unique_ptr<CommandBuffer>
   CreateCommandBuffer() override;
 
+  std::unique_ptr<CopyImageToImage>
+  CreateCopyImageToImageCMD() override;
+
   std::unique_ptr<BindDescriptorSet>
   CreateBindDescriptorSetCMD() override;
 

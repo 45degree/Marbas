@@ -58,6 +58,9 @@ class OpenGLGraphicsPipeline final : public GraphicsPipeLine {
   void
   Bind() const;
 
+  void
+  UnBind() const;
+
  private:
   GLuint m_VAO;
 

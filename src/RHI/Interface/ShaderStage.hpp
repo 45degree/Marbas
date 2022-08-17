@@ -31,15 +31,27 @@ class ShaderStage {
    * @note we assume the spri-v file don't have specialization constants.
    */
   virtual void
-  ReadSPIR_V(const FileSystem::path& path, const String& enterPoint) = 0;
+  ReadSPIR_V(const Path& path, const String& enterPoint) = 0;
+
+  virtual Vector<uint32_t>
+  CompileFromSource(const Path& filePath) = 0;
+
+  virtual void
+  ReadFromSource(const Path& path) {}
 
   [[nodiscard]] ShaderType
   GetShaderType() const noexcept {
     return shaderType;
   };
 
+  bool
+  IsEnableSpriv() const {
+    return m_enableSpriv;
+  }
+
  protected:
   ShaderType shaderType;
+  bool m_enableSpriv = true;
 };
 
 }  // namespace Marbas

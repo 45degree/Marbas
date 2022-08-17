@@ -15,7 +15,7 @@ class ResourceBase {
   virtual ~ResourceBase() = default;
 
   virtual void
-  LoadResource(RHIFactory* rhiFactory, std::shared_ptr<ResourceManager>& ResourceManager) = 0;
+  LoadResource(RHIFactory* rhiFactory, const ResourceManager* ResourceManager) = 0;
 
  public:
   [[nodiscard]] bool

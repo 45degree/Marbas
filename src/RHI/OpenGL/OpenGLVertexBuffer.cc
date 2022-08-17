@@ -36,17 +36,11 @@ void
 OpenGLVertexBuffer::Bind() const {
   // glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBindVertexBuffer(0, VBO, 0, m_stride);
-
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't bind vertex buffer: {}, error code is {}", VBO, error);
 }
 
 void
 OpenGLVertexBuffer::UnBind() const {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't unbind vertex buffer {}, error code is {}", VBO, error);
 }
 
 void

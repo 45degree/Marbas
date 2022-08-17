@@ -4,9 +4,11 @@
 #include "Common/EditorCamera.hpp"
 #include "Core/Application.hpp"
 #include "Core/Event/Input.hpp"
+#include "Core/Renderer/BeginningRenderPass.hpp"
 #include "Core/Renderer/BillBoardRenderPass.hpp"
 #include "Core/Renderer/CubeMapRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
+#include "Core/Renderer/GridRenderPass.hpp"
 #include "RHI/RHI.hpp"
 
 namespace Marbas {
@@ -28,6 +30,35 @@ RenderLayer::~RenderLayer() = default;
 
 void
 RenderLayer::OnAttach() {
+  // create beginning render target
+  auto beginningDepthTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = BeginningRenderPass::depthTargetName,
+      .buffersType = {{GBufferTexutreType::DEPTH, 1}},
+      .rhiFactory = m_rhiFactory,
+      .width = m_width,
+      .height = m_height,
+  });
+
+  auto beginningTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = BeginningRenderPass::targetName,
+      .buffersType = {{GBufferTexutreType::COLOR, 1}},
+      .rhiFactory = m_rhiFactory,
+      .width = m_width,
+      .height = m_height,
+  });
+  m_renderGraph->RegisterRenderTargetNode(beginningDepthTarget);
+  m_renderGraph->RegisterRenderTargetNode(beginningTarget);
+
+  auto beginningRenderPass = std::make_shared<BeginningRenderPass>([&]() {
+    BeginningRenderPassCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = m_width;
+    createInfo.height = m_height;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterDeferredRenderPassNode(beginningRenderPass);
+
   // create geometry render pass and target
   auto geometryDepthTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
       .targetName = GeometryRenderPass::depthTargetName,
@@ -61,7 +92,7 @@ RenderLayer::OnAttach() {
   }());
   m_renderGraph->RegisterDeferredRenderPassNode(geometryRenderPass);
 
-  // create cube map render pass
+  // create billBoard render pass
   auto billBoardRenderPass = std::make_shared<BillBoardRenderPass>([&]() {
     BillBoardRenderPassCreateInfo createInfo;
     createInfo.resourceManager = m_resourceManager;
@@ -72,6 +103,7 @@ RenderLayer::OnAttach() {
   }());
   m_renderGraph->RegisterForwardRenderPassNode(billBoardRenderPass);
 
+  // create cube map render pass
   auto cubeMapRenderPass = std::make_shared<CubeMapRenderPass>([&]() {
     CubeMapRenderPassCreateInfo createInfo;
     createInfo.resourceManager = m_resourceManager;
@@ -81,6 +113,17 @@ RenderLayer::OnAttach() {
     return createInfo;
   }());
   m_renderGraph->RegisterForwardRenderPassNode(cubeMapRenderPass);
+
+  // create grid render pass
+  auto gridRenderPass = std::make_shared<GridRenderPass>([&]() {
+    GridRenderPassCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = m_width;
+    createInfo.height = m_height;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterForwardRenderPassNode(gridRenderPass);
 
   // compile render graph
   m_renderGraph->Compile();

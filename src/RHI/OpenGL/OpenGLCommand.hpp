@@ -181,6 +181,13 @@ class OpenGLBindPipeline final : public BindPipeline {
     }
   }
 
+  void
+  OnEndRenderPass() const override {
+    if (m_graphicsPipeline != nullptr) {
+      m_graphicsPipeline->UnBind();
+    }
+  }
+
   std::unique_ptr<ICommand>
   Clone() const override {
     return std::make_unique<OpenGLBindPipeline>(*this);
@@ -363,8 +370,8 @@ class OpenGLCopyImageToImage final : public CopyImageToImage {
     auto depth = m_srcTexture->GetDepth();
     auto dstTex = m_dstTexture->GetOpenGLTexture();
     auto dstLevel = m_dstTexture->GetLevel();
-    glCopyImageSubData(srcTex, GL_TEXTURE_2D, srcLevel, 0, 0, 0, dstTex, GL_TEXTURE_2D, dstLevel, 0,
-                       0, 0, width, height, depth);
+    glCopyImageSubData(srcTex, GL_TEXTURE_2D, srcLevel - 1, 0, 0, 0, dstTex, GL_TEXTURE_2D,
+                       dstLevel - 1, 0, 0, 0, width, height, 1);
   }
 
   std::unique_ptr<ICommand>

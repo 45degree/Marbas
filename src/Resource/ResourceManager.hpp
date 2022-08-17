@@ -149,6 +149,27 @@ class ResourceManager {
     m_materialResourceContainer = materialResourceContainer;
   }
 
+  void
+  SetWorkspace(const Path& path) {
+    m_workspace = path;
+  }
+
+  Path
+  GetWorkspace() const {
+    return m_workspace;
+  }
+
+  void
+  SetCachePath(const Path& path) {
+    m_cachePath = path;
+  }
+
+  Path
+  GetCachePath() const {
+    if (m_cachePath.is_absolute()) return m_cachePath;
+    return m_workspace / m_cachePath;
+  }
+
   template <typename T>
   std::shared_ptr<IResourceContainer<T>>
   GetContainer() requires(std::derived_from<T, ResourceBase>) {
@@ -172,6 +193,8 @@ class ResourceManager {
   std::shared_ptr<IResourceContainer<MaterialResource>> m_materialResourceContainer;
   Uid m_defaultShaderResourceUid;
   Uid m_defaultCubeMapShaderResourceUid;
+  Path m_workspace{"."};
+  Path m_cachePath{"cache/"};
 };
 
 }  // namespace Marbas

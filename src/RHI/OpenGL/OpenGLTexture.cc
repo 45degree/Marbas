@@ -55,6 +55,8 @@ OpenGLTexture2D::OpenGLTexture2D(int width, int height, uint32_t level, TextureF
 
   glTextureParameteri(textureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTextureParameteri(textureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTextureParameteri(textureID, GL_TEXTURE_BASE_LEVEL, 0);
+  glTextureParameteri(textureID, GL_TEXTURE_MAX_LEVEL, m_level);
 
   glTextureParameteri(textureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTextureParameteri(textureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -76,10 +78,6 @@ OpenGLTexture2D::SetData(void* data, uint32_t size) {
 
   auto dataFormat = ConvertToOpenglDataFormat(this->m_format);
   glTextureSubImage2D(textureID, 0, 0, 0, m_width, m_height, dataFormat, GL_UNSIGNED_BYTE, data);
-
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't submit the data for texture {}, error code is {}",
-                                 textureID, error);
 }
 
 void*
@@ -135,10 +133,6 @@ OpenGLTextureCubeMap::SetData(void* data, uint32_t size, CubeMapPosition positio
 
   glTextureSubImage3D(m_textureID, 0, 0, 0, layer, m_width, m_height, 1, dataFormat,
                       GL_UNSIGNED_BYTE, data);
-
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't submit the data for cubemap texture {}, error code is {}",
-                                 m_textureID, error);
 }
 
 }  // namespace Marbas

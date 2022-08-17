@@ -5,8 +5,7 @@
 namespace Marbas {
 
 void
-MaterialResource::LoadResource(RHIFactory* rhiFactory,
-                               std::shared_ptr<ResourceManager>& resourceManager) {
+MaterialResource::LoadResource(RHIFactory* rhiFactory, const ResourceManager* resourceManager) {
   if (m_shaderResource != nullptr) {
     if (!m_shaderResource->IsLoad()) {
       m_shaderResource->LoadResource(rhiFactory, resourceManager);

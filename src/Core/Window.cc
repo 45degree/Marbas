@@ -56,7 +56,9 @@ Window::InitializeWindow() {
   }
 
   m_rhiFactory->SetGLFWwindow(glfwWindow);
-  m_rhiFactory->Init();
+  m_rhiFactory->Init(RHICreateInfo{
+      .m_openglRHICreateInfo = OpenGLRHICreateInfo{.useSPIRV = false},
+  });
 
   // TODO: need to impove it
   m_swapChain = m_rhiFactory->CreateSwapChain();

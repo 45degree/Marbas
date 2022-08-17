@@ -2,6 +2,7 @@
 
 #include <nameof.hpp>
 
+#include "Core/Renderer/BeginningRenderPass.hpp"
 #include "Core/Scene/Component/MeshComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
 
@@ -33,7 +34,7 @@ GetMeshVertexInfoLayout() {
 
 GeometryRenderPassCreatInfo::GeometryRenderPassCreatInfo() : DeferredRenderPassNodeCreateInfo() {
   passName = GeometryRenderPass::renderPassName;
-  inputResource = {};
+  inputResource = {BeginningRenderPass::depthTargetName, BeginningRenderPass::targetName};
   outputResource = {GeometryRenderPass::depthTargetName, GeometryRenderPass::geometryTargetName};
 }
 
@@ -53,7 +54,7 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
               AttachmentDescription{
                   .format = TextureFormat::RGBA,
                   .type = AttachmentType::Color,
-                  .loadOp = AttachmentLoadOp::Clear,
+                  .loadOp = AttachmentLoadOp::Ignore,
               },
               AttachmentDescription{
                   .format = TextureFormat::RGB,
@@ -63,7 +64,7 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
               AttachmentDescription{
                   .format = TextureFormat::DEPTH,
                   .type = AttachmentType::Depth,
-                  .loadOp = AttachmentLoadOp::Clear,
+                  .loadOp = AttachmentLoadOp::Ignore,
               },
           },
   };
@@ -74,20 +75,18 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
   m_commandBuffer = m_commandFactory->CreateCommandBuffer();
 
   // read shader
-  auto fragmentShader = m_rhiFactory->CreateShaderStage(
-      "Shader/shader.frag.glsl", ShaderCodeType::FILE, ShaderType::FRAGMENT_SHADER);
-  auto vertexShader = m_rhiFactory->CreateShaderStage(
-      "Shader/shader.vert.glsl", ShaderCodeType::FILE, ShaderType::VERTEX_SHADER);
-  auto meshShader = m_rhiFactory->CreateShader();
-  meshShader->AddShaderStage(vertexShader);
-  meshShader->AddShaderStage(fragmentShader);
-  meshShader->Link();
+  auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
+  auto shaderResource = shaderContainer->CreateResource();
+  shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/shader.vert.glsl");
+  shaderResource->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/shader.frag.glsl");
+  shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
+  m_shaderId = shaderContainer->AddResource(shaderResource);
 
   // create pipeline
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
   m_pipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = m_width, .height = m_height});
-  m_pipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout());
-  m_pipeline->SetShader(meshShader);
+  m_pipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout(), VertexInputRate::VERTEX);
+  m_pipeline->SetShader(shaderResource->GetShader());
   m_pipeline->Create();
 
   // create desciriptorSet
@@ -171,12 +170,33 @@ GeometryRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
   auto dynamicBufferDescriptor = m_dynamicUniforBuffer->GetIDynamicBufferDescriptor();
   m_dynamicDescriptorSet->BindDynamicBuffer(0, std::move(dynamicBufferDescriptor));
 
+  // get input target GBuffer
+  const auto& inputTargetGBuffer = m_inputTarget[BeginningRenderPass::targetName]->GetGBuffer();
+  auto inputDepthGBuffer = m_inputTarget[BeginningRenderPass::depthTargetName]->GetGBuffer();
+  auto inputColorTexture = inputTargetGBuffer->GetTexture(GBufferTexutreType::COLOR);
+  auto inputdepthTexture = inputDepthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
+
+  const auto& outputTargetGBuffer = m_outputTarget[geometryTargetName]->GetGBuffer();
+  auto outputColorBuffer = outputTargetGBuffer->GetTexture(GBufferTexutreType::COLOR);
+  const auto& outputDepthGBuffer = m_outputTarget[depthTargetName]->GetGBuffer();
+  auto outputDepthBuffer = outputDepthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
+
   /**
    * begin to record command
    */
   m_commandBuffer->BeginRecordCmd();
   m_commandBuffer->AddCommand(std::move(beginRenderPass));
   m_commandBuffer->AddCommand(std::move(bindPipeline));
+
+  auto copyColorImageCMD = m_commandFactory->CreateCopyImageToImageCMD();
+  auto copyDepthImageCMD = m_commandFactory->CreateCopyImageToImageCMD();
+  copyColorImageCMD->SetSrcImage(inputColorTexture);
+  copyColorImageCMD->SetDstImage(outputColorBuffer);
+  copyDepthImageCMD->SetSrcImage(inputdepthTexture);
+  copyDepthImageCMD->SetDstImage(outputDepthBuffer);
+
+  m_commandBuffer->AddCommand(std::move(copyColorImageCMD));
+  m_commandBuffer->AddCommand(std::move(copyDepthImageCMD));
 
   // for every mesh entity, create bindVertexBuffer and bindIndexBuffer command and draw it
   uint32_t meshIndex = 0;
@@ -186,7 +206,7 @@ GeometryRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
       auto bindVertexBuffer = m_commandFactory->CreateBindVertexBufferCMD();
       auto bindIndexBuffer = m_commandFactory->CreateBindIndexBufferCMD();
       auto bindDynamicBuffer = m_commandFactory->CreateBindDynamicDescriptorSetCMD();
-      auto drawIndex = m_commandFactory->CreateDrawIndexCMD();
+      auto drawIndex = m_commandFactory->CreateDrawIndexCMD(m_pipeline);
 
       bindVertexBuffer->SetVertexBuffer(implData->vertexBuffer);
       bindIndexBuffer->SetIndexBuffer(implData->indexBuffer);
@@ -240,7 +260,7 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh,
   if (_mesh->m_materialId.has_value()) {
     auto id = _mesh->m_materialId.value();
     auto materialResource = m_resourceManager->GetMaterialResourceContainer()->GetResource(id);
-    materialResource->LoadResource(m_rhiFactory, m_resourceManager);
+    materialResource->LoadResource(m_rhiFactory, m_resourceManager.get());
 
     DescriptorSetInfo descriptorSetInfo{
         DescriptorInfo{

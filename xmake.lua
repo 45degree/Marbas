@@ -16,13 +16,16 @@ add_requires("libiconv 1.16")
 add_requires("gtest 1.11.0")
 add_requires("entt v3.9.0")
 add_requires("nativefiledialog 1.1.6")
-add_requires("glslang", { configs = { binaryonly = true }})
+add_requires("shaderc")
+add_requires("openssl")
+
+-- add_requires("glslang", { configs = { binaryonly = true }})
 
 -- add_requires("uchardet")
 
-if is_mode("debug") then
-  add_defines("DEBUG")
-end
+-- if is_mode("debug") then
+--   add_defines("DEBUG")
+-- end
 
 includes("src/App/Editor/")
 includes("src/App/Games/")

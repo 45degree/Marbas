@@ -33,17 +33,11 @@ OpenGLIndexBuffer::~OpenGLIndexBuffer() {
 void
 OpenGLIndexBuffer::Bind() const {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't bind index buffer: {}", EBO);
 }
 
 void
 OpenGLIndexBuffer::UnBind() const {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't unbind index buffer: {}", EBO);
 }
 
 void

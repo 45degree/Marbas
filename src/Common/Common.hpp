@@ -11,7 +11,8 @@
  */
 
 // format marco
-#define FORMAT(Str, ...) folly::sformat(Str, __VA_ARGS__);
+#define FORMAT(Str, ...) folly::sformat(Str, __VA_ARGS__)
+#define PATH_TO_CONST_CHAR(Path) reinterpret_cast<const char*>(Path.c_str())
 
 namespace Marbas {
 

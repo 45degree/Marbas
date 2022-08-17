@@ -84,19 +84,11 @@ OpenGLFrameBuffer::Bind() const {
   if (currentBinding == frameBufferID) return;
 
   glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
-
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't bind framebuffer: {}, error code is {}", frameBufferID,
-                                 error);
 }
 
 void
 OpenGLFrameBuffer::UnBind() const {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  auto error = glGetError();
-  LOG_IF(ERROR, error) << FORMAT("can't unbind framebuffer: {}, error code is {}", frameBufferID,
-                                 error);
 }
 
 }  // namespace Marbas

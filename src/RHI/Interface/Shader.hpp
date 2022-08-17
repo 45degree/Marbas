@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RHI/Interface/IndexBuffer.hpp"
-#include "RHI/Interface/ShaderCode.hpp"
+#include "RHI/Interface/ShaderStage.hpp"
 #include "RHI/Interface/Texture.hpp"
 #include "RHI/Interface/VertexBuffer.hpp"
 

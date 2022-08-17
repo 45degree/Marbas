@@ -14,5 +14,5 @@ target("Marbas.RHI")
     end
 
     add_deps("Imgui")
-    add_packages("glfw", "glm", "glog", "glew", "folly", "stb")
+    add_packages("glfw", "glm", "glog", "glew", "folly", "stb", "shaderc")
 target_end()

@@ -14,7 +14,7 @@ class ModelResource final : public ResourceBase {
    * @berif read model from trandition file such as .obj
    */
   void
-  LoadResource(RHIFactory* rhiFactory, std::shared_ptr<ResourceManager>& resourceManager) override;
+  LoadResource(RHIFactory* rhiFactory, const ResourceManager* resourceManager) override;
 
   std::shared_ptr<Model>
   GetModel() {

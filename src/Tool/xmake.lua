@@ -7,12 +7,8 @@ target("Marbas.Tool")
     add_files("$(projectdir)/src/Tool/**.cc")
     add_includedirs("$(projectdir)/src", { public = true })
 
-    -- add_cxxflags("-fPIC", { force = true})
-
-    if is_mode("debug") then
-        add_defines("DEBUG")
-    end
-
     add_packages("glfw", "glm", "glew");
-    add_packages("libiconv", "uchardet", "folly", "glog");
+    add_packages("libiconv", "uchardet", "folly", "glog", "openssl");
+
+    add_deps("Marbas.Common")
 target_end()

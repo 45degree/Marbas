@@ -14,8 +14,8 @@ struct ForwardRenderPassNodeCreateInfo : public RenderPassNodeCreateInfo {
 
 class ForwardRenderPass : public RenderPassNode {
  public:
-  explicit ForwardRenderPass(const RenderPassNodeCreateInfo& createInfo)
-      : RenderPassNode(createInfo) {}
+  explicit ForwardRenderPass(const ForwardRenderPassNodeCreateInfo& createInfo)
+      : RenderPassNode(createInfo), m_inputPassNode(createInfo.inputPassNode) {}
   virtual ~ForwardRenderPass() = default;
 
  public:
