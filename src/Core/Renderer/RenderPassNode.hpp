@@ -39,14 +39,13 @@ class RenderPassNode {
    * @brief record the command
    */
   virtual void
-  RecordCommand(const std::shared_ptr<Scene>& scene) = 0;
+  RecordCommand(const Scene* scene) = 0;
 
   /**
    * @berif execute the render pass node after setting the render grpah
    */
   virtual void
-  Execute(const std::shared_ptr<Scene>& scene,
-          const std::shared_ptr<ResourceManager>& resourceManager) = 0;
+  Execute(const Scene* scene, const ResourceManager* resourceManager) = 0;
 
  protected:
   String m_passName;

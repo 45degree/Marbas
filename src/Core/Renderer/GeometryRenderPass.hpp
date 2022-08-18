@@ -31,17 +31,16 @@ class GeometryRenderPass final : public DeferredRenderPass {
    * @brief record the command
    */
   void
-  RecordCommand(const std::shared_ptr<Scene>& scene) override;
+  RecordCommand(const Scene* scene) override;
 
   void
-  CreateBufferForEveryEntity(const MeshEntity& mesh, const std::shared_ptr<Scene>& scene);
+  CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* scene);
 
   void
-  SetUniformBuffer(const std::shared_ptr<Scene>& scene);
+  SetUniformBuffer(const Scene* scene);
 
   void
-  Execute(const std::shared_ptr<Scene>& scene,
-          const std::shared_ptr<ResourceManager>& resourceMnager) override;
+  Execute(const Scene* scene, const ResourceManager* resourceMnager) override;
 
  private:
   std::shared_ptr<DynamicDescriptorSet> m_dynamicDescriptorSet = nullptr;

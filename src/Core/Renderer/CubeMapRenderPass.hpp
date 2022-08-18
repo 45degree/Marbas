@@ -18,17 +18,16 @@ class CubeMapRenderPass final : public ForwardRenderPass {
 
  public:
   void
-  RecordCommand(const std::shared_ptr<Scene>& scene) override;
+  RecordCommand(const Scene* scene) override;
 
   void
-  CreateBufferForEveryEntity(const entt::entity entity, const std::shared_ptr<Scene>& scene);
+  CreateBufferForEveryEntity(const entt::entity entity, Scene* scene);
 
   void
-  SetUniformBuffer(const std::shared_ptr<Scene>& scene);
+  SetUniformBuffer(Scene* scene);
 
   void
-  Execute(const std::shared_ptr<Scene>& scene,
-          const std::shared_ptr<ResourceManager>& resourceMnager) override;
+  Execute(const Scene* scene, const ResourceManager* resourceMnager) override;
 
  private:
   std::shared_ptr<UniformBuffer> m_uniformBuffer = nullptr;

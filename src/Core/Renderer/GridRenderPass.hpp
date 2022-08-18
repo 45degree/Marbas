@@ -18,17 +18,16 @@ class GridRenderPass final : public ForwardRenderPass {
    * @brief record the command
    */
   void
-  RecordCommand(const std::shared_ptr<Scene>& scene) override;
+  RecordCommand(const Scene* scene) override;
 
   /**
    * @berif execute the render pass node after setting the render grpah
    */
   void
-  Execute(const std::shared_ptr<Scene>& scene,
-          const std::shared_ptr<ResourceManager>& resourceManager) override;
+  Execute(const Scene* scene, const ResourceManager* resourceManager) override;
 
   void
-  SetUniformBuffer(const std::shared_ptr<Scene>& scene);
+  SetUniformBuffer(const Scene* scene);
 
  private:
 #pragma pack(push, 1)

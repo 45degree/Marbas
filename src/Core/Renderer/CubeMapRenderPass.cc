@@ -106,7 +106,7 @@ CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createIn
 }
 
 void
-CubeMapRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
+CubeMapRenderPass::RecordCommand(const Scene* scene) {
   m_commandBuffer->Clear();
 
   auto view = Entity::GetAllEntity<CubeMapComponent>(scene);
@@ -181,8 +181,7 @@ CubeMapRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
 }
 
 void
-CubeMapRenderPass::CreateBufferForEveryEntity(const entt::entity cubeMap,
-                                              const std::shared_ptr<Scene>& scene) {
+CubeMapRenderPass::CreateBufferForEveryEntity(const entt::entity cubeMap, Scene* scene) {
   DLOG_ASSERT(Entity::HasComponent<CubeMapComponent>(scene, cubeMap));
 
   auto& cubeMapComponent = Entity::GetComponent<CubeMapComponent>(scene, cubeMap);
@@ -231,7 +230,7 @@ CubeMapRenderPass::CreateBufferForEveryEntity(const entt::entity cubeMap,
 }
 
 void
-CubeMapRenderPass::SetUniformBuffer(const std::shared_ptr<Scene>& scene) {
+CubeMapRenderPass::SetUniformBuffer(Scene* scene) {
   // get matrix
   const auto editorCamera = scene->GetEditorCamrea();
   const auto viewMatrix = editorCamera->GetViewMartix();
@@ -250,11 +249,10 @@ CubeMapRenderPass::SetUniformBuffer(const std::shared_ptr<Scene>& scene) {
 }
 
 void
-CubeMapRenderPass::Execute(const std::shared_ptr<Scene>& scene,
-                           const std::shared_ptr<ResourceManager>& resourceMnager) {
+CubeMapRenderPass::Execute(const Scene* scene, const ResourceManager* resourceMnager) {
   auto view = Entity::GetAllEntity<CubeMapComponent>(scene);
   for (auto&& [entity, cubeMapComponent] : view.each()) {
-    CreateBufferForEveryEntity(entity, scene);
+    CreateBufferForEveryEntity(entity, const_cast<Scene*>(scene));
   }
 
   if (m_needToRecordComand) {
@@ -262,7 +260,7 @@ CubeMapRenderPass::Execute(const std::shared_ptr<Scene>& scene,
     m_needToRecordComand = false;
   }
 
-  SetUniformBuffer(scene);
+  SetUniformBuffer(const_cast<Scene*>(scene));
   m_commandBuffer->SubmitCommand();
 }
 

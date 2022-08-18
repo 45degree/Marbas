@@ -121,7 +121,7 @@ GeometryRenderPass::CreateFrameBuffer() {
 }
 
 void
-GeometryRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
+GeometryRenderPass::RecordCommand(const Scene* scene) {
   m_commandBuffer->Clear();
 
   auto view = Entity::GetAllEntity<MeshComponent>(scene);
@@ -234,8 +234,7 @@ GeometryRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
 }
 
 void
-GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh,
-                                               const std::shared_ptr<Scene>& scene) {
+GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* scene) {
   if (!Entity::HasComponent<MeshComponent>(scene, mesh)) return;
 
   auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, mesh);
@@ -292,14 +291,14 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh,
 }
 
 void
-GeometryRenderPass::SetUniformBuffer(const std::shared_ptr<Scene>& scene) {
+GeometryRenderPass::SetUniformBuffer(const Scene* scene) {
   // get matrix
   const auto editorCamera = scene->GetEditorCamrea();
   const auto viewMatrix = editorCamera->GetViewMartix();
   const auto perspectiveMatrix = editorCamera->GetPerspective();
 
   uint32_t index = 0;
-  auto view = Entity::GetAllEntity<MeshComponent>(scene);
+  auto view = Entity::GetAllEntity<MeshComponent>(const_cast<Scene*>(scene));
   for (const auto& [entity, meshComponent] : view.each()) {
     if (meshComponent.m_impldata == nullptr) continue;
     auto offset = index * sizeof(MeshComponent::UniformBufferBlockData);
@@ -320,12 +319,11 @@ GeometryRenderPass::SetUniformBuffer(const std::shared_ptr<Scene>& scene) {
 }
 
 void
-GeometryRenderPass::Execute(const std::shared_ptr<Scene>& scene,
-                            const std::shared_ptr<ResourceManager>& resourceManager) {
+GeometryRenderPass::Execute(const Scene* scene, const ResourceManager* resourceManager) {
   // CreateFrameBuffer();
   auto view = Entity::GetAllEntity<MeshComponent>(scene);
   for (auto&& [entity, meshComponent] : view.each()) {
-    CreateBufferForEveryEntity(entity, scene);
+    CreateBufferForEveryEntity(entity, const_cast<Scene*>(scene));
   }
 
   if (m_needToRecordComand) {

@@ -105,11 +105,11 @@ BillBoardRenderPass::BillBoardRenderPass(const BillBoardRenderPassCreateInfo& cr
 }
 
 void
-BillBoardRenderPass::CreateBufferForEveryEntity(const entt::entity entity,
-                                                const std::shared_ptr<Scene>& scene) {
+BillBoardRenderPass::CreateBufferForEveryEntity(const entt::entity entity, const Scene* scene) {
   DLOG_ASSERT(Entity::HasComponent<BillBoardComponent>(scene, entity));
 
-  auto& billBoardComponent = Entity::GetComponent<BillBoardComponent>(scene, entity);
+  auto& billBoardComponent =
+      Entity::GetComponent<BillBoardComponent>(const_cast<Scene*>(scene), entity);
   if (billBoardComponent.implData != nullptr) return;
 
   auto implData = std::make_shared<BillBoardComponent_Impl>();
@@ -161,7 +161,7 @@ BillBoardRenderPass::CreateBufferForEveryEntity(const entt::entity entity,
 }
 
 void
-BillBoardRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
+BillBoardRenderPass::RecordCommand(const Scene* scene) {
   m_commandBuffer->Clear();
   auto view = Entity::GetAllEntity<BillBoardComponent>(scene);
 
@@ -222,7 +222,7 @@ BillBoardRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
 }
 
 void
-BillBoardRenderPass::SetUniformBuffer(const std::shared_ptr<Scene>& scene) {
+BillBoardRenderPass::SetUniformBuffer(const Scene* scene) {
   // set matrix
   const auto editorCamera = scene->GetEditorCamrea();
   const auto viewMatrix = editorCamera->GetViewMartix();
@@ -241,8 +241,7 @@ BillBoardRenderPass::SetUniformBuffer(const std::shared_ptr<Scene>& scene) {
 }
 
 void
-BillBoardRenderPass::Execute(const std::shared_ptr<Scene>& scene,
-                             const std::shared_ptr<ResourceManager>& resourceManager) {
+BillBoardRenderPass::Execute(const Scene* scene, const ResourceManager* resourceManager) {
   auto view = Entity::GetAllEntity<BillBoardComponent>(scene);
   for (auto&& [entity, cubeMapComponent] : view.each()) {
     CreateBufferForEveryEntity(entity, scene);

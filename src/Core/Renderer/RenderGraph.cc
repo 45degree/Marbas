@@ -126,12 +126,12 @@ void
 RenderGraph::Execute(const std::shared_ptr<ResourceManager> &resourceManager,
                      const std::shared_ptr<Scene> &scene) {
   for (int i = 0; i < m_renderOrder.size(); i++) {
-    m_deferredRenderPassNodes[m_renderOrder[i]]->Execute(scene, resourceManager);
+    m_deferredRenderPassNodes[m_renderOrder[i]]->Execute(scene.get(), resourceManager.get());
   }
 
   // execute forward rendering
   for (const auto &forwardRenderPass : m_forwardRendererPassNodes) {
-    forwardRenderPass->Execute(scene, resourceManager);
+    forwardRenderPass->Execute(scene.get(), resourceManager.get());
   }
 }
 

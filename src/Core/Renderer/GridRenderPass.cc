@@ -108,7 +108,7 @@ GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)
 }
 
 void
-GridRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
+GridRenderPass::RecordCommand(const Scene* scene) {
   m_commandBuffer->Clear();
 
   // check framebuffer and renderpass
@@ -169,7 +169,7 @@ GridRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
 }
 
 void
-GridRenderPass::SetUniformBuffer(const std::shared_ptr<Scene>& scene) {
+GridRenderPass::SetUniformBuffer(const Scene* scene) {
   const auto editorCamera = scene->GetEditorCamrea();
   const auto viewMatrix = editorCamera->GetViewMartix();
   const auto perspectiveMatrix = editorCamera->GetPerspective();
@@ -180,8 +180,7 @@ GridRenderPass::SetUniformBuffer(const std::shared_ptr<Scene>& scene) {
 }
 
 void
-GridRenderPass::Execute(const std::shared_ptr<Scene>& scene,
-                        const std::shared_ptr<ResourceManager>& resourceManager) {
+GridRenderPass::Execute(const Scene* scene, const ResourceManager* resourceManager) {
   if (m_needToRecordComand) {
     RecordCommand(scene);
     m_needToRecordComand = false;

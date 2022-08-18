@@ -47,7 +47,7 @@ RenderImage::Draw() {
     auto entity = m_modelEntity.value();
     auto viewMatrix = camera->GetViewMartix();
     auto perspectiveMatrix = camera->GetPerspective();
-    const auto& modelComponent = Entity::GetComponent<ModelComponent>(m_scene, entity);
+    const auto& modelComponent = Entity::GetComponent<ModelComponent>(m_scene.get(), entity);
     auto id = modelComponent.modelResourceId;
     auto resource = m_resourceManager->GetModelResourceContainer()->GetResource(id);
     DLOG_ASSERT(resource != nullptr);

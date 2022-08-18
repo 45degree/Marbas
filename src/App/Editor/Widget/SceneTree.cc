@@ -28,15 +28,15 @@ AddIconForStringByTag(const char* str, const UniqueTagComponent& tag) {
 void
 SceneTreeWidget::DrawNode(const entt::entity& entity) {
   if (entity == entt::null) return;
-  if (!Entity::HasComponent<HierarchyComponent>(m_scene, entity)) {
+  if (!Entity::HasComponent<HierarchyComponent>(m_scene.get(), entity)) {
     return;
   }
-  auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(m_scene, entity);
+  auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(m_scene.get(), entity);
 
   String name = "default node name";
   EntityType type;
-  if (Entity::HasComponent<UniqueTagComponent>(m_scene, entity)) {
-    const auto& tag = Entity::GetComponent<UniqueTagComponent>(m_scene, entity);
+  if (Entity::HasComponent<UniqueTagComponent>(m_scene.get(), entity)) {
+    const auto& tag = Entity::GetComponent<UniqueTagComponent>(m_scene.get(), entity);
     name = tag.tagName;
     type = tag.type;
   }
@@ -45,7 +45,7 @@ SceneTreeWidget::DrawNode(const entt::entity& entity) {
 
   if (ImGui::TreeNode(name.c_str())) {
     if (ImGui::IsItemClicked() && type == EntityType::Model) {
-      m_signal.publish(entity, Entity::GetComponent<ModelComponent>(m_scene, entity));
+      m_signal.publish(entity, Entity::GetComponent<ModelComponent>(m_scene.get(), entity));
     }
 
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && ImGui::IsWindowHovered()) {
@@ -66,8 +66,8 @@ SceneTreeWidget::DrawPopup() {
   if (m_selectEntity == entt::null) return;
 
   String name;
-  if (Entity::HasComponent<UniqueTagComponent>(m_scene, m_selectEntity)) {
-    const auto& tag = Entity::GetComponent<UniqueTagComponent>(m_scene, m_selectEntity);
+  if (Entity::HasComponent<UniqueTagComponent>(m_scene.get(), m_selectEntity)) {
+    const auto& tag = Entity::GetComponent<UniqueTagComponent>(m_scene.get(), m_selectEntity);
     name = tag.tagName;
   }
 

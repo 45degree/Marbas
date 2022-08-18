@@ -154,15 +154,13 @@ Scene::SaveToFile(const Path& scenePath) {}
 
 void
 Scene::AddModel(Uid modelResourceId, const String& modelName, const entt::entity& parent) {
-  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(shared_from_this(), parent))
+  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(this, parent))
       << "can't find the HierarchyComponent from the entity";
 
-  auto scene = shared_from_this();
-  auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(scene, parent);
+  auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(this, parent);
   auto modelEntity =
-      Entity::CreateEntity<ModelEntityPolicy>(scene, modelResourceId, m_resourceManager);
-  auto& modelTagComponent =
-      Entity::GetComponent<UniqueTagComponent>(shared_from_this(), modelEntity);
+      Entity::CreateEntity<ModelEntityPolicy>(this, modelResourceId, m_resourceManager);
+  auto& modelTagComponent = Entity::GetComponent<UniqueTagComponent>(this, modelEntity);
 
   modelTagComponent.tagName = modelName;
 
@@ -171,14 +169,12 @@ Scene::AddModel(Uid modelResourceId, const String& modelName, const entt::entity
 
 void
 Scene::AddBillBoard(Uid texture2DResourceId, glm::vec3 point, const entt::entity& parent) {
-  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(shared_from_this(), parent))
+  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(this, parent))
       << "can't find the HierarchyComponent from the entity";
 
-  auto scene = shared_from_this();
-  auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(scene, parent);
-  auto billBoardEntity = Entity::CreateEntity<BillBoardPolicy>(scene, texture2DResourceId);
-  auto& billBoardTagComponent =
-      Entity::GetComponent<UniqueTagComponent>(shared_from_this(), billBoardEntity);
+  auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(this, parent);
+  auto billBoardEntity = Entity::CreateEntity<BillBoardPolicy>(this, texture2DResourceId);
+  auto& billBoardTagComponent = Entity::GetComponent<UniqueTagComponent>(this, billBoardEntity);
 
   HierarchyComponent::AddChild(parent, m_world, billBoardEntity);
 }

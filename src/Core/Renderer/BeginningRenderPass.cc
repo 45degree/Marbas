@@ -78,7 +78,7 @@ BeginningRenderPass::CreateFrameBuffer() {
 }
 
 void
-BeginningRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
+BeginningRenderPass::RecordCommand(const Scene* scene) {
   m_commandBuffer->Clear();
 
   // check framebuffer and renderpass
@@ -120,8 +120,7 @@ BeginningRenderPass::RecordCommand(const std::shared_ptr<Scene>& scene) {
 }
 
 void
-BeginningRenderPass::Execute(const std::shared_ptr<Scene>& scene,
-                             const std::shared_ptr<ResourceManager>& resourceManager) {
+BeginningRenderPass::Execute(const Scene* scene, const ResourceManager* resourceManager) {
   m_commandBuffer->SubmitCommand();
 }
 

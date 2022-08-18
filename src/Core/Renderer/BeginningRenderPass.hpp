@@ -22,11 +22,10 @@ class BeginningRenderPass final : public DeferredRenderPass {
   CreateFrameBuffer() override;
 
   void
-  RecordCommand(const std::shared_ptr<Scene>& scene) override;
+  RecordCommand(const Scene* scene) override;
 
   virtual void
-  Execute(const std::shared_ptr<Scene>& scene,
-          const std::shared_ptr<ResourceManager>& resourceManager) override;
+  Execute(const Scene* scene, const ResourceManager* resourceManager) override;
 };
 
 }  // namespace Marbas
