@@ -22,12 +22,6 @@ class BillBoardComponent {
   glm::vec2 size = glm::vec2(1, 1);
   std::optional<Uid> textureResourceId;
   std::shared_ptr<BillBoardComponent_Impl> implData = nullptr;
-
-#pragma pack(push, 1)
-
-  struct UniformBufferBlockData {};
-
-#pragma pack(pop)
 };
 
 }  // namespace Marbas

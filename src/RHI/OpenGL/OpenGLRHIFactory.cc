@@ -159,44 +159,44 @@ OpenGLRHIFactory::Init(const RHICreateInfo& createInfo) const {
   }
 }
 
-std::shared_ptr<ImguiInterface>
+std::unique_ptr<ImguiInterface>
 OpenGLRHIFactory::CreateImguiInterface() const {
-  return std::make_shared<OpenGLImguiInterface>();
+  return std::make_unique<OpenGLImguiInterface>();
 }
 
-std::shared_ptr<FrameBuffer>
+std::unique_ptr<FrameBuffer>
 OpenGLRHIFactory::CreateFrameBuffer(const FrameBufferInfo& info) const {
-  return std::make_shared<OpenGLFrameBuffer>(info);
+  return std::make_unique<OpenGLFrameBuffer>(info);
 }
 
-std::shared_ptr<VertexBuffer>
+std::unique_ptr<VertexBuffer>
 OpenGLRHIFactory::CreateVertexBuffer(const void* data, size_t size) const {
-  return std::make_shared<OpenGLVertexBuffer>(data, size);
+  return std::make_unique<OpenGLVertexBuffer>(data, size);
 }
 
-std::shared_ptr<VertexBuffer>
+std::unique_ptr<VertexBuffer>
 OpenGLRHIFactory::CreateVertexBuffer(size_t size) const {
-  return std::make_shared<OpenGLVertexBuffer>(size);
+  return std::make_unique<OpenGLVertexBuffer>(size);
 }
 
-std::shared_ptr<IndexBuffer>
+std::unique_ptr<IndexBuffer>
 OpenGLRHIFactory::CreateIndexBuffer(const Vector<uint32_t>& indices) const {
-  return std::make_shared<OpenGLIndexBuffer>(indices);
+  return std::make_unique<OpenGLIndexBuffer>(indices);
 }
 
-std::shared_ptr<ShaderStage>
+std::unique_ptr<ShaderStage>
 OpenGLRHIFactory::CreateShaderStage(const ShaderType shaderType) const {
-  auto shaderStage = std::make_shared<OpenGLShaderStage>(shaderType);
+  auto shaderStage = std::make_unique<OpenGLShaderStage>(shaderType);
   shaderStage->EnableSpriv(m_enableSpriv);
   return shaderStage;
 }
 
-std::shared_ptr<Shader>
+std::unique_ptr<Shader>
 OpenGLRHIFactory::CreateShader() const {
-  return std::make_shared<OpenGLShader>();
+  return std::make_unique<OpenGLShader>();
 }
 
-std::shared_ptr<Texture2D>
+std::unique_ptr<Texture2D>
 OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath, uint32_t level) const {
   String pathStr = imagePath.string();
 
@@ -236,13 +236,13 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath, uint32_t level) const {
   return texture;
 }
 
-std::shared_ptr<Texture2D>
+std::unique_ptr<Texture2D>
 OpenGLRHIFactory::CreateTexutre2D(int width, int height, uint32_t level,
                                   TextureFormat format) const {
-  return std::make_shared<OpenGLTexture2D>(width, height, level, format);
+  return std::make_unique<OpenGLTexture2D>(width, height, level, format);
 }
 
-std::shared_ptr<TextureCubeMap>
+std::unique_ptr<TextureCubeMap>
 OpenGLRHIFactory::CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) const {
   int width, height, nrChannels;
   TextureFormat formatType;
@@ -252,7 +252,7 @@ OpenGLRHIFactory::CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) cons
   formatType = nrChannels == 4 ? TextureFormat::RGBA : TextureFormat::RGB;
 
   // create texture cubemap
-  auto textureCubeMap = std::make_shared<OpenGLTextureCubeMap>(width, height, formatType);
+  auto textureCubeMap = std::make_unique<OpenGLTextureCubeMap>(width, height, formatType);
 
   // Set Data
   textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::BACK);
@@ -286,51 +286,51 @@ OpenGLRHIFactory::CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) cons
   return textureCubeMap;
 }
 
-std::shared_ptr<TextureCubeMap>
+std::unique_ptr<TextureCubeMap>
 OpenGLRHIFactory::CreateTextureCubeMap(int width, int height, TextureFormat format) const {
-  return std::make_shared<OpenGLTextureCubeMap>(width, height, format);
+  return std::make_unique<OpenGLTextureCubeMap>(width, height, format);
 }
 
-std::shared_ptr<UniformBuffer>
+std::unique_ptr<UniformBuffer>
 OpenGLRHIFactory::CreateUniformBuffer(uint32_t size) const {
-  return std::make_shared<OpenGLUniformBuffer>(size);
+  return std::make_unique<OpenGLUniformBuffer>(size);
 }
 
-std::shared_ptr<DynamicUniformBuffer>
+std::unique_ptr<DynamicUniformBuffer>
 OpenGLRHIFactory::CreateDynamicUniforBuffer(uint32_t size) const {
-  return std::make_shared<OpenGLDynamicUniformBuffer>(size);
+  return std::make_unique<OpenGLDynamicUniformBuffer>(size);
 }
 
-std::shared_ptr<CommandFactory>
+std::unique_ptr<CommandFactory>
 OpenGLRHIFactory::CreateCommandFactory() const {
-  return std::make_shared<OpenGLCommandFactory>();
+  return std::make_unique<OpenGLCommandFactory>();
 }
 
-std::shared_ptr<SwapChain>
+std::unique_ptr<SwapChain>
 OpenGLRHIFactory::CreateSwapChain() {
   int width, height;
   glfwGetFramebufferSize(m_glfwWindow, &width, &height);
-  return std::make_shared<OpenGLSwapChain>(m_glfwWindow, width, height);
+  return std::make_unique<OpenGLSwapChain>(m_glfwWindow, width, height);
 }
 
-std::shared_ptr<RenderPass>
+std::unique_ptr<RenderPass>
 OpenGLRHIFactory::CreateRenderPass(const RenderPassCreateInfo& createInfo) {
-  return std::make_shared<OpenGLRenderPass>(createInfo);
+  return std::make_unique<OpenGLRenderPass>(createInfo);
 }
 
-std::shared_ptr<GraphicsPipeLine>
+std::unique_ptr<GraphicsPipeLine>
 OpenGLRHIFactory::CreateGraphicsPipeLine() {
   return std::make_unique<OpenGLGraphicsPipeline>();
 }
 
-std::shared_ptr<DescriptorSet>
+std::unique_ptr<DescriptorSet>
 OpenGLRHIFactory::CreateDescriptorSet(const DescriptorSetInfo& info) const {
-  return std::make_shared<OpenGLDescriptorSet>(info);
+  return std::make_unique<OpenGLDescriptorSet>(info);
 }
 
-std::shared_ptr<DynamicDescriptorSet>
+std::unique_ptr<DynamicDescriptorSet>
 OpenGLRHIFactory::CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const {
-  return std::make_shared<OpenGLDynamicDescriptorSet>(bindingPoints);
+  return std::make_unique<OpenGLDynamicDescriptorSet>(bindingPoints);
 }
 
 }  // namespace Marbas

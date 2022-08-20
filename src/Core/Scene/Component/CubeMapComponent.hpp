@@ -22,13 +22,11 @@ struct CubeMapComponent {
                                                        6, 3, 2, 7, 3, 6, 1, 0, 4, 1, 4, 5,
                                                        7, 0, 3, 0, 7, 4, 4, 7, 5, 7, 6, 5};
 
-#pragma pack(push, 1)
   struct UniformBufferBlockData {
-    glm::mat4 model = glm::mat4(1.0);
-    glm::mat4 view = glm::mat4(1.0);
-    glm::mat4 projective = glm::mat4(1.0);
+    alignas(16) glm::mat4 model = glm::mat4(1.0);
+    alignas(16) glm::mat4 view = glm::mat4(1.0);
+    alignas(16) glm::mat4 projective = glm::mat4(1.0);
   } m_uniformBufferData;
-#pragma pack(pop)
 
   std::optional<Uid> cubeMapResourceId = std::nullopt;
   std::shared_ptr<CubeMapComponent_Impl> m_implData = nullptr;

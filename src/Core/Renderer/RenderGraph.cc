@@ -102,6 +102,7 @@ RenderGraph::Compile() {
           degree[id]--;
         }
         graph[i].clear();
+        graphUsedflag[i] = 1;
       }
     }
   }

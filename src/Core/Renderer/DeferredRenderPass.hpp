@@ -4,14 +4,14 @@
 
 namespace Marbas {
 
-struct DeferredRenderPassNodeCreateInfo : public RenderPassNodeCreateInfo {
+struct DeferredRenderPassCreateInfo : public RenderPassNodeCreateInfo {
   Vector<String> inputResource;
   Vector<String> outputResource;
 };
 
 class DeferredRenderPass : public RenderPassNode {
  public:
-  explicit DeferredRenderPass(const DeferredRenderPassNodeCreateInfo& createInfo);
+  explicit DeferredRenderPass(const DeferredRenderPassCreateInfo& createInfo);
   virtual ~DeferredRenderPass() = default;
 
  public:

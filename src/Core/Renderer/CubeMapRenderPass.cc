@@ -4,6 +4,7 @@
 
 #include <nameof.hpp>
 
+#include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "Core/Scene/Component/CubeMapComponent.hpp"
 
@@ -31,7 +32,7 @@ GetMeshVertexInfoLayout() {
 
 CubeMapRenderPassCreateInfo::CubeMapRenderPassCreateInfo() {
   passName = "CubeMapRenderPass";
-  inputPassNode = GeometryRenderPass::renderPassName;
+  inputPassNode = BlinnPhongRenderPass::renderPassName;
 }
 
 CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createInfo)
@@ -196,10 +197,10 @@ CubeMapRenderPass::CreateBufferForEveryEntity(const entt::entity cubeMap, Scene*
   auto verticesLen = sizeof(Vertex) * vertices.size();
   auto vertexBuffer = m_rhiFactory->CreateVertexBuffer(vertices.data(), verticesLen);
   vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
-  implData->vertexBuffer = vertexBuffer;
+  implData->vertexBuffer = std::move(vertexBuffer);
 
   auto indexBuffer = m_rhiFactory->CreateIndexBuffer(std::move(indices));
-  implData->indexBuffer = indexBuffer;
+  implData->indexBuffer = std::move(indexBuffer);
 
   // load material
   if (cubeMapComponent.cubeMapResourceId.has_value()) {
@@ -222,7 +223,7 @@ CubeMapRenderPass::CreateBufferForEveryEntity(const entt::entity cubeMap, Scene*
     descriptor->BindImage(0, cubeMapResource->GetTextureCubeMap()->GetDescriptor());
     descriptor->BindBuffer(0, m_uniformBuffer->GetIBufferDescriptor());
 
-    implData->descriptorSet = descriptor;
+    implData->descriptorSet = std::move(descriptor);
     implData->textureCubeMapResource = cubeMapResource;
   }
   cubeMapComponent.m_implData = implData;

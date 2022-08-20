@@ -6,6 +6,7 @@
 #include "Core/Event/Input.hpp"
 #include "Core/Renderer/BeginningRenderPass.hpp"
 #include "Core/Renderer/BillBoardRenderPass.hpp"
+#include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/CubeMapRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "Core/Renderer/GridRenderPass.hpp"
@@ -73,6 +74,7 @@ RenderLayer::OnAttach() {
           {
               {GBufferTexutreType::COLOR, 1},
               {GBufferTexutreType::NORMALS, 1},
+              {GBufferTexutreType::POSITION, 1},
           },
       .rhiFactory = m_rhiFactory,
       .width = m_width,
@@ -91,6 +93,26 @@ RenderLayer::OnAttach() {
     return createInfo;
   }());
   m_renderGraph->RegisterDeferredRenderPassNode(geometryRenderPass);
+
+  // blinnPhone Render Pass
+  auto blinnPhoneTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = BlinnPhongRenderPass::blinnPhongTargetName,
+      .buffersType = {{GBufferTexutreType::COLOR, 1}},
+      .rhiFactory = m_rhiFactory,
+      .width = m_width,
+      .height = m_height,
+  });
+  m_renderGraph->RegisterRenderTargetNode(blinnPhoneTarget);
+
+  auto blinnPhoneRenderPass = std::make_shared<BlinnPhongRenderPass>([&]() {
+    BlinnPhongRenderPassCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = m_width;
+    createInfo.height = m_height;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterDeferredRenderPassNode(blinnPhoneRenderPass);
 
   // create billBoard render pass
   auto billBoardRenderPass = std::make_shared<BillBoardRenderPass>([&]() {
@@ -179,7 +201,7 @@ RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
 
 std::shared_ptr<Texture2D>
 RenderLayer::GetRenderResult() {
-  auto target = m_renderGraph->GetRenderTarget(GeometryRenderPass::geometryTargetName);
+  auto target = m_renderGraph->GetRenderTarget(BlinnPhongRenderPass::blinnPhongTargetName);
 
   return target->GetGBuffer()->GetTexture(GBufferTexutreType::COLOR);
 }

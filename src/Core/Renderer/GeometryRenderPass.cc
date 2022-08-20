@@ -32,7 +32,7 @@ GetMeshVertexInfoLayout() {
   return layouts;
 };
 
-GeometryRenderPassCreatInfo::GeometryRenderPassCreatInfo() : DeferredRenderPassNodeCreateInfo() {
+GeometryRenderPassCreatInfo::GeometryRenderPassCreatInfo() : DeferredRenderPassCreateInfo() {
   passName = GeometryRenderPass::renderPassName;
   inputResource = {BeginningRenderPass::depthTargetName, BeginningRenderPass::targetName};
   outputResource = {GeometryRenderPass::depthTargetName, GeometryRenderPass::geometryTargetName};
@@ -57,7 +57,12 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
                   .loadOp = AttachmentLoadOp::Ignore,
               },
               AttachmentDescription{
-                  .format = TextureFormat::RGB,
+                  .format = TextureFormat::RGB32F,
+                  .type = AttachmentType::Color,
+                  .loadOp = AttachmentLoadOp::Clear,
+              },
+              AttachmentDescription{
+                  .format = TextureFormat::RGB32F,
                   .type = AttachmentType::Color,
                   .loadOp = AttachmentLoadOp::Clear,
               },
@@ -77,8 +82,8 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
   // read shader
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto shaderResource = shaderContainer->CreateResource();
-  shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/shader.vert.glsl");
-  shaderResource->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/shader.frag.glsl");
+  shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/geometry.vert.glsl");
+  shaderResource->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/geometry.frag.glsl");
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
 
@@ -98,6 +103,7 @@ GeometryRenderPass::CreateFrameBuffer() {
   const auto& targetGBuffer = m_outputTarget[geometryTargetName]->GetGBuffer();
   auto normalBuffer = targetGBuffer->GetTexture(GBufferTexutreType::NORMALS);
   auto colorBuffer = targetGBuffer->GetTexture(GBufferTexutreType::COLOR);
+  auto positionBuffer = targetGBuffer->GetTexture(GBufferTexutreType::POSITION);
 
   const auto& depthGBuffer = m_outputTarget[depthTargetName]->GetGBuffer();
   auto depthBuffer = depthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
@@ -114,7 +120,7 @@ GeometryRenderPass::CreateFrameBuffer() {
       .width = width,
       .height = height,
       .renderPass = m_renderPass.get(),
-      .attachments = {colorBuffer, normalBuffer, depthBuffer},
+      .attachments = {colorBuffer, normalBuffer, positionBuffer, depthBuffer},
   };
 
   m_framebuffer = m_rhiFactory->CreateFrameBuffer(createInfo);
@@ -249,11 +255,11 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* sc
   auto verticesLen = sizeof(Vertex) * vertices.size();
   auto vertexBuffer = m_rhiFactory->CreateVertexBuffer(vertices.data(), verticesLen);
   vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
-  implData->vertexBuffer = vertexBuffer;
+  implData->vertexBuffer = std::move(vertexBuffer);
 
   const auto& indices = _mesh->m_indices;
   auto indexBuffer = m_rhiFactory->CreateIndexBuffer(indices);
-  implData->indexBuffer = indexBuffer;
+  implData->indexBuffer = std::move(indexBuffer);
 
   // load material
   if (_mesh->m_materialId.has_value()) {
@@ -282,7 +288,7 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* sc
     }
 
     implData->materialResource = materialResource;
-    implData->descriptor = descriptor;
+    implData->descriptor = std::move(descriptor);
   }
 
   meshComponent.m_impldata = implData;

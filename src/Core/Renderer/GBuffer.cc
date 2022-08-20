@@ -28,7 +28,7 @@ GBuffer::AddTexture(GBufferTexutreType type, uint32_t level, RHIFactory* rhiFact
       break;
     case GBufferTexutreType::NORMALS:
     case GBufferTexutreType::POSITION:
-      texture = rhiFactory->CreateTexutre2D(m_width, m_height, level, TextureFormat::RGB);
+      texture = rhiFactory->CreateTexutre2D(m_width, m_height, level, TextureFormat::RGB32F);
       break;
     case GBufferTexutreType::DEPTH:
       texture = rhiFactory->CreateTexutre2D(m_width, m_height, level, TextureFormat::DEPTH);

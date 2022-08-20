@@ -41,7 +41,7 @@ ShaderResource::LoadResource(RHIFactory* rhiFactory, const ResourceManager* reso
       shader->ReadFromSource(shaderStagePath);
     }
 
-    m_shader->AddShaderStage(shader);
+    m_shader->AddShaderStage(std::move(shader));
   }
 
   m_shader->Link();

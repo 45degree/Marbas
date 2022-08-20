@@ -33,17 +33,15 @@ class BillBoardRenderPass final : public ForwardRenderPass {
   Execute(const Scene* scene, const ResourceManager* resourceManager) override;
 
  private:
-#pragma pack(push, 1)
   struct MatrixUniformBufferBlock {
-    glm::mat4 view;
-    glm::mat4 perspective;
+    alignas(16) glm::mat4 view;
+    alignas(16) glm::mat4 perspective;
   } m_matrixUniformBlock;
 
   struct CameraInfoUniformBufferBlock {
-    glm::vec3 right;
-    glm::vec3 up;
+    alignas(16) glm::vec3 right;
+    alignas(16) glm::vec3 up;
   } m_cameraUniformBlock;
-#pragma pack(pop)
 
   std::shared_ptr<UniformBuffer> m_matrixUniformBuffer = nullptr;
   std::shared_ptr<UniformBuffer> m_cameraUniformBuffer = nullptr;

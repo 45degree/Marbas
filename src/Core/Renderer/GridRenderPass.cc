@@ -2,6 +2,7 @@
 
 #include <nameof.hpp>
 
+#include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "RHI/Interface/Pipeline.hpp"
 
@@ -9,7 +10,7 @@ namespace Marbas {
 
 GridRenderPassCreateInfo::GridRenderPassCreateInfo() {
   passName = "GridRenderPassCreateInfo";
-  inputPassNode = GeometryRenderPass::renderPassName;
+  inputPassNode = BlinnPhongRenderPass::renderPassName;
 }
 
 GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)
@@ -47,15 +48,6 @@ GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)
   m_commandBuffer = m_commandFactory->CreateCommandBuffer();
 
   // read shader
-  // auto fragmentShader =
-  //     m_rhiFactory->CreateShaderStage("Shader/grid.frag.glsl.spv", ShaderType::FRAGMENT_SHADER);
-  // auto vertexShader =
-  //     m_rhiFactory->CreateShaderStage("Shader/grid.vert.glsl.spv", ShaderType::VERTEX_SHADER);
-  // auto cubeMapShader = m_rhiFactory->CreateShader();
-  // cubeMapShader->AddShaderStage(vertexShader);
-  // cubeMapShader->AddShaderStage(fragmentShader);
-  // cubeMapShader->Link();
-
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto shaderResource = shaderContainer->CreateResource();
   shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/grid.vert.glsl");

@@ -9,7 +9,7 @@
 
 namespace Marbas {
 
-struct GeometryRenderPassCreatInfo final : public DeferredRenderPassNodeCreateInfo {
+struct GeometryRenderPassCreatInfo final : public DeferredRenderPassCreateInfo {
   GeometryRenderPassCreatInfo();
 };
 

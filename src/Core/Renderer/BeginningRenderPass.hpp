@@ -4,7 +4,7 @@
 
 namespace Marbas {
 
-struct BeginningRenderPassCreateInfo : public DeferredRenderPassNodeCreateInfo {
+struct BeginningRenderPassCreateInfo : public DeferredRenderPassCreateInfo {
   BeginningRenderPassCreateInfo();
 };
 

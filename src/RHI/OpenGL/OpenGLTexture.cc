@@ -19,6 +19,10 @@ ConvertToOpenglDataFormat(TextureFormat type) {
       return GL_RGB;
     case TextureFormat::RGBA:
       return GL_RGBA;
+    case TextureFormat::RGB16F:
+      return GL_RGB16F;
+    case TextureFormat::RGB32F:
+      return GL_RGB32F;
     case TextureFormat::DEPTH:
       return GL_DEPTH_COMPONENT;
   }
@@ -39,6 +43,10 @@ ConvertToOpenglInternalFormat(TextureFormat type) {
       return GL_RGB8;
     case TextureFormat::RGBA:
       return GL_RGBA8;
+    case TextureFormat::RGB16F:
+      return GL_RGB16F;
+    case TextureFormat::RGB32F:
+      return GL_RGB32F;
     case TextureFormat::DEPTH:
       return GL_DEPTH_COMPONENT32;
   }

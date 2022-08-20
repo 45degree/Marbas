@@ -195,7 +195,7 @@ OpenGLShaderStage::ReadFromSource(const FileSystem::path& path) {
   if (!success) {
     GLchar infoLog[1024];
     glGetShaderInfoLog(shaderID, 1024, nullptr, infoLog);
-    LOG(ERROR) << "failed to compile shader, info: \n" << String(infoLog);
+    LOG(ERROR) << FORMAT("failed to compile shader: {}, info:{}", path, String(infoLog));
   } else {
     LOG(INFO) << "compiled shader";
   }

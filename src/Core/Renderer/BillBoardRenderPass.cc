@@ -2,6 +2,7 @@
 
 #include <nameof.hpp>
 
+#include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "Core/Scene/Component/BillBoardComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
@@ -29,7 +30,7 @@ GetMeshVertexInfoLayout() {
 
 BillBoardRenderPassCreateInfo::BillBoardRenderPassCreateInfo() {
   passName = "CubeMapRenderPass";
-  inputPassNode = GeometryRenderPass::renderPassName;
+  inputPassNode = BlinnPhongRenderPass::renderPassName;
 }
 
 BillBoardRenderPass::BillBoardRenderPass(const BillBoardRenderPassCreateInfo& createInfo)
@@ -71,16 +72,6 @@ BillBoardRenderPass::BillBoardRenderPass(const BillBoardRenderPassCreateInfo& cr
   m_commandBuffer = m_commandFactory->CreateCommandBuffer();
 
   // read shader
-  // auto fragmentShader = m_rhiFactory->CreateShaderStage("Shader/billBoard.frag.glsl.spv",
-  //                                                       ShaderType::FRAGMENT_SHADER);
-  // auto vertexShader =
-  //     m_rhiFactory->CreateShaderStage("Shader/billBoard.vert.glsl.spv",
-  //     ShaderType::VERTEX_SHADER);
-  // auto billBoardShader = m_rhiFactory->CreateShader();
-  // billBoardShader->AddShaderStage(vertexShader);
-  // billBoardShader->AddShaderStage(fragmentShader);
-  // billBoardShader->Link();
-
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto shaderResource = shaderContainer->CreateResource();
   shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/billBoard.vert.glsl");
@@ -124,7 +115,7 @@ BillBoardRenderPass::CreateBufferForEveryEntity(const entt::entity entity, const
   auto verticesLen = sizeof(vertexData);
   auto vertexBuffer = m_rhiFactory->CreateVertexBuffer(&vertexData, verticesLen);
   vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
-  implData->vertexBuffer = vertexBuffer;
+  implData->vertexBuffer = std::move(vertexBuffer);
 
   // load material
   if (billBoardComponent.textureResourceId.has_value()) {
@@ -153,7 +144,7 @@ BillBoardRenderPass::CreateBufferForEveryEntity(const entt::entity entity, const
     descriptor->BindBuffer(0, m_matrixUniformBuffer->GetIBufferDescriptor());
     descriptor->BindBuffer(1, m_cameraUniformBuffer->GetIBufferDescriptor());
 
-    implData->descriptorSet = descriptor;
+    implData->descriptorSet = std::move(descriptor);
     implData->textureResource = texture2DResource;
   }
   billBoardComponent.implData = implData;

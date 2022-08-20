@@ -1,3 +1,4 @@
+#include "RHI/Interface/FrameBuffer.hpp"
 #define GOOGLE_GLOG_DLL_DECL
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 
@@ -83,7 +84,8 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   };
 
   auto cubeVertexBufferLen = sizeof(float) * cubeVertices.size();
-  auto cubeVertexBuffer = rhiFactory->CreateVertexBuffer(cubeVertices.data(), cubeVertexBufferLen);
+  std::shared_ptr<Marbas::VertexBuffer> cubeVertexBuffer =
+      rhiFactory->CreateVertexBuffer(cubeVertices.data(), cubeVertexBufferLen);
   Marbas::Vector<Marbas::ElementLayout> cubeVertexBufferLayout{
       Marbas::ElementLayout{
           .index = 0,
@@ -100,7 +102,8 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   cubeVertexBuffer->SetLayout(cubeVertexBufferLayout);
 
   auto planeVerticesLen = sizeof(float) * planeVertices.size();
-  auto planeVertexBuffer = rhiFactory->CreateVertexBuffer(planeVertices.data(), planeVerticesLen);
+  std::shared_ptr<Marbas::VertexBuffer> planeVertexBuffer =
+      rhiFactory->CreateVertexBuffer(planeVertices.data(), planeVerticesLen);
   Marbas::Vector<Marbas::ElementLayout> planeVertexBufferLayout{
       Marbas::ElementLayout{
           .index = 0,
@@ -117,7 +120,8 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   planeVertexBuffer->SetLayout(planeVertexBufferLayout);
 
   auto quadVerticesLen = sizeof(float) * quadVertices.size();
-  auto quadVertexBuffer = rhiFactory->CreateVertexBuffer(quadVertices.data(), quadVerticesLen);
+  std::shared_ptr<Marbas::VertexBuffer> quadVertexBuffer =
+      rhiFactory->CreateVertexBuffer(quadVertices.data(), quadVerticesLen);
   Marbas::Vector<Marbas::ElementLayout> quadVertexBufferLayout{
       Marbas::ElementLayout{
           .index = 0,
@@ -136,21 +140,24 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   auto cubeTexture = rhiFactory->CreateTexutre2D("Test/container.jpg", 1);
   auto floorTexture = rhiFactory->CreateTexutre2D("Test/metal.png", 1);
 
-  auto frameVertexShaderStage = rhiFactory->CreateShaderStage(Marbas::ShaderType::VERTEX_SHADER);
+  std::shared_ptr<Marbas::ShaderStage> frameVertexShaderStage =
+      rhiFactory->CreateShaderStage(Marbas::ShaderType::VERTEX_SHADER);
   frameVertexShaderStage->ReadSPIR_V("Test/showBox.vert.glsl.spv", "main");
-  auto frameFragmentShaderStage =
+  std::shared_ptr<Marbas::ShaderStage> frameFragmentShaderStage =
       rhiFactory->CreateShaderStage(Marbas::ShaderType::FRAGMENT_SHADER);
   frameFragmentShaderStage->ReadSPIR_V("Test/showBox.frag.glsl.spv", "main");
-  auto frameShader = rhiFactory->CreateShader();
+  std::shared_ptr<Marbas::Shader> frameShader = rhiFactory->CreateShader();
   frameShader->AddShaderStage(frameVertexShaderStage);
   frameShader->AddShaderStage(frameFragmentShaderStage);
   frameShader->Link();
 
-  auto screenVertexShaderStage = rhiFactory->CreateShaderStage(Marbas::ShaderType::VERTEX_SHADER);
+  std::shared_ptr<Marbas::ShaderStage> screenVertexShaderStage =
+      rhiFactory->CreateShaderStage(Marbas::ShaderType::VERTEX_SHADER);
   screenVertexShaderStage->ReadSPIR_V("Test/showBoxScreen.vert.glsl.spv", "main");
-  auto screenFragShaderStage = rhiFactory->CreateShaderStage(Marbas::ShaderType::FRAGMENT_SHADER);
+  std::shared_ptr<Marbas::ShaderStage> screenFragShaderStage =
+      rhiFactory->CreateShaderStage(Marbas::ShaderType::FRAGMENT_SHADER);
   screenFragShaderStage->ReadSPIR_V("Test/showBoxScreen.frag.glsl.spv", "main");
-  auto screenShader = rhiFactory->CreateShader();
+  std::shared_ptr<Marbas::Shader> screenShader = rhiFactory->CreateShader();
   screenShader->AddShaderStage(screenVertexShaderStage);
   screenShader->AddShaderStage(screenFragShaderStage);
   screenShader->Link();
@@ -195,17 +202,20 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   };
 
   // create resource
-  auto cubeRenderPass = rhiFactory->CreateRenderPass(cubeRenderPassCreateInfo);
-  auto cubePipeline = rhiFactory->CreateGraphicsPipeLine();
-  auto textureColorBuffer = rhiFactory->CreateTexutre2D(800, 600, 1, Marbas::TextureFormat::RGB);
-  auto textureDepthBuffer = rhiFactory->CreateTexutre2D(800, 600, 1, Marbas::TextureFormat::DEPTH);
+  std::shared_ptr<Marbas::RenderPass> cubeRenderPass =
+      rhiFactory->CreateRenderPass(cubeRenderPassCreateInfo);
+  std::shared_ptr<Marbas::GraphicsPipeLine> cubePipeline = rhiFactory->CreateGraphicsPipeLine();
+  std::shared_ptr<Marbas::Texture2D> textureColorBuffer =
+      rhiFactory->CreateTexutre2D(800, 600, 1, Marbas::TextureFormat::RGB);
+  std::shared_ptr<Marbas::Texture2D> textureDepthBuffer =
+      rhiFactory->CreateTexutre2D(800, 600, 1, Marbas::TextureFormat::DEPTH);
   Marbas::FrameBufferInfo frameBufferInfo{
       .width = 800,
       .height = 600,
       .renderPass = cubeRenderPass.get(),
       .attachments = {textureColorBuffer, textureDepthBuffer},
   };
-  auto frameBuffer = rhiFactory->CreateFrameBuffer(frameBufferInfo);
+  std::shared_ptr<Marbas::FrameBuffer> frameBuffer = rhiFactory->CreateFrameBuffer(frameBufferInfo);
   auto cubeCommandBuffer = commandFactory->CreateCommandBuffer();
   Marbas::DescriptorSetInfo cubeDescriptorSetInfo{
       Marbas::DescriptorInfo{
@@ -218,7 +228,8 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
           .bindingPoint = 0,
       },
   };
-  auto cubeDescriptorSet = rhiFactory->CreateDescriptorSet(cubeDescriptorSetInfo);
+  std::shared_ptr<Marbas::DescriptorSet> cubeDescriptorSet =
+      rhiFactory->CreateDescriptorSet(cubeDescriptorSetInfo);
   cubePipeline->SetVertexBufferLayout(cubeVertexBuffer->Getlayout(),
                                       Marbas::VertexInputRate::VERTEX);
   cubePipeline->SetShader(frameShader);
@@ -287,9 +298,11 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   };
 
   // create resource
-  auto planeRenderPass = rhiFactory->CreateRenderPass(planeRenderPassCreateInfo);
-  auto planePipeline = rhiFactory->CreateGraphicsPipeLine();
-  auto planeDescriptorSet = rhiFactory->CreateDescriptorSet(planeDescriptorSetInfo);
+  std::shared_ptr<Marbas::RenderPass> planeRenderPass =
+      rhiFactory->CreateRenderPass(planeRenderPassCreateInfo);
+  std::shared_ptr<Marbas::GraphicsPipeLine> planePipeline = rhiFactory->CreateGraphicsPipeLine();
+  std::shared_ptr<Marbas::DescriptorSet> planeDescriptorSet =
+      rhiFactory->CreateDescriptorSet(planeDescriptorSetInfo);
   auto planeCommandBuffer = commandFactory->CreateCommandBuffer();
   planePipeline->SetVertexBufferLayout(planeVertexBuffer->Getlayout(),
                                        Marbas::VertexInputRate::VERTEX);
@@ -354,9 +367,11 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   };
 
   // create resource
-  auto screenRenderPass = rhiFactory->CreateRenderPass(screenRenderPassCreateInfo);
-  auto screenPipeLine = rhiFactory->CreateGraphicsPipeLine();
-  auto screenDescriptorSet = rhiFactory->CreateDescriptorSet(screenDescriptorSetInfo);
+  std::shared_ptr<Marbas::RenderPass> screenRenderPass =
+      rhiFactory->CreateRenderPass(screenRenderPassCreateInfo);
+  std::shared_ptr<Marbas::GraphicsPipeLine> screenPipeLine = rhiFactory->CreateGraphicsPipeLine();
+  std::shared_ptr<Marbas::DescriptorSet> screenDescriptorSet =
+      rhiFactory->CreateDescriptorSet(screenDescriptorSetInfo);
   auto screenCommandBuffer = commandFactory->CreateCommandBuffer();
   screenDescriptorSet->BindImage(0, textureColorBuffer->GetDescriptor());
   screenPipeLine->SetVertexBufferLayout(quadVertexBuffer->Getlayout(),

@@ -5,6 +5,8 @@ layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aTexCoord;
 
 layout(location = 0) out vec2 ourTex;
+layout(location = 1) out vec3 Normal;
+layout(location = 2) out vec3 Position;
 
 layout(std140, binding = 0) uniform Matrices {
   mat4 model;
@@ -15,5 +17,11 @@ layout(std140, binding = 0) uniform Matrices {
 void main() {
   ourTex = aTexCoord;
 
-  gl_Position = projection * view * model * vec4(aPos, 1.0);
+  mat3 normalMatrix = transpose(inverse(mat3(model)));
+  Normal = normalMatrix * aNormal;
+
+  vec4 position = model * vec4(aPos, 1.0);
+  Position =position.xyz;
+
+  gl_Position = projection * view * position;
 }

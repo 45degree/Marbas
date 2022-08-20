@@ -10,5 +10,4 @@ extern "C" struct Vertex {
 };
 #pragma pack()
 
-
 }  // namespace Marbas

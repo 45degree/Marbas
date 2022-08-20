@@ -2,7 +2,7 @@
 
 namespace Marbas {
 
-DeferredRenderPass::DeferredRenderPass(const DeferredRenderPassNodeCreateInfo& createInfo)
+DeferredRenderPass::DeferredRenderPass(const DeferredRenderPassCreateInfo& createInfo)
     : RenderPassNode(createInfo) {
   for (const auto& input : createInfo.inputResource) {
     m_inputTarget.insert({input, nullptr});

@@ -74,61 +74,61 @@ class RHIFactory {
   virtual void
   Init(const RHICreateInfo& extraInfo) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<ImguiInterface>
+  [[nodiscard]] virtual std::unique_ptr<ImguiInterface>
   CreateImguiInterface() const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<VertexBuffer>
+  [[nodiscard]] virtual std::unique_ptr<VertexBuffer>
   CreateVertexBuffer(const void* data, size_t size) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<VertexBuffer>
+  [[nodiscard]] virtual std::unique_ptr<VertexBuffer>
   CreateVertexBuffer(size_t size) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<IndexBuffer>
+  [[nodiscard]] virtual std::unique_ptr<IndexBuffer>
   CreateIndexBuffer(const Vector<uint32_t>& indices) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<ShaderStage>
+  [[nodiscard]] virtual std::unique_ptr<ShaderStage>
   CreateShaderStage(const ShaderType shaderType) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<Shader>
+  [[nodiscard]] virtual std::unique_ptr<Shader>
   CreateShader() const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<SwapChain>
+  [[nodiscard]] virtual std::unique_ptr<SwapChain>
   CreateSwapChain() = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<RenderPass>
+  [[nodiscard]] virtual std::unique_ptr<RenderPass>
   CreateRenderPass(const RenderPassCreateInfo& createInfo) = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<GraphicsPipeLine>
+  [[nodiscard]] virtual std::unique_ptr<GraphicsPipeLine>
   CreateGraphicsPipeLine() = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<Texture2D>
+  [[nodiscard]] virtual std::unique_ptr<Texture2D>
   CreateTexutre2D(const Path& imagePath, uint32_t level) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<Texture2D>
+  [[nodiscard]] virtual std::unique_ptr<Texture2D>
   CreateTexutre2D(int width, int height, uint32_t level, TextureFormat formatType) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<TextureCubeMap>
+  [[nodiscard]] virtual std::unique_ptr<TextureCubeMap>
   CreateTextureCubeMap(int width, int height, TextureFormat format) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<TextureCubeMap>
+  [[nodiscard]] virtual std::unique_ptr<TextureCubeMap>
   CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<CommandFactory>
+  [[nodiscard]] virtual std::unique_ptr<CommandFactory>
   CreateCommandFactory() const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<UniformBuffer>
+  [[nodiscard]] virtual std::unique_ptr<UniformBuffer>
   CreateUniformBuffer(uint32_t size) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<DynamicUniformBuffer>
+  [[nodiscard]] virtual std::unique_ptr<DynamicUniformBuffer>
   CreateDynamicUniforBuffer(uint32_t size) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<FrameBuffer>
+  [[nodiscard]] virtual std::unique_ptr<FrameBuffer>
   CreateFrameBuffer(const FrameBufferInfo& info) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<DescriptorSet>
+  [[nodiscard]] virtual std::unique_ptr<DescriptorSet>
   CreateDescriptorSet(const DescriptorSetInfo& createInfo) const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<DynamicDescriptorSet>
+  [[nodiscard]] virtual std::unique_ptr<DynamicDescriptorSet>
   CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const = 0;
 
  public:

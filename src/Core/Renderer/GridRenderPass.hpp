@@ -30,13 +30,11 @@ class GridRenderPass final : public ForwardRenderPass {
   SetUniformBuffer(const Scene* scene);
 
  private:
-#pragma pack(push, 1)
   struct MatrixUniformBufferBlock {
-    glm::mat4 model = glm::mat4(1.0);
-    glm::mat4 view = glm::mat4(1.0);
-    glm::mat4 perspective = glm::mat4(1.0);
+    alignas(16) glm::mat4 model = glm::mat4(1.0);
+    alignas(16) glm::mat4 view = glm::mat4(1.0);
+    alignas(16) glm::mat4 perspective = glm::mat4(1.0);
   } m_matrixUniformBlock;
-#pragma pack(pop)
 
   std::shared_ptr<UniformBuffer> m_uniformBuffer = nullptr;
   std::shared_ptr<DescriptorSet> m_descriptorSet = nullptr;

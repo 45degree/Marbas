@@ -9,10 +9,12 @@
 
 #include "Common/Common.hpp"
 #include "Core/Scene/Component/HierarchyComponent.hpp"
+#include "Core/Scene/Component/LightComponent.hpp"
 #include "Core/Scene/Component/TagComponent.hpp"
 #include "Core/Scene/Entity/BillBoardEntity.hpp"
 #include "Core/Scene/Entity/CubeMapEntity.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
+#include "Core/Scene/Entity/LightEntity.hpp"
 #include "Core/Scene/Entity/MeshEntity.hpp"
 #include "Core/Scene/Entity/ModelEntity.hpp"
 #include "Resource/ResourceManager.hpp"
@@ -104,6 +106,13 @@ Scene::Scene(const std::shared_ptr<ResourceManager>& resourceManager)
   // create Entity
   auto cubeMap = CubeMapPolicy::Create(m_world, cubeMapResourceId);
   HierarchyComponent::AddChild(m_rootEntity, m_world, cubeMap);
+
+  // TODO: need to remove
+  // create a light
+  auto light = LightPolicy::Create(m_world);
+  auto& component = Entity::GetComponent<LightComponent>(this, light);
+  component.m_light->SetPos(glm::vec3(0, 10, 5));
+  component.m_light->SetColor(glm::vec3(1, 1, 1));
 }
 
 void
