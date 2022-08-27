@@ -22,6 +22,9 @@ class BlinnPhongRenderPass final : public DeferredRenderPass {
   CreateFrameBuffer() override;
 
   void
+  GeneratePipeline() override;
+
+  void
   RecordCommand(const Scene* scene) override;
 
   void
@@ -48,7 +51,7 @@ class BlinnPhongRenderPass final : public DeferredRenderPass {
  private:
   Uid m_shaderId;
   std::shared_ptr<VertexBuffer> m_vertexBuffer;
-  std::shared_ptr<UniformBuffer> m_uniformBuffer;
+  std::shared_ptr<UniformBuffer> m_lightUniformBuffer = nullptr;
   std::shared_ptr<DescriptorSet> m_descriptorSet;
 };
 

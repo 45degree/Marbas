@@ -5,19 +5,13 @@
 #include "Core/Renderer/BeginningRenderPass.hpp"
 #include "Core/Scene/Component/MeshComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
+#include "RHI/Interface/DescriptorSet.hpp"
 
 namespace Marbas {
 
 const String GeometryRenderPass::depthTargetName = "GeometryDepthTexture";
 const String GeometryRenderPass::geometryTargetName = "GeometryColorNormalTexture";
 const String GeometryRenderPass::renderPassName = "GeometryRenderPass";
-
-struct MeshComponent_Impl {
-  std::shared_ptr<VertexBuffer> vertexBuffer;
-  std::shared_ptr<IndexBuffer> indexBuffer;
-  std::shared_ptr<DescriptorSet> descriptor;  // store the texture
-  std::shared_ptr<MaterialResource> materialResource;
-};
 
 static Vector<ElementLayout>
 GetMeshVertexInfoLayout() {
@@ -75,10 +69,6 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
   };
   m_renderPass = m_rhiFactory->CreateRenderPass(renderPassCreateInfo);
 
-  // create command factory
-  m_commandFactory = m_rhiFactory->CreateCommandFactory();
-  m_commandBuffer = m_commandFactory->CreateCommandBuffer();
-
   // read shader
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto shaderResource = shaderContainer->CreateResource();
@@ -87,15 +77,40 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
 
-  // create pipeline
+  // set descriptor set layout
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = true,
+      .type = BufferDescriptorType::DYNAMIC_UNIFORM_BUFFER,
+      .bindingPoint = 1,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 0,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 1,
+  });
+
+  GeneratePipeline();
+}
+
+void
+GeometryRenderPass::GeneratePipeline() {
+  auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
+  auto resource = shaderContainer->GetResource(m_shaderId);
+  if (!resource->IsLoad()) {
+    resource->LoadResource(m_rhiFactory, m_resourceManager.get());
+  }
+
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
   m_pipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = m_width, .height = m_height});
   m_pipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout(), VertexInputRate::VERTEX);
-  m_pipeline->SetShader(shaderResource->GetShader());
+  m_pipeline->SetPipelineLayout(GraphicsPipeLineLayout{
+      .descriptorSetLayout = m_descriptorSetLayout,
+  });
+  m_pipeline->SetShader(resource->GetShader());
   m_pipeline->Create();
-
-  // create desciriptorSet
-  m_dynamicDescriptorSet = m_rhiFactory->CreateDynamicDescriptorSet({0});
 }
 
 void
@@ -143,16 +158,8 @@ GeometryRenderPass::RecordCommand(const Scene* scene) {
       << FORMAT("{}'s pipeline is null, can't record command", NAMEOF_TYPE(GeometryRenderPass));
 
   // recreate dynamic uniform buffer
-  Vector<MeshComponent::UniformBufferBlockData> uniformBufferData;
-  for (auto&& [entity, meshComponent] : view.each()) {
-    const auto& implData = meshComponent.m_impldata;
-    if (implData == nullptr) continue;
-    uniformBufferData.push_back(meshComponent.m_uniformBufferData);
-  }
-  auto bufferSize = uniformBufferData.size() * sizeof(MeshComponent::UniformBufferBlockData);
-
+  auto bufferSize = view.size() * sizeof(MeshComponent::UniformBufferBlockData);
   m_dynamicUniforBuffer = m_rhiFactory->CreateDynamicUniforBuffer(bufferSize);
-  m_dynamicUniforBuffer->SetData(uniformBufferData.data(), bufferSize, 0);
 
   /**
    * set command
@@ -171,10 +178,6 @@ GeometryRenderPass::RecordCommand(const Scene* scene) {
   // set bind pipeline
   auto bindPipeline = m_commandFactory->CreateBindPipelineCMD();
   bindPipeline->SetPipeLine(m_pipeline);
-
-  // set dynamic descriptor set
-  auto dynamicBufferDescriptor = m_dynamicUniforBuffer->GetIDynamicBufferDescriptor();
-  m_dynamicDescriptorSet->BindDynamicBuffer(0, std::move(dynamicBufferDescriptor));
 
   // get input target GBuffer
   const auto& inputTargetGBuffer = m_inputTarget[BeginningRenderPass::targetName]->GetGBuffer();
@@ -208,28 +211,32 @@ GeometryRenderPass::RecordCommand(const Scene* scene) {
   uint32_t meshIndex = 0;
   for (auto&& [entity, meshComponent] : view.each()) {
     const auto& implData = meshComponent.m_impldata;
+    implData->descriptorSet->BindDynamicBuffer(1, m_dynamicUniforBuffer);
     if (implData->vertexBuffer != nullptr && implData->indexBuffer != nullptr) {
       auto bindVertexBuffer = m_commandFactory->CreateBindVertexBufferCMD();
       auto bindIndexBuffer = m_commandFactory->CreateBindIndexBufferCMD();
-      auto bindDynamicBuffer = m_commandFactory->CreateBindDynamicDescriptorSetCMD();
       auto drawIndex = m_commandFactory->CreateDrawIndexCMD(m_pipeline);
 
       bindVertexBuffer->SetVertexBuffer(implData->vertexBuffer);
       bindIndexBuffer->SetIndexBuffer(implData->indexBuffer);
-      bindDynamicBuffer->SetDescriptorSet(m_dynamicDescriptorSet);
-      bindDynamicBuffer->SetOffset(sizeof(MeshComponent::UniformBufferBlockData) * meshIndex);
-      bindDynamicBuffer->SetSize(sizeof(MeshComponent::UniformBufferBlockData));
 
+      auto bindDescriptorSet = m_commandFactory->CreateBindDescriptorSetCMD();
+      bindDescriptorSet->SetDescriptor(implData->descriptorSet);
       if (implData->materialResource != nullptr) {
-        auto bindDescriptorSet = m_commandFactory->CreateBindDescriptorSetCMD();
-        bindDescriptorSet->SetDescriptor(implData->descriptor);
-        m_commandBuffer->AddCommand(std::move(bindDescriptorSet));
+        auto size = sizeof(MeshComponent::UniformBufferBlockData);
+        auto offset = sizeof(MeshComponent::UniformBufferBlockData) * meshIndex;
+        bindDescriptorSet->SetDynamicDescriptorBufferPiece({
+            DynamicBufferPiece{
+                .offset = static_cast<uint32_t>(offset),
+                .size = static_cast<uint32_t>(size),
+            },
+        });
       }
-      drawIndex->SetIndexCount(implData->indexBuffer->GetIndexCount());
-
+      m_commandBuffer->AddCommand(std::move(bindDescriptorSet));
       m_commandBuffer->AddCommand(std::move(bindVertexBuffer));
       m_commandBuffer->AddCommand(std::move(bindIndexBuffer));
-      m_commandBuffer->AddCommand(std::move(bindDynamicBuffer));
+
+      drawIndex->SetIndexCount(implData->indexBuffer->GetIndexCount());
       m_commandBuffer->AddCommand(std::move(drawIndex));
 
       meshIndex++;
@@ -261,36 +268,26 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* sc
   auto indexBuffer = m_rhiFactory->CreateIndexBuffer(indices);
   implData->indexBuffer = std::move(indexBuffer);
 
+  // create descriptor Set
+  implData->descriptorSet = GenerateDescriptorSet();
+  BindCameraUniformBuffer(implData->descriptorSet.get());
+
   // load material
   if (_mesh->m_materialId.has_value()) {
     auto id = _mesh->m_materialId.value();
     auto materialResource = m_resourceManager->GetMaterialResourceContainer()->GetResource(id);
     materialResource->LoadResource(m_rhiFactory, m_resourceManager.get());
 
-    DescriptorSetInfo descriptorSetInfo{
-        DescriptorInfo{
-            .isBuffer = false,
-            .bindingPoint = 0,
-        },
-        DescriptorInfo{
-            .isBuffer = false,
-            .bindingPoint = 1,
-        },
-    };
-    auto descriptor = m_rhiFactory->CreateDescriptorSet(descriptorSetInfo);
     auto diffuseTexture = materialResource->GetDiffuseTexture();
     auto ambientTexture = materialResource->GetAmbientTexture();
     if (diffuseTexture != nullptr) {
-      descriptor->BindImage(0, diffuseTexture->GetDescriptor());
+      implData->descriptorSet->BindImage(0, diffuseTexture);
     }
     if (ambientTexture != nullptr) {
-      descriptor->BindImage(1, ambientTexture->GetDescriptor());
+      implData->descriptorSet->BindImage(1, ambientTexture);
     }
-
     implData->materialResource = materialResource;
-    implData->descriptor = std::move(descriptor);
   }
-
   meshComponent.m_impldata = implData;
 
   m_needToRecordComand = true;
@@ -300,8 +297,7 @@ void
 GeometryRenderPass::SetUniformBuffer(const Scene* scene) {
   // get matrix
   const auto editorCamera = scene->GetEditorCamrea();
-  const auto viewMatrix = editorCamera->GetViewMartix();
-  const auto perspectiveMatrix = editorCamera->GetPerspective();
+  UpdateCameraUniformBuffer(editorCamera.get());
 
   uint32_t index = 0;
   auto view = Entity::GetAllEntity<MeshComponent>(const_cast<Scene*>(scene));
@@ -315,9 +311,6 @@ GeometryRenderPass::SetUniformBuffer(const Scene* scene) {
       const auto& modelMatrix = model->GetModelMatrix();
       meshComponent.m_uniformBufferData.model = modelMatrix;
     }
-
-    meshComponent.m_uniformBufferData.view = viewMatrix;
-    meshComponent.m_uniformBufferData.projective = perspectiveMatrix;
 
     m_dynamicUniforBuffer->SetData(&meshComponent.m_uniformBufferData, size, offset);
     index++;

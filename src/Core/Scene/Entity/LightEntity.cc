@@ -6,12 +6,13 @@
 namespace Marbas {
 
 LightEntity
-LightPolicy::Create(entt::registry& registry) {
+LightPolicy::Create(entt::registry& registry, LightType lightType) {
   auto light = registry.create();
-  registry.emplace<LightComponent>(light);
-
-  auto& lightComponent = registry.get<LightComponent>(light);
-  lightComponent.m_light = std::make_unique<Light>();
+  switch (lightType) {
+    case LightType::ParalleLight:
+      registry.emplace<ParallelLightComponent>(light);
+      break;
+  }
 
   return light;
 }

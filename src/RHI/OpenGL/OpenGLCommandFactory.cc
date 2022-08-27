@@ -21,10 +21,10 @@ OpenGLCommandFactory::CreateBindDescriptorSetCMD() {
   return std::make_unique<OpenGLBindDescriptorSet>();
 }
 
-std::unique_ptr<BindDynamicDescriptorSet>
-OpenGLCommandFactory::CreateBindDynamicDescriptorSetCMD() {
-  return std::make_unique<OpenGLBindDynamicDescriptorSet>();
-}
+// std::unique_ptr<BindDynamicDescriptorSet>
+// OpenGLCommandFactory::CreateBindDynamicDescriptorSetCMD() {
+//   return std::make_unique<OpenGLBindDynamicDescriptorSet>();
+// }
 
 std::unique_ptr<BeginRenderPass>
 OpenGLCommandFactory::CreateBeginRenderPassCMD() {

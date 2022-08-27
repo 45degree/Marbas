@@ -29,7 +29,6 @@ enum class ClearBuferBit {
   COLOR_BUFFER,
   DEPTH_BUFFER,
 };
-
 enum class EnableItem {
   DEPTH,
 };
@@ -126,10 +125,10 @@ class RHIFactory {
   CreateFrameBuffer(const FrameBufferInfo& info) const = 0;
 
   [[nodiscard]] virtual std::unique_ptr<DescriptorSet>
-  CreateDescriptorSet(const DescriptorSetInfo& createInfo) const = 0;
+  CreateDescriptorSet(const DescriptorSetLayout& createInfo) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<DynamicDescriptorSet>
-  CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const = 0;
+  // [[nodiscard]] virtual std::unique_ptr<DynamicDescriptorSet>
+  // CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const = 0;
 
  public:
   static RHIFactory*

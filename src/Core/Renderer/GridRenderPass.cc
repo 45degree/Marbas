@@ -55,10 +55,26 @@ GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
 
+  // create descriptor set layout and uniform buffer
+  m_descriptorSet = GenerateDescriptorSet();
+  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(0);
+  BindCameraUniformBuffer(m_descriptorSet.get());
+
   // create Pipeline
+  GeneratePipeline();
+}
+
+void
+GridRenderPass::GeneratePipeline() {
+  auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
+  auto resource = shaderContainer->GetResource(m_shaderId);
+  if (!resource->IsLoad()) {
+    resource->LoadResource(m_rhiFactory, m_resourceManager.get());
+  }
+
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
   m_pipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = m_width, .height = m_height});
-  m_pipeline->SetShader(shaderResource->GetShader());
+  m_pipeline->SetShader(resource->GetShader());
   m_pipeline->SetVertexBufferLayout({}, VertexInputRate::INSTANCE);
   m_pipeline->SetVertexInputBindingDivisor({{0, 1}});
   m_pipeline->SetDepthStencilInfo(DepthStencilInfo{
@@ -81,22 +97,6 @@ GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)
   });
 
   m_pipeline->Create();
-
-  // create uniform buffer
-
-  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(0);
-  auto bufferSize = sizeof(GridRenderPass::MatrixUniformBufferBlock);
-  m_uniformBuffer = m_rhiFactory->CreateUniformBuffer(bufferSize);
-
-  DescriptorSetInfo descriptorSetInfo{
-      DescriptorInfo{
-          .isBuffer = true,
-          .type = BufferDescriptorType::UNIFORM_BUFFER,
-          .bindingPoint = 0,
-      },
-  };
-  m_descriptorSet = m_rhiFactory->CreateDescriptorSet(descriptorSetInfo);
-  m_descriptorSet->BindBuffer(0, m_uniformBuffer->GetIBufferDescriptor());
 }
 
 void
@@ -115,8 +115,8 @@ GridRenderPass::RecordCommand(const Scene* scene) {
 
   // recreate uniform buffer
 
-  auto bufferSize = sizeof(GridRenderPass::MatrixUniformBufferBlock);
-  m_uniformBuffer->SetData(&m_matrixUniformBlock, bufferSize, 0);
+  // auto bufferSize = sizeof(GridRenderPass::MatrixUniformBufferBlock);
+  // m_uniformBuffer->SetData(&m_matrixUniformBlock, bufferSize, 0);
 
   /**
    * set command
@@ -163,12 +163,7 @@ GridRenderPass::RecordCommand(const Scene* scene) {
 void
 GridRenderPass::SetUniformBuffer(const Scene* scene) {
   const auto editorCamera = scene->GetEditorCamrea();
-  const auto viewMatrix = editorCamera->GetViewMartix();
-  const auto perspectiveMatrix = editorCamera->GetPerspective();
-
-  m_matrixUniformBlock.view = viewMatrix;
-  m_matrixUniformBlock.perspective = perspectiveMatrix;
-  m_uniformBuffer->SetData(&m_matrixUniformBlock, sizeof(MatrixUniformBufferBlock), 0);
+  UpdateCameraUniformBuffer(editorCamera.get());
 }
 
 void

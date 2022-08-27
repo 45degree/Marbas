@@ -7,45 +7,43 @@
 namespace Marbas {
 
 OpenGLUniformBuffer::OpenGLUniformBuffer(uint32_t size) : UniformBuffer(size) {
-  glCreateBuffers(1, &UBO);
-  glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-  glNamedBufferData(UBO, m_size, nullptr, GL_DYNAMIC_DRAW);
+  glCreateBuffers(1, &m_target);
+  glBindBuffer(GL_UNIFORM_BUFFER, m_target);
+  glNamedBufferData(m_target, m_size, nullptr, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-  m_bufferDescriptor = std::make_shared<OpenGLUniformBufferDescriptor>(UBO);
+  // m_bufferDescriptor = std::make_shared<OpenGLUniformBufferDescriptor>(UBO);
 
   LOG(INFO) << "create uniform buffer";
 }
 
 OpenGLUniformBuffer::~OpenGLUniformBuffer() {
-  glDeleteBuffers(1, &UBO);
+  glDeleteBuffers(1, &m_target);
   LOG(INFO) << "delete uniform buffer";
 }
 
 void
 OpenGLUniformBuffer::SetData(const void* data, uint32_t size, uint32_t offset) {
-  glNamedBufferSubData(UBO, offset, size, data);
+  glNamedBufferSubData(m_target, offset, size, data);
 }
 
 OpenGLDynamicUniformBuffer::OpenGLDynamicUniformBuffer(uint32_t size) : DynamicUniformBuffer(size) {
-  glCreateBuffers(1, &m_ubo);
-  glBindBuffer(GL_UNIFORM_BUFFER, m_ubo);
-  glNamedBufferData(m_ubo, m_size, nullptr, GL_DYNAMIC_DRAW);
+  glCreateBuffers(1, &m_target);
+  glBindBuffer(GL_UNIFORM_BUFFER, m_target);
+  glNamedBufferData(m_target, m_size, nullptr, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-  m_dynamicBufferDescriptor = std::make_shared<OpenGLDynamicUniformBufferDescriptor>(m_ubo);
 
   LOG(INFO) << "create dynamic uniform buffer";
 }
 
 OpenGLDynamicUniformBuffer::~OpenGLDynamicUniformBuffer() {
-  glDeleteBuffers(1, &m_ubo);
+  glDeleteBuffers(1, &m_target);
   LOG(INFO) << "delete dynamic uniform buffer";
 }
 
 void
 OpenGLDynamicUniformBuffer::SetData(const void* data, uint32_t size, uint32_t offset) {
-  glNamedBufferSubData(m_ubo, offset, size, data);
+  glNamedBufferSubData(m_target, offset, size, data);
 }
 
 }  // namespace Marbas

@@ -201,8 +201,8 @@ OpenGLGraphicsPipeline::SetBlendInfo(const BlendInfo& blendInfo) {
 }
 
 void
-OpenGLGraphicsPipeline::SetDescriptorSetInfo(const DescriptorSetInfo& descriptorSetInfo) {
-  m_descriptorSetInfo = descriptorSetInfo;
+OpenGLGraphicsPipeline::SetPipelineLayout(const GraphicsPipeLineLayout& pipelineLayout) {
+  m_descriptorSetInfo = pipelineLayout.descriptorSetLayout;
 }
 
 void

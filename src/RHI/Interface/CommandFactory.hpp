@@ -18,8 +18,8 @@ class CommandFactory {
   virtual std::unique_ptr<BindDescriptorSet>
   CreateBindDescriptorSetCMD() = 0;
 
-  virtual std::unique_ptr<BindDynamicDescriptorSet>
-  CreateBindDynamicDescriptorSetCMD() = 0;
+  // virtual std::unique_ptr<BindDynamicDescriptorSet>
+  // CreateBindDynamicDescriptorSetCMD() = 0;
 
   virtual std::unique_ptr<BeginRenderPass>
   CreateBeginRenderPassCMD() = 0;

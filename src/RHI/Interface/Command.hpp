@@ -25,6 +25,11 @@ class ICommand {
   Clone() const = 0;
 };
 
+struct DynamicBufferPiece {
+  uint32_t offset;
+  uint32_t size;
+};
+
 class BindDescriptorSet : public ICommand {
  public:
   virtual ~BindDescriptorSet() = default;
@@ -32,30 +37,36 @@ class BindDescriptorSet : public ICommand {
  public:
   virtual void
   SetDescriptor(const std::shared_ptr<DescriptorSet>& descriptorSet) = 0;
-};
 
-class BindDynamicDescriptorSet : public ICommand {
- public:
-  virtual ~BindDynamicDescriptorSet() = default;
-
- public:
   virtual void
-  SetDescriptorSet(const std::shared_ptr<DynamicDescriptorSet>& descriptorSet) = 0;
+  SetDescriptorLayout(const DescriptorSetLayout& layouts) = 0;
 
-  void
-  SetOffset(uint32_t offset) {
-    m_offset = offset;
-  }
-
-  void
-  SetSize(uint32_t size) {
-    m_size = size;
-  }
-
- protected:
-  uint32_t m_offset = 0;
-  uint32_t m_size = 0;
+  virtual void
+  SetDynamicDescriptorBufferPiece(const Vector<DynamicBufferPiece>& bufferPiece) = 0;
 };
+
+// class BindDynamicDescriptorSet : public ICommand {
+//  public:
+//   virtual ~BindDynamicDescriptorSet() = default;
+//
+//  public:
+//   virtual void
+//   SetDescriptorSet(const std::shared_ptr<DynamicDescriptorSet>& descriptorSet) = 0;
+//
+//   void
+//   SetOffset(uint32_t offset) {
+//     m_offset = offset;
+//   }
+//
+//   void
+//   SetSize(uint32_t size) {
+//     m_size = size;
+//   }
+//
+//  protected:
+//   uint32_t m_offset = 0;
+//   uint32_t m_size = 0;
+// };
 
 class BeginRenderPass : public ICommand {
  public:

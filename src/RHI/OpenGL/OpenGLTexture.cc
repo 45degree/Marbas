@@ -58,21 +58,21 @@ OpenGLTexture2D::OpenGLTexture2D(int width, int height, uint32_t level, TextureF
 
   if (m_format == TextureFormat::DEPTH) m_level = 1;
 
-  glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
-  glTextureStorage2D(textureID, m_level, internalFormat, width, height);
+  glCreateTextures(GL_TEXTURE_2D, 1, &m_textureID);
+  glTextureStorage2D(m_textureID, m_level, internalFormat, width, height);
 
-  glTextureParameteri(textureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTextureParameteri(textureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTextureParameteri(textureID, GL_TEXTURE_BASE_LEVEL, 0);
-  glTextureParameteri(textureID, GL_TEXTURE_MAX_LEVEL, m_level);
+  glTextureParameteri(m_textureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTextureParameteri(m_textureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTextureParameteri(m_textureID, GL_TEXTURE_BASE_LEVEL, 0);
+  glTextureParameteri(m_textureID, GL_TEXTURE_MAX_LEVEL, m_level);
 
-  glTextureParameteri(textureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTextureParameteri(textureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-  m_descriptor = std::make_shared<OpenGLTexture2DDescriptor>(textureID);
+  // m_descriptor = std::make_shared<OpenGLTexture2DDescriptor>(textureID);
 }
 
-OpenGLTexture2D::~OpenGLTexture2D() { glDeleteTextures(1, &textureID); }
+OpenGLTexture2D::~OpenGLTexture2D() { glDeleteTextures(1, &m_textureID); }
 
 GLenum
 OpenGLTexture2D::GetOpenGLFormat() const noexcept {
@@ -85,12 +85,12 @@ OpenGLTexture2D::SetData(void* data, uint32_t size) {
   LOG_IF(ERROR, size != m_width * m_height * bpp) << "size and texture size do not match";
 
   auto dataFormat = ConvertToOpenglDataFormat(this->m_format);
-  glTextureSubImage2D(textureID, 0, 0, 0, m_width, m_height, dataFormat, GL_UNSIGNED_BYTE, data);
+  glTextureSubImage2D(m_textureID, 0, 0, 0, m_width, m_height, dataFormat, GL_UNSIGNED_BYTE, data);
 }
 
 void*
 OpenGLTexture2D::GetTexture() {
-  return reinterpret_cast<void*>(textureID);
+  return reinterpret_cast<void*>(m_textureID);
 }
 
 OpenGLTextureCubeMap::OpenGLTextureCubeMap(int width, int height, TextureFormat format)
@@ -106,7 +106,7 @@ OpenGLTextureCubeMap::OpenGLTextureCubeMap(int width, int height, TextureFormat 
   glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-  m_descriptor = std::make_shared<OpenGLTextureCubeMapDescriptor>(m_textureID);
+  // m_descriptor = std::make_shared<OpenGLTextureCubeMapDescriptor>(m_textureID);
 }
 
 void

@@ -50,7 +50,7 @@ class OpenGLGraphicsPipeline final : public GraphicsPipeLine {
   SetBlendInfo(const BlendInfo& blendInfo) override;
 
   void
-  SetDescriptorSetInfo(const DescriptorSetInfo& descriptorSetInfo) override;
+  SetPipelineLayout(const GraphicsPipeLineLayout& pipelineLayout) override;
 
   void
   Create() override;
@@ -70,7 +70,7 @@ class OpenGLGraphicsPipeline final : public GraphicsPipeLine {
   DepthStencilInfo m_depthStencilInfo;
   MultisampleInfo m_multisampleInfo;
   BlendInfo m_blendInfo;
-  DescriptorSetInfo m_descriptorSetInfo;
+  DescriptorSetLayout m_descriptorSetInfo;
 
   Vector<ElementLayout> m_vertexBufferLayout;
   Vector<BindingDivisorInfo> m_bindingDivisorInfo;

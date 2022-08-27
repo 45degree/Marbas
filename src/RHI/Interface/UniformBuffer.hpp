@@ -14,8 +14,10 @@ class UniformBuffer : public IBuffer {
   virtual ~UniformBuffer() = default;
 
  public:
-  virtual std::shared_ptr<IBufferDescriptor>
-  GetIBufferDescriptor() const = 0;
+  virtual BufferDescriptorType
+  GetBufferDescriptorType() const {
+    return BufferDescriptorType::UNIFORM_BUFFER;
+  }
 
  protected:
   uint32_t m_size;
@@ -27,8 +29,12 @@ class DynamicUniformBuffer : public IBuffer {
   virtual ~DynamicUniformBuffer() = default;
 
  public:
-  virtual std::shared_ptr<IDynamicBufferDescriptor>
-  GetIDynamicBufferDescriptor() const = 0;
+  // virtual std::shared_ptr<IDynamicBufferDescriptor>
+  // GetIDynamicBufferDescriptor() const = 0;
+  virtual BufferDescriptorType
+  GetBufferDescriptorType() const {
+    return BufferDescriptorType::DYNAMIC_UNIFORM_BUFFER;
+  }
 
  protected:
   uint32_t m_size;

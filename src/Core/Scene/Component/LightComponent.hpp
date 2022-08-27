@@ -6,8 +6,8 @@
 
 namespace Marbas {
 
-struct LightComponent {
-  std::unique_ptr<Light> m_light;
+struct ParallelLightComponent {
+  ParallelLight m_light;
 };
 
 }  // namespace Marbas

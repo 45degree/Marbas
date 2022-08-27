@@ -21,6 +21,9 @@ class CubeMapRenderPass final : public ForwardRenderPass {
   RecordCommand(const Scene* scene) override;
 
   void
+  GeneratePipeline() override;
+
+  void
   CreateBufferForEveryEntity(const entt::entity entity, Scene* scene);
 
   void
@@ -30,7 +33,6 @@ class CubeMapRenderPass final : public ForwardRenderPass {
   Execute(const Scene* scene, const ResourceManager* resourceMnager) override;
 
  private:
-  std::shared_ptr<UniformBuffer> m_uniformBuffer = nullptr;
   Uid m_shaderId;
 };
 

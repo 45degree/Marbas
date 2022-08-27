@@ -5,9 +5,10 @@ layout(location = 1) in vec3 farPoint;
 layout(location = 0) out vec4 outColor;
 
 layout(std140, binding = 0) uniform Matrices {
-  mat4 model;
   mat4 view;
   mat4 perspective;
+  vec3 right;
+  vec3 up;
 } view;
 
 vec4 grid(vec3 fragPos3D, float scale, bool drawAxis) {

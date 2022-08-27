@@ -29,13 +29,10 @@ class GridRenderPass final : public ForwardRenderPass {
   void
   SetUniformBuffer(const Scene* scene);
 
- private:
-  struct MatrixUniformBufferBlock {
-    alignas(16) glm::mat4 model = glm::mat4(1.0);
-    alignas(16) glm::mat4 view = glm::mat4(1.0);
-    alignas(16) glm::mat4 perspective = glm::mat4(1.0);
-  } m_matrixUniformBlock;
+  void
+  GeneratePipeline() override;
 
+ private:
   std::shared_ptr<UniformBuffer> m_uniformBuffer = nullptr;
   std::shared_ptr<DescriptorSet> m_descriptorSet = nullptr;
   std::shared_ptr<VertexBuffer> m_vertexBuffer = nullptr;

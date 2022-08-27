@@ -52,6 +52,7 @@ MeshPolicy::Create(const std::shared_ptr<Mesh>& mesh, entt::registry& registry) 
   registry.emplace<MeshComponent>(meshEntity);
   registry.emplace<HierarchyComponent>(meshEntity);
   registry.emplace<UniqueTagComponent>(meshEntity);
+  registry.emplace<EnableShadowTag>(meshEntity);
 
   auto& meshComponent = registry.get<MeshComponent>(meshEntity);
   meshComponent.m_mesh = mesh;

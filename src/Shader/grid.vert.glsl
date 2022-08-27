@@ -4,9 +4,10 @@ layout(location = 0) out vec3 nearPoint;
 layout(location = 1) out vec3 farPoint;
 
 layout(std140, binding = 0) uniform Matrices {
-  mat4 model;
   mat4 view;
   mat4 perspective;
+  vec3 right;
+  vec3 up;
 } view;
 
 vec3 gridPlane[6] = vec3[] (

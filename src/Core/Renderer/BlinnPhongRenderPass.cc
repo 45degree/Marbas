@@ -11,8 +11,7 @@ namespace Marbas {
 const String BlinnPhongRenderPass::renderPassName = "BlinnPhoneRenderPass";
 const String BlinnPhongRenderPass::blinnPhongTargetName = "BlinnPhongTarget";
 
-BlinnPhongRenderPassCreateInfo::BlinnPhongRenderPassCreateInfo()
-    : DeferredRenderPassNodeCreateInfo() {
+BlinnPhongRenderPassCreateInfo::BlinnPhongRenderPassCreateInfo() : DeferredRenderPassCreateInfo() {
   passName = BlinnPhongRenderPass::renderPassName;
   inputResource = {GeometryRenderPass::geometryTargetName};
   outputResource = {BlinnPhongRenderPass::blinnPhongTargetName,
@@ -63,41 +62,51 @@ BlinnPhongRenderPass::BlinnPhongRenderPass(const BlinnPhongRenderPassCreateInfo&
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
 
-  // create pipeline
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 0,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 1,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 2,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = true,
+      .bindingPoint = 1,
+  });
+
+  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(0);
+  m_descriptorSet = GenerateDescriptorSet();
+  BindCameraUniformBuffer(m_descriptorSet.get());
+
+  auto bufferSize = sizeof(LightsInfo);
+  m_lightUniformBuffer = m_rhiFactory->CreateUniformBuffer(bufferSize);
+  m_descriptorSet->BindBuffer(1, m_lightUniformBuffer);
+
+  GeneratePipeline();
+}
+
+void
+BlinnPhongRenderPass::GeneratePipeline() {
+  auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
+  auto resource = shaderContainer->GetResource(m_shaderId);
+  if (!resource->IsLoad()) {
+    resource->LoadResource(m_rhiFactory, m_resourceManager.get());
+  }
+
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
   m_pipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = m_width, .height = m_height});
-  m_pipeline->SetShader(shaderResource->GetShader());
+  m_pipeline->SetShader(resource->GetShader());
   m_pipeline->SetVertexBufferLayout({}, VertexInputRate::INSTANCE);
   m_pipeline->SetVertexInputBindingDivisor({{0, 1}});
   m_pipeline->SetDepthStencilInfo(DepthStencilInfo{
       .depthTestEnable = false,
   });
   m_pipeline->Create();
-
-  // create uniform buffer
-  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(0);
-  m_uniformBuffer = m_rhiFactory->CreateUniformBuffer(sizeof(LightsInfo));
-  DescriptorSetInfo descriptorSetInfo{
-      DescriptorInfo{
-          .isBuffer = true,
-          .type = BufferDescriptorType::UNIFORM_BUFFER,
-          .bindingPoint = 0,
-      },
-      DescriptorInfo{
-          .isBuffer = false,
-          .bindingPoint = 0,
-      },
-      DescriptorInfo{
-          .isBuffer = false,
-          .bindingPoint = 1,
-      },
-      DescriptorInfo{
-          .isBuffer = false,
-          .bindingPoint = 2,
-      },
-  };
-  m_descriptorSet = m_rhiFactory->CreateDescriptorSet(descriptorSetInfo);
-  m_descriptorSet->BindBuffer(0, m_uniformBuffer->GetIBufferDescriptor());
 }
 
 void
@@ -117,7 +126,7 @@ BlinnPhongRenderPass::RecordCommand(const Scene* scene) {
   // recreate uniform buffer
 
   auto bufferSize = sizeof(BlinnPhongRenderPass::LightsInfo);
-  m_uniformBuffer->SetData(&m_uniformBufferBlock, bufferSize, 0);
+  m_lightUniformBuffer->SetData(&m_uniformBufferBlock, bufferSize, 0);
 
   /**
    * set command
@@ -192,14 +201,14 @@ BlinnPhongRenderPass::CreateFrameBuffer() {
   auto gNormalBuffer = gBuffer->GetTexture(GBufferTexutreType::NORMALS);
   auto gPositionBuffer = gBuffer->GetTexture(GBufferTexutreType::POSITION);
 
-  m_descriptorSet->BindImage(0, gColorBuffer->GetDescriptor());
-  m_descriptorSet->BindImage(1, gNormalBuffer->GetDescriptor());
-  m_descriptorSet->BindImage(2, gPositionBuffer->GetDescriptor());
+  m_descriptorSet->BindImage(0, gColorBuffer);
+  m_descriptorSet->BindImage(1, gNormalBuffer);
+  m_descriptorSet->BindImage(2, gPositionBuffer);
 }
 
 void
 BlinnPhongRenderPass::SetUniformBuffer(const Scene* scene) {
-  auto view = Entity::GetAllEntity<LightComponent>(scene);
+  auto view = Entity::GetAllEntity<ParallelLightComponent>(scene);
   uint32_t index = 0;
   for (const auto& [entity, lightComponent] : view.each()) {
     if (index >= maxLightsCount) {
@@ -207,8 +216,8 @@ BlinnPhongRenderPass::SetUniformBuffer(const Scene* scene) {
       break;
     }
 
-    auto pos = lightComponent.m_light->GetPos();
-    auto color = lightComponent.m_light->GetColor();
+    auto pos = lightComponent.m_light.GetPos();
+    auto color = lightComponent.m_light.GetColor();
     auto viewPos = scene->GetEditorCamrea()->GetPosition();
     m_uniformBufferBlock.lights[index].pos = pos;
     m_uniformBufferBlock.lights[index].color = color;
@@ -218,7 +227,7 @@ BlinnPhongRenderPass::SetUniformBuffer(const Scene* scene) {
   m_uniformBufferBlock.lightsCount = index;
 
   auto bufferSize = sizeof(LightsInfo);
-  m_uniformBuffer->SetData(&m_uniformBufferBlock, bufferSize, 0);
+  m_lightUniformBuffer->SetData(&m_uniformBufferBlock, bufferSize, 0);
 }
 
 void

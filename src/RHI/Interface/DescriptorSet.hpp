@@ -4,45 +4,51 @@
 
 #include "Common/Common.hpp"
 #include "RHI/Interface/IDescriptor.hpp"
+#include "RHI/Interface/Texture.hpp"
+#include "RHI/Interface/UniformBuffer.hpp"
 
 namespace Marbas {
 
-struct DescriptorInfo {
+struct DescriptorSetLayoutBinding {
   bool isBuffer = false;
   BufferDescriptorType type;
   uint16_t bindingPoint = 0;
 };
 
-using DescriptorSetInfo = Vector<DescriptorInfo>;
+using DescriptorSetLayout = Vector<DescriptorSetLayoutBinding>;
 
 class DescriptorSet {
  public:
-  DescriptorSet(const DescriptorSetInfo& createInfo) : m_createInfo(createInfo){};
+  DescriptorSet(const DescriptorSetLayout& createInfo) : m_createInfo(createInfo){};
   virtual ~DescriptorSet() = default;
 
  public:
   virtual void
-  BindBuffer(uint16_t bindingPoint, const std::shared_ptr<IBufferDescriptor>& descriptor) = 0;
+  BindBuffer(uint16_t bindingPoint, const std::shared_ptr<UniformBuffer>& uniformBuffer) = 0;
 
   virtual void
-  BindImage(uint16_t bindingPoint, const std::shared_ptr<IImageDescriptor>& descriptor) = 0;
+  BindImage(uint16_t bindingPoint, const std::shared_ptr<Texture>& texture) = 0;
 
- protected:
-  DescriptorSetInfo m_createInfo;
-};
-
-class DynamicDescriptorSet {
- public:
-  explicit DynamicDescriptorSet(const Vector<uint16_t>& bindingPoints)
-      : m_bindingPoints(bindingPoints) {}
-
- public:
   virtual void
   BindDynamicBuffer(uint16_t bindingPoint,
-                    const std::shared_ptr<IDynamicBufferDescriptor>& dynamicBuffer) = 0;
+                    const std::shared_ptr<DynamicUniformBuffer>& uniformBuffer) = 0;
 
  protected:
-  Vector<uint16_t> m_bindingPoints;
+  DescriptorSetLayout m_createInfo;
 };
+
+// class DynamicDescriptorSet {
+//  public:
+//   explicit DynamicDescriptorSet(const Vector<uint16_t>& bindingPoints)
+//       : m_bindingPoints(bindingPoints) {}
+//
+//  public:
+//   virtual void
+//   BindDynamicBuffer(uint16_t bindingPoint,
+//                     const std::shared_ptr<IDynamicBufferDescriptor>& dynamicBuffer) = 0;
+//
+//  protected:
+//   Vector<uint16_t> m_bindingPoints;
+// };
 
 }  // namespace Marbas

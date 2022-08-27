@@ -9,12 +9,6 @@
 
 namespace Marbas {
 
-struct BillBoardComponent_Impl {
-  std::shared_ptr<VertexBuffer> vertexBuffer;
-  std::shared_ptr<DescriptorSet> descriptorSet;
-  std::shared_ptr<Texture2DResource> textureResource;
-};
-
 static Vector<ElementLayout>
 GetMeshVertexInfoLayout() {
   Vector<ElementLayout> layouts{
@@ -79,20 +73,37 @@ BillBoardRenderPass::BillBoardRenderPass(const BillBoardRenderPassCreateInfo& cr
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
 
+  // set descriptor set
+
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = true,
+      .type = BufferDescriptorType::UNIFORM_BUFFER,
+      .bindingPoint = 0,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 0,
+  });
+
+  GeneratePipeline();
+}
+
+void
+BillBoardRenderPass::GeneratePipeline() {
+  auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
+  auto resource = shaderContainer->GetResource(m_shaderId);
+  if (!resource->IsLoad()) {
+    resource->LoadResource(m_rhiFactory, m_resourceManager.get());
+  }
+
   // create Pipeline
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
   m_pipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = m_width, .height = m_height});
   m_pipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout(), VertexInputRate::INSTANCE);
   m_pipeline->SetVertexInputBindingDivisor({{0, 1}});
-  m_pipeline->SetShader(shaderResource->GetShader());
+  m_pipeline->SetShader(resource->GetShader());
   m_pipeline->SetDepthStencilInfo(DepthStencilInfo{.depthTestEnable = true});
   m_pipeline->Create();
-
-  // create uniform buffer
-  auto matrixBufferSize = sizeof(BillBoardRenderPass::MatrixUniformBufferBlock);
-  auto cameraBufferSize = sizeof(BillBoardRenderPass::CameraInfoUniformBufferBlock);
-  m_matrixUniformBuffer = m_rhiFactory->CreateUniformBuffer(matrixBufferSize);
-  m_cameraUniformBuffer = m_rhiFactory->CreateUniformBuffer(cameraBufferSize);
 }
 
 void
@@ -117,34 +128,19 @@ BillBoardRenderPass::CreateBufferForEveryEntity(const entt::entity entity, const
   vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
   implData->vertexBuffer = std::move(vertexBuffer);
 
+  // create descriptor set
+  implData->descriptorSet = GenerateDescriptorSet();
+  BindCameraUniformBuffer(implData->descriptorSet.get());
+
   // load material
   if (billBoardComponent.textureResourceId.has_value()) {
     auto id = billBoardComponent.textureResourceId.value();
     auto texture2DResource = m_resourceManager->GetTexture2DResourceContainer()->GetResource(id);
     texture2DResource->LoadResource(m_rhiFactory, m_resourceManager.get());
 
-    DescriptorSetInfo descriptorSetInfo{
-        DescriptorInfo{
-            .isBuffer = true,
-            .type = BufferDescriptorType::UNIFORM_BUFFER,
-            .bindingPoint = 0,
-        },
-        DescriptorInfo{
-            .isBuffer = true,
-            .type = BufferDescriptorType::UNIFORM_BUFFER,
-            .bindingPoint = 1,
-        },
-        DescriptorInfo{
-            .isBuffer = false,
-            .bindingPoint = 0,
-        },
-    };
-    auto descriptor = m_rhiFactory->CreateDescriptorSet(descriptorSetInfo);
-    descriptor->BindImage(0, texture2DResource->GetTexture()->GetDescriptor());
-    descriptor->BindBuffer(0, m_matrixUniformBuffer->GetIBufferDescriptor());
-    descriptor->BindBuffer(1, m_cameraUniformBuffer->GetIBufferDescriptor());
+    implData->descriptorSet->BindImage(0, texture2DResource->GetTexture());
+    // implData->descriptorSet->BindBuffer(1, m_matrixUniformBuffer);
 
-    implData->descriptorSet = std::move(descriptor);
     implData->textureResource = texture2DResource;
   }
   billBoardComponent.implData = implData;
@@ -216,19 +212,21 @@ void
 BillBoardRenderPass::SetUniformBuffer(const Scene* scene) {
   // set matrix
   const auto editorCamera = scene->GetEditorCamrea();
-  const auto viewMatrix = editorCamera->GetViewMartix();
-  const auto perspectiveMatrix = editorCamera->GetPerspective();
+  // const auto viewMatrix = editorCamera->GetViewMartix();
+  // const auto perspectiveMatrix = editorCamera->GetPerspective();
+  //
+  // m_matrixUniformBlock.view = viewMatrix;
+  // m_matrixUniformBlock.perspective = perspectiveMatrix;
+  // m_matrixUniformBuffer->SetData(&m_matrixUniformBlock, sizeof(MatrixUniformBufferBlock), 0);
+  //
+  // // set camera info
+  // auto right = editorCamera->GetRightVector();
+  // auto up = editorCamera->GetUpVector();
+  // m_cameraUniformBlock.right = right;
+  // m_cameraUniformBlock.up = up;
+  // m_cameraUniformBuffer->SetData(&m_cameraUniformBlock, sizeof(CameraInfoUniformBufferBlock), 0);
 
-  m_matrixUniformBlock.view = viewMatrix;
-  m_matrixUniformBlock.perspective = perspectiveMatrix;
-  m_matrixUniformBuffer->SetData(&m_matrixUniformBlock, sizeof(MatrixUniformBufferBlock), 0);
-
-  // set camera info
-  auto right = editorCamera->GetRightVector();
-  auto up = editorCamera->GetUpVector();
-  m_cameraUniformBlock.right = right;
-  m_cameraUniformBlock.up = up;
-  m_cameraUniformBuffer->SetData(&m_cameraUniformBlock, sizeof(CameraInfoUniformBufferBlock), 0);
+  UpdateCameraUniformBuffer(editorCamera.get());
 }
 
 void

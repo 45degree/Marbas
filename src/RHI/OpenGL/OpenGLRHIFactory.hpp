@@ -73,10 +73,10 @@ class OpenGLRHIFactory final : public RHIFactory {
   CreateCommandFactory() const override;
 
   [[nodiscard]] std::unique_ptr<DescriptorSet>
-  CreateDescriptorSet(const DescriptorSetInfo& info) const override;
+  CreateDescriptorSet(const DescriptorSetLayout& info) const override;
 
-  [[nodiscard]] std::unique_ptr<DynamicDescriptorSet>
-  CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const override;
+  // [[nodiscard]] std::unique_ptr<DynamicDescriptorSet>
+  // CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const override;
 
  private:
   mutable bool m_enableSpriv = true;

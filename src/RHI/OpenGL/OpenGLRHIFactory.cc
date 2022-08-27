@@ -324,13 +324,13 @@ OpenGLRHIFactory::CreateGraphicsPipeLine() {
 }
 
 std::unique_ptr<DescriptorSet>
-OpenGLRHIFactory::CreateDescriptorSet(const DescriptorSetInfo& info) const {
+OpenGLRHIFactory::CreateDescriptorSet(const DescriptorSetLayout& info) const {
   return std::make_unique<OpenGLDescriptorSet>(info);
 }
 
-std::unique_ptr<DynamicDescriptorSet>
-OpenGLRHIFactory::CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const {
-  return std::make_unique<OpenGLDynamicDescriptorSet>(bindingPoints);
-}
+// std::unique_ptr<DynamicDescriptorSet>
+// OpenGLRHIFactory::CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const {
+//   return std::make_unique<OpenGLDynamicDescriptorSet>(bindingPoints);
+// }
 
 }  // namespace Marbas

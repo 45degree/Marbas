@@ -9,12 +9,14 @@ layout(location = 0) out vec2 aTex;
 layout(std140, binding=0) uniform Matrices {
   mat4 view;
   mat4 projection;
-};
-
-layout(std140, binding=1) uniform CameraInfo {
   vec3 right;
   vec3 up;
 };
+
+// layout(std140, binding=1) uniform CameraInfo {
+//   vec3 right;
+//   vec3 up;
+// };
 
 
 void main() {

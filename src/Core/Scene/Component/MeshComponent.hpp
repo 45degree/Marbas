@@ -11,16 +11,20 @@
 
 namespace Marbas {
 
-struct MeshComponent_Impl;
 struct Model;
+struct MeshComponent_Impl {
+  std::shared_ptr<VertexBuffer> vertexBuffer;
+  std::shared_ptr<IndexBuffer> indexBuffer;
+  std::shared_ptr<DescriptorSet> descriptorSet;
+  std::shared_ptr<MaterialResource> materialResource;
+};
+
 struct MeshComponent {
   std::shared_ptr<Mesh> m_mesh = nullptr;
   std::weak_ptr<Model> m_model;
 
   struct UniformBufferBlockData {
     alignas(16) glm::mat4 model = glm::mat4(1.0);
-    alignas(16) glm::mat4 view = glm::mat4(1.0);
-    alignas(16) glm::mat4 projective = glm::mat4(1.0);
   } m_uniformBufferData;
 
   std::shared_ptr<MeshComponent_Impl> m_impldata = nullptr;

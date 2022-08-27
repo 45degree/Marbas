@@ -1,18 +1,21 @@
 #pragma once
 
+#include "Common/Camera.hpp"
 #include "Common/MathCommon.hpp"
 
 /**
  * @brief this camera always looks at a fixed point, and can rotate around it
  */
-class EditorCamera {
+namespace Marbas {
+
+class EditorCamera final : public Camera {
  public:
   EditorCamera() = default;
   ~EditorCamera() = default;
 
  public:
   [[nodiscard]] glm::mat4
-  GetViewMartix() const noexcept {
+  GetViewMatrix() const noexcept override {
     auto direction = glm::vec3(0, 0, 0);
     direction.x = std::cos(glm::radians(m_pitch)) * std::sin(glm::radians(m_yaw));
     direction.y = std::sin(glm::radians(m_pitch));
@@ -32,18 +35,18 @@ class EditorCamera {
   }
 
   [[nodiscard]] glm::mat4
-  GetPerspective() const noexcept {
+  GetProjectionMatrix() const noexcept override {
     return glm::perspective(glm::radians(fov), m_aspect, m_near, m_far);
   }
 
   glm::vec3
-  GetUpVector() const noexcept {
+  GetUpVector() const noexcept override {
     auto lookatDirection = GetLookAtVector();
     return glm::cross(glm::cross(lookatDirection, glm::vec3(0, 1, 0)), lookatDirection);
   }
 
   glm::vec3
-  GetRightVector() const noexcept {
+  GetRightVector() const noexcept override {
     auto lookatDirection = GetLookAtVector();
     return glm::cross(lookatDirection, glm::vec3(0, 1, 0));
   }
@@ -125,3 +128,5 @@ class EditorCamera {
   constexpr static float MaxDistance = 10000.f;
   constexpr static float MinDistance = 1.f;
 };
+
+}  // namespace Marbas

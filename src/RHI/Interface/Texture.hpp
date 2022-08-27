@@ -19,7 +19,12 @@ enum class TextureFormat {
   DEPTH,
 };
 
-class Texture2D {
+class Texture {
+ public:
+  virtual ~Texture() = default;
+};
+
+class Texture2D : public Texture {
  public:
   Texture2D(uint32_t width, uint32_t height, uint32_t level, TextureFormat formatType)
       : m_width(width), m_height(height), m_level(level), m_format(formatType) {}
@@ -32,8 +37,8 @@ class Texture2D {
   virtual void*
   GetTexture() = 0;
 
-  virtual std::shared_ptr<IImageDescriptor>
-  GetDescriptor() const = 0;
+  // virtual std::shared_ptr<IImageDescriptor>
+  // GetDescriptor() const = 0;
 
   uint32_t
   GetWidth() const noexcept {
@@ -55,6 +60,8 @@ class Texture2D {
         return 2;
       case TextureFormat::BGR:
       case TextureFormat::RGB:
+      case TextureFormat::RGB16F:
+      case TextureFormat::RGB32F:
         return 3;
       case TextureFormat::BGRA:
       case TextureFormat::RGBA:
@@ -93,7 +100,7 @@ enum class CubeMapPosition {
   TOP,
 };
 
-class TextureCubeMap {
+class TextureCubeMap : public Texture {
  public:
   TextureCubeMap(int width, int height, TextureFormat formatType)
       : m_width(width), m_height(height), m_format(formatType) {}
@@ -104,8 +111,8 @@ class TextureCubeMap {
   virtual void
   SetData(void* data, uint32_t size, CubeMapPosition position) = 0;
 
-  virtual std::shared_ptr<IImageDescriptor>
-  GetDescriptor() const = 0;
+  // virtual std::shared_ptr<IImageDescriptor>
+  // GetDescriptor() const = 0;
 
  protected:
   int m_width;

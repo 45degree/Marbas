@@ -24,6 +24,9 @@ class BeginningRenderPass final : public DeferredRenderPass {
   void
   RecordCommand(const Scene* scene) override;
 
+  void
+  GeneratePipeline() override;
+
   virtual void
   Execute(const Scene* scene, const ResourceManager* resourceManager) override;
 };

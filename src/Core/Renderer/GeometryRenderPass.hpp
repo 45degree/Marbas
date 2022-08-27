@@ -33,6 +33,12 @@ class GeometryRenderPass final : public DeferredRenderPass {
   void
   RecordCommand(const Scene* scene) override;
 
+  /**
+   * @brief generate the pipeline
+   */
+  void
+  GeneratePipeline() override;
+
   void
   CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* scene);
 
@@ -43,8 +49,6 @@ class GeometryRenderPass final : public DeferredRenderPass {
   Execute(const Scene* scene, const ResourceManager* resourceMnager) override;
 
  private:
-  std::shared_ptr<DynamicDescriptorSet> m_dynamicDescriptorSet = nullptr;
-
   // this buffer used to store all mesh's MVP matrix
   std::shared_ptr<DynamicUniformBuffer> m_dynamicUniforBuffer = nullptr;
 

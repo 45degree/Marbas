@@ -6,11 +6,13 @@
 
 namespace Marbas {
 
-OpenGLDescriptorSet::OpenGLDescriptorSet(const DescriptorSetInfo& createInfo)
+OpenGLDescriptorSet::OpenGLDescriptorSet(const DescriptorSetLayout& createInfo)
     : DescriptorSet(createInfo) {
   for (const auto& item : createInfo) {
-    if (item.isBuffer) {
+    if (item.isBuffer && item.type == BufferDescriptorType::UNIFORM_BUFFER) {
       m_bufferDescripor.insert({item.bindingPoint, nullptr});
+    } else if (item.isBuffer && item.type == BufferDescriptorType::DYNAMIC_UNIFORM_BUFFER) {
+      m_dynamicBuffer.insert({item.bindingPoint, nullptr});
     } else {
       m_imageDescriptor.insert({item.bindingPoint, nullptr});
     }
@@ -19,17 +21,18 @@ OpenGLDescriptorSet::OpenGLDescriptorSet(const DescriptorSetInfo& createInfo)
 
 void
 OpenGLDescriptorSet::BindBuffer(uint16_t bindingPoint,
-                                const std::shared_ptr<IBufferDescriptor>& descriptor) {
+                                const std::shared_ptr<UniformBuffer>& descriptor) {
   // check whether the binding point is valid
-  if (std::none_of(m_createInfo.cbegin(), m_createInfo.cend(), [&](const DescriptorInfo& item) {
-        return item.isBuffer && item.type == descriptor->GetDescriptorType() &&
-               bindingPoint == item.bindingPoint;
-      })) {
+  if (std::none_of(m_createInfo.cbegin(), m_createInfo.cend(),
+                   [&](const DescriptorSetLayoutBinding& item) {
+                     return item.isBuffer && item.type == descriptor->GetBufferDescriptorType() &&
+                            bindingPoint == item.bindingPoint;
+                   })) {
     LOG(ERROR) << FORMAT("don't have this binding point {} for buffer descriptor", bindingPoint);
     return;
   }
 
-  const auto openglDescriptor = std::dynamic_pointer_cast<IOpenGLBufferDescriptor>(descriptor);
+  const auto openglDescriptor = std::dynamic_pointer_cast<OpenGLUniformBuffer>(descriptor);
   if (openglDescriptor != nullptr) {
     m_bufferDescripor[bindingPoint] = openglDescriptor;
   }
@@ -38,26 +41,52 @@ OpenGLDescriptorSet::BindBuffer(uint16_t bindingPoint,
 }
 
 void
-OpenGLDescriptorSet::BindImage(uint16_t bindingPoint,
-                               const std::shared_ptr<IImageDescriptor>& descriptor) {
+OpenGLDescriptorSet::BindImage(uint16_t bindingPoint, const std::shared_ptr<Texture>& descriptor) {
   // check
-  if (std::none_of(m_createInfo.cbegin(), m_createInfo.cend(), [&](const DescriptorInfo& item) {
-        return !item.isBuffer && bindingPoint == item.bindingPoint;
-      })) {
+  if (std::none_of(m_createInfo.cbegin(), m_createInfo.cend(),
+                   [&](const DescriptorSetLayoutBinding& item) {
+                     return !item.isBuffer && bindingPoint == item.bindingPoint;
+                   })) {
     LOG(ERROR) << FORMAT("don't have this binding point {} for buffer descriptor", bindingPoint);
     return;
   }
 
-  const auto openglDescriptor = std::dynamic_pointer_cast<IOpenGLImageDescriptor>(descriptor);
-  if (openglDescriptor != nullptr) {
-    m_imageDescriptor[bindingPoint] = openglDescriptor;
+  const auto openglTextureCubeMap = std::dynamic_pointer_cast<OpenGLTextureCubeMap>(descriptor);
+  const auto openglTexture2D = std::dynamic_pointer_cast<OpenGLTexture2D>(descriptor);
+  if (openglTexture2D != nullptr) {
+    m_imageDescriptor[bindingPoint] = openglTexture2D;
+  } else if (openglTextureCubeMap != nullptr) {
+    m_imageDescriptor[bindingPoint] = openglTextureCubeMap;
+  } else {
+    LOG(ERROR) << FORMAT("can't bind descriptor to {}, because it's not a opengl buffer descriptor",
+                         bindingPoint);
   }
-  LOG_IF(ERROR, openglDescriptor == nullptr) << FORMAT(
+}
+
+void
+OpenGLDescriptorSet::BindDynamicBuffer(uint16_t bindingPoint,
+                                       const std::shared_ptr<DynamicUniformBuffer>& dynamicBuffer) {
+  // check whether the binding point is valid
+  if (std::none_of(
+          m_createInfo.cbegin(), m_createInfo.cend(), [&](const DescriptorSetLayoutBinding& item) {
+            return item.isBuffer && item.type == dynamicBuffer->GetBufferDescriptorType() &&
+                   bindingPoint == item.bindingPoint;
+          })) {
+    LOG(ERROR) << FORMAT("don't have this binding point {} for buffer descriptor", bindingPoint);
+    return;
+  }
+
+  const auto openglDynamicBuffer =
+      std::dynamic_pointer_cast<OpenGLDynamicUniformBuffer>(dynamicBuffer);
+  if (openglDynamicBuffer != nullptr) {
+    m_dynamicBuffer[bindingPoint] = openglDynamicBuffer;
+  }
+  LOG_IF(ERROR, openglDynamicBuffer == nullptr) << FORMAT(
       "can't bind descriptor to {}, because it's not a opengl buffer descriptor", bindingPoint);
 }
 
 void
-OpenGLDescriptorSet::Bind() const {
+OpenGLDescriptorSet::Bind(const Vector<DynamicBufferPiece>& bufferPiece) const {
   for (auto& [bindingPoint, bufferDescriptor] : m_bufferDescripor) {
     bufferDescriptor->Bind(bindingPoint);
   }
@@ -67,35 +96,14 @@ OpenGLDescriptorSet::Bind() const {
       imageDescriptor->Bind(bindingPoint);
     }
   }
-}
 
-OpenGLDynamicDescriptorSet::OpenGLDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints)
-    : DynamicDescriptorSet(bindingPoints) {
-  for (auto&& bindingPoint : bindingPoints) {
-    m_bufferDescriptor.insert({bindingPoint, nullptr});
-  }
-}
+  for (int i = 0, j = 0; i < m_createInfo.size(); i++) {
+    if (m_createInfo[i].type != BufferDescriptorType::DYNAMIC_UNIFORM_BUFFER) continue;
+    auto bindingPoint = m_createInfo[i].bindingPoint;
+    const auto& buffer = m_dynamicBuffer.at(bindingPoint);
+    buffer->Bind(bindingPoint, bufferPiece[j].offset, bufferPiece[j].size);
 
-void
-OpenGLDynamicDescriptorSet::BindDynamicBuffer(
-    uint16_t bindingPoint, const std::shared_ptr<IDynamicBufferDescriptor>& dynamicBuffer) {
-  DLOG_ASSERT(std::find(m_bindingPoints.cbegin(), m_bindingPoints.cend(), bindingPoint) !=
-              m_bindingPoints.cend())
-      << FORMAT("don't have this binding point {} for buffer descriptor", bindingPoint);
-
-  const auto openglDynamicDescriptor =
-      std::dynamic_pointer_cast<IOpenGLDynamicBufferDescriptor>(dynamicBuffer);
-
-  DLOG_ASSERT(openglDynamicDescriptor != nullptr)
-      << FORMAT("can't bind descriptor to {}, because it's not a opengl dynamic buffer descriptor",
-                bindingPoint);
-  m_bufferDescriptor[bindingPoint] = openglDynamicDescriptor;
-}
-
-void
-OpenGLDynamicDescriptorSet::Bind(uint32_t offset, uint32_t size) const {
-  for (const auto& [bindingPoint, bufferDescripor] : m_bufferDescriptor) {
-    bufferDescripor->Bind(bindingPoint, offset, size);
+    j++;
   }
 }
 

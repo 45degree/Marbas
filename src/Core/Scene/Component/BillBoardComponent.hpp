@@ -3,11 +3,17 @@
 #include <optional>
 
 #include "Common/MathCommon.hpp"
+#include "RHI/RHI.hpp"
+#include "Resource/ResourceManager.hpp"
 #include "Tool/Uid.hpp"
 
 namespace Marbas {
 
-class BillBoardComponent_Impl;
+struct BillBoardComponent_Impl {
+  std::shared_ptr<VertexBuffer> vertexBuffer;
+  std::shared_ptr<DescriptorSet> descriptorSet;
+  std::shared_ptr<Texture2DResource> textureResource;
+};
 
 enum class BillBoardType {
   POINT_ROT_EYE,

@@ -22,4 +22,6 @@ struct MultiTagComponent {
   EntityType type = EntityType::None;
 };
 
+struct EnableShadowTag {};
+
 }  // namespace Marbas

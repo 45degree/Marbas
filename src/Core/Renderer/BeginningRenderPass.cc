@@ -8,8 +8,7 @@ const String BeginningRenderPass::renderPassName = "beginningRenderPass";
 const String BeginningRenderPass::targetName = "beginningTarget";
 const String BeginningRenderPass::depthTargetName = "beginningDepthTarget";
 
-BeginningRenderPassCreateInfo::BeginningRenderPassCreateInfo()
-    : DeferredRenderPassNodeCreateInfo() {
+BeginningRenderPassCreateInfo::BeginningRenderPassCreateInfo() : DeferredRenderPassCreateInfo() {
   passName = BeginningRenderPass::renderPassName;
   inputResource = {};
   outputResource = {BeginningRenderPass::depthTargetName, BeginningRenderPass::targetName};
@@ -46,6 +45,12 @@ BeginningRenderPass::BeginningRenderPass(const BeginningRenderPassCreateInfo& cr
   m_commandFactory = m_rhiFactory->CreateCommandFactory();
   m_commandBuffer = m_commandFactory->CreateCommandBuffer();
 
+  // create pipeline
+  GeneratePipeline();
+}
+
+void
+BeginningRenderPass::GeneratePipeline() {
   // create pipeline
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
   m_pipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = m_width, .height = m_height});

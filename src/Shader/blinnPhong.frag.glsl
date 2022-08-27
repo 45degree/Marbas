@@ -10,7 +10,7 @@ struct Lights {
 layout(location = 0) in vec2 TexCoords;
 layout(location = 0) out vec4 FragColor;
 
-layout(std140, binding = 0) uniform LightsInfo {
+layout(std140, binding = 1) uniform LightsInfo {
   Lights lights[MAX_LIGHT_COUNT];
   uint lightsCount;
   vec3 viewPos;

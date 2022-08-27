@@ -15,8 +15,8 @@ class OpenGLCommandFactory final : public CommandFactory {
   std::unique_ptr<BindDescriptorSet>
   CreateBindDescriptorSetCMD() override;
 
-  std::unique_ptr<BindDynamicDescriptorSet>
-  CreateBindDynamicDescriptorSetCMD() override;
+  // std::unique_ptr<BindDynamicDescriptorSet>
+  // CreateBindDynamicDescriptorSetCMD() override;
 
   std::unique_ptr<BeginRenderPass>
   CreateBeginRenderPassCMD() override;

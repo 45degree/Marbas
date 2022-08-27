@@ -10,13 +10,6 @@
 
 namespace Marbas {
 
-struct CubeMapComponent_Impl {
-  std::shared_ptr<VertexBuffer> vertexBuffer;
-  std::shared_ptr<IndexBuffer> indexBuffer;
-  std::shared_ptr<DescriptorSet> descriptorSet;
-  std::shared_ptr<TextureCubeMapResource> textureCubeMapResource;
-};
-
 static Vector<ElementLayout>
 GetMeshVertexInfoLayout() {
   Vector<ElementLayout> layouts{
@@ -68,21 +61,7 @@ CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createIn
   };
   m_renderPass = m_rhiFactory->CreateRenderPass(renderPassCreateInfo);
 
-  // create command factory
-  m_commandFactory = m_rhiFactory->CreateCommandFactory();
-  m_commandBuffer = m_commandFactory->CreateCommandBuffer();
-
   // read shader
-  // auto fragmentShader =
-  //     m_rhiFactory->CreateShaderStage("Shader/cubeMap.frag.glsl.spv",
-  //     ShaderType::FRAGMENT_SHADER);
-  // auto vertexShader =
-  //     m_rhiFactory->CreateShaderStage("Shader/cubeMap.vert.glsl.spv", ShaderType::VERTEX_SHADER);
-  // auto cubeMapShader = m_rhiFactory->CreateShader();
-  // cubeMapShader->AddShaderStage(vertexShader);
-  // cubeMapShader->AddShaderStage(fragmentShader);
-  // cubeMapShader->Link();
-
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto shaderResource = shaderContainer->CreateResource();
   shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/cubeMap.vert.glsl");
@@ -90,20 +69,31 @@ CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createIn
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
 
-  // create Pipeline
+  // set descriptor set layout and create pipeline
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 0,
+  });
+  GeneratePipeline();
+}
+
+void
+CubeMapRenderPass::GeneratePipeline() {
+  auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
+  auto resource = shaderContainer->GetResource(m_shaderId);
+  if (!resource->IsLoad()) {
+    resource->LoadResource(m_rhiFactory, m_resourceManager.get());
+  }
+
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
   m_pipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = m_width, .height = m_height});
   m_pipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout(), VertexInputRate::VERTEX);
-  m_pipeline->SetShader(shaderResource->GetShader());
+  m_pipeline->SetShader(resource->GetShader());
   m_pipeline->SetDepthStencilInfo(DepthStencilInfo{
       .depthTestEnable = true,
       .depthCompareOp = DepthCompareOp::LEQUAL,
   });
   m_pipeline->Create();
-
-  // create uniform buffer
-  auto bufferSize = sizeof(CubeMapComponent::UniformBufferBlockData);
-  m_uniformBuffer = m_rhiFactory->CreateUniformBuffer(bufferSize);
 }
 
 void
@@ -126,9 +116,6 @@ CubeMapRenderPass::RecordCommand(const Scene* scene) {
   // recreate uniform buffer
   auto entity = view.front();
   auto& cubeMapComponent = Entity::GetComponent<CubeMapComponent>(scene, entity);
-
-  auto bufferSize = sizeof(CubeMapComponent::UniformBufferBlockData);
-  m_uniformBuffer->SetData(&cubeMapComponent.m_uniformBufferData, bufferSize, 0);
 
   /**
    * set command
@@ -167,7 +154,6 @@ CubeMapRenderPass::RecordCommand(const Scene* scene) {
 
   bindVertexBuffer->SetVertexBuffer(implData->vertexBuffer);
   bindIndexBuffer->SetIndexBuffer(implData->indexBuffer);
-
   bindDescriptorSet->SetDescriptor(implData->descriptorSet);
 
   drawIndex->SetIndexCount(implData->indexBuffer->GetIndexCount());
@@ -202,28 +188,18 @@ CubeMapRenderPass::CreateBufferForEveryEntity(const entt::entity cubeMap, Scene*
   auto indexBuffer = m_rhiFactory->CreateIndexBuffer(std::move(indices));
   implData->indexBuffer = std::move(indexBuffer);
 
+  // create descriptor set
+  implData->descriptorSet = GenerateDescriptorSet();
+  BindCameraUniformBuffer(implData->descriptorSet.get());
+
   // load material
   if (cubeMapComponent.cubeMapResourceId.has_value()) {
     auto id = cubeMapComponent.cubeMapResourceId.value();
     auto cubeMapResource = m_resourceManager->GetCubeMapResourceContainer()->GetResource(id);
     cubeMapResource->LoadResource(m_rhiFactory, m_resourceManager.get());
 
-    DescriptorSetInfo descriptorSetInfo{
-        DescriptorInfo{
-            .isBuffer = true,
-            .type = BufferDescriptorType::UNIFORM_BUFFER,
-            .bindingPoint = 0,
-        },
-        DescriptorInfo{
-            .isBuffer = false,
-            .bindingPoint = 0,
-        },
-    };
-    auto descriptor = m_rhiFactory->CreateDescriptorSet(descriptorSetInfo);
-    descriptor->BindImage(0, cubeMapResource->GetTextureCubeMap()->GetDescriptor());
-    descriptor->BindBuffer(0, m_uniformBuffer->GetIBufferDescriptor());
+    implData->descriptorSet->BindImage(0, cubeMapResource->GetTextureCubeMap());
 
-    implData->descriptorSet = std::move(descriptor);
     implData->textureCubeMapResource = cubeMapResource;
   }
   cubeMapComponent.m_implData = implData;
@@ -234,19 +210,9 @@ void
 CubeMapRenderPass::SetUniformBuffer(Scene* scene) {
   // get matrix
   const auto editorCamera = scene->GetEditorCamrea();
-  const auto viewMatrix = editorCamera->GetViewMartix();
-  const auto perspectiveMatrix = editorCamera->GetPerspective();
-
-  auto view = Entity::GetAllEntity<CubeMapComponent>(scene);
-  auto entity = view.front();
-  auto& cubeMapComponent = Entity::GetComponent<CubeMapComponent>(scene, entity);
-  cubeMapComponent.m_uniformBufferData.model = glm::mat4(1);
-
-  cubeMapComponent.m_uniformBufferData.view = glm::mat4(glm::mat3(viewMatrix));
-  cubeMapComponent.m_uniformBufferData.projective = perspectiveMatrix;
-
-  auto bufferSize = sizeof(CubeMapComponent::UniformBufferBlockData);
-  m_uniformBuffer->SetData(&cubeMapComponent.m_uniformBufferData, bufferSize, 0);
+  const auto viewMatrix = editorCamera->GetViewMatrix();
+  const auto ProjectionMatrix = editorCamera->GetProjectionMatrix();
+  UpdateCameraUniformBuffer(glm::mat4(glm::mat3(viewMatrix)), ProjectionMatrix);
 }
 
 void

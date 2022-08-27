@@ -132,8 +132,12 @@ struct GraphicsPipeLineCreateInfo {
   // VertexInputDescription vertexInputDescription;
   ViewportInfo viewport;
   ScissorInfo scissor;
-  DescriptorSetInfo descriptorsSetInfo;
+  DescriptorSetLayout descriptorsSetInfo;
   MultisampleInfo multisampleInfo;
+};
+
+struct GraphicsPipeLineLayout {
+  DescriptorSetLayout descriptorSetLayout;
 };
 
 enum class VertexInputRate {
@@ -174,7 +178,7 @@ class GraphicsPipeLine {
   SetBlendInfo(const BlendInfo& blendInfo) = 0;
 
   virtual void
-  SetDescriptorSetInfo(const DescriptorSetInfo& descriptorSetInfo) = 0;
+  SetPipelineLayout(const GraphicsPipeLineLayout& pipelineLayout) = 0;
 
   /**
    * @brief Create the pipeline, if create failed, throw an exception

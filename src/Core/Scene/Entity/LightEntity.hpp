@@ -7,6 +7,9 @@ namespace Marbas {
 using LightEntity = entt::entity;
 
 class Scene;
+
+enum class LightType { ParalleLight };
+
 class LightPolicy {
  public:
   LightPolicy() = delete;
@@ -15,7 +18,7 @@ class LightPolicy {
   operator=(const LightPolicy&) = delete;
 
   static LightEntity
-  Create(entt::registry& registry);
+  Create(entt::registry& registry, LightType lightType);
 };
 
 }  // namespace Marbas
