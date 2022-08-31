@@ -10,6 +10,14 @@ struct Lights {
 layout(location = 0) in vec2 TexCoords;
 layout(location = 0) out vec4 FragColor;
 
+layout(std140, binding = 0) uniform Matrices {
+  mat4 VIEW;
+  mat4 PROJETION;
+  vec3 RIGHT;
+  vec3 UP;
+  vec3 POS;
+};
+
 layout(std140, binding = 1) uniform LightsInfo {
   Lights lights[MAX_LIGHT_COUNT];
   uint lightsCount;
@@ -33,7 +41,13 @@ void main() {
   for(int i = 0; i < min(lightsCount, MAX_LIGHT_COUNT); ++i) {
     vec3 lightDir = normalize(lights[i].pos - FragPos);
     vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lights[i].color;
-    lighting += diffuse;
+
+    float distance = length(lights[i].pos - FragPos);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(Normal, halfwayDir), 0.0), 32.0);
+    vec3 specular = lights[i].color * spec * Specular;
+
+    lighting += diffuse + specular;
   }
   FragColor = vec4(lighting, 1.0);
 }

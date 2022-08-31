@@ -5,12 +5,13 @@
 #include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "RHI/Interface/Pipeline.hpp"
+#include "ShadowMappingRenderPass.hpp"
 
 namespace Marbas {
 
 GridRenderPassCreateInfo::GridRenderPassCreateInfo() {
   passName = "GridRenderPassCreateInfo";
-  inputPassNode = BlinnPhongRenderPass::renderPassName;
+  inputPassNode = ShadowMappingRenderPass::renderPassName;
 }
 
 GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)

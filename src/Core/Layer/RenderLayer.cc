@@ -10,6 +10,7 @@
 #include "Core/Renderer/CubeMapRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "Core/Renderer/GridRenderPass.hpp"
+#include "Core/Renderer/ShadowMappingRenderPass.hpp"
 #include "RHI/RHI.hpp"
 
 namespace Marbas {
@@ -114,6 +115,26 @@ RenderLayer::OnAttach() {
   }());
   m_renderGraph->RegisterDeferredRenderPassNode(blinnPhoneRenderPass);
 
+  // shadow mapping render pass
+  auto shadowMappingTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = String(ShadowMappingRenderPass::renderTarget),
+      .buffersType = {{GBufferTexutreType::COLOR, 1}},
+      .rhiFactory = m_rhiFactory,
+      .width = m_width,
+      .height = m_height,
+  });
+  m_renderGraph->RegisterRenderTargetNode(shadowMappingTarget);
+
+  auto shadowMappingRenderPass = std::make_shared<ShadowMappingRenderPass>([&]() {
+    ShadowMappingCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = m_width;
+    createInfo.height = m_height;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterDeferredRenderPassNode(shadowMappingRenderPass);
+
   // create billBoard render pass
   auto billBoardRenderPass = std::make_shared<BillBoardRenderPass>([&]() {
     BillBoardRenderPassCreateInfo createInfo;
@@ -201,7 +222,7 @@ RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
 
 std::shared_ptr<Texture2D>
 RenderLayer::GetRenderResult() {
-  auto target = m_renderGraph->GetRenderTarget(BlinnPhongRenderPass::blinnPhongTargetName);
+  auto target = m_renderGraph->GetRenderTarget(String(ShadowMappingRenderPass::renderTarget));
 
   return target->GetGBuffer()->GetTexture(GBufferTexutreType::COLOR);
 }

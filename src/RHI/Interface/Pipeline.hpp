@@ -24,25 +24,34 @@ struct ScissorInfo {
 };
 
 enum class PolygonMode {
-
+  FILL,
+  POINT,
+  LINE,
 };
 
 enum class CullMode {
-
+  NONE,
+  FRONT,
+  BACK,
+  FRONT_AND_BACK,
 };
 
 enum class FrontFace {
-
+  CW,
+  CCW,
 };
 
 struct RasterizationInfo {
-  bool depthClampEnable;         // TODO
-  bool rasterizerDiscardEnable;  // TODO
-  PolygonMode polygonMode;
+  bool depthClampEnable = false;
+  bool rasterizerDiscardEnable = false;
+  PolygonMode polygonMode = PolygonMode::FILL;
   float lineWidth = 1.0f;
-  CullMode cullMode;
-  FrontFace frontFace;
-  bool depthBiasEnable;  // TODO
+  CullMode cullMode = CullMode::NONE;
+  FrontFace frontFace = FrontFace::CCW;
+  bool depthBiasEnable = false;
+  float depthBiasConstantFactor = 0.0f;
+  float depthBiasClamp = 0.0f;
+  float depthBiasSlopeFactor = 0.0f;
 };
 
 enum class DepthCompareOp {

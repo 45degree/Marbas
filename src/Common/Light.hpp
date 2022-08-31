@@ -43,7 +43,7 @@ class ParallelLight final : public Light {
  public:
   glm::mat4
   GetProjectionMatrix() const {
-    return glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, m_near, m_far);
+    return glm::ortho(-10.0f, 10.0f, -100.0f, 100.0f, m_near, m_far);
   }
 
   glm::mat4
@@ -61,10 +61,15 @@ class ParallelLight final : public Light {
     m_far = far;
   }
 
+  void
+  SetDirection(const glm::vec3& direction) {
+    m_direction = direction;
+  }
+
  private:
-  glm::vec3 m_direction;
-  float m_near = 1.0f;
-  float m_far = 7.5f;
+  glm::vec3 m_direction = glm::vec3(0, 0, -1);
+  float m_near = 0.1f;
+  float m_far = 100.f;
 };
 
 }  // namespace Marbas

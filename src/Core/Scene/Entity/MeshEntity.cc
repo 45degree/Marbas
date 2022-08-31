@@ -9,6 +9,7 @@
 #include "Common/Common.hpp"
 #include "Core/Application.hpp"
 #include "Core/Scene/Component/HierarchyComponent.hpp"
+#include "Core/Scene/Component/ShadowComponent.hpp"
 #include "Core/Scene/Component/TagComponent.hpp"
 #include "Core/Scene/Scene.hpp"
 #include "RHI/RHI.hpp"
@@ -52,7 +53,7 @@ MeshPolicy::Create(const std::shared_ptr<Mesh>& mesh, entt::registry& registry) 
   registry.emplace<MeshComponent>(meshEntity);
   registry.emplace<HierarchyComponent>(meshEntity);
   registry.emplace<UniqueTagComponent>(meshEntity);
-  registry.emplace<EnableShadowTag>(meshEntity);
+  registry.emplace<ShadowComponent>(meshEntity);
 
   auto& meshComponent = registry.get<MeshComponent>(meshEntity);
   meshComponent.m_mesh = mesh;

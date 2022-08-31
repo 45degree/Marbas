@@ -4,6 +4,7 @@
 
 #include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
+#include "Core/Renderer/ShadowMappingRenderPass.hpp"
 #include "Core/Scene/Component/BillBoardComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
 
@@ -24,7 +25,7 @@ GetMeshVertexInfoLayout() {
 
 BillBoardRenderPassCreateInfo::BillBoardRenderPassCreateInfo() {
   passName = "CubeMapRenderPass";
-  inputPassNode = BlinnPhongRenderPass::renderPassName;
+  inputPassNode = ShadowMappingRenderPass::renderPassName;
 }
 
 BillBoardRenderPass::BillBoardRenderPass(const BillBoardRenderPassCreateInfo& createInfo)
@@ -75,11 +76,6 @@ BillBoardRenderPass::BillBoardRenderPass(const BillBoardRenderPassCreateInfo& cr
 
   // set descriptor set
 
-  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
-      .isBuffer = true,
-      .type = BufferDescriptorType::UNIFORM_BUFFER,
-      .bindingPoint = 0,
-  });
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
       .isBuffer = false,
       .bindingPoint = 0,
@@ -212,20 +208,6 @@ void
 BillBoardRenderPass::SetUniformBuffer(const Scene* scene) {
   // set matrix
   const auto editorCamera = scene->GetEditorCamrea();
-  // const auto viewMatrix = editorCamera->GetViewMartix();
-  // const auto perspectiveMatrix = editorCamera->GetPerspective();
-  //
-  // m_matrixUniformBlock.view = viewMatrix;
-  // m_matrixUniformBlock.perspective = perspectiveMatrix;
-  // m_matrixUniformBuffer->SetData(&m_matrixUniformBlock, sizeof(MatrixUniformBufferBlock), 0);
-  //
-  // // set camera info
-  // auto right = editorCamera->GetRightVector();
-  // auto up = editorCamera->GetUpVector();
-  // m_cameraUniformBlock.right = right;
-  // m_cameraUniformBlock.up = up;
-  // m_cameraUniformBuffer->SetData(&m_cameraUniformBlock, sizeof(CameraInfoUniformBufferBlock), 0);
-
   UpdateCameraUniformBuffer(editorCamera.get());
 }
 

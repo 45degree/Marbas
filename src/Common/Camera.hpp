@@ -17,6 +17,9 @@ class Camera {
 
   virtual glm::vec3
   GetRightVector() const = 0;
+
+  virtual glm::vec3
+  GetPosition() const = 0;
 };
 
 }  // namespace Marbas

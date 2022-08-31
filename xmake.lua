@@ -19,13 +19,7 @@ add_requires("nativefiledialog 1.1.6")
 add_requires("shaderc")
 add_requires("openssl")
 
--- add_requires("glslang", { configs = { binaryonly = true }})
-
 -- add_requires("uchardet")
-
--- if is_mode("debug") then
---   add_defines("DEBUG")
--- end
 
 includes("src/App/Editor/")
 includes("src/App/Games/")

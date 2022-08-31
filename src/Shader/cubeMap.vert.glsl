@@ -9,6 +9,7 @@ layout(std140, binding = 0) uniform Matrices {
   mat4 projection;
   vec3 right;
   vec3 up;
+  vec3 pos;
 };
 
 void main() {

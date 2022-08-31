@@ -25,7 +25,7 @@ class EditorCamera final : public Camera {
   }
 
   [[nodiscard]] glm::vec3
-  GetPosition() const noexcept {
+  GetPosition() const noexcept override {
     auto direction = glm::vec3(0, 0, 0);
     direction.x = std::cos(glm::radians(m_pitch)) * std::sin(glm::radians(m_yaw));
     direction.y = std::sin(glm::radians(m_pitch));

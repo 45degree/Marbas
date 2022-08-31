@@ -113,6 +113,7 @@ Scene::Scene(const std::shared_ptr<ResourceManager>& resourceManager)
   auto& component = Entity::GetComponent<ParallelLightComponent>(this, light);
   component.m_light.SetPos(glm::vec3(0, 10, 5));
   component.m_light.SetColor(glm::vec3(1, 1, 1));
+  component.m_light.SetDirection(glm::normalize(glm::vec3(0, -10, -5)));
 }
 
 void

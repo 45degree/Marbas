@@ -72,16 +72,9 @@ class RenderPassNode {
     m_cameraUniformBlock.projective = camera->GetProjectionMatrix();
     m_cameraUniformBlock.up = camera->GetUpVector();
     m_cameraUniformBlock.right = camera->GetRightVector();
+    m_cameraUniformBlock.pos = camera->GetPosition();
 
     DLOG_ASSERT(m_cameraUniformBuffer != nullptr);
-    m_cameraUniformBuffer->SetData(&m_cameraUniformBlock, sizeof(CameraUniformBlock), 0);
-  }
-
-  // TODO: remove?
-  void
-  UpdateCameraUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectiveMatrix) {
-    m_cameraUniformBlock.projective = projectiveMatrix;
-    m_cameraUniformBlock.view = viewMatrix;
     m_cameraUniformBuffer->SetData(&m_cameraUniformBlock, sizeof(CameraUniformBlock), 0);
   }
 
@@ -96,6 +89,7 @@ class RenderPassNode {
     alignas(16) glm::mat4 projective = glm::mat4(1.0);
     alignas(16) glm::vec3 right = glm::vec3(1, 0, 0);
     alignas(16) glm::vec3 up = glm::vec3(0, 1.0, 0);
+    alignas(16) glm::vec3 pos = glm::vec3(0, 0, 0);
   } m_cameraUniformBlock;
 
   DescriptorSetLayout m_descriptorSetLayout;

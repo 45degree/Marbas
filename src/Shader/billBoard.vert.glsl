@@ -11,13 +11,8 @@ layout(std140, binding=0) uniform Matrices {
   mat4 projection;
   vec3 right;
   vec3 up;
+  vec3 pos;
 };
-
-// layout(std140, binding=1) uniform CameraInfo {
-//   vec3 right;
-//   vec3 up;
-// };
-
 
 void main() {
   const vec2 uvData[6] = vec2[6] (

@@ -6,6 +6,7 @@
 
 #include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
+#include "Core/Renderer/ShadowMappingRenderPass.hpp"
 #include "Core/Scene/Component/CubeMapComponent.hpp"
 
 namespace Marbas {
@@ -25,7 +26,7 @@ GetMeshVertexInfoLayout() {
 
 CubeMapRenderPassCreateInfo::CubeMapRenderPassCreateInfo() {
   passName = "CubeMapRenderPass";
-  inputPassNode = BlinnPhongRenderPass::renderPassName;
+  inputPassNode = ShadowMappingRenderPass::renderPassName;
 }
 
 CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createInfo)
@@ -212,7 +213,8 @@ CubeMapRenderPass::SetUniformBuffer(Scene* scene) {
   const auto editorCamera = scene->GetEditorCamrea();
   const auto viewMatrix = editorCamera->GetViewMatrix();
   const auto ProjectionMatrix = editorCamera->GetProjectionMatrix();
-  UpdateCameraUniformBuffer(glm::mat4(glm::mat3(viewMatrix)), ProjectionMatrix);
+  // UpdateCameraUniformBuffer(glm::mat4(glm::mat3(viewMatrix)), ProjectionMatrix);
+  UpdateCameraUniformBuffer(editorCamera.get());
 }
 
 void

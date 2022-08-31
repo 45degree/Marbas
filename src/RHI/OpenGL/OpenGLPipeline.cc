@@ -147,6 +147,47 @@ ConvertToOpenGLBlendFuctor(BlendFactor factor) {
   return GL_SRC_ALPHA;
 }
 
+constexpr static GLenum
+ConvertToOpenGLCullMode(CullMode cullMode) {
+  switch (cullMode) {
+    case CullMode::BACK:
+      return GL_BACK;
+    case CullMode::FRONT:
+      return GL_FRONT;
+    case CullMode::FRONT_AND_BACK:
+      return GL_FRONT_AND_BACK;
+    case CullMode::NONE:
+      // never enter to this
+      return GL_FRONT;
+  }
+
+  return GL_FRONT;
+}
+
+constexpr static GLenum
+ConvertToOpenGLPolyMode(PolygonMode polygonMode) {
+  switch (polygonMode) {
+    case PolygonMode::FILL:
+      return GL_FILL;
+    case PolygonMode::LINE:
+      return GL_LINE;
+    case PolygonMode::POINT:
+      return GL_POINT;
+  }
+  return GL_FILL;
+}
+
+constexpr static GLenum
+ConvertToOpenGLFrontFaceMode(FrontFace frontFace) {
+  switch (frontFace) {
+    case FrontFace::CCW:
+      return GL_CCW;
+    case FrontFace::CW:
+      return GL_CW;
+  }
+  return GL_CCW;
+}
+
 OpenGLGraphicsPipeline::OpenGLGraphicsPipeline() { glCreateVertexArrays(1, &m_VAO); }
 
 OpenGLGraphicsPipeline::~OpenGLGraphicsPipeline() { glDeleteVertexArrays(1, &m_VAO); }
@@ -247,6 +288,31 @@ OpenGLGraphicsPipeline::Bind() const {
   glViewport(m_viewPortInfo.x, m_viewPortInfo.y, m_viewPortInfo.width, m_viewPortInfo.height);
   // glScissor(m_scissorInfo.x, m_scissorInfo.y, m_scissorInfo.x, m_scissorInfo.y);
 
+  // set rastreization state
+  if (m_rasterizationInfo.depthClampEnable) {
+    glEnable(GL_DEPTH_CLAMP);
+  }
+
+  if (m_rasterizationInfo.rasterizerDiscardEnable) {
+    glEnable(GL_RASTERIZER_DISCARD);
+  }
+
+  if (m_rasterizationInfo.cullMode != CullMode::NONE) {
+    glEnable(GL_CULL_FACE);
+    glCullFace(ConvertToOpenGLCullMode(m_rasterizationInfo.cullMode));
+  }
+
+  glPolygonMode(GL_FRONT_AND_BACK, ConvertToOpenGLPolyMode(m_rasterizationInfo.polygonMode));
+
+  glFrontFace(ConvertToOpenGLFrontFaceMode(m_rasterizationInfo.frontFace));
+  glLineWidth(m_rasterizationInfo.lineWidth);
+
+  // TODO: opengl depth offset
+  // if (m_rasterizationInfo.depthBiasEnable) {
+  //   glEnable(GL_POLYGON_OFFSET_FILL);
+  //   glPolygonOffset(1.0, 1.0);
+  // }
+
   // set depth test
   if (m_depthStencilInfo.depthTestEnable) {
     glEnable(GL_DEPTH_TEST);
@@ -293,6 +359,13 @@ OpenGLGraphicsPipeline::UnBind() const {
   } else {
     glDisable(GL_BLEND);
   }
+
+  glDisable(GL_DEPTH_CLAMP);
+  glDisable(GL_RASTERIZER_DISCARD);
+  glDisable(GL_CULL_FACE);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glFrontFace(GL_CCW);
+  glLineWidth(1.0);
 }
 
 }  // namespace Marbas
