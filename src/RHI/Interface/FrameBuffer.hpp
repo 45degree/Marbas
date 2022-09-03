@@ -9,7 +9,7 @@ struct FrameBufferInfo {
 
   // if the renderpass is null, means the frame buffer is a default frame buffer
   const RenderPass* renderPass = nullptr;
-  Vector<std::shared_ptr<Texture2D>> attachments;
+  Vector<std::shared_ptr<Texture>> attachments;
 };
 
 class FrameBuffer {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Common/Common.hpp"
 #include "Common/MathCommon.hpp"
 
 namespace Marbas {
@@ -51,9 +52,19 @@ class ParallelLight final : public Light {
     return glm::lookAt(m_pos, m_pos + m_direction, glm::vec3(0, 1, 0));
   }
 
+  float
+  GetNearPlane() const {
+    return m_near;
+  }
+
   void
   SetNearPlane(float near) {
     m_near = near;
+  }
+
+  float
+  GetFarPlane() const {
+    return m_far;
   }
 
   void
@@ -70,6 +81,62 @@ class ParallelLight final : public Light {
   glm::vec3 m_direction = glm::vec3(0, 0, -1);
   float m_near = 0.1f;
   float m_far = 100.f;
+};
+
+class PointLight final : public Light {
+ public:
+  PointLight() = default;
+  ~PointLight() = default;
+
+ public:
+  float
+  GetNearPlane() const {
+    return m_near;
+  }
+
+  void
+  SetNearPlane(float near) {
+    m_near = near;
+  }
+
+  float
+  GetFarPlane() const {
+    return m_far;
+  }
+
+  void
+  SetFarPlane(float far) {
+    m_far = far;
+  }
+
+  void
+  SetAspect(float aspect) {
+    m_aspect = aspect;
+  }
+
+  glm::mat4
+  GetProjectionMatrix() const {
+    return glm::perspective(glm::radians(90.0f), 1.0f, m_near, m_far);
+  }
+
+  /**
+   * @brief get view matrix to transform the world coordiante to the camera coordiante
+   *
+   * @param diretion the direction of the cubemap
+   *        0 --- right
+   *        1 --- left
+   *        2 --- top
+   *        3 --- bottom
+   *        4 --- front
+   *        5 --- back
+   */
+  glm::mat4
+  GetViewMatrix(const int direction) const;
+
+ private:
+  float m_aspect = 1.0f;
+  float m_near = 0.1f;
+  float m_far = 1000.0f;
 };
 
 }  // namespace Marbas

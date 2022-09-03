@@ -6,6 +6,7 @@
 
 #include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
+#include "Core/Renderer/PointLightShadowMappingRenderPass.hpp"
 #include "Core/Renderer/ShadowMappingRenderPass.hpp"
 #include "Core/Scene/Component/CubeMapComponent.hpp"
 
@@ -26,7 +27,7 @@ GetMeshVertexInfoLayout() {
 
 CubeMapRenderPassCreateInfo::CubeMapRenderPassCreateInfo() {
   passName = "CubeMapRenderPass";
-  inputPassNode = ShadowMappingRenderPass::renderPassName;
+  inputPassNode = PointLightShadowMappingRenderPass::renderPassName;
 }
 
 CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createInfo)
@@ -211,9 +212,6 @@ void
 CubeMapRenderPass::SetUniformBuffer(Scene* scene) {
   // get matrix
   const auto editorCamera = scene->GetEditorCamrea();
-  const auto viewMatrix = editorCamera->GetViewMatrix();
-  const auto ProjectionMatrix = editorCamera->GetProjectionMatrix();
-  // UpdateCameraUniformBuffer(glm::mat4(glm::mat3(viewMatrix)), ProjectionMatrix);
   UpdateCameraUniformBuffer(editorCamera.get());
 }
 

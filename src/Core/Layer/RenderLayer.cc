@@ -10,6 +10,7 @@
 #include "Core/Renderer/CubeMapRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "Core/Renderer/GridRenderPass.hpp"
+#include "Core/Renderer/PointLightShadowMappingRenderPass.hpp"
 #include "Core/Renderer/ShadowMappingRenderPass.hpp"
 #include "RHI/RHI.hpp"
 
@@ -135,6 +136,26 @@ RenderLayer::OnAttach() {
   }());
   m_renderGraph->RegisterDeferredRenderPassNode(shadowMappingRenderPass);
 
+  // point light shadow mapping render pass
+  auto pointLightshadowMappTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = String(PointLightShadowMappingRenderPass::targetName),
+      .buffersType = {{GBufferTexutreType::COLOR, 1}},
+      .rhiFactory = m_rhiFactory,
+      .width = m_width,
+      .height = m_height,
+  });
+  m_renderGraph->RegisterRenderTargetNode(pointLightshadowMappTarget);
+
+  auto pointLightShadowMapRenderPass = std::make_shared<PointLightShadowMappingRenderPass>([&]() {
+    PointLightShadowMappingRenderPassCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = m_width;
+    createInfo.height = m_height;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterDeferredRenderPassNode(pointLightShadowMapRenderPass);
+
   // create billBoard render pass
   auto billBoardRenderPass = std::make_shared<BillBoardRenderPass>([&]() {
     BillBoardRenderPassCreateInfo createInfo;
@@ -222,7 +243,8 @@ RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
 
 std::shared_ptr<Texture2D>
 RenderLayer::GetRenderResult() {
-  auto target = m_renderGraph->GetRenderTarget(String(ShadowMappingRenderPass::renderTarget));
+  auto target =
+      m_renderGraph->GetRenderTarget(String(PointLightShadowMappingRenderPass::targetName));
 
   return target->GetGBuffer()->GetTexture(GBufferTexutreType::COLOR);
 }

@@ -34,6 +34,9 @@ class ShadowMappingRenderPass : public DeferredRenderPass {
   void
   RecordCommand(const Scene* scene) override;
 
+  void
+  RecordCopyCommand();
+
   /**
    * @berif execute the render pass node after setting the render grpah
    */
@@ -68,9 +71,12 @@ class ShadowMappingRenderPass : public DeferredRenderPass {
   Uid m_depthShaderId;
   Uid m_shaderId;
 
+  bool m_needToRecordCopyCommand = true;
+
   std::shared_ptr<RenderPass> m_depthRenderPass = nullptr;
   std::shared_ptr<GraphicsPipeLine> m_depthPipeline = nullptr;
   std::shared_ptr<CommandBuffer> m_depthCommandBuffer = nullptr;
+  std::shared_ptr<CommandBuffer> m_copyFrameCommandBuffer = nullptr;
   std::shared_ptr<FrameBuffer> m_depthFrameBuffer = nullptr;
   std::shared_ptr<Texture2D> m_depthTexture = nullptr;
   std::shared_ptr<DynamicUniformBuffer> m_meshDynamicUniformBuffer = nullptr;

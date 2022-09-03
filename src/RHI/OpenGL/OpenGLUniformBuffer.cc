@@ -12,8 +12,6 @@ OpenGLUniformBuffer::OpenGLUniformBuffer(uint32_t size) : UniformBuffer(size) {
   glNamedBufferData(m_target, m_size, nullptr, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-  // m_bufferDescriptor = std::make_shared<OpenGLUniformBufferDescriptor>(UBO);
-
   LOG(INFO) << "create uniform buffer";
 }
 

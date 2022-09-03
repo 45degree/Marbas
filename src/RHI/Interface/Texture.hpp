@@ -19,15 +19,41 @@ enum class TextureFormat {
   DEPTH,
 };
 
+enum TextureType {
+  TEXTURE2D,
+  CUBEMAP,
+};
+
 class Texture {
  public:
+  explicit Texture(TextureType type, TextureFormat format) : m_type(type), m_format(format) {}
   virtual ~Texture() = default;
+
+ public:
+  TextureType
+  GetTextureType() const noexcept {
+    return m_type;
+  }
+
+  TextureFormat
+  GetFormat() const noexcept {
+    return m_format;
+  }
+
+ protected:
+  TextureType m_type;
+  TextureFormat m_format;
 };
+
+// TODO: refactor the texture create info
 
 class Texture2D : public Texture {
  public:
   Texture2D(uint32_t width, uint32_t height, uint32_t level, TextureFormat formatType)
-      : m_width(width), m_height(height), m_level(level), m_format(formatType) {}
+      : Texture(TextureType::TEXTURE2D, formatType),
+        m_width(width),
+        m_height(height),
+        m_level(level) {}
 
   virtual ~Texture2D() = default;
 
@@ -36,9 +62,6 @@ class Texture2D : public Texture {
 
   virtual void*
   GetTexture() = 0;
-
-  // virtual std::shared_ptr<IImageDescriptor>
-  // GetDescriptor() const = 0;
 
   uint32_t
   GetWidth() const noexcept {
@@ -70,11 +93,6 @@ class Texture2D : public Texture {
     return 3;
   }
 
-  TextureFormat
-  GetFormat() const noexcept {
-    return m_format;
-  }
-
   uint32_t
   GetLevel() const noexcept {
     return m_level;
@@ -84,7 +102,6 @@ class Texture2D : public Texture {
   uint32_t m_width;
   uint32_t m_height;
   uint32_t m_level;
-  TextureFormat m_format;
 };
 
 /**
@@ -103,7 +120,7 @@ enum class CubeMapPosition {
 class TextureCubeMap : public Texture {
  public:
   TextureCubeMap(int width, int height, TextureFormat formatType)
-      : m_width(width), m_height(height), m_format(formatType) {}
+      : Texture(TextureType::CUBEMAP, formatType), m_width(width), m_height(height) {}
 
   virtual ~TextureCubeMap() = default;
 
@@ -111,13 +128,9 @@ class TextureCubeMap : public Texture {
   virtual void
   SetData(void* data, uint32_t size, CubeMapPosition position) = 0;
 
-  // virtual std::shared_ptr<IImageDescriptor>
-  // GetDescriptor() const = 0;
-
  protected:
   int m_width;
   int m_height;
-  TextureFormat m_format;
 };
 
 }  // namespace Marbas

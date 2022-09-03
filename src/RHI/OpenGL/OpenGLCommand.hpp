@@ -50,38 +50,6 @@ class OpenGLBindDescriptorSet final : public BindDescriptorSet {
   Vector<DynamicBufferPiece> m_bufferPiece = {};
 };
 
-// class OpenGLBindDynamicDescriptorSet final : public BindDynamicDescriptorSet {
-//  public:
-//   OpenGLBindDynamicDescriptorSet() = default;
-//   OpenGLBindDynamicDescriptorSet(const OpenGLBindDynamicDescriptorSet& command)
-//       : m_openGLDescriptor(command.m_openGLDescriptor) {}
-//
-//   virtual ~OpenGLBindDynamicDescriptorSet() = default;
-//
-//  public:
-//   void
-//   SetDescriptorSet(const std::shared_ptr<DynamicDescriptorSet>& descriptorSet) override {
-//     auto openglDescriptorSet =
-//     std::dynamic_pointer_cast<OpenGLDynamicDescriptorSet>(descriptorSet);
-//     DLOG_ASSERT(openglDescriptorSet != nullptr) << "can't set descriptorSet";
-//     m_openGLDescriptor = openglDescriptorSet;
-//   }
-//
-//  protected:
-//   void
-//   Execute() const override {
-//     m_openGLDescriptor->Bind(m_offset, m_size);
-//   }
-//
-//   std::unique_ptr<ICommand>
-//   Clone() const override {
-//     return std::make_unique<OpenGLBindDynamicDescriptorSet>(*this);
-//   }
-//
-//  private:
-//   std::shared_ptr<OpenGLDynamicDescriptorSet> m_openGLDescriptor = nullptr;
-// };
-
 class OpenGLBeginRenderPass final : public BeginRenderPass {
  public:
   OpenGLBeginRenderPass() = default;

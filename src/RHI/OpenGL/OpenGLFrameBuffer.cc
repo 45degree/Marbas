@@ -21,12 +21,13 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(const FrameBufferInfo& info) : FrameBuffer(
   int depthAttachmentCount = 0;
   Vector<GLuint> colorAttachments;
   for (int i = 0; i < m_attachmentInfos.size(); i++) {
-    auto attachment = std::dynamic_pointer_cast<OpenGLTexture2D>(info.attachments[i]);
-    if (attachment == nullptr) {
-      auto strMsg = FORMAT("the {}th attachment is not a opengl texture", i);
+    // check depth attachment count
+    if (m_attachmentInfos[i].format == TextureFormat::DEPTH && depthAttachmentCount > 1) {
+      auto strMsg = "the depth attachment should only have one";
       LOG(ERROR) << strMsg;
       throw std::runtime_error(strMsg);
     }
+    auto attachment = info.attachments[i];
 
     // check type
     if (attachment->GetFormat() != m_attachmentInfos[i].format) {
@@ -35,23 +36,29 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(const FrameBufferInfo& info) : FrameBuffer(
       throw std::runtime_error(strMsg);
     }
 
-    // check depth attachment count
-    if (m_attachmentInfos[i].format == TextureFormat::DEPTH && depthAttachmentCount > 1) {
-      auto strMsg = "the depth attachment should only have one";
-      LOG(ERROR) << strMsg;
-      throw std::runtime_error(strMsg);
+    // TODO:
+    GLuint texture;
+    if (attachment->GetTextureType() == TextureType::TEXTURE2D) {
+      auto attachment2D = std::dynamic_pointer_cast<OpenGLTexture2D>(attachment);
+      DLOG_ASSERT(attachment2D != nullptr)
+          << FORMAT("the {}th attachment is not a opengl texture", i);
+      texture = attachment2D->GetOpenGLTexture();
+    } else if (info.attachments[i]->GetTextureType() == TextureType::CUBEMAP) {
+      auto attachmentCubeMap = std::dynamic_pointer_cast<OpenGLTextureCubeMap>(attachment);
+      DLOG_ASSERT(attachmentCubeMap != nullptr)
+          << FORMAT("the {}th attachment is not a opengl cubemap texture", i);
+      texture = attachmentCubeMap->GetOpenGLTexture();
     }
 
     // attach the attachment
-    auto texture = attachment->GetOpenGLTexture();
     switch (attachment->GetFormat()) {
       case TextureFormat::DEPTH:
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texture, 0);
+        glNamedFramebufferTexture(frameBufferID, GL_DEPTH_ATTACHMENT, texture, 0);
         depthAttachmentCount++;
         break;
       default:
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + colorAttachmentCount,
-                               GL_TEXTURE_2D, texture, 0);
+        glNamedFramebufferTexture(frameBufferID, GL_COLOR_ATTACHMENT0 + colorAttachmentCount,
+                                  texture, 0);
         colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + colorAttachmentCount);
         colorAttachmentCount++;
         break;

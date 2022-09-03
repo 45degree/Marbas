@@ -4,7 +4,11 @@
 
 namespace Marbas {
 
-enum class ShaderType { VERTEX_SHADER, FRAGMENT_SHADER };
+enum class ShaderType {
+  VERTEX_SHADER,
+  FRAGMENT_SHADER,
+  GEOMETRY_SHADER,
+};
 
 class ShaderStage {
  public:

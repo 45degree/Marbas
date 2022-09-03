@@ -109,11 +109,11 @@ Scene::Scene(const std::shared_ptr<ResourceManager>& resourceManager)
 
   // TODO: need to remove
   // create a light
-  auto light = LightPolicy::Create(m_world, LightType::ParalleLight);
-  auto& component = Entity::GetComponent<ParallelLightComponent>(this, light);
-  component.m_light.SetPos(glm::vec3(0, 10, 5));
+  auto light = LightPolicy::Create(m_world, LightType::PointLight);
+  auto& component = Entity::GetComponent<PointLightComponent>(this, light);
+  component.m_light.SetPos(glm::vec3(0, 30, 0));
   component.m_light.SetColor(glm::vec3(1, 1, 1));
-  component.m_light.SetDirection(glm::normalize(glm::vec3(0, -10, -5)));
+  // component.m_light.SetDirection(glm::normalize(glm::vec3(0, -10, -5)));
 }
 
 void

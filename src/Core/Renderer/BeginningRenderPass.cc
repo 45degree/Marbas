@@ -119,13 +119,17 @@ BeginningRenderPass::RecordCommand(const Scene* scene) {
    */
   m_commandBuffer->BeginRecordCmd();
   m_commandBuffer->AddCommand(std::move(beginRenderPass));
-  m_commandBuffer->AddCommand(std::move(bindPipeline));
+  // m_commandBuffer->AddCommand(std::move(bindPipeline));
   m_commandBuffer->AddCommand(std::move(endRenderPass));
   m_commandBuffer->EndRecordCmd();
 }
 
 void
 BeginningRenderPass::Execute(const Scene* scene, const ResourceManager* resourceManager) {
+  if (m_needToRecordComand) {
+    RecordCommand(scene);
+    m_needToRecordComand = false;
+  }
   m_commandBuffer->SubmitCommand();
 }
 

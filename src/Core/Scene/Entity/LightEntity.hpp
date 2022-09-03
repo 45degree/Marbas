@@ -8,7 +8,10 @@ using LightEntity = entt::entity;
 
 class Scene;
 
-enum class LightType { ParalleLight };
+enum class LightType {
+  ParalleLight,
+  PointLight,
+};
 
 class LightPolicy {
  public:

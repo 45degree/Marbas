@@ -208,9 +208,12 @@ BlinnPhongRenderPass::CreateFrameBuffer() {
 
 void
 BlinnPhongRenderPass::SetUniformBuffer(const Scene* scene) {
-  auto view = Entity::GetAllEntity<ParallelLightComponent>(scene);
+  auto paralleLightView = Entity::GetAllEntity<ParallelLightComponent>(scene);
+  auto pointLightView = Entity::GetAllEntity<PointLightComponent>(scene);
   uint32_t index = 0;
-  for (const auto& [entity, lightComponent] : view.each()) {
+
+  // set paralle light
+  for (const auto& [entity, lightComponent] : paralleLightView.each()) {
     if (index >= maxLightsCount) {
       LOG(WARNING) << FORMAT("the max count of light is {}", maxLightsCount);
       break;
@@ -224,6 +227,22 @@ BlinnPhongRenderPass::SetUniformBuffer(const Scene* scene) {
     m_uniformBufferBlock.viewPos = viewPos;
     index++;
   }
+
+  // set point light
+  for (const auto& [entity, lightComponent] : pointLightView.each()) {
+    if (index >= maxLightsCount) {
+      LOG(WARNING) << FORMAT("the max count of light is {}", maxLightsCount);
+      break;
+    }
+    auto pos = lightComponent.m_light.GetPos();
+    auto color = lightComponent.m_light.GetColor();
+    auto viewPos = scene->GetEditorCamrea()->GetPosition();
+    m_uniformBufferBlock.lights[index].pos = pos;
+    m_uniformBufferBlock.lights[index].color = color;
+    m_uniformBufferBlock.viewPos = viewPos;
+    index++;
+  }
+
   m_uniformBufferBlock.lightsCount = index;
 
   auto bufferSize = sizeof(LightsInfo);

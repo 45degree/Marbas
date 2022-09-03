@@ -24,7 +24,7 @@ class OpenGLFrameBuffer : public FrameBuffer {
   GLuint frameBufferID;
 
   Vector<AttachmentDescription> m_attachmentInfos;
-  Vector<std::shared_ptr<OpenGLTexture2D>> m_attachments;
+  Vector<std::shared_ptr<Texture>> m_attachments;
 };
 
 }  // namespace Marbas

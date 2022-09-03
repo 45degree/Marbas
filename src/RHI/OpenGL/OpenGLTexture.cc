@@ -20,12 +20,37 @@ ConvertToOpenglDataFormat(TextureFormat type) {
     case TextureFormat::RGBA:
       return GL_RGBA;
     case TextureFormat::RGB16F:
-      return GL_RGB16F;
+      return GL_RGB;
     case TextureFormat::RGB32F:
-      return GL_RGB32F;
+      return GL_RGB;
     case TextureFormat::DEPTH:
       return GL_DEPTH_COMPONENT;
   }
+}
+
+static constexpr GLenum
+ConvertToOpenGLTextureType(TextureFormat type) {
+  switch (type) {
+    case TextureFormat::BGR:
+      return GL_UNSIGNED_BYTE;
+    case TextureFormat::BGRA:
+      return GL_UNSIGNED_BYTE;
+    case TextureFormat::RED:
+      return GL_UNSIGNED_BYTE;
+    case TextureFormat::RG:
+      return GL_UNSIGNED_BYTE;
+    case TextureFormat::RGB:
+      return GL_UNSIGNED_BYTE;
+    case TextureFormat::RGBA:
+      return GL_UNSIGNED_BYTE;
+    case TextureFormat::RGB16F:
+      return GL_FLOAT;
+    case TextureFormat::RGB32F:
+      return GL_FLOAT;
+    case TextureFormat::DEPTH:
+      return GL_FLOAT;
+  }
+  return GL_UNSIGNED_BYTE;
 }
 
 static GLenum
@@ -68,8 +93,6 @@ OpenGLTexture2D::OpenGLTexture2D(int width, int height, uint32_t level, TextureF
 
   glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-  // m_descriptor = std::make_shared<OpenGLTexture2DDescriptor>(textureID);
 }
 
 OpenGLTexture2D::~OpenGLTexture2D() { glDeleteTextures(1, &m_textureID); }
@@ -84,8 +107,9 @@ OpenGLTexture2D::SetData(void* data, uint32_t size) {
   auto bpp = this->m_format == TextureFormat::RGBA ? 4 : 3;
   LOG_IF(ERROR, size != m_width * m_height * bpp) << "size and texture size do not match";
 
-  auto dataFormat = ConvertToOpenglDataFormat(this->m_format);
-  glTextureSubImage2D(m_textureID, 0, 0, 0, m_width, m_height, dataFormat, GL_UNSIGNED_BYTE, data);
+  auto dataFormat = ConvertToOpenglDataFormat(m_format);
+  auto type = ConvertToOpenGLTextureType(m_format);
+  glTextureSubImage2D(m_textureID, 0, 0, 0, m_width, m_height, dataFormat, type, data);
 }
 
 void*
@@ -105,8 +129,6 @@ OpenGLTextureCubeMap::OpenGLTextureCubeMap(int width, int height, TextureFormat 
   glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-  // m_descriptor = std::make_shared<OpenGLTextureCubeMapDescriptor>(m_textureID);
 }
 
 void
@@ -115,6 +137,7 @@ OpenGLTextureCubeMap::SetData(void* data, uint32_t size, CubeMapPosition positio
   LOG_IF(ERROR, size != m_width * m_height * bpp) << "size and texture size do not match";
 
   auto dataFormat = ConvertToOpenglDataFormat(m_format);
+  auto type = ConvertToOpenGLTextureType(m_format);
 
   // see wiki https://www.khronos.org/opengl/wiki/Cubemap_Texture
   int layer = 0;
@@ -139,8 +162,7 @@ OpenGLTextureCubeMap::SetData(void* data, uint32_t size, CubeMapPosition positio
       break;
   }
 
-  glTextureSubImage3D(m_textureID, 0, 0, 0, layer, m_width, m_height, 1, dataFormat,
-                      GL_UNSIGNED_BYTE, data);
+  glTextureSubImage3D(m_textureID, 0, 0, 0, layer, m_width, m_height, 1, dataFormat, type, data);
 }
 
 }  // namespace Marbas

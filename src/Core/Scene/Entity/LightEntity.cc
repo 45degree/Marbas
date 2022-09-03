@@ -12,6 +12,9 @@ LightPolicy::Create(entt::registry& registry, LightType lightType) {
     case LightType::ParalleLight:
       registry.emplace<ParallelLightComponent>(light);
       break;
+    case LightType::PointLight:
+      registry.emplace<PointLightComponent>(light);
+      break;
   }
 
   return light;

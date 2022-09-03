@@ -17,6 +17,8 @@ ConvertToOpenGLShaderType(const ShaderType& type) noexcept {
       return GL_VERTEX_SHADER;
     case ShaderType::FRAGMENT_SHADER:
       return GL_FRAGMENT_SHADER;
+    case ShaderType::GEOMETRY_SHADER:
+      return GL_GEOMETRY_SHADER;
   }
 }
 
@@ -112,6 +114,9 @@ OpenGLShaderStage::CompileFromSource(const Path& path) {
     case ShaderType::FRAGMENT_SHADER:
       kind = shaderc_glsl_fragment_shader;
       break;
+    case ShaderType::GEOMETRY_SHADER:
+      kind = shaderc_glsl_geometry_shader;
+      break;
   }
 
   // compile shader
@@ -171,6 +176,9 @@ OpenGLShaderStage::ReadFromSource(const FileSystem::path& path) {
       break;
     case ShaderType::FRAGMENT_SHADER:
       kind = shaderc_glsl_fragment_shader;
+      break;
+    case ShaderType::GEOMETRY_SHADER:
+      kind = shaderc_glsl_geometry_shader;
       break;
   }
 

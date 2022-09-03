@@ -6,44 +6,6 @@
 
 namespace Marbas {
 
-// class OpenGLTexture2DDescriptor : public IOpenGLImageDescriptor {
-//  public:
-//   explicit OpenGLTexture2DDescriptor(GLuint target) : IOpenGLImageDescriptor(), m_target(target)
-//   {}
-//
-//  public:
-//   void
-//   Bind(uint16_t bindingPoint) const override {
-//     glBindTextureUnit(bindingPoint, m_target);
-//   }
-//   void
-//   UnBind() const override {
-//     glBindTexture(GL_TEXTURE_2D, 0);
-//   }
-//
-//  private:
-//   GLuint m_target;
-// };
-//
-// class OpenGLTextureCubeMapDescriptor final : public IOpenGLImageDescriptor {
-//  public:
-//   explicit OpenGLTextureCubeMapDescriptor(GLuint target)
-//       : IOpenGLImageDescriptor(), m_target(target) {}
-//
-//  public:
-//   void
-//   Bind(uint16_t bindingPoint) const override {
-//     glBindTextureUnit(bindingPoint, m_target);
-//   }
-//   void
-//   UnBind() const override {
-//     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-//   }
-//
-//  private:
-//   GLuint m_target;
-// };
-
 class OpenGLTexture2D : public Texture2D, public IOpenGLBindable {
  public:
   OpenGLTexture2D(int width, int height, uint32_t level, TextureFormat format);
@@ -74,14 +36,8 @@ class OpenGLTexture2D : public Texture2D, public IOpenGLBindable {
   GLenum
   GetOpenGLFormat() const noexcept;
 
-  // std::shared_ptr<IImageDescriptor>
-  // GetDescriptor() const override {
-  //   return m_descriptor;
-  // }
-
  private:
   GLuint m_textureID = 0;
-  // std::shared_ptr<OpenGLTexture2DDescriptor> m_descriptor = nullptr;
 };
 
 class OpenGLTextureCubeMap : public TextureCubeMap, public IOpenGLBindable {
@@ -104,13 +60,12 @@ class OpenGLTextureCubeMap : public TextureCubeMap, public IOpenGLBindable {
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
   }
 
-  // std::shared_ptr<IImageDescriptor>
-  // GetDescriptor() const override {
-  //   return m_descriptor;
-  // }
+  GLuint
+  GetOpenGLTexture() const noexcept {
+    return m_textureID;
+  }
 
  private:
-  // std::shared_ptr<OpenGLTextureCubeMapDescriptor> m_descriptor = nullptr;
   GLuint m_textureID;
 };
 

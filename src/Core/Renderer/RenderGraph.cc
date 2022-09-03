@@ -1,5 +1,7 @@
 #include "Core/Renderer/RenderGraph.hpp"
 
+#include "RHI/OpenGL/OpenGLFrameBuffer.hpp"
+
 namespace Marbas {
 
 void
@@ -86,7 +88,7 @@ RenderGraph::Compile() {
   }
 
   for (int i = 0; i < graph.size(); i++) {
-    for (auto &id : graph[i]) {
+    for (const auto &id : graph[i]) {
       degree[id]++;
     }
   }
@@ -117,6 +119,8 @@ RenderGraph::Compile() {
   // set framebuffer for forward render
   for (auto &forwardRenderPass : m_forwardRendererPassNodes) {
     auto inputName = forwardRenderPass->GetInputTargetName();
+    DLOG_ASSERT(m_deferredRenderPassMap.find(inputName) != m_deferredRenderPassMap.end())
+        << FORMAT("can't find {} in all deferred render pass", inputName);
     auto id = m_deferredRenderPassMap[std::move(inputName)];
     auto frameBuffer = m_deferredRenderPassNodes[id]->GetFrameBuffer();
     forwardRenderPass->SetFrameBuffer(std::move(frameBuffer));

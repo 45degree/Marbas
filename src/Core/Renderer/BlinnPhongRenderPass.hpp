@@ -33,9 +33,6 @@ class BlinnPhongRenderPass final : public DeferredRenderPass {
   void
   SetUniformBuffer(const Scene* scene);
 
-  // void
-  // SetInputAsImageDescriptorSet();
-
  private:
   struct BlinnPhongLight {
     alignas(16) glm::vec3 pos = glm::vec3(0, 0, 0);

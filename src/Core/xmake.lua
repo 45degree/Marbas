@@ -16,6 +16,6 @@ target("Marbas.Core")
            "IconFontCppHeaders", "ImGuizmo", "nameof")
 
   add_packages("glfw", "glm", "glog", "folly", "assimp", "glslang", -- "uchardet",
-               "toml++", "entt")
+               "toml++", "entt", "fmt")
 
 target_end()
