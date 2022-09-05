@@ -20,6 +20,21 @@ class ShadowMappingRenderPass : public DeferredRenderPass {
   virtual ~ShadowMappingRenderPass() = default;
 
  public:
+  void
+  OnInit() override;
+
+  void
+  CreateShader() override;
+
+  void
+  CreateRenderPass() override;
+
+  void
+  CreateDescriptorSetLayout() override;
+
+  void
+  CreatePipeline() override;
+
   /**
    * @berif create the frame buffer from the input and output target
    *
@@ -42,9 +57,6 @@ class ShadowMappingRenderPass : public DeferredRenderPass {
    */
   void
   Execute(const Scene* scene, const ResourceManager* resourceManager) override;
-
-  void
-  GeneratePipeline() override;
 
   void
   SetUniformBuffer(const Scene* scene, const ParallelLight& light);

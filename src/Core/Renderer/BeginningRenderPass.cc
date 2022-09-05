@@ -15,15 +15,10 @@ BeginningRenderPassCreateInfo::BeginningRenderPassCreateInfo() : DeferredRenderP
 }
 
 BeginningRenderPass::BeginningRenderPass(const BeginningRenderPassCreateInfo& createInfo)
-    : DeferredRenderPass(createInfo) {
-  DLOG_ASSERT(m_rhiFactory != nullptr)
-      << "can't Initialize the geometryRenderPass, because the rhiFactory isn't been set";
+    : DeferredRenderPass(createInfo) {}
 
-  /**
-   * set render pass and pipeline
-   */
-
-  // create render pass
+void
+BeginningRenderPass::CreateRenderPass() {
   RenderPassCreateInfo renderPassCreateInfo{
       .attachments =
           {
@@ -40,17 +35,10 @@ BeginningRenderPass::BeginningRenderPass(const BeginningRenderPassCreateInfo& cr
           },
   };
   m_renderPass = m_rhiFactory->CreateRenderPass(renderPassCreateInfo);
-
-  // create command factory
-  m_commandFactory = m_rhiFactory->CreateCommandFactory();
-  m_commandBuffer = m_commandFactory->CreateCommandBuffer();
-
-  // create pipeline
-  GeneratePipeline();
 }
 
 void
-BeginningRenderPass::GeneratePipeline() {
+BeginningRenderPass::CreatePipeline() {
   // create pipeline
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
   m_pipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = m_width, .height = m_height});
@@ -87,14 +75,9 @@ BeginningRenderPass::RecordCommand(const Scene* scene) {
   m_commandBuffer->Clear();
 
   // check framebuffer and renderpass
-  DLOG_ASSERT(m_framebuffer != nullptr)
-      << FORMAT("{}'s framebuffer is null, can't record command", NAMEOF_TYPE(BeginningRenderPass));
-
-  DLOG_ASSERT(m_renderPass != nullptr)
-      << FORMAT("{}'s render pass is null, can't record command", NAMEOF_TYPE(BeginningRenderPass));
-
-  DLOG_ASSERT(m_pipeline != nullptr)
-      << FORMAT("{}'s pipeline is null, can't record command", NAMEOF_TYPE(BeginningRenderPass));
+  DLOG_ASSERT(m_framebuffer != nullptr);
+  DLOG_ASSERT(m_renderPass != nullptr);
+  DLOG_ASSERT(m_pipeline != nullptr);
 
   /**
    * set command
@@ -119,7 +102,6 @@ BeginningRenderPass::RecordCommand(const Scene* scene) {
    */
   m_commandBuffer->BeginRecordCmd();
   m_commandBuffer->AddCommand(std::move(beginRenderPass));
-  // m_commandBuffer->AddCommand(std::move(bindPipeline));
   m_commandBuffer->AddCommand(std::move(endRenderPass));
   m_commandBuffer->EndRecordCmd();
 }

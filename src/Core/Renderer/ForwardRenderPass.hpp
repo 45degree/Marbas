@@ -20,6 +20,14 @@ class ForwardRenderPass : public RenderPassNode {
 
  public:
   void
+  Initialize() override {
+    CreateRenderPass();
+    CreateShader();
+    CreateDescriptorSetLayout();
+    CreatePipeline();
+  }
+
+  void
   SetFrameBuffer(const std::shared_ptr<FrameBuffer>& frameBuffer) {
     m_framebuffer = frameBuffer;
   }

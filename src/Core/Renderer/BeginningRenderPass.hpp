@@ -19,13 +19,25 @@ class BeginningRenderPass final : public DeferredRenderPass {
 
  public:
   void
+  OnInit() override {}
+
+  void
   CreateFrameBuffer() override;
+
+  void
+  CreateShader() override {}
+
+  void
+  CreateDescriptorSetLayout() override {}
 
   void
   RecordCommand(const Scene* scene) override;
 
   void
-  GeneratePipeline() override;
+  CreatePipeline() override;
+
+  void
+  CreateRenderPass() override;
 
   virtual void
   Execute(const Scene* scene, const ResourceManager* resourceManager) override;

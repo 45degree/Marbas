@@ -15,6 +15,9 @@ class BillBoardRenderPass final : public ForwardRenderPass {
 
  public:
   void
+  OnInit() override {}
+
+  void
   CreateBufferForEveryEntity(const entt::entity entity, const Scene* scene);
 
   /**
@@ -22,6 +25,15 @@ class BillBoardRenderPass final : public ForwardRenderPass {
    */
   void
   RecordCommand(const Scene* scene) override;
+
+  void
+  CreateRenderPass() override;
+
+  void
+  CreateShader() override;
+
+  void
+  CreateDescriptorSetLayout() override;
 
   void
   SetUniformBuffer(const Scene* scene);
@@ -33,7 +45,7 @@ class BillBoardRenderPass final : public ForwardRenderPass {
   Execute(const Scene* scene, const ResourceManager* resourceManager) override;
 
   void
-  GeneratePipeline() override;
+  CreatePipeline() override;
 
  private:
   Uid m_shaderId;

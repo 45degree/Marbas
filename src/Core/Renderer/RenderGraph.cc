@@ -23,6 +23,8 @@ RenderGraph::RegisterDeferredRenderPassNode(
     const auto &resource = m_renderTargetNode[m_renderTargetMap[outputName]];
     renderPassNode->SetOutputTarget(resource);
   }
+
+  renderPassNode->Initialize();
   m_deferredRenderPassNodes.push_back(renderPassNode);
   m_deferredRenderPassMap[passNodeName] = m_deferredRenderPassNodes.size() - 1;
 }
@@ -41,6 +43,7 @@ RenderGraph::RegisterRenderTargetNode(const std::shared_ptr<RenderTargetNode> &r
 void
 RenderGraph::RegisterForwardRenderPassNode(
     const std::shared_ptr<ForwardRenderPass> &renderPassNode) {
+  renderPassNode->Initialize();
   m_forwardRendererPassNodes.push_back(renderPassNode);
 }
 
@@ -57,6 +60,11 @@ void
 RenderGraph::Compile() {
   for (auto &&renderPassNode : m_deferredRenderPassNodes) {
     renderPassNode->CreateFrameBuffer();
+    renderPassNode->OnInit();
+  }
+
+  for (auto &&renderPassNode : m_forwardRendererPassNodes) {
+    renderPassNode->OnInit();
   }
 
   // TODO: need to test

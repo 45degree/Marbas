@@ -18,10 +18,22 @@ class CubeMapRenderPass final : public ForwardRenderPass {
 
  public:
   void
+  OnInit() override {}
+
+  void
   RecordCommand(const Scene* scene) override;
 
   void
-  GeneratePipeline() override;
+  CreateRenderPass() override;
+
+  void
+  CreateShader() override;
+
+  void
+  CreateDescriptorSetLayout() override;
+
+  void
+  CreatePipeline() override;
 
   void
   CreateBufferForEveryEntity(const entt::entity entity, Scene* scene);

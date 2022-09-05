@@ -36,11 +36,10 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
     : DeferredRenderPass(createInfo) {
   DLOG_ASSERT(m_rhiFactory != nullptr)
       << "can't Initialize the geometryRenderPass, because the rhiFactory isn't been set";
+}
 
-  /**
-   * set render pass and pipeline
-   */
-
+void
+GeometryRenderPass::CreateRenderPass() {
   // create render pass
   RenderPassCreateInfo renderPassCreateInfo{
       .attachments =
@@ -68,7 +67,10 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
           },
   };
   m_renderPass = m_rhiFactory->CreateRenderPass(renderPassCreateInfo);
+}
 
+void
+GeometryRenderPass::CreateShader() {
   // read shader
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto shaderResource = shaderContainer->CreateResource();
@@ -76,7 +78,10 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
   shaderResource->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/geometry.frag.glsl");
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
+}
 
+void
+GeometryRenderPass::CreateDescriptorSetLayout() {
   // set descriptor set layout
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
       .isBuffer = true,
@@ -91,12 +96,10 @@ GeometryRenderPass::GeometryRenderPass(const GeometryRenderPassCreatInfo& create
       .isBuffer = false,
       .bindingPoint = 1,
   });
-
-  GeneratePipeline();
 }
 
 void
-GeometryRenderPass::GeneratePipeline() {
+GeometryRenderPass::CreatePipeline() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto resource = shaderContainer->GetResource(m_shaderId);
   if (!resource->IsLoad()) {
@@ -148,14 +151,9 @@ GeometryRenderPass::RecordCommand(const Scene* scene) {
   auto view = Entity::GetAllEntity<MeshComponent>(scene);
 
   // check framebuffer and renderpass
-  DLOG_ASSERT(m_framebuffer != nullptr)
-      << FORMAT("{}'s framebuffer is null, can't record command", NAMEOF_TYPE(GeometryRenderPass));
-
-  DLOG_ASSERT(m_renderPass != nullptr)
-      << FORMAT("{}'s render pass is null, can't record command", NAMEOF_TYPE(GeometryRenderPass));
-
-  DLOG_ASSERT(m_pipeline != nullptr)
-      << FORMAT("{}'s pipeline is null, can't record command", NAMEOF_TYPE(GeometryRenderPass));
+  DLOG_ASSERT(m_framebuffer != nullptr);
+  DLOG_ASSERT(m_renderPass != nullptr);
+  DLOG_ASSERT(m_pipeline != nullptr);
 
   // recreate dynamic uniform buffer
   auto bufferSize = view.size() * sizeof(MeshComponent::UniformBufferBlockData);
@@ -269,8 +267,8 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* sc
   implData->indexBuffer = std::move(indexBuffer);
 
   // create descriptor Set
-  implData->descriptorSet = GenerateDescriptorSet();
-  BindCameraUniformBuffer(implData->descriptorSet.get());
+  implData->descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
+  implData->descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
 
   // load material
   if (_mesh->m_materialId.has_value()) {

@@ -46,13 +46,51 @@ ShadowMappingCreateInfo::ShadowMappingCreateInfo() : DeferredRenderPassCreateInf
 
 ShadowMappingRenderPass::ShadowMappingRenderPass(const ShadowMappingCreateInfo& createInfo)
     : DeferredRenderPass(createInfo) {
-  // create command Factory and load shader container
-  m_commandFactory = m_rhiFactory->CreateCommandFactory();
-  auto shaderContainer = m_resourceManager->GetContainer<ShaderResource>();
-
   /**
    * shadow depth render pass
    */
+  m_depthCommandBuffer = m_commandFactory->CreateCommandBuffer();
+  m_copyFrameCommandBuffer = m_commandFactory->CreateCommandBuffer();
+
+  // create dynamic uniform buffer
+  m_lightUniformBuffer = m_rhiFactory->CreateUniformBuffer(sizeof(LightUniformBlock));
+  m_lightInfoUniformBuffer = m_rhiFactory->CreateUniformBuffer(sizeof(LightInfo));
+}
+
+void
+ShadowMappingRenderPass::OnInit() {
+  // create vertexBuffer and descriptorSet
+  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(0);
+  m_shadowDescriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
+  m_shadowDescriptorSet->BindBuffer(0, m_cameraUniformBuffer);
+  m_shadowDescriptorSet->BindBuffer(1, m_lightUniformBuffer);
+  m_shadowDescriptorSet->BindBuffer(2, m_lightInfoUniformBuffer);
+
+  const auto& geometryGBuffer = m_inputTarget[GeometryRenderPass::geometryTargetName]->GetGBuffer();
+  const auto& blinnPhongGBuffer =
+      m_inputTarget[BlinnPhongRenderPass::blinnPhongTargetName]->GetGBuffer();
+  const auto& targetGBuffer = m_outputTarget[String(renderTarget)]->GetGBuffer();
+  auto colorBuffer = targetGBuffer->GetTexture(GBufferTexutreType::COLOR);
+
+  if (colorBuffer == nullptr) {
+    LOG(ERROR) << "can't get normal buffer or color buffer from the gbuffer";
+    throw std::runtime_error("normal buffer and color buffer is needed by geometry render pass");
+  }
+
+  // set input as image descriptor set
+  auto gColorBuffer = blinnPhongGBuffer->GetTexture(GBufferTexutreType::COLOR);
+  auto gPositionBuffer = geometryGBuffer->GetTexture(GBufferTexutreType::POSITION);
+  auto gNormalBuffer = geometryGBuffer->GetTexture(GBufferTexutreType::NORMALS);
+
+  m_shadowDescriptorSet->BindImage(0, gColorBuffer);
+  m_shadowDescriptorSet->BindImage(1, m_depthTexture);
+  m_shadowDescriptorSet->BindImage(2, gPositionBuffer);
+  m_shadowDescriptorSet->BindImage(3, gNormalBuffer);
+}
+
+void
+ShadowMappingRenderPass::CreateRenderPass() {
+  // depth render pass
   RenderPassCreateInfo depthRenderPassCreateInfo{
       .attachments =
           {
@@ -64,18 +102,73 @@ ShadowMappingRenderPass::ShadowMappingRenderPass(const ShadowMappingCreateInfo& 
           },
   };
   m_depthRenderPass = m_rhiFactory->CreateRenderPass(depthRenderPassCreateInfo);
-  m_depthPipeline = m_rhiFactory->CreateGraphicsPipeLine();
-  m_depthCommandBuffer = m_commandFactory->CreateCommandBuffer();
-  m_copyFrameCommandBuffer = m_commandFactory->CreateCommandBuffer();
 
-  // read shader
+  // shadow render pass
+  RenderPassCreateInfo shadowRenderPassCreateInfo{
+      .attachments =
+          {
+              AttachmentDescription{
+                  // output color
+                  .format = TextureFormat::RGBA,
+                  .type = AttachmentType::Color,
+                  .loadOp = AttachmentLoadOp::Ignore,
+              },
+              AttachmentDescription{
+                  .format = TextureFormat::DEPTH,
+                  .type = AttachmentType::Depth,
+                  .loadOp = AttachmentLoadOp::Ignore,
+              },
+          },
+  };
+  m_renderPass = m_rhiFactory->CreateRenderPass(shadowRenderPassCreateInfo);
+}
+
+void
+ShadowMappingRenderPass::CreateShader() {
+  auto shaderContainer = m_resourceManager->GetContainer<ShaderResource>();
+
+  // depth shader
   auto depthShaderRes = shaderContainer->CreateResource();
   depthShaderRes->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/shadow_depth.vert.glsl");
   depthShaderRes->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/shadow_depth.frag.glsl");
   depthShaderRes->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_depthShaderId = shaderContainer->AddResource(depthShaderRes);
 
-  // set depth descriptor set layout
+  // shadow shader
+  auto shadowShaderRes = shaderContainer->CreateResource();
+  shadowShaderRes->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/parallelShadow.vert.glsl");
+  shadowShaderRes->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/parallelShadow.frag.glsl");
+  shadowShaderRes->LoadResource(m_rhiFactory, m_resourceManager.get());
+  m_shaderId = shaderContainer->AddResource(shadowShaderRes);
+}
+
+void
+ShadowMappingRenderPass::CreateFrameBuffer() {
+  // depth frame buffer
+  m_depthTexture = m_rhiFactory->CreateTexutre2D(4096, 4096, 1, TextureFormat::DEPTH);
+  m_depthFrameBuffer = m_rhiFactory->CreateFrameBuffer(FrameBufferInfo{
+      .width = 4096,
+      .height = 4096,
+      .renderPass = m_depthRenderPass.get(),
+      .attachments = {m_depthTexture},
+  });
+
+  // shadow framebuffer
+  const auto& depthGBuffer = m_outputTarget[GeometryRenderPass::depthTargetName]->GetGBuffer();
+  auto depthBuffer = depthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
+  const auto& targetGBuffer = m_outputTarget[String(renderTarget)]->GetGBuffer();
+  auto colorBuffer = targetGBuffer->GetTexture(GBufferTexutreType::COLOR);
+  m_framebuffer = m_rhiFactory->CreateFrameBuffer(FrameBufferInfo{
+      .width = m_width,
+      .height = m_height,
+      .renderPass = m_renderPass.get(),
+      .attachments = {colorBuffer, depthBuffer},
+  });
+}
+
+void
+ShadowMappingRenderPass::CreateDescriptorSetLayout() {
+  // depth binding layout
   m_depthDescriptorSetLayout = {
       DescriptorSetLayoutBinding{
           // camera
@@ -95,55 +188,7 @@ ShadowMappingRenderPass::ShadowMappingRenderPass(const ShadowMappingCreateInfo& 
       },
   };
 
-  // create pipeline
-  m_depthPipeline = m_rhiFactory->CreateGraphicsPipeLine();
-  m_depthPipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = 4096, .height = 4096});
-  m_depthPipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout(), VertexInputRate::VERTEX);
-  m_depthPipeline->SetShader(depthShaderRes->GetShader());
-  m_depthPipeline->SetPipelineLayout(GraphicsPipeLineLayout{
-      .descriptorSetLayout = m_depthDescriptorSetLayout,
-  });
-  // m_depthPipeline->SetRastreizationInfo(RasterizationInfo{
-  //     .cullMode = CullMode::FRONT,
-  // });
-  m_depthPipeline->Create();
-
-  // create dynamic uniform buffer
-  m_lightUniformBuffer = m_rhiFactory->CreateUniformBuffer(sizeof(LightUniformBlock));
-  m_lightInfoUniformBuffer = m_rhiFactory->CreateUniformBuffer(sizeof(LightInfo));
-
-  // create command buffer
-  m_depthCommandBuffer = m_commandFactory->CreateCommandBuffer();
-
-  /**
-   * shadow render pass
-   */
-  RenderPassCreateInfo shadowRenderPassCreateInfo{
-      .attachments =
-          {
-              AttachmentDescription{
-                  // output color
-                  .format = TextureFormat::RGBA,
-                  .type = AttachmentType::Color,
-                  .loadOp = AttachmentLoadOp::Ignore,
-              },
-              AttachmentDescription{
-                  .format = TextureFormat::DEPTH,
-                  .type = AttachmentType::Depth,
-                  .loadOp = AttachmentLoadOp::Ignore,
-              },
-          },
-  };
-  m_renderPass = m_rhiFactory->CreateRenderPass(shadowRenderPassCreateInfo);
-
-  // read shader
-  auto shadowShaderRes = shaderContainer->CreateResource();
-  shadowShaderRes->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/parallelShadow.vert.glsl");
-  shadowShaderRes->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/parallelShadow.frag.glsl");
-  shadowShaderRes->LoadResource(m_rhiFactory, m_resourceManager.get());
-  m_shaderId = shaderContainer->AddResource(shadowShaderRes);
-
-  // set descriptor set layout
+  // shadow binding layout
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
       // color texture
       .isBuffer = false,
@@ -174,64 +219,31 @@ ShadowMappingRenderPass::ShadowMappingRenderPass(const ShadowMappingCreateInfo& 
       .isBuffer = true,
       .bindingPoint = 2,
   });
-
-  GeneratePipeline();
-
-  // create vertexBuffer and descriptorSet
-  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(0);
-  m_shadowDescriptorSet = GenerateDescriptorSet();
-  BindCameraUniformBuffer(m_shadowDescriptorSet.get());
-  m_shadowDescriptorSet->BindBuffer(1, m_lightUniformBuffer);
-  m_shadowDescriptorSet->BindBuffer(2, m_lightInfoUniformBuffer);
 }
 
 void
-ShadowMappingRenderPass::CreateFrameBuffer() {
-  m_depthTexture = m_rhiFactory->CreateTexutre2D(4096, 4096, 1, TextureFormat::DEPTH);
-  m_depthFrameBuffer = m_rhiFactory->CreateFrameBuffer(FrameBufferInfo{
-      .width = 4096,
-      .height = 4096,
-      .renderPass = m_depthRenderPass.get(),
-      .attachments = {m_depthTexture},
-  });
+ShadowMappingRenderPass::CreatePipeline() {
+  auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
 
-  const auto& depthGBuffer = m_outputTarget[GeometryRenderPass::depthTargetName]->GetGBuffer();
-  auto depthBuffer = depthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
-  const auto& targetGBuffer = m_outputTarget[String(renderTarget)]->GetGBuffer();
-  auto colorBuffer = targetGBuffer->GetTexture(GBufferTexutreType::COLOR);
-  m_framebuffer = m_rhiFactory->CreateFrameBuffer(FrameBufferInfo{
-      .width = m_width,
-      .height = m_height,
-      .renderPass = m_renderPass.get(),
-      .attachments = {colorBuffer, depthBuffer},
-  });
-
-  const auto& geometryGBuffer = m_inputTarget[GeometryRenderPass::geometryTargetName]->GetGBuffer();
-  const auto& blinnPhongGBuffer =
-      m_inputTarget[BlinnPhongRenderPass::blinnPhongTargetName]->GetGBuffer();
-
-  if (colorBuffer == nullptr) {
-    LOG(ERROR) << "can't get normal buffer or color buffer from the gbuffer";
-    throw std::runtime_error("normal buffer and color buffer is needed by geometry render pass");
+  // depth pipeline
+  auto depthShaderRes = shaderContainer->GetResource(m_depthShaderId);
+  if (!depthShaderRes->IsLoad()) {
+    depthShaderRes->LoadResource(m_rhiFactory, m_resourceManager.get());
   }
 
-  // set input as image descriptor set
-  auto gColorBuffer = blinnPhongGBuffer->GetTexture(GBufferTexutreType::COLOR);
-  auto gPositionBuffer = geometryGBuffer->GetTexture(GBufferTexutreType::POSITION);
-  auto gNormalBuffer = geometryGBuffer->GetTexture(GBufferTexutreType::NORMALS);
+  m_depthPipeline = m_rhiFactory->CreateGraphicsPipeLine();
+  m_depthPipeline->SetViewPort(ViewportInfo{.x = 0, .y = 0, .width = 4096, .height = 4096});
+  m_depthPipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout(), VertexInputRate::VERTEX);
+  m_depthPipeline->SetShader(depthShaderRes->GetShader());
+  m_depthPipeline->SetPipelineLayout(GraphicsPipeLineLayout{
+      .descriptorSetLayout = m_depthDescriptorSetLayout,
+  });
+  m_depthPipeline->Create();
 
-  m_shadowDescriptorSet->BindImage(0, gColorBuffer);
-  m_shadowDescriptorSet->BindImage(1, m_depthTexture);
-  m_shadowDescriptorSet->BindImage(2, gPositionBuffer);
-  m_shadowDescriptorSet->BindImage(3, gNormalBuffer);
-}
-
-void
-ShadowMappingRenderPass::GeneratePipeline() {
-  auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
-  auto resource = shaderContainer->GetResource(m_shaderId);
-  if (!resource->IsLoad()) {
-    resource->LoadResource(m_rhiFactory, m_resourceManager.get());
+  // shadow pipeline
+  auto shadowShaderRes = shaderContainer->GetResource(m_shaderId);
+  if (!shadowShaderRes->IsLoad()) {
+    shadowShaderRes->LoadResource(m_rhiFactory, m_resourceManager.get());
   }
 
   m_pipeline = m_rhiFactory->CreateGraphicsPipeLine();
@@ -244,7 +256,7 @@ ShadowMappingRenderPass::GeneratePipeline() {
   m_pipeline->SetPipelineLayout(GraphicsPipeLineLayout{
       .descriptorSetLayout = m_descriptorSetLayout,
   });
-  m_pipeline->SetShader(resource->GetShader());
+  m_pipeline->SetShader(shadowShaderRes->GetShader());
   m_pipeline->Create();
 }
 
@@ -310,14 +322,9 @@ ShadowMappingRenderPass::RecordCommand(const Scene* scene) {
   m_copyFrameCommandBuffer->Clear();
 
   // check framebuffer and renderpass
-  DLOG_ASSERT(m_depthFrameBuffer != nullptr) << FORMAT(
-      "{}'s framebuffer is null, can't record command ", NAMEOF_TYPE(ShadowMappingRenderPass));
-
-  DLOG_ASSERT(m_depthRenderPass != nullptr) << FORMAT(
-      "{}'s render pass is null, can't record command ", NAMEOF_TYPE(ShadowMappingRenderPass));
-
-  DLOG_ASSERT(m_depthCommandBuffer != nullptr) << FORMAT(
-      "{}'s pipeline is null, can't record command", NAMEOF_TYPE(ShadowMappingRenderPass));
+  DLOG_ASSERT(m_depthFrameBuffer != nullptr);
+  DLOG_ASSERT(m_depthRenderPass != nullptr);
+  DLOG_ASSERT(m_depthCommandBuffer != nullptr);
 
   auto view = Entity::GetAllEntity<MeshComponent, ShadowComponent>(const_cast<Scene*>(scene));
   auto entityCount = view.size_hint();

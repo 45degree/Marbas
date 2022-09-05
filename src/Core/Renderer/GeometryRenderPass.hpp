@@ -25,7 +25,19 @@ class GeometryRenderPass final : public DeferredRenderPass {
 
  public:
   void
+  OnInit() override {}
+
+  void
   CreateFrameBuffer() override;
+
+  void
+  CreateShader() override;
+
+  void
+  CreateRenderPass() override;
+
+  void
+  CreateDescriptorSetLayout() override;
 
   /**
    * @brief record the command
@@ -37,7 +49,7 @@ class GeometryRenderPass final : public DeferredRenderPass {
    * @brief generate the pipeline
    */
   void
-  GeneratePipeline() override;
+  CreatePipeline() override;
 
   void
   CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* scene);

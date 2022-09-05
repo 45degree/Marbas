@@ -19,20 +19,10 @@ BlinnPhongRenderPassCreateInfo::BlinnPhongRenderPassCreateInfo() : DeferredRende
 }
 
 BlinnPhongRenderPass::BlinnPhongRenderPass(const BlinnPhongRenderPassCreateInfo& createInfo)
-    : DeferredRenderPass(createInfo) {
-  DLOG_ASSERT(m_rhiFactory != nullptr)
-      << FORMAT("can't Initialize the {}, because the rhiFactory isn't been set",
-                NAMEOF_TYPE(BlinnPhongRenderPass));
+    : DeferredRenderPass(createInfo) {}
 
-  DLOG_ASSERT(m_resourceManager != nullptr)
-      << FORMAT("can't Initialize the {}, because the resource manager isn't been set",
-                NAMEOF_TYPE(BlinnPhongRenderPass));
-
-  /**
-   * set render pass and pipeline
-   */
-
-  // create render pass
+void
+BlinnPhongRenderPass::CreateRenderPass() {
   RenderPassCreateInfo renderPassCreateInfo{
       .attachments =
           {
@@ -49,49 +39,20 @@ BlinnPhongRenderPass::BlinnPhongRenderPass(const BlinnPhongRenderPassCreateInfo&
           },
   };
   m_renderPass = m_rhiFactory->CreateRenderPass(renderPassCreateInfo);
+}
 
-  // create command factory
-  m_commandFactory = m_rhiFactory->CreateCommandFactory();
-  m_commandBuffer = m_commandFactory->CreateCommandBuffer();
-
-  // read shader
+void
+BlinnPhongRenderPass::CreateShader() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto shaderResource = shaderContainer->CreateResource();
   shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/blinnPhong.vert.glsl");
   shaderResource->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/blinnPhong.frag.glsl");
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
-
-  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
-      .isBuffer = false,
-      .bindingPoint = 0,
-  });
-  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
-      .isBuffer = false,
-      .bindingPoint = 1,
-  });
-  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
-      .isBuffer = false,
-      .bindingPoint = 2,
-  });
-  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
-      .isBuffer = true,
-      .bindingPoint = 1,
-  });
-
-  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(0);
-  m_descriptorSet = GenerateDescriptorSet();
-  BindCameraUniformBuffer(m_descriptorSet.get());
-
-  auto bufferSize = sizeof(LightsInfo);
-  m_lightUniformBuffer = m_rhiFactory->CreateUniformBuffer(bufferSize);
-  m_descriptorSet->BindBuffer(1, m_lightUniformBuffer);
-
-  GeneratePipeline();
 }
 
 void
-BlinnPhongRenderPass::GeneratePipeline() {
+BlinnPhongRenderPass::CreatePipeline() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto resource = shaderContainer->GetResource(m_shaderId);
   if (!resource->IsLoad()) {
@@ -110,18 +71,54 @@ BlinnPhongRenderPass::GeneratePipeline() {
 }
 
 void
+BlinnPhongRenderPass::CreateDescriptorSetLayout() {
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 0,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 1,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 2,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = true,
+      .bindingPoint = 1,
+  });
+}
+
+void
+BlinnPhongRenderPass::OnInit() {
+  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(0);
+  m_descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
+  m_descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
+
+  auto bufferSize = sizeof(LightsInfo);
+  m_lightUniformBuffer = m_rhiFactory->CreateUniformBuffer(bufferSize);
+  m_descriptorSet->BindBuffer(1, m_lightUniformBuffer);
+
+  // set input as image descriptor set
+  auto gBuffer = m_inputTarget[GeometryRenderPass::geometryTargetName]->GetGBuffer();
+  auto gColorBuffer = gBuffer->GetTexture(GBufferTexutreType::COLOR);
+  auto gNormalBuffer = gBuffer->GetTexture(GBufferTexutreType::NORMALS);
+  auto gPositionBuffer = gBuffer->GetTexture(GBufferTexutreType::POSITION);
+
+  m_descriptorSet->BindImage(0, gColorBuffer);
+  m_descriptorSet->BindImage(1, gNormalBuffer);
+  m_descriptorSet->BindImage(2, gPositionBuffer);
+}
+
+void
 BlinnPhongRenderPass::RecordCommand(const Scene* scene) {
   m_commandBuffer->Clear();
 
   // check framebuffer and renderpass
-  DLOG_ASSERT(m_framebuffer != nullptr) << FORMAT("{}'s framebuffer is null, can't record command",
-                                                  NAMEOF_TYPE(BlinnPhongRenderPass));
-
-  DLOG_ASSERT(m_renderPass != nullptr) << FORMAT("{}'s render pass is null, can't record command",
-                                                 NAMEOF_TYPE(BlinnPhongRenderPass));
-
-  DLOG_ASSERT(m_pipeline != nullptr)
-      << FORMAT("{}'s pipeline is null, can't record command", NAMEOF_TYPE(BlinnPhongRenderPass));
+  DLOG_ASSERT(m_framebuffer != nullptr);
+  DLOG_ASSERT(m_renderPass != nullptr);
+  DLOG_ASSERT(m_pipeline != nullptr);
 
   // recreate uniform buffer
 
@@ -194,16 +191,6 @@ BlinnPhongRenderPass::CreateFrameBuffer() {
   };
 
   m_framebuffer = m_rhiFactory->CreateFrameBuffer(createInfo);
-
-  // set input as image descriptor set
-  auto gBuffer = m_inputTarget[GeometryRenderPass::geometryTargetName]->GetGBuffer();
-  auto gColorBuffer = gBuffer->GetTexture(GBufferTexutreType::COLOR);
-  auto gNormalBuffer = gBuffer->GetTexture(GBufferTexutreType::NORMALS);
-  auto gPositionBuffer = gBuffer->GetTexture(GBufferTexutreType::POSITION);
-
-  m_descriptorSet->BindImage(0, gColorBuffer);
-  m_descriptorSet->BindImage(1, gNormalBuffer);
-  m_descriptorSet->BindImage(2, gPositionBuffer);
 }
 
 void

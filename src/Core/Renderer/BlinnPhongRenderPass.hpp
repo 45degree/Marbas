@@ -19,10 +19,22 @@ class BlinnPhongRenderPass final : public DeferredRenderPass {
 
  public:
   void
+  OnInit() override;
+
+  void
+  CreateRenderPass() override;
+
+  void
   CreateFrameBuffer() override;
 
   void
-  GeneratePipeline() override;
+  CreateShader() override;
+
+  void
+  CreateDescriptorSetLayout() override;
+
+  void
+  CreatePipeline() override;
 
   void
   RecordCommand(const Scene* scene) override;

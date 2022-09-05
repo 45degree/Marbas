@@ -29,20 +29,10 @@ BillBoardRenderPassCreateInfo::BillBoardRenderPassCreateInfo() {
 }
 
 BillBoardRenderPass::BillBoardRenderPass(const BillBoardRenderPassCreateInfo& createInfo)
-    : ForwardRenderPass(createInfo) {
-  DLOG_ASSERT(m_rhiFactory != nullptr)
-      << FORMAT("can't Initialize the {}, because the rhiFactory isn't been set",
-                NAMEOF_TYPE(BillBoardRenderPass));
+    : ForwardRenderPass(createInfo) {}
 
-  DLOG_ASSERT(m_resourceManager != nullptr)
-      << FORMAT("can't Initialize the {}, because the resource manager isn't been set",
-                NAMEOF_TYPE(BillBoardRenderPass));
-
-  /**
-   * set render pass and pipeline
-   */
-
-  // create render pass
+void
+BillBoardRenderPass::CreateRenderPass() {
   RenderPassCreateInfo renderPassCreateInfo{
       .attachments =
           {
@@ -61,31 +51,28 @@ BillBoardRenderPass::BillBoardRenderPass(const BillBoardRenderPassCreateInfo& cr
           },
   };
   m_renderPass = m_rhiFactory->CreateRenderPass(renderPassCreateInfo);
+}
 
-  // create command factory
-  m_commandFactory = m_rhiFactory->CreateCommandFactory();
-  m_commandBuffer = m_commandFactory->CreateCommandBuffer();
+void
+BillBoardRenderPass::CreateDescriptorSetLayout() {
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 0,
+  });
+}
 
-  // read shader
+void
+BillBoardRenderPass::CreateShader() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto shaderResource = shaderContainer->CreateResource();
   shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/billBoard.vert.glsl");
   shaderResource->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/billBoard.frag.glsl");
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
-
-  // set descriptor set
-
-  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
-      .isBuffer = false,
-      .bindingPoint = 0,
-  });
-
-  GeneratePipeline();
 }
 
 void
-BillBoardRenderPass::GeneratePipeline() {
+BillBoardRenderPass::CreatePipeline() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto resource = shaderContainer->GetResource(m_shaderId);
   if (!resource->IsLoad()) {
@@ -125,8 +112,9 @@ BillBoardRenderPass::CreateBufferForEveryEntity(const entt::entity entity, const
   implData->vertexBuffer = std::move(vertexBuffer);
 
   // create descriptor set
-  implData->descriptorSet = GenerateDescriptorSet();
-  BindCameraUniformBuffer(implData->descriptorSet.get());
+  implData->descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
+  implData->descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
+  // BindCameraUniformBuffer(implData->descriptorSet.get());
 
   // load material
   if (billBoardComponent.textureResourceId.has_value()) {
@@ -149,14 +137,9 @@ BillBoardRenderPass::RecordCommand(const Scene* scene) {
   auto view = Entity::GetAllEntity<BillBoardComponent>(scene);
 
   // check framebuffer and renderpass
-  DLOG_ASSERT(m_framebuffer != nullptr)
-      << FORMAT("{}'s framebuffer is null, can't record command", NAMEOF_TYPE(BillBoardRenderPass));
-
-  DLOG_ASSERT(m_renderPass != nullptr)
-      << FORMAT("{}'s render pass is null, can't record command", NAMEOF_TYPE(BillBoardRenderPass));
-
-  DLOG_ASSERT(m_pipeline != nullptr)
-      << FORMAT("{}'s pipeline is null, can't record command", NAMEOF_TYPE(BillBoardRenderPass));
+  DLOG_ASSERT(m_framebuffer != nullptr);
+  DLOG_ASSERT(m_renderPass != nullptr);
+  DLOG_ASSERT(m_pipeline != nullptr);
 
   // recreate uniform buffer
 

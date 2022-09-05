@@ -20,6 +20,18 @@ class GridRenderPass final : public ForwardRenderPass {
   void
   RecordCommand(const Scene* scene) override;
 
+  void
+  CreateRenderPass() override;
+
+  void
+  CreateShader() override;
+
+  void
+  CreateDescriptorSetLayout() override {}
+
+  void
+  OnInit() override;
+
   /**
    * @berif execute the render pass node after setting the render grpah
    */
@@ -30,7 +42,7 @@ class GridRenderPass final : public ForwardRenderPass {
   SetUniformBuffer(const Scene* scene);
 
   void
-  GeneratePipeline() override;
+  CreatePipeline() override;
 
  private:
   std::shared_ptr<UniformBuffer> m_uniformBuffer = nullptr;

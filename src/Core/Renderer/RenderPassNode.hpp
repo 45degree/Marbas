@@ -11,9 +11,9 @@ namespace Marbas {
 struct RenderPassNodeCreateInfo {
   String passName;
   std::shared_ptr<ResourceManager> resourceManager;
-  RHIFactory* rhiFactory;
-  uint32_t width;
-  uint32_t height;
+  RHIFactory* rhiFactory = nullptr;
+  uint32_t width = 800;
+  uint32_t height = 600;
 };
 
 class RenderPassNode {
@@ -33,6 +33,21 @@ class RenderPassNode {
   }
 
  public:
+  virtual void
+  Initialize() = 0;
+
+  virtual void
+  OnInit() = 0;
+
+  virtual void
+  CreateRenderPass() = 0;
+
+  virtual void
+  CreateShader() = 0;
+
+  virtual void
+  CreateDescriptorSetLayout() = 0;
+
   /**
    * @brief record the command
    */
@@ -43,7 +58,7 @@ class RenderPassNode {
    * @brief generate the pipeline
    */
   virtual void
-  GeneratePipeline() = 0;
+  CreatePipeline() = 0;
 
   /**
    * @berif execute the render pass node after setting the render grpah
@@ -53,18 +68,6 @@ class RenderPassNode {
 
   void
   AddDescriptorSetLayoutBinding(const DescriptorSetLayoutBinding& bindingInfo);
-
-  std::unique_ptr<DescriptorSet>
-  GenerateDescriptorSet() {
-    auto descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
-    descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
-    return descriptorSet;
-  }
-
-  void
-  BindCameraUniformBuffer(DescriptorSet* descriptorSet) {
-    descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
-  }
 
   void
   UpdateCameraUniformBuffer(Camera* camera) {
@@ -98,7 +101,6 @@ class RenderPassNode {
   std::shared_ptr<FrameBuffer> m_framebuffer = nullptr;
   std::shared_ptr<RenderPass> m_renderPass = nullptr;
   std::shared_ptr<GraphicsPipeLine> m_pipeline = nullptr;
-  // std::shared_ptr<DescriptorSet> m_descriptorSet = nullptr;  // TODO: remove?
   std::shared_ptr<CommandFactory> m_commandFactory = nullptr;
   std::unique_ptr<CommandBuffer> m_commandBuffer = nullptr;
   std::shared_ptr<ResourceManager> m_resourceManager = nullptr;

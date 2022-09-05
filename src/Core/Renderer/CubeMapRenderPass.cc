@@ -32,18 +32,17 @@ CubeMapRenderPassCreateInfo::CubeMapRenderPassCreateInfo() {
 
 CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createInfo)
     : ForwardRenderPass(createInfo) {
-  DLOG_ASSERT(m_rhiFactory != nullptr)
-      << FORMAT("can't Initialize the {}, because the rhiFactory isn't been set",
-                NAMEOF_TYPE(CubeMapRenderPass));
-  DLOG_ASSERT(m_resourceManager != nullptr)
-      << FORMAT("can't Initialize the {}, because the resource manager isn't been set",
-                NAMEOF_TYPE(CubeMapRenderPass));
+  // DLOG_ASSERT(m_rhiFactory != nullptr);
+  // DLOG_ASSERT(m_resourceManager != nullptr);
+  //
+  // CreateRenderPass();
+  // CreateShader();
+  // CreateDescriptorSetLayout();
+  // CreatePipeline();
+}
 
-  /**
-   * set render pass and pipeline
-   */
-
-  // create render pass
+void
+CubeMapRenderPass::CreateRenderPass() {
   RenderPassCreateInfo renderPassCreateInfo{
       .attachments =
           {
@@ -62,25 +61,28 @@ CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createIn
           },
   };
   m_renderPass = m_rhiFactory->CreateRenderPass(renderPassCreateInfo);
+}
 
-  // read shader
+void
+CubeMapRenderPass::CreateDescriptorSetLayout() {
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      .isBuffer = false,
+      .bindingPoint = 0,
+  });
+}
+
+void
+CubeMapRenderPass::CreateShader() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto shaderResource = shaderContainer->CreateResource();
   shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/cubeMap.vert.glsl");
   shaderResource->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/cubeMap.frag.glsl");
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
-
-  // set descriptor set layout and create pipeline
-  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
-      .isBuffer = false,
-      .bindingPoint = 0,
-  });
-  GeneratePipeline();
 }
 
 void
-CubeMapRenderPass::GeneratePipeline() {
+CubeMapRenderPass::CreatePipeline() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto resource = shaderContainer->GetResource(m_shaderId);
   if (!resource->IsLoad()) {
@@ -191,8 +193,8 @@ CubeMapRenderPass::CreateBufferForEveryEntity(const entt::entity cubeMap, Scene*
   implData->indexBuffer = std::move(indexBuffer);
 
   // create descriptor set
-  implData->descriptorSet = GenerateDescriptorSet();
-  BindCameraUniformBuffer(implData->descriptorSet.get());
+  implData->descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
+  implData->descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
 
   // load material
   if (cubeMapComponent.cubeMapResourceId.has_value()) {

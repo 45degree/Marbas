@@ -16,16 +16,17 @@ GridRenderPassCreateInfo::GridRenderPassCreateInfo() {
 }
 
 GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)
-    : ForwardRenderPass(createInfo) {
-  DLOG_ASSERT(m_rhiFactory != nullptr)
-      << FORMAT("can't Initialize the {}, because the rhiFactory isn't been set",
-                NAMEOF_TYPE(GridRenderPass));
+    : ForwardRenderPass(createInfo) {}
 
-  /**
-   * set render pass and pipeline
-   */
+void
+GridRenderPass::OnInit() {
+  m_descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
+  m_descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
+  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(0);
+}
 
-  // create render pass
+void
+GridRenderPass::CreateRenderPass() {
   RenderPassCreateInfo renderPassCreateInfo{
       .attachments =
           {
@@ -44,30 +45,20 @@ GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)
           },
   };
   m_renderPass = m_rhiFactory->CreateRenderPass(renderPassCreateInfo);
+}
 
-  // create command factory
-  m_commandFactory = m_rhiFactory->CreateCommandFactory();
-  m_commandBuffer = m_commandFactory->CreateCommandBuffer();
-
-  // read shader
+void
+GridRenderPass::CreateShader() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto shaderResource = shaderContainer->CreateResource();
   shaderResource->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/grid.vert.glsl");
   shaderResource->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/grid.frag.glsl");
   shaderResource->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(shaderResource);
-
-  // create descriptor set layout and uniform buffer
-  m_descriptorSet = GenerateDescriptorSet();
-  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(0);
-  BindCameraUniformBuffer(m_descriptorSet.get());
-
-  // create Pipeline
-  GeneratePipeline();
 }
 
 void
-GridRenderPass::GeneratePipeline() {
+GridRenderPass::CreatePipeline() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   auto resource = shaderContainer->GetResource(m_shaderId);
   if (!resource->IsLoad()) {
@@ -106,19 +97,11 @@ GridRenderPass::RecordCommand(const Scene* scene) {
   m_commandBuffer->Clear();
 
   // check framebuffer and renderpass
-  DLOG_ASSERT(m_framebuffer != nullptr)
-      << FORMAT("{}'s framebuffer is null, can't record command", NAMEOF_TYPE(GridRenderPass));
-
-  DLOG_ASSERT(m_renderPass != nullptr)
-      << FORMAT("{}'s render pass is null, can't record command", NAMEOF_TYPE(GridRenderPass));
-
-  DLOG_ASSERT(m_pipeline != nullptr)
-      << FORMAT("{}'s pipeline is null, can't record command", NAMEOF_TYPE(GridRenderPass));
+  DLOG_ASSERT(m_framebuffer != nullptr);
+  DLOG_ASSERT(m_renderPass != nullptr);
+  DLOG_ASSERT(m_pipeline != nullptr);
 
   // recreate uniform buffer
-
-  // auto bufferSize = sizeof(GridRenderPass::MatrixUniformBufferBlock);
-  // m_uniformBuffer->SetData(&m_matrixUniformBlock, bufferSize, 0);
 
   /**
    * set command

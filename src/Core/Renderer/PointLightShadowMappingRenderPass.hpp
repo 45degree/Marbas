@@ -22,10 +22,22 @@ class PointLightShadowMappingRenderPass final : public DeferredRenderPass {
 
  public:
   void
+  OnInit() override;
+
+  void
   Execute(const Scene* scene, const ResourceManager* resourceManager) override;
 
   void
-  GeneratePipeline() override;
+  CreatePipeline() override;
+
+  void
+  CreateRenderPass() override;
+
+  void
+  CreateDescriptorSetLayout() override;
+
+  void
+  CreateShader() override;
 
   /**
    * @berif create the frame buffer from the input and output target

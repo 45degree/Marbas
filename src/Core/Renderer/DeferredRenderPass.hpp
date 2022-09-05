@@ -15,11 +15,14 @@ class DeferredRenderPass : public RenderPassNode {
   virtual ~DeferredRenderPass() = default;
 
  public:
-  /**
-   * @berif create the frame buffer from the input and output target
-   *
-   * @warning it should be invoked after setting the target
-   */
+  void
+  Initialize() override {
+    CreateRenderPass();
+    CreateShader();
+    CreateDescriptorSetLayout();
+    CreatePipeline();
+  }
+
   virtual void
   CreateFrameBuffer() = 0;
 
