@@ -297,6 +297,7 @@ ShadowMappingRenderPass::RecordCopyCommand() {
   /**
    * copy framebuffer command
    */
+  m_copyFrameCommandBuffer->Clear();
 
   // get input target GBuffer
   const auto& inputTargetGBuffer =
@@ -319,7 +320,6 @@ void
 ShadowMappingRenderPass::RecordCommand(const Scene* scene) {
   m_depthCommandBuffer->Clear();
   m_commandBuffer->Clear();
-  m_copyFrameCommandBuffer->Clear();
 
   // check framebuffer and renderpass
   DLOG_ASSERT(m_depthFrameBuffer != nullptr);

@@ -41,6 +41,7 @@ PointLightShadowMappingRenderPassCreateInfo::PointLightShadowMappingRenderPassCr
 PointLightShadowMappingRenderPass::PointLightShadowMappingRenderPass(const CreateInfo &createInfo)
     : DeferredRenderPass(createInfo) {
   m_depthCommandBuffer = m_commandFactory->CreateCommandBuffer();
+  m_copyFrameCommandBuffer = m_commandFactory->CreateCommandBuffer();
   m_lightInfoUniformBuffer = m_rhiFactory->CreateUniformBuffer(sizeof(LightInfo));
 }
 
@@ -254,6 +255,26 @@ PointLightShadowMappingRenderPass::SetUniformBuffer(const Scene *scene, const Po
 }
 
 void
+PointLightShadowMappingRenderPass::RecordCopyCommand() {
+  m_copyFrameCommandBuffer->Clear();
+
+  const auto &inputGBuffer =
+      m_inputTarget[String(ShadowMappingRenderPass::renderTarget)]->GetGBuffer();
+  auto inputColorTexture = inputGBuffer->GetTexture(GBufferTexutreType::COLOR);
+
+  const auto &outputTargetGBuffer = m_outputTarget[String(targetName)]->GetGBuffer();
+  auto outputColorBuffer = outputTargetGBuffer->GetTexture(GBufferTexutreType::COLOR);
+
+  auto copyTeture = m_commandFactory->CreateCopyImageToImageCMD();
+  copyTeture->SetSrcImage(inputColorTexture);
+  copyTeture->SetDstImage(outputColorBuffer);
+
+  m_copyFrameCommandBuffer->BeginRecordCmd();
+  m_copyFrameCommandBuffer->AddCommand(std::move(copyTeture));
+  m_copyFrameCommandBuffer->EndRecordCmd();
+}
+
+void
 PointLightShadowMappingRenderPass::RecordCommand(const Scene *scene) {
   m_depthCommandBuffer->Clear();
   m_commandBuffer->Clear();
@@ -407,7 +428,11 @@ PointLightShadowMappingRenderPass::Execute(const Scene *scene,
   auto view = Entity::GetAllEntity<MeshComponent, ShadowComponent>(scene);
   auto lightView = Entity::GetAllEntity<PointLightComponent>(const_cast<Scene *>(scene));
 
-  // there is no need to draw the shadow if the scene don't have any meshes
+  if (m_needToRecordCopyCommand) {
+    RecordCopyCommand();
+    m_needToRecordCopyCommand = false;
+  }
+  m_copyFrameCommandBuffer->SubmitCommand();
 
   for (auto light : lightView) {
     auto &lightComponent = lightView.get<PointLightComponent>(light);

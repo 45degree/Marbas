@@ -54,6 +54,9 @@ class PointLightShadowMappingRenderPass final : public DeferredRenderPass {
   RecordCommand(const Scene* scene) override;
 
   void
+  RecordCopyCommand();
+
+  void
   CreateBufferForEveryEntity(const entt::entity& entity, Scene* scene);
 
   void
@@ -69,6 +72,9 @@ class PointLightShadowMappingRenderPass final : public DeferredRenderPass {
 
   Uid m_depthShaderId;
   Uid m_shaderId;
+
+  bool m_needToRecordCopyCommand = true;
+  std::shared_ptr<CommandBuffer> m_copyFrameCommandBuffer;
 
   std::shared_ptr<RenderPass> m_depthRenderPass;
   std::shared_ptr<GraphicsPipeLine> m_depthPipeline;
