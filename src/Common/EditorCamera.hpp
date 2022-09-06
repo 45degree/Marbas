@@ -12,7 +12,10 @@ namespace Marbas {
 
 class EditorCamera final : public Camera {
  public:
-  EditorCamera() { LOG(INFO) << glm::to_string(GetUpVector()); }
+  EditorCamera() {
+    auto pos = glm::normalize(glm::vec3(-1, 1, 1)) * m_distance;
+    m_viewMatrix = glm::lookAt(pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+  }
   ~EditorCamera() = default;
 
  public:
@@ -93,7 +96,14 @@ class EditorCamera final : public Camera {
   void
   MoveFixPoint(float xOffset, float yOffset, float zOffset) noexcept {
     auto transMatrix = glm::translate(glm::mat4(1.0), glm::vec3(xOffset, yOffset, zOffset));
-    m_viewMatrix = glm::inverse(glm::inverse(m_viewMatrix) * transMatrix);
+    m_viewMatrix = glm::inverse(transMatrix * glm::inverse(m_viewMatrix));
+  }
+
+  void
+  MovePosition(const glm::vec3& pos) {
+    auto currentPos = GetLookPosition();
+    auto transMatrix = glm::translate(glm::mat4(1.0), pos - currentPos);
+    m_viewMatrix = glm::inverse(transMatrix * glm::inverse(m_viewMatrix));
   }
 
   void
@@ -124,7 +134,7 @@ class EditorCamera final : public Camera {
   float m_aspect = 800.f / 600.f;
 
   float m_distance = 50.0f;
-  glm::mat4 m_viewMatrix = glm::lookAt(glm::vec3(0, 0, 50), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+  glm::mat4 m_viewMatrix;
 
   constexpr static float MaxDistance = 10000.f;
   constexpr static float MinDistance = 1.f;

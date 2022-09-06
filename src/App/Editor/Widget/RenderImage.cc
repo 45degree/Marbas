@@ -23,27 +23,53 @@ RenderImage::ShowToolBar() {
     m_showRotate = true;
     m_showScale = true;
   }
-  ImGui::SameLine();
 
+  ImGui::SameLine();
   ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
-  ImGui::SameLine();
 
+  ImGui::SameLine();
   if (ImGui::Button(ICON_FA_ARROWS_UP_DOWN_LEFT_RIGHT)) {
     m_showMove = true;
     m_showRotate = false;
     m_showScale = false;
   }
+
   ImGui::SameLine();
   if (ImGui::Button(ICON_FA_ARROW_ROTATE_LEFT)) {
     m_showMove = false;
     m_showRotate = true;
     m_showScale = false;
   }
+
   ImGui::SameLine();
   if (ImGui::Button(ICON_FA_MAXIMIZE)) {
     m_showMove = false;
     m_showRotate = false;
     m_showScale = true;
+  }
+
+  ImGui::SameLine();
+  ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+
+  ImGui::SameLine();
+  if (ImGui::Button(ICON_FA_ARROWS_TO_DOT)) {
+    if (m_modelEntity.has_value()) {
+      auto entity = *m_modelEntity;
+      auto camera = m_scene->GetEditorCamrea();
+      auto perspectiveMatrix = camera->GetProjectionMatrix();
+      const auto& modelComponent = Entity::GetComponent<ModelComponent>(m_scene.get(), entity);
+      auto id = modelComponent.modelResourceId;
+      auto resource = m_resourceManager->GetModelResourceContainer()->GetResource(id);
+      DLOG_ASSERT(resource != nullptr);
+
+      auto modelMatrix = resource->GetModel()->GetModelMatrix();
+
+      float modelPos[3], unused1[3], unused2[3];
+      ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(modelMatrix), modelPos, unused1,
+                                            unused2);
+      auto cameraPos = camera->GetPosition();
+      camera->MovePosition(glm::vec3(modelPos[0], modelPos[1], modelPos[2]));
+    }
   }
 
   ImGui::PopStyleColor(1);
@@ -93,7 +119,6 @@ RenderImage::Draw() {
   // TODO:
   if (m_modelEntity.has_value()) {
     auto entity = m_modelEntity.value();
-    // auto viewMatrix = camera->GetViewMatrix();
     auto perspectiveMatrix = camera->GetProjectionMatrix();
     const auto& modelComponent = Entity::GetComponent<ModelComponent>(m_scene.get(), entity);
     auto id = modelComponent.modelResourceId;
