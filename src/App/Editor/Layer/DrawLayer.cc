@@ -2,7 +2,7 @@
 
 #include <nfd.h>
 
-#include "App/Editor/Widget/MeshInfomationWidget.hpp"
+#include "App/Editor/Widget/InfomationWidget.hpp"
 #include "App/Editor/Widget/RenderImage.hpp"
 #include "App/Editor/Widget/SceneTree.hpp"
 #include "App/Editor/Widget/Widget.hpp"
@@ -16,15 +16,10 @@ DrawLayer::OnAttach() {
 
   auto renderImage = std::make_unique<RenderImage>(m_rhiFactory, "renderImage");
   auto sceneTree = std::make_unique<SceneTreeWidget>(m_rhiFactory);
-  auto meshInfomationWidget = std::make_unique<MeshInfomationWidget>(m_rhiFactory);
+  auto meshInfomationWidget = std::make_unique<InformationWidget>(m_rhiFactory);
 
-  // auto& a = *renderImage;
-  // sceneTree->AddSelectModelListener<&RenderImage::SetSelectedModel, RenderImage>(*renderImage);
-  auto& sink = sceneTree->GetSink();
-  sink.connect<&RenderImage::SetSelectedModel>(*renderImage);
-
-  // sceneTree->AddSelectMeshWidget(renderImage.get());
-  // sceneTree->AddSelectMeshWidget(meshInfomationWidget.get());
+  sceneTree->Connect<&RenderImage::SetSelectedModel>(*renderImage);
+  sceneTree->Connect<&InformationWidget::SelectEntity>(*meshInfomationWidget);
 
   AddWidget(std::move(renderImage));
   AddWidget(std::move(sceneTree));

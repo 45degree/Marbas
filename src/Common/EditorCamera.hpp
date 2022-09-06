@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Common/Camera.hpp"
+#include "Common/Common.hpp"
 #include "Common/MathCommon.hpp"
+#include "glog/logging.h"
 
 /**
  * @brief this camera always looks at a fixed point, and can rotate around it
@@ -10,28 +12,23 @@ namespace Marbas {
 
 class EditorCamera final : public Camera {
  public:
-  EditorCamera() = default;
+  EditorCamera() { LOG(INFO) << glm::to_string(GetUpVector()); }
   ~EditorCamera() = default;
 
  public:
   [[nodiscard]] glm::mat4
   GetViewMatrix() const noexcept override {
-    auto direction = glm::vec3(0, 0, 0);
-    direction.x = std::cos(glm::radians(m_pitch)) * std::sin(glm::radians(m_yaw));
-    direction.y = std::sin(glm::radians(m_pitch));
-    direction.z = std::cos(glm::radians(m_pitch)) * std::cos(glm::radians(m_yaw));
-
-    return glm::lookAt(m_fixPoint + m_distance * direction, m_fixPoint, m_upDirection);
+    return m_viewMatrix;
   }
 
   [[nodiscard]] glm::vec3
   GetPosition() const noexcept override {
-    auto direction = glm::vec3(0, 0, 0);
-    direction.x = std::cos(glm::radians(m_pitch)) * std::sin(glm::radians(m_yaw));
-    direction.y = std::sin(glm::radians(m_pitch));
-    direction.z = std::cos(glm::radians(m_pitch)) * std::cos(glm::radians(m_yaw));
+    return glm::vec3(glm::column(glm::inverse(m_viewMatrix), 3));
+  }
 
-    return m_fixPoint + direction * m_distance;
+  [[nodiscard]] float
+  GetDistance() const noexcept {
+    return m_distance;
   }
 
   [[nodiscard]] glm::mat4
@@ -41,29 +38,22 @@ class EditorCamera final : public Camera {
 
   glm::vec3
   GetUpVector() const noexcept override {
-    auto lookatDirection = GetLookAtVector();
-    return glm::cross(glm::cross(lookatDirection, glm::vec3(0, 1, 0)), lookatDirection);
+    return glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 1)));
   }
 
   glm::vec3
   GetRightVector() const noexcept override {
-    auto lookatDirection = GetLookAtVector();
-    return glm::cross(lookatDirection, glm::vec3(0, 1, 0));
+    return glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 0)));
   }
 
   glm::vec3
   GetLookAtVector() const noexcept {
-    auto direction = glm::vec3(0, 0, 0);
-    direction.x = std::cos(glm::radians(m_pitch)) * std::sin(glm::radians(m_yaw));
-    direction.y = std::sin(glm::radians(m_pitch));
-    direction.z = std::cos(glm::radians(m_pitch)) * std::cos(glm::radians(m_yaw));
-
-    return -direction;
+    return -glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 2)));
   }
 
   void
-  SetFixPoint(const glm::vec3& newPos) {
-    m_fixPoint = newPos;
+  SetViewMatrix(const glm::mat4& viewMatrix) {
+    m_viewMatrix = viewMatrix;
   }
 
   void
@@ -71,26 +61,39 @@ class EditorCamera final : public Camera {
     m_aspect = aspect;
   }
 
+  glm::vec3
+  GetLookPosition() {
+    return GetPosition() + GetLookAtVector() * m_distance;
+  }
+
   void
   AddPitch(float pitch) noexcept {
-    m_pitch += pitch;
-    if (m_pitch > 89.0) {
-      m_pitch = 89.0f;
-    } else if (m_pitch < -89.0) {
-      m_pitch = -89.0f;
-    }
+    auto lookVec = -GetLookAtVector() * m_distance;
+    float curPitch = glm::degrees(std::asin(lookVec.y / glm::length(lookVec)));
+    if (curPitch + pitch > 89.0 || curPitch + pitch < -89.0) return;
+
+    auto inverseMatrix = glm::inverse(m_viewMatrix);
+
+    auto rotateMatrix = glm::rotate(glm::mat4(1.0), glm::radians(-pitch), GetRightVector());
+    auto pos = GetLookPosition();
+    auto transMatrix1 = glm::translate(glm::mat4(1.0), -pos);
+    auto transMatrix2 = glm::translate(glm::mat4(1.0), pos);
+    m_viewMatrix = glm::inverse(transMatrix2 * rotateMatrix * transMatrix1 * inverseMatrix);
   }
 
   void
   AddYaw(float yaw) noexcept {
-    m_yaw += yaw;
+    auto inverseMatrix = glm::inverse(m_viewMatrix);
+    auto rotateMatrix = glm::rotate(glm::mat4(1.0), glm::radians(yaw), glm::vec3(0, 1, 0));
+    auto transMatrix1 = glm::translate(glm::mat4(1.0), -GetLookPosition());
+    auto transMatrix2 = glm::translate(glm::mat4(1.0), GetLookPosition());
+    m_viewMatrix = glm::inverse(transMatrix2 * rotateMatrix * transMatrix1 * inverseMatrix);
   }
 
   void
   MoveFixPoint(float xOffset, float yOffset, float zOffset) noexcept {
-    m_fixPoint.x += xOffset * 0.1f;
-    m_fixPoint.y += yOffset * 0.1f;
-    m_fixPoint.z += zOffset * 0.1f;
+    auto transMatrix = glm::translate(glm::mat4(1.0), glm::vec3(xOffset, yOffset, zOffset));
+    m_viewMatrix = glm::inverse(glm::inverse(m_viewMatrix) * transMatrix);
   }
 
   void
@@ -108,22 +111,20 @@ class EditorCamera final : public Camera {
 
   void
   AddDistance(float distanceDiff) {
+    if (m_distance + distanceDiff > MaxDistance || m_distance + distanceDiff < MinDistance) return;
+    auto transMatrix = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, distanceDiff));
     m_distance += distanceDiff;
-    if (m_distance > MaxDistance) m_distance = MaxDistance;
-    if (m_distance < MinDistance) m_distance = MinDistance;
+    m_viewMatrix = glm::inverse(glm::inverse(m_viewMatrix) * transMatrix);
   }
 
  private:
   float m_near = 0.1f;
   float m_far = MaxDistance;
-  float m_distance = 50.f;
   float fov = 45.0f;
   float m_aspect = 800.f / 600.f;
-  glm::vec3 m_fixPoint = glm::vec3(0, 0, 0);
-  glm::vec3 m_upDirection = glm::vec3(0, 1, 0);
 
-  float m_pitch = 40.0f;
-  float m_yaw = 0.0f;
+  float m_distance = 50.0f;
+  glm::mat4 m_viewMatrix = glm::lookAt(glm::vec3(0, 0, 50), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
   constexpr static float MaxDistance = 10000.f;
   constexpr static float MinDistance = 1.f;

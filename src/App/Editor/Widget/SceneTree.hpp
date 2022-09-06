@@ -17,9 +17,10 @@ class SceneTreeWidget : public Widget {
   void
   Draw() override;
 
-  auto&
-  GetSink() {
-    return m_sink;
+  template <auto Candidate, typename Type>
+  void
+  Connect(Type&& instance) {
+    m_sink.connect<Candidate, Type>(std::forward<Type>(instance));
   }
 
  private:
@@ -30,9 +31,9 @@ class SceneTreeWidget : public Widget {
   DrawNode(const entt::entity& rootEntity);
 
  private:
-  entt::entity m_selectEntity = entt::null;
+  entt::entity m_PopupEntity = entt::null;
   String m_popUpName = "";
-  entt::sigh<void(ModelEntity, const ModelComponent&)> m_signal;
+  entt::sigh<void(entt::entity)> m_signal;
   entt::sink<decltype(m_signal)> m_sink{m_signal};
 };
 

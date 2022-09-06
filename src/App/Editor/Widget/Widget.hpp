@@ -37,11 +37,5 @@ class Widget {
   std::shared_ptr<ResourceManager> m_resourceManager;
   RHIFactory* m_rhiFactory;
 };
-//
-// class IChangeMeshAble {
-//  public:
-//   virtual void
-//   ChangeMesh(const MeshEntity& mesh) = 0;
-// };
 
 }  // namespace Marbas

@@ -213,10 +213,9 @@ RenderLayer::OnMouseMove(const MouseMoveEvent& e) {
     if (Input::IsMousePress(GLFW_MOUSE_BUTTON_MIDDLE)) {
       // calculate current plane
 
-      auto up = editorCamera->GetUpVector();        // y-axis in camera coordinate
       auto right = editorCamera->GetRightVector();  // x-axis in camera coordinate
-      up = glm::normalize(up);
-      right = glm::normalize(right);
+      auto pos = editorCamera->GetPosition();
+      auto up = editorCamera->GetUpVector();
 
       // The movement of the viewpoint is always opposite to the mouse, and the direction of the
       // v-axis in the image coordinate system is also opposite to the direction of the y-axis in

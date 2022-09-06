@@ -41,15 +41,15 @@ SceneTreeWidget::DrawNode(const entt::entity& entity) {
     type = tag.type;
   }
 
-  if (type == EntityType::Mesh) return;
+  if (type == EntityType::Mesh) return;  // not draw mesh node
 
   if (ImGui::TreeNode(name.c_str())) {
-    if (ImGui::IsItemClicked() && type == EntityType::Model) {
-      m_signal.publish(entity, Entity::GetComponent<ModelComponent>(m_scene.get(), entity));
+    if (ImGui::IsItemClicked()) {
+      m_signal.publish(entity);
     }
 
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && ImGui::IsWindowHovered()) {
-      m_selectEntity = entity;
+      m_PopupEntity = entity;
     }
 
     auto children = hierarchyComponent.children;
@@ -63,11 +63,11 @@ SceneTreeWidget::DrawNode(const entt::entity& entity) {
 
 void
 SceneTreeWidget::DrawPopup() {
-  if (m_selectEntity == entt::null) return;
+  if (m_PopupEntity == entt::null) return;
 
   String name;
-  if (Entity::HasComponent<UniqueTagComponent>(m_scene.get(), m_selectEntity)) {
-    const auto& tag = Entity::GetComponent<UniqueTagComponent>(m_scene.get(), m_selectEntity);
+  if (Entity::HasComponent<UniqueTagComponent>(m_scene.get(), m_PopupEntity)) {
+    const auto& tag = Entity::GetComponent<UniqueTagComponent>(m_scene.get(), m_PopupEntity);
     name = tag.tagName;
   }
 
@@ -90,7 +90,7 @@ SceneTreeWidget::DrawPopup() {
         modelResource->LoadResource(m_rhiFactory, m_resourceManager.get());
 
         m_scene->AddModel(modelResourceId, modelResource->GetModel()->GetModelName(),
-                          m_selectEntity);
+                          m_PopupEntity);
       }
     }
 
@@ -98,7 +98,7 @@ SceneTreeWidget::DrawPopup() {
       auto textureResourceContainer = m_resourceManager->GetTexture2DResourceContainer();
       auto resource = textureResourceContainer->CreateResource("assert/lightbulb.png");
       auto id = textureResourceContainer->AddResource(resource);
-      m_scene->AddBillBoard(id, glm::vec3(0, 0, 0), m_selectEntity);
+      m_scene->AddBillBoard(id, glm::vec3(0, 0, 0), m_PopupEntity);
     }
 
     ImGui::EndPopup();

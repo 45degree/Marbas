@@ -1,18 +1,29 @@
-#include "App/Editor/Widget/MeshInfomationWidget.hpp"
+#include "App/Editor/Widget/InfomationWidget.hpp"
 
 // clang-format off
 #include <imgui.h>
 #include <ImGuizmo.h>
 // clang-format on
 
-// #include "Core/Scene/Component/Component.hpp"
-#include "Core/Scene/Entity/Entity.hpp"
 #include "Common/MathCommon.hpp"
+#include "Core/Scene/Component/TagComponent.hpp"
+#include "Core/Scene/Entity/Entity.hpp"
 
 namespace Marbas {
 
 void
-MeshInfomationWidget::Draw() {
+InformationWidget::Draw() {
+  if (!Entity::HasComponent<UniqueTagComponent>(m_scene.get(), m_entity)) return;
+
+  const auto& tagComponent = Entity::GetComponent<UniqueTagComponent>(m_scene.get(), m_entity);
+  switch (tagComponent.type) {
+    case EntityType::Model:
+      m_modelInformation->DrawInformation(m_entity, m_scene.get(), m_resourceManager.get());
+      break;
+    default:
+      break;
+  }
+
   // TODO:
   // if (!m_selectedMesh.has_value()) return;
   //
