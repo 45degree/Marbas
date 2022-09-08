@@ -33,7 +33,7 @@ class Light {
 
  protected:
   glm::vec3 m_pos;
-  glm::vec3 m_color;
+  glm::vec3 m_color = glm::vec3(1, 1, 1);
 };
 
 class ParallelLight final : public Light {

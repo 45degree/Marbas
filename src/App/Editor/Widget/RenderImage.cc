@@ -5,6 +5,7 @@
 
 #include "Common/Common.hpp"
 #include "Core/Application.hpp"
+#include "Core/Scene/Component/LightComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
 #include "Core/Window.hpp"
 #include "RHI/RHI.hpp"
@@ -53,22 +54,26 @@ RenderImage::ShowToolBar() {
 
   ImGui::SameLine();
   if (ImGui::Button(ICON_FA_ARROWS_TO_DOT)) {
-    if (m_modelEntity.has_value()) {
-      auto entity = *m_modelEntity;
-      auto camera = m_scene->GetEditorCamrea();
-      auto perspectiveMatrix = camera->GetProjectionMatrix();
-      const auto& modelComponent = Entity::GetComponent<ModelComponent>(m_scene.get(), entity);
-      auto id = modelComponent.modelResourceId;
-      auto resource = m_resourceManager->GetModelResourceContainer()->GetResource(id);
-      DLOG_ASSERT(resource != nullptr);
+    if (m_entity.has_value()) {
+      const auto& tagComp = Entity::GetComponent<UniqueTagComponent>(m_scene.get(), *m_entity);
+      auto type = tagComp.type;
+      if (type == EntityType::Model) {
+        auto entity = *m_entity;
+        auto camera = m_scene->GetEditorCamrea();
+        auto perspectiveMatrix = camera->GetProjectionMatrix();
+        const auto& modelComponent = Entity::GetComponent<ModelComponent>(m_scene.get(), entity);
+        auto id = modelComponent.modelResourceId;
+        auto resource = m_resourceManager->GetModelResourceContainer()->GetResource(id);
+        DLOG_ASSERT(resource != nullptr);
 
-      auto modelMatrix = resource->GetModel()->GetModelMatrix();
+        auto modelMatrix = resource->GetModel()->GetModelMatrix();
 
-      float modelPos[3], unused1[3], unused2[3];
-      ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(modelMatrix), modelPos, unused1,
-                                            unused2);
-      auto cameraPos = camera->GetPosition();
-      camera->MovePosition(glm::vec3(modelPos[0], modelPos[1], modelPos[2]));
+        float modelPos[3], unused1[3], unused2[3];
+        ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(modelMatrix), modelPos, unused1,
+                                              unused2);
+        auto cameraPos = camera->GetPosition();
+        camera->MovePosition(glm::vec3(modelPos[0], modelPos[1], modelPos[2]));
+      }
     }
   }
 
@@ -117,35 +122,19 @@ RenderImage::Draw() {
 
   // draw
   // TODO:
-  if (m_modelEntity.has_value()) {
-    auto entity = m_modelEntity.value();
-    auto perspectiveMatrix = camera->GetProjectionMatrix();
-    const auto& modelComponent = Entity::GetComponent<ModelComponent>(m_scene.get(), entity);
-    auto id = modelComponent.modelResourceId;
-    auto resource = m_resourceManager->GetModelResourceContainer()->GetResource(id);
-    DLOG_ASSERT(resource != nullptr);
-
-    auto modelMatrix = resource->GetModel()->GetModelMatrix();
-
-    if (m_showMove && m_showRotate && m_showScale) {
-      ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
-                           ImGuizmo::OPERATION::UNIVERSAL, ImGuizmo::LOCAL,
-                           glm::value_ptr(modelMatrix));
-    } else if (m_showMove) {
-      ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
-                           ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL,
-                           glm::value_ptr(modelMatrix));
-    } else if (m_showRotate) {
-      ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
-                           ImGuizmo::OPERATION::ROTATE, ImGuizmo::LOCAL,
-                           glm::value_ptr(modelMatrix));
-    } else if (m_showScale) {
-      ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
-                           ImGuizmo::OPERATION::SCALE, ImGuizmo::LOCAL,
-                           glm::value_ptr(modelMatrix));
+  if (m_entity.has_value()) {
+    const auto& tagComp = Entity::GetComponent<UniqueTagComponent>(m_scene.get(), *m_entity);
+    auto type = tagComp.type;
+    switch (type) {
+      case EntityType::Model:
+        DrawModelManipulate();
+        break;
+      case EntityType::Light:
+        DrawLightManipulate();
+        break;
+      default:
+        break;
     }
-
-    resource->GetModel()->SetModelMatrix(modelMatrix);
   }
 
   /**
@@ -153,6 +142,57 @@ RenderImage::Draw() {
    */
   float aspect = imageSize.x / imageSize.y;
   camera->SetAspect(aspect);
+}
+
+void
+RenderImage::DrawModelManipulate() {
+  const auto camera = m_scene->GetEditorCamrea();
+  const auto viewMatrix = camera->GetViewMatrix();
+  const auto perspectiveMatrix = camera->GetProjectionMatrix();
+
+  auto entity = m_entity.value();
+  const auto& modelComponent = Entity::GetComponent<ModelComponent>(m_scene.get(), entity);
+  auto id = modelComponent.modelResourceId;
+  auto resource = m_resourceManager->GetModelResourceContainer()->GetResource(id);
+  DLOG_ASSERT(resource != nullptr);
+
+  auto modelMatrix = resource->GetModel()->GetModelMatrix();
+
+  if (m_showMove && m_showRotate && m_showScale) {
+    ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
+                         ImGuizmo::OPERATION::UNIVERSAL, ImGuizmo::LOCAL,
+                         glm::value_ptr(modelMatrix));
+  } else if (m_showMove) {
+    ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
+                         ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL,
+                         glm::value_ptr(modelMatrix));
+  } else if (m_showRotate) {
+    ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
+                         ImGuizmo::OPERATION::ROTATE, ImGuizmo::LOCAL, glm::value_ptr(modelMatrix));
+  } else if (m_showScale) {
+    ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
+                         ImGuizmo::OPERATION::SCALE, ImGuizmo::LOCAL, glm::value_ptr(modelMatrix));
+  }
+
+  resource->GetModel()->SetModelMatrix(modelMatrix);
+}
+
+void
+RenderImage::DrawLightManipulate() {
+  const auto camera = m_scene->GetEditorCamrea();
+  const auto viewMatrix = camera->GetViewMatrix();
+  const auto perspectiveMatrix = camera->GetProjectionMatrix();
+
+  auto entity = m_entity.value();
+  if (Entity::HasComponent<PointLightComponent>(m_scene.get(), entity)) {
+    auto& light = Entity::GetComponent<PointLightComponent>(m_scene.get(), entity).m_light;
+    glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0), light.GetPos());
+    ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
+                         ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL,
+                         glm::value_ptr(modelMatrix));
+    auto newPos = glm::vec3(glm::column(modelMatrix, 3));
+    light.SetPos(newPos);
+  }
 }
 
 }  // namespace Marbas

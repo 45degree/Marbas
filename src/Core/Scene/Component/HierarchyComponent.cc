@@ -19,16 +19,14 @@ HierarchyComponent::AddChild(const entt::entity parent, entt::registry& registry
   auto& childComponent = registry.get<HierarchyComponent>(child);
   childComponent.parent = parent;
 
-  if (parentComponent.children.empty()) {
-    parentComponent.children.push_back(child);
-    return;
+  if (!parentComponent.children.empty()) {
+    auto lastChildEntity = parentComponent.children[parentComponent.children.size() - 1];
+    auto& lastChildComponent = registry.get<HierarchyComponent>(lastChildEntity);
+    lastChildComponent.next = child;
+    childComponent.prew = lastChildEntity;
   }
 
-  auto lastChildEntity = parentComponent.children[parentComponent.children.size() - 1];
-  auto& lastChildComponent = registry.get<HierarchyComponent>(lastChildEntity);
-  lastChildComponent.next = child;
-
-  childComponent.prew = lastChildEntity;
+  parentComponent.children.push_back(child);
 }
 
 }  // namespace Marbas

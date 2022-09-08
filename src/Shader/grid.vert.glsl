@@ -9,6 +9,8 @@ layout(std140, binding = 0) uniform Matrices {
   vec3 right;
   vec3 up;
   vec3 pos;
+  float FAR;
+  float NEAR;
 } view;
 
 vec3 gridPlane[6] = vec3[] (

@@ -28,25 +28,25 @@ class RenderImage : public Widget {
 
   void
   SetSelectedModel(entt::entity modelEntity) {
-    if (!Entity::HasComponent<UniqueTagComponent>(m_scene.get(), modelEntity)) return;
-
-    const auto& tagComp = Entity::GetComponent<UniqueTagComponent>(m_scene.get(), modelEntity);
-    auto type = tagComp.type;
-    if (type == EntityType::Model) {
-      m_modelEntity = modelEntity;
-    }
+    m_entity = modelEntity;
   }
 
  private:
   void
   ShowToolBar();
 
+  void
+  DrawModelManipulate();
+
+  void
+  DrawLightManipulate();
+
  private:
   ImVec2 imageSize;
   bool m_showMove = true;
   bool m_showRotate = true;
   bool m_showScale = true;
-  std::optional<ModelEntity> m_modelEntity = std::nullopt;
+  std::optional<ModelEntity> m_entity = std::nullopt;
 };
 
 }  // namespace Marbas

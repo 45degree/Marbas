@@ -13,12 +13,16 @@ namespace Marbas {
 
 void
 InformationWidget::Draw() {
+  if (m_entity == entt::null) return;
   if (!Entity::HasComponent<UniqueTagComponent>(m_scene.get(), m_entity)) return;
 
   const auto& tagComponent = Entity::GetComponent<UniqueTagComponent>(m_scene.get(), m_entity);
   switch (tagComponent.type) {
     case EntityType::Model:
       m_modelInformation->DrawInformation(m_entity, m_scene.get(), m_resourceManager.get());
+      break;
+    case EntityType::Light:
+      m_lightInformation->DrawInformation(m_entity, m_scene.get(), m_resourceManager.get());
       break;
     default:
       break;

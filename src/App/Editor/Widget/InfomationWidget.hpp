@@ -1,5 +1,6 @@
 #pragma once
 
+#include "App/Editor/Widget/Information/LightInformation.hpp"
 #include "App/Editor/Widget/Information/ModelInformation.hpp"
 #include "App/Editor/Widget/Widget.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
@@ -10,7 +11,8 @@ class InformationWidget : public Widget {
  public:
   explicit InformationWidget(RHIFactory* rhiFactory)
       : Widget("Infomation", rhiFactory),
-        m_modelInformation(std::make_unique<ModelInformation>()) {}
+        m_modelInformation(std::make_unique<ModelInformation>()),
+        m_lightInformation(std::make_unique<LightInformation>()) {}
   ~InformationWidget() override = default;
 
  public:
@@ -23,9 +25,10 @@ class InformationWidget : public Widget {
   }
 
  private:
-  entt::entity m_entity;
+  entt::entity m_entity = entt::null;
 
   std::unique_ptr<ModelInformation> m_modelInformation;
+  std::unique_ptr<LightInformation> m_lightInformation;
 };
 
 }  // namespace Marbas

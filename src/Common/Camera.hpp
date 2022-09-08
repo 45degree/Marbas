@@ -20,6 +20,12 @@ class Camera {
 
   virtual glm::vec3
   GetPosition() const = 0;
+
+  virtual float
+  GetFar() const = 0;
+
+  virtual float
+  GetNear() const = 0;
 };
 
 }  // namespace Marbas

@@ -109,10 +109,11 @@ Scene::Scene(const std::shared_ptr<ResourceManager>& resourceManager)
 
   // TODO: need to remove
   // create a light
-  auto light = LightPolicy::Create(m_world, LightType::PointLight);
-  auto& component = Entity::GetComponent<PointLightComponent>(this, light);
-  component.m_light.SetPos(glm::vec3(0, 30, 0));
-  component.m_light.SetColor(glm::vec3(1, 1, 1));
+  // auto light = LightPolicy::Create(m_world, LightType::PointLight);
+  // auto& component = Entity::GetComponent<PointLightComponent>(this, light);
+  // component.m_light.SetPos(glm::vec3(0, 30, 0));
+  // component.m_light.SetColor(glm::vec3(1, 1, 1));
+  AddLight(LightType::PointLight, glm::vec3(0, 30, 0), m_rootEntity);
   // component.m_light.SetDirection(glm::normalize(glm::vec3(0, -10, -5)));
 }
 
@@ -164,29 +165,34 @@ Scene::SaveToFile(const Path& scenePath) {}
 
 void
 Scene::AddModel(Uid modelResourceId, const String& modelName, const entt::entity& parent) {
-  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(this, parent))
-      << "can't find the HierarchyComponent from the entity";
+  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(this, parent));
 
-  auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(this, parent);
   auto modelEntity =
       Entity::CreateEntity<ModelEntityPolicy>(this, modelResourceId, m_resourceManager);
   auto& modelTagComponent = Entity::GetComponent<UniqueTagComponent>(this, modelEntity);
 
   modelTagComponent.tagName = modelName;
 
-  hierarchyComponent.children.push_back(modelEntity);
+  HierarchyComponent::AddChild(parent, m_world, modelEntity);
 }
 
 void
 Scene::AddBillBoard(Uid texture2DResourceId, glm::vec3 point, const entt::entity& parent) {
-  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(this, parent))
-      << "can't find the HierarchyComponent from the entity";
+  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(this, parent));
 
-  auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(this, parent);
+  // auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(this, parent);
   auto billBoardEntity = Entity::CreateEntity<BillBoardPolicy>(this, texture2DResourceId);
-  auto& billBoardTagComponent = Entity::GetComponent<UniqueTagComponent>(this, billBoardEntity);
+  // auto& billBoardTagComponent = Entity::GetComponent<UniqueTagComponent>(this, billBoardEntity);
 
   HierarchyComponent::AddChild(parent, m_world, billBoardEntity);
+}
+
+void
+Scene::AddLight(LightType type, glm::vec3 point, const entt::entity& parent) {
+  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(this, parent));
+
+  auto lightEntity = Entity::CreateEntity<LightPolicy>(this, type, point);
+  HierarchyComponent::AddChild(parent, m_world, lightEntity);
 }
 
 // static bool DeleteNode(SceneNode* sceneNode) {

@@ -6,6 +6,7 @@
 
 #include "Common/Common.hpp"
 #include "Common/EditorCamera.hpp"
+#include "Core/Scene/Entity/LightEntity.hpp"
 #include "Resource/ResourceManager.hpp"
 
 namespace Marbas {
@@ -46,6 +47,9 @@ class Scene : public std::enable_shared_from_this<Scene> {
 
   void
   AddBillBoard(Uid texture2DResourceId, glm::vec3 point, const entt::entity& parent);
+
+  void
+  AddLight(LightType type, glm::vec3 point, const entt::entity& parent);
 
   std::shared_ptr<EditorCamera>
   GetEditorCamrea() {

@@ -49,6 +49,16 @@ class EditorCamera final : public Camera {
     return glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 0)));
   }
 
+  float
+  GetNear() const noexcept override {
+    return m_near;
+  }
+
+  float
+  GetFar() const noexcept override {
+    return m_far;
+  }
+
   glm::vec3
   GetLookAtVector() const noexcept {
     return -glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 2)));

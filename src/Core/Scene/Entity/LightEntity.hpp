@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Common/MathCommon.hpp"
 #include "entt/entt.hpp"
 
 namespace Marbas {
@@ -21,7 +22,7 @@ class LightPolicy {
   operator=(const LightPolicy&) = delete;
 
   static LightEntity
-  Create(entt::registry& registry, LightType lightType);
+  Create(entt::registry& registry, LightType lightType, const glm::vec3 pos);
 };
 
 }  // namespace Marbas
