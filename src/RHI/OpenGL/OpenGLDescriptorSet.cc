@@ -51,8 +51,8 @@ OpenGLDescriptorSet::BindImage(uint16_t bindingPoint, const std::shared_ptr<Text
     return;
   }
 
-  const auto openglTextureCubeMap = std::dynamic_pointer_cast<OpenGLTextureCubeMap>(descriptor);
-  const auto openglTexture2D = std::dynamic_pointer_cast<OpenGLTexture2D>(descriptor);
+  const auto openglTextureCubeMap = std::dynamic_pointer_cast<OpenGLTexture>(descriptor);
+  const auto openglTexture2D = std::dynamic_pointer_cast<OpenGLTexture>(descriptor);
   if (openglTexture2D != nullptr) {
     m_imageDescriptor[bindingPoint] = openglTexture2D;
   } else if (openglTextureCubeMap != nullptr) {

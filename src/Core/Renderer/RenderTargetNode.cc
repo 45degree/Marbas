@@ -10,8 +10,8 @@ RenderTargetNode::RenderTargetNode(const RenderTargetNodeCreateInfo& createInfo)
       m_height(createInfo.height) {
   // create gbuffer
   m_gbuffer = std::make_shared<GBuffer>(m_width, m_height);
-  for (const auto& [bufferType, level] : m_gbufferType) {
-    m_gbuffer->AddTexture(bufferType, level, m_rhiFactory);
+  for (const auto& gBufferType : m_gbufferType) {
+    m_gbuffer->AddTexture(gBufferType, m_rhiFactory);
   }
 }
 

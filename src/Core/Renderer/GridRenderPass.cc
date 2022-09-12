@@ -12,7 +12,7 @@ namespace Marbas {
 
 GridRenderPassCreateInfo::GridRenderPassCreateInfo() {
   passName = "GridRenderPassCreateInfo";
-  inputPassNode = PointLightShadowMappingRenderPass::renderPassName;
+  inputPassNode = BlinnPhongRenderPass::renderPassName;
 }
 
 GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)
@@ -101,47 +101,25 @@ GridRenderPass::RecordCommand(const Scene* scene) {
   DLOG_ASSERT(m_renderPass != nullptr);
   DLOG_ASSERT(m_pipeline != nullptr);
 
-  // recreate uniform buffer
-
   /**
    * set command
    */
 
-  // set render pass command
-  auto beginRenderPass = m_commandFactory->CreateBeginRenderPassCMD();
-  beginRenderPass->SetRenderPass(m_renderPass);
-  beginRenderPass->SetFrameBuffer(m_framebuffer);
-  beginRenderPass->SetClearColor({0, 0, 0, 1});
-
-  auto endRenderPass = m_commandFactory->CreateEndRenderPassCMD();
-  endRenderPass->SetRenderPass(m_renderPass);
-  endRenderPass->SetFrameBuffer(m_framebuffer);
-
-  // set bind pipeline
-  auto bindPipeline = m_commandFactory->CreateBindPipelineCMD();
-  bindPipeline->SetPipeLine(m_pipeline);
-
-  /**
-   * begin to record command
-   */
-
   m_commandBuffer->BeginRecordCmd();
-  m_commandBuffer->AddCommand(std::move(beginRenderPass));
-  m_commandBuffer->AddCommand(std::move(bindPipeline));
+  m_commandBuffer->BeginRenderPass(BeginRenderPassInfo{
+      .renderPass = m_renderPass,
+      .frameBuffer = m_framebuffer,
+      .clearColor = {0, 0, 0, 1},
+  });
+  m_commandBuffer->BindPipeline(m_pipeline);
 
-  auto bindVertexBuffer = m_commandFactory->CreateBindVertexBufferCMD();
-  auto bindDescriptorSet = m_commandFactory->CreateBindDescriptorSetCMD();
-  auto drawArray = m_commandFactory->CreateDrawArrayCMD(m_pipeline);
-
-  bindVertexBuffer->SetVertexBuffer(m_vertexBuffer);
-  drawArray->SetVertexCount(6);
-  drawArray->SetInstanceCount(1);
-  bindDescriptorSet->SetDescriptor(m_descriptorSet);
-
-  m_commandBuffer->AddCommand(std::move(bindDescriptorSet));
-  m_commandBuffer->AddCommand(std::move(drawArray));
-
-  m_commandBuffer->AddCommand(std::move(endRenderPass));
+  m_commandBuffer->BindDescriptorSet(BindDescriptorSetInfo{
+      .descriptorSet = m_descriptorSet,
+      .layouts = m_descriptorSetLayout,
+  });
+  m_commandBuffer->BindVertexBuffer(m_vertexBuffer);
+  m_commandBuffer->DrawArray(6, 1);
+  m_commandBuffer->EndRenderPass();
   m_commandBuffer->EndRecordCmd();
 }
 

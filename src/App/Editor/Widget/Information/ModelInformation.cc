@@ -21,14 +21,14 @@ ShowMaterial(const Mesh* mesh, ResourceManager* resourceManager) {
   auto regionSize = ImGui::GetContentRegionAvail();
   ImGui::Text("ambient Texture:");
   if (ambientTexture != nullptr) {
-    ImGui::Image(ambientTexture->GetTexture(), ImVec2(regionSize.x, regionSize.x));
+    ImGui::Image(ambientTexture->GetOriginHandle(), ImVec2(regionSize.x, regionSize.x));
   } else {
     ImGui::Text("don't have ambient Texture");
   }
 
   ImGui::Text("diffuse Texture:");
   if (diffuseTexture != nullptr) {
-    ImGui::Image(diffuseTexture->GetTexture(), ImVec2(regionSize.x, regionSize.x));
+    ImGui::Image(diffuseTexture->GetOriginHandle(), ImVec2(regionSize.x, regionSize.x));
   } else {
     ImGui::Text("don't have diffuse Texture");
   }

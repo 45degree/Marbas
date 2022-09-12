@@ -25,7 +25,7 @@ GetMeshVertexInfoLayout() {
 
 BillBoardRenderPassCreateInfo::BillBoardRenderPassCreateInfo() {
   passName = "CubeMapRenderPass";
-  inputPassNode = ShadowMappingRenderPass::renderPassName;
+  inputPassNode = BlinnPhongRenderPass::renderPassName;
 }
 
 BillBoardRenderPass::BillBoardRenderPass(const BillBoardRenderPassCreateInfo& createInfo)
@@ -141,49 +141,31 @@ BillBoardRenderPass::RecordCommand(const Scene* scene) {
   DLOG_ASSERT(m_renderPass != nullptr);
   DLOG_ASSERT(m_pipeline != nullptr);
 
-  // recreate uniform buffer
-
   /**
    * set command
    */
-  auto beginRenderPass = m_commandFactory->CreateBeginRenderPassCMD();
-  beginRenderPass->SetRenderPass(m_renderPass);
-  beginRenderPass->SetFrameBuffer(m_framebuffer);
-  beginRenderPass->SetClearColor({0, 0, 0, 1});
-
-  auto endRenderPass = m_commandFactory->CreateEndRenderPassCMD();
-  endRenderPass->SetRenderPass(m_renderPass);
-  endRenderPass->SetFrameBuffer(m_framebuffer);
-
-  // set bind pipeline
-  auto bindPipeline = m_commandFactory->CreateBindPipelineCMD();
-  bindPipeline->SetPipeLine(m_pipeline);
-
-  /**
-   * begin to record command
-   */
 
   m_commandBuffer->BeginRecordCmd();
-  m_commandBuffer->AddCommand(std::move(beginRenderPass));
-  m_commandBuffer->AddCommand(std::move(bindPipeline));
+  m_commandBuffer->BeginRenderPass(BeginRenderPassInfo{
+      .renderPass = m_renderPass,
+      .frameBuffer = m_framebuffer,
+      .clearColor = {0, 0, 0, 1},
+  });
+  m_commandBuffer->BindPipeline(m_pipeline);
 
   for (const auto& [entity, component] : view.each()) {
     const auto& billBoardComponent = Entity::GetComponent<BillBoardComponent>(scene, entity);
     const auto& implData = billBoardComponent.implData;
     DLOG_ASSERT(implData->vertexBuffer != nullptr);
-    auto bindVertexBuffer = m_commandFactory->CreateBindVertexBufferCMD();
-    auto bindDescriptorSet = m_commandFactory->CreateBindDescriptorSetCMD();
-    auto drawArray = m_commandFactory->CreateDrawArrayCMD(m_pipeline);
-    bindVertexBuffer->SetVertexBuffer(implData->vertexBuffer);
-    bindDescriptorSet->SetDescriptor(implData->descriptorSet);
-    drawArray->SetVertexCount(6);
-    drawArray->SetInstanceCount(1);
-    m_commandBuffer->AddCommand(std::move(bindVertexBuffer));
-    m_commandBuffer->AddCommand(std::move(bindDescriptorSet));
-    m_commandBuffer->AddCommand(std::move(drawArray));
+
+    m_commandBuffer->BindVertexBuffer(implData->vertexBuffer);
+    m_commandBuffer->BindDescriptorSet(BindDescriptorSetInfo{
+        .descriptorSet = implData->descriptorSet,
+    });
+    m_commandBuffer->DrawArray(6, 1);
   }
 
-  m_commandBuffer->AddCommand(std::move(endRenderPass));
+  m_commandBuffer->EndRenderPass();
   m_commandBuffer->EndRecordCmd();
 }
 

@@ -28,6 +28,9 @@ struct MeshComponent {
   } m_uniformBufferData;
 
   std::shared_ptr<MeshComponent_Impl> m_impldata = nullptr;
+
+  void
+  LoadMeshImpl(RHIFactory* rhiFactory);
 };
 
 }  // namespace Marbas

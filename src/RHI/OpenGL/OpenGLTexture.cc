@@ -13,6 +13,8 @@ ConvertToOpenglDataFormat(TextureFormat type) {
       return GL_BGRA;
     case TextureFormat::RED:
       return GL_RED;
+    case TextureFormat::R32:
+      return GL_RED;
     case TextureFormat::RG:
       return GL_RG;
     case TextureFormat::RGB:
@@ -37,6 +39,8 @@ ConvertToOpenGLTextureType(TextureFormat type) {
       return GL_UNSIGNED_BYTE;
     case TextureFormat::RED:
       return GL_UNSIGNED_BYTE;
+    case TextureFormat::R32:
+      return GL_FLOAT;
     case TextureFormat::RG:
       return GL_UNSIGNED_BYTE;
     case TextureFormat::RGB:
@@ -62,6 +66,8 @@ ConvertToOpenglInternalFormat(TextureFormat type) {
       return GL_RGBA8;
     case TextureFormat::RED:
       return GL_R8;
+    case TextureFormat::R32:
+      return GL_R32F;
     case TextureFormat::RG:
       return GL_RG8;
     case TextureFormat::RGB:
@@ -77,92 +83,124 @@ ConvertToOpenglInternalFormat(TextureFormat type) {
   }
 }
 
-OpenGLTexture2D::OpenGLTexture2D(int width, int height, uint32_t level, TextureFormat format)
-    : Texture2D(width, height, level, format) {
-  auto internalFormat = ConvertToOpenglInternalFormat(format);
+/**
+ * Opengl Texture2D
+ */
 
-  if (m_format == TextureFormat::DEPTH) m_level = 1;
-
-  glCreateTextures(GL_TEXTURE_2D, 1, &m_textureID);
-  glTextureStorage2D(m_textureID, m_level, internalFormat, width, height);
-
-  glTextureParameteri(m_textureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTextureParameteri(m_textureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTextureParameteri(m_textureID, GL_TEXTURE_BASE_LEVEL, 0);
-  glTextureParameteri(m_textureID, GL_TEXTURE_MAX_LEVEL, m_level);
-
-  glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
-}
-
-OpenGLTexture2D::~OpenGLTexture2D() { glDeleteTextures(1, &m_textureID); }
-
-GLenum
-OpenGLTexture2D::GetOpenGLFormat() const noexcept {
-  return ConvertToOpenglInternalFormat(m_format);
-}
-
-void
-OpenGLTexture2D::SetData(void* data, uint32_t size) {
-  auto bpp = this->m_format == TextureFormat::RGBA ? 4 : 3;
-  LOG_IF(ERROR, size != m_width * m_height * bpp) << "size and texture size do not match";
-
-  auto dataFormat = ConvertToOpenglDataFormat(m_format);
-  auto type = ConvertToOpenGLTextureType(m_format);
-  glTextureSubImage2D(m_textureID, 0, 0, 0, m_width, m_height, dataFormat, type, data);
-}
-
-void*
-OpenGLTexture2D::GetTexture() {
-  return reinterpret_cast<void*>(m_textureID);
-}
-
-OpenGLTextureCubeMap::OpenGLTextureCubeMap(int width, int height, TextureFormat format)
-    : TextureCubeMap(width, height, format) {
-  auto internalFormat = ConvertToOpenglInternalFormat(format);
-
-  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_textureID);
-  glTextureStorage2D(m_textureID, 1, internalFormat, m_width, m_height);
-
-  glTextureParameteri(m_textureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTextureParameteri(m_textureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTextureParameteri(m_textureID, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-}
-
-void
-OpenGLTextureCubeMap::SetData(void* data, uint32_t size, CubeMapPosition position) {
-  auto bpp = m_format == TextureFormat::RGBA ? 4 : 3;
-  LOG_IF(ERROR, size != m_width * m_height * bpp) << "size and texture size do not match";
-
-  auto dataFormat = ConvertToOpenglDataFormat(m_format);
-  auto type = ConvertToOpenGLTextureType(m_format);
-
-  // see wiki https://www.khronos.org/opengl/wiki/Cubemap_Texture
-  int layer = 0;
-  switch (position) {
-    case CubeMapPosition::BACK:
-      layer = 5;
-      break;  // GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
-    case CubeMapPosition::FRONT:
-      layer = 4;
-      break;  // GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
-    case CubeMapPosition::TOP:
-      layer = 2;
+OpenGLTexture::OpenGLTexture(const ImageDesc& desc) : Texture(desc) {
+  auto internalFormat = ConvertToOpenglInternalFormat(desc.format);
+  auto width = m_imageDesc.width;
+  auto height = m_imageDesc.height;
+  auto level = m_imageDesc.mipmapLevel;
+  auto depth = m_imageDesc.arrayLayer;
+  switch (m_imageDesc.textureType) {
+    case TextureType::TEXTURE2D:
+      glCreateTextures(GL_TEXTURE_2D, 1, &m_target);
+      glTextureStorage2D(m_target, level, internalFormat, width, height);
       break;
-    case CubeMapPosition::BOTTOM:
-      layer = 3;
+    case TextureType::CUBEMAP:
+      glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_target);
+      glTextureStorage2D(m_target, level, internalFormat, width, height);
       break;
-    case CubeMapPosition::LEFT:
-      layer = 1;
+    case TextureType::TEXTURE2D_ARRAY:
+      glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &m_target);
+      glTextureStorage3D(m_target, level, internalFormat, width, height, depth);
       break;
-    case CubeMapPosition::RIGHT:
-      layer = 0;
+    case TextureType::CUBEMAP_ARRAY:
+      glCreateTextures(GL_TEXTURE_CUBE_MAP_ARRAY, 1, &m_target);
+      glTextureStorage3D(m_target, level, internalFormat, width, height, depth);
       break;
   }
 
-  glTextureSubImage3D(m_textureID, 0, 0, 0, layer, m_width, m_height, 1, dataFormat, type, data);
+  glTextureParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTextureParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTextureParameteri(m_target, GL_TEXTURE_BASE_LEVEL, 0);
+  glTextureParameteri(m_target, GL_TEXTURE_MAX_LEVEL, level - 1);
+
+  glTextureParameteri(m_target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTextureParameteri(m_target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  glGenerateTextureMipmap(m_target);
+}
+
+void
+OpenGLTexture::UnBind() const noexcept {
+  switch (m_imageDesc.textureType) {
+    case TextureType::TEXTURE2D:
+      glBindTexture(GL_TEXTURE_2D, 0);
+      break;
+    case TextureType::CUBEMAP:
+      glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+      break;
+    case TextureType::TEXTURE2D_ARRAY:
+      glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+      break;
+    case TextureType::CUBEMAP_ARRAY:
+      glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, 0);
+      break;
+  }
+}
+
+void
+OpenGLTexture::SetData(void* data, size_t size, uint32_t level, uint32_t layer) {
+  size_t bpp = 0;
+  switch (m_imageDesc.format) {
+    case TextureFormat::RED:
+      bpp = 1;
+      break;
+    case TextureFormat::RG:
+      bpp = 2;
+      break;
+    case TextureFormat::BGR:
+    case TextureFormat::RGB:
+      bpp = 3;
+      break;
+    case TextureFormat::RGBA:
+    case TextureFormat::R32:
+    case TextureFormat::BGRA:
+    case TextureFormat::DEPTH:
+      bpp = 4;
+      break;
+    case TextureFormat::RGB16F:
+      bpp = 6;
+      break;
+    case TextureFormat::RGB32F:
+      bpp = 12;
+      break;
+  }
+  LOG_IF(ERROR, size != m_imageDesc.width * m_imageDesc.height * bpp)
+      << "size and texture size do not match";
+
+  auto dataFormat = ConvertToOpenglDataFormat(m_imageDesc.format);
+  auto type = ConvertToOpenGLTextureType(m_imageDesc.format);
+  auto width = m_imageDesc.width;
+  auto height = m_imageDesc.height;
+
+  switch (m_imageDesc.textureType) {
+    case TextureType::TEXTURE2D:
+      glTextureSubImage2D(m_target, level, 0, 0, width, height, dataFormat, type, data);
+      break;
+    case TextureType::CUBEMAP:
+    case TextureType::TEXTURE2D_ARRAY:
+      glTextureSubImage3D(m_target, level, 0, 0, layer, width, height, 1, dataFormat, type, data);
+      break;
+    case TextureType::CUBEMAP_ARRAY:
+      uint32_t face = layer % 6;
+      uint32_t _layer = layer / 6;
+      glTextureSubImage3D(m_target, level, 0, 0, face, width, height, _layer, dataFormat, type,
+                          data);
+      break;
+  }
+}
+
+GLenum
+OpenGLTexture::GetOpenGLType() const {
+  return ConvertToOpenGLTextureType(m_imageDesc.format);
+}
+
+GLenum
+OpenGLTexture::GetOpenGLFormat() const {
+  return ConvertToOpenglInternalFormat(m_imageDesc.format);
 }
 
 }  // namespace Marbas

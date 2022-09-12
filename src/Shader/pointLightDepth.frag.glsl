@@ -7,6 +7,7 @@ layout(std140, binding = 1) uniform LightInfo {
   float farPlane;
   mat4 matrices[6];
   mat4 projectMatrix;
+  int lightIndex;
 };
 
 void main() {

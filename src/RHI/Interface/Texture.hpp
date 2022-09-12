@@ -14,6 +14,7 @@ enum class TextureFormat {
   BGR,
   RGBA,
   BGRA,
+  R32,
   RGB16F,
   RGB32F,
   DEPTH,
@@ -22,115 +23,83 @@ enum class TextureFormat {
 enum TextureType {
   TEXTURE2D,
   CUBEMAP,
+  TEXTURE2D_ARRAY,
+  CUBEMAP_ARRAY,
+};
+
+class Texture;
+struct ImageView {
+  virtual void
+  SetTexture(const std::shared_ptr<Texture>& texture) = 0;
+
+  virtual void
+  SetRangeInfo(uint32_t layerBase, uint32_t layerCount, uint32_t levelBase,
+               uint32_t levelCount) = 0;
+};
+
+struct ImageViewDesc final {
+  uint32_t m_layerBase = 0;
+  uint32_t m_layerCount = 1;
+  uint32_t m_levelBase = 0;
+  uint32_t m_levelCount = 1;
+};
+
+struct ImageDesc final {
+  TextureType textureType = TextureType::TEXTURE2D;
+  TextureFormat format = TextureFormat::RGBA;
+  uint32_t width = 1920;
+  uint32_t height = 1080;
+  uint32_t arrayLayer = 1;
+  uint32_t mipmapLevel = 1;
 };
 
 class Texture {
  public:
-  explicit Texture(TextureType type, TextureFormat format) : m_type(type), m_format(format) {}
-  virtual ~Texture() = default;
+  Texture(const ImageDesc& imageDesc) : m_imageDesc(imageDesc) {}
 
  public:
-  TextureType
-  GetTextureType() const noexcept {
-    return m_type;
+  virtual void
+  SetData(void* data, size_t size, uint32_t level = 0, uint32_t layer = 0) = 0;
+
+  /**
+   * @brief get origin handle, in OpenGl it means GLUint,
+   *        in Vulkan, it's a pointer to the vk::Image
+   */
+  virtual void*
+  GetOriginHandle() = 0;
+
+  uint32_t
+  GetLevels() const {
+    return m_imageDesc.mipmapLevel;
+  }
+
+  uint32_t
+  GetLayers() const {
+    return m_imageDesc.arrayLayer;
+  }
+
+  uint32_t
+  GetWidth() const {
+    return m_imageDesc.width;
+  }
+
+  uint32_t
+  GetHeight() const {
+    return m_imageDesc.height;
   }
 
   TextureFormat
-  GetFormat() const noexcept {
-    return m_format;
+  GetFormat() const {
+    return m_imageDesc.format;
+  }
+
+  TextureType
+  GetTextureType() const {
+    return m_imageDesc.textureType;
   }
 
  protected:
-  TextureType m_type;
-  TextureFormat m_format;
-};
-
-// TODO: refactor the texture create info
-
-class Texture2D : public Texture {
- public:
-  Texture2D(uint32_t width, uint32_t height, uint32_t level, TextureFormat formatType)
-      : Texture(TextureType::TEXTURE2D, formatType),
-        m_width(width),
-        m_height(height),
-        m_level(level) {}
-
-  virtual ~Texture2D() = default;
-
-  virtual void
-  SetData(void* data, uint32_t size) = 0;
-
-  virtual void*
-  GetTexture() = 0;
-
-  uint32_t
-  GetWidth() const noexcept {
-    return m_width;
-  }
-
-  uint32_t
-  GetHeight() const noexcept {
-    return m_height;
-  }
-
-  uint32_t
-  GetDepth() const noexcept {
-    switch (m_format) {
-      case TextureFormat::DEPTH:
-      case TextureFormat::RED:
-        return 1;
-      case TextureFormat::RG:
-        return 2;
-      case TextureFormat::BGR:
-      case TextureFormat::RGB:
-      case TextureFormat::RGB16F:
-      case TextureFormat::RGB32F:
-        return 3;
-      case TextureFormat::BGRA:
-      case TextureFormat::RGBA:
-        return 4;
-    }
-    return 3;
-  }
-
-  uint32_t
-  GetLevel() const noexcept {
-    return m_level;
-  }
-
- protected:
-  uint32_t m_width;
-  uint32_t m_height;
-  uint32_t m_level;
-};
-
-/**
- * @brief
- */
-
-enum class CubeMapPosition {
-  BACK,
-  BOTTOM,
-  FRONT,
-  LEFT,
-  RIGHT,
-  TOP,
-};
-
-class TextureCubeMap : public Texture {
- public:
-  TextureCubeMap(int width, int height, TextureFormat formatType)
-      : Texture(TextureType::CUBEMAP, formatType), m_width(width), m_height(height) {}
-
-  virtual ~TextureCubeMap() = default;
-
- public:
-  virtual void
-  SetData(void* data, uint32_t size, CubeMapPosition position) = 0;
-
- protected:
-  int m_width;
-  int m_height;
+  const ImageDesc m_imageDesc;
 };
 
 }  // namespace Marbas

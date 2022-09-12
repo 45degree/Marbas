@@ -27,44 +27,46 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(const FrameBufferInfo& info) : FrameBuffer(
       LOG(ERROR) << strMsg;
       throw std::runtime_error(strMsg);
     }
-    auto attachment = info.attachments[i];
+    auto attachment = std::static_pointer_cast<OpenGLImageView>(info.attachments[i]);
+    auto texture = attachment->texture;
+    auto textureId = texture->GetOpenGLTarget();
+    auto textureType = texture->GetTextureType();
+    auto textureFormat = texture->GetFormat();
+    auto level = attachment->level;
+    auto layer = attachment->layer;
 
     // check type
-    if (attachment->GetFormat() != m_attachmentInfos[i].format) {
+    if (texture->GetFormat() != m_attachmentInfos[i].format) {
       auto strMsg = "the texture's format is not equal the attachment info format";
       LOG(ERROR) << strMsg;
       throw std::runtime_error(strMsg);
     }
 
     // TODO:
-    GLuint texture;
-    if (attachment->GetTextureType() == TextureType::TEXTURE2D) {
-      auto attachment2D = std::dynamic_pointer_cast<OpenGLTexture2D>(attachment);
-      DLOG_ASSERT(attachment2D != nullptr)
-          << FORMAT("the {}th attachment is not a opengl texture", i);
-      texture = attachment2D->GetOpenGLTexture();
-    } else if (info.attachments[i]->GetTextureType() == TextureType::CUBEMAP) {
-      auto attachmentCubeMap = std::dynamic_pointer_cast<OpenGLTextureCubeMap>(attachment);
-      DLOG_ASSERT(attachmentCubeMap != nullptr)
-          << FORMAT("the {}th attachment is not a opengl cubemap texture", i);
-      texture = attachmentCubeMap->GetOpenGLTexture();
-    }
 
-    // attach the attachment
-    switch (attachment->GetFormat()) {
-      case TextureFormat::DEPTH:
-        glNamedFramebufferTexture(frameBufferID, GL_DEPTH_ATTACHMENT, texture, 0);
-        depthAttachmentCount++;
-        break;
-      default:
-        glNamedFramebufferTexture(frameBufferID, GL_COLOR_ATTACHMENT0 + colorAttachmentCount,
-                                  texture, 0);
-        colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + colorAttachmentCount);
-        colorAttachmentCount++;
-        break;
+    // if (textureType == TextureType::TEXTURE2D || textureType == TextureType::CUBEMAP) {
+    if (textureFormat == TextureFormat::DEPTH) {
+      glNamedFramebufferTexture(frameBufferID, GL_DEPTH_ATTACHMENT, textureId, 0);
+      depthAttachmentCount++;
+    } else {
+      glNamedFramebufferTexture(frameBufferID, GL_COLOR_ATTACHMENT0 + colorAttachmentCount,
+                                textureId, 0);
+      colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + colorAttachmentCount);
+      colorAttachmentCount++;
     }
-
-    m_attachments.push_back(std::move(attachment));
+    //
+    // } else {
+    //   if (textureFormat == TextureFormat::DEPTH) {
+    //     glNamedFramebufferTextureLayer(frameBufferID, GL_DEPTH_ATTACHMENT, textureId, level,
+    //     layer); depthAttachmentCount++;
+    //   } else {
+    //     glNamedFramebufferTextureLayer(frameBufferID, GL_COLOR_ATTACHMENT0 +
+    //     colorAttachmentCount,
+    //                                    textureId, level, layer);
+    //     colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + colorAttachmentCount);
+    //     colorAttachmentCount++;
+    //   }
+    // }
   }
   glDrawBuffers(colorAttachmentCount, colorAttachments.data());
 

@@ -2,8 +2,8 @@
 
 #include <glog/logging.h>
 
-#include "OpenGLDescriptorSet.hpp"
-#include "RHI/Interface/Command.hpp"
+#include "RHI/Interface/CommandBuffer.hpp"
+#include "RHI/OpenGL/OpenGLDescriptorSet.hpp"
 #include "RHI/OpenGL/OpenGLIndexBuffer.hpp"
 #include "RHI/OpenGL/OpenGLPipeline.hpp"
 #include "RHI/OpenGL/OpenGLRenderPass.hpp"
@@ -11,46 +11,58 @@
 
 namespace Marbas {
 
-class OpenGLBindDescriptorSet final : public BindDescriptorSet {
+template <typename Derive>
+class IOpenGLCommand {
+ public:
+  void
+  Execute() const {
+    static_cast<Derive&>(*this)->Execute();
+  }
+
+  void
+  OnEndRenderPass() const {
+    static_cast<Derive&>(*this)->OnEndRenderPass();
+  }
+};
+
+class OpenGLBindDescriptorSet final : public IOpenGLCommand<OpenGLBindDescriptorSet> {
  public:
   OpenGLBindDescriptorSet() = default;
   OpenGLBindDescriptorSet(const OpenGLBindDescriptorSet& command)
       : m_openGLDescriptor(command.m_openGLDescriptor), m_bufferPiece(command.m_bufferPiece) {}
-  ~OpenGLBindDescriptorSet() override = default;
+  ~OpenGLBindDescriptorSet() = default;
 
  public:
   void
-  SetDescriptor(const std::shared_ptr<DescriptorSet>& descriptorSet) override {
-    auto openglDescriptorSet = std::dynamic_pointer_cast<OpenGLDescriptorSet>(descriptorSet);
+  SetDescriptor(const std::shared_ptr<DescriptorSet>& descriptorSet) {
+    auto openglDescriptorSet = std::static_pointer_cast<OpenGLDescriptorSet>(descriptorSet);
     DLOG_ASSERT(openglDescriptorSet != nullptr) << "can't set descriptorSet";
     m_openGLDescriptor = openglDescriptorSet;
   }
 
   void
-  SetDescriptorLayout(const DescriptorSetLayout& layouts) override {}
+  SetDescriptorLayout(const DescriptorSetLayout& layouts) {}
 
   void
-  SetDynamicDescriptorBufferPiece(const Vector<DynamicBufferPiece>& bufferPiece) override {
+  SetDynamicDescriptorBufferPiece(const Vector<DynamicBufferPiece>& bufferPiece) {
     m_bufferPiece = bufferPiece;
   }
 
- protected:
+ public:
   void
-  Execute() const override {
+  Execute() const {
     m_openGLDescriptor->Bind(m_bufferPiece);
   }
 
-  std::unique_ptr<ICommand>
-  Clone() const override {
-    return std::make_unique<OpenGLBindDescriptorSet>(*this);
-  };
+  void
+  OnEndRenderPass() const {}
 
  private:
   std::shared_ptr<OpenGLDescriptorSet> m_openGLDescriptor = nullptr;
   Vector<DynamicBufferPiece> m_bufferPiece = {};
 };
 
-class OpenGLBeginRenderPass final : public BeginRenderPass {
+class OpenGLBeginRenderPass final : public IOpenGLCommand<OpenGLBeginRenderPass> {
  public:
   OpenGLBeginRenderPass() = default;
   OpenGLBeginRenderPass(const OpenGLBeginRenderPass& command)
@@ -59,27 +71,26 @@ class OpenGLBeginRenderPass final : public BeginRenderPass {
 
  public:
   void
-  SetRenderPass(const std::shared_ptr<RenderPass>& renderPass) override {
-    m_renderPass = std::dynamic_pointer_cast<OpenGLRenderPass>(renderPass);
+  SetRenderPass(const std::shared_ptr<OpenGLRenderPass>& renderPass) {
+    m_renderPass = renderPass;
 
     LOG_IF(ERROR, m_renderPass == nullptr) << "render pass is not a opengl render pass";
   }
 
   void
-  SetFrameBuffer(const std::shared_ptr<FrameBuffer>& frameBuffer) override {
+  SetFrameBuffer(const std::shared_ptr<FrameBuffer>& frameBuffer) {
     m_frameBuffer = std::dynamic_pointer_cast<OpenGLFrameBuffer>(frameBuffer);
 
     LOG_IF(ERROR, m_frameBuffer == nullptr) << "frame buffer is not a opengl frame buffer";
   }
 
   void
-  SetClearColor(const std::array<float, 4>& clearColor) override {
+  SetClearColor(const std::array<float, 4>& clearColor) {
     m_clearColor = clearColor;
   }
 
- protected:
   void
-  Execute() const override {
+  Execute() const {
     if (m_clearColor.has_value()) {
       const auto& value = m_clearColor.value();
       glClearColor(value[0], value[1], value[2], value[3]);
@@ -88,10 +99,8 @@ class OpenGLBeginRenderPass final : public BeginRenderPass {
     m_renderPass->Bind();
   }
 
-  std::unique_ptr<ICommand>
-  Clone() const override {
-    return std::make_unique<OpenGLBeginRenderPass>(*this);
-  }
+  void
+  OnEndRenderPass() const {}
 
  private:
   std::shared_ptr<OpenGLRenderPass> m_renderPass = nullptr;
@@ -99,83 +108,78 @@ class OpenGLBeginRenderPass final : public BeginRenderPass {
   std::optional<std::array<float, 4>> m_clearColor = std::nullopt;
 };
 
-class OpenGLEndRenderpass final : public EndRenderPass {
+class OpenGLEndRenderpass final : public IOpenGLCommand<OpenGLEndRenderpass> {
  public:
   OpenGLEndRenderpass() = default;
-  OpenGLEndRenderpass(const OpenGLEndRenderpass& command) {}
+  OpenGLEndRenderpass(const OpenGLEndRenderpass& command)
+      : m_renderPass(command.m_renderPass), m_frameBuffer(command.m_frameBuffer) {}
   virtual ~OpenGLEndRenderpass() = default;
 
  public:
   void
-  Execute() const override {
+  Execute() const {
     if (m_frameBuffer != nullptr) {
       m_frameBuffer->UnBind();
     }
   }
 
   void
-  SetRenderPass(const std::shared_ptr<RenderPass>& renderPass) override {
-    m_renderPass = std::dynamic_pointer_cast<OpenGLRenderPass>(renderPass);
+  SetRenderPass(const std::shared_ptr<RenderPass>& renderPass) {
+    m_renderPass = std::static_pointer_cast<OpenGLRenderPass>(renderPass);
 
     LOG_IF(ERROR, m_renderPass == nullptr) << "render pass is not a opengl render pass";
   }
 
   void
-  SetFrameBuffer(const std::shared_ptr<FrameBuffer>& frameBuffer) override {
+  SetFrameBuffer(const std::shared_ptr<FrameBuffer>& frameBuffer) {
     m_frameBuffer = std::dynamic_pointer_cast<OpenGLFrameBuffer>(frameBuffer);
 
     LOG_IF(ERROR, m_frameBuffer == nullptr) << "frame buffer is not a opengl frame buffer";
   }
 
-  std::unique_ptr<ICommand>
-  Clone() const override {
-    return std::make_unique<OpenGLEndRenderpass>(*this);
-  }
+  void
+  OnEndRenderPass() const {}
 
  private:
   std::shared_ptr<OpenGLRenderPass> m_renderPass = nullptr;
   std::shared_ptr<OpenGLFrameBuffer> m_frameBuffer = nullptr;
 };
 
-class OpenGLBindPipeline final : public BindPipeline {
+class OpenGLBindPipeline final : public IOpenGLCommand<OpenGLBindPipeline> {
  public:
   OpenGLBindPipeline() = default;
-  OpenGLBindPipeline(const OpenGLBindPipeline& command) {}
+  OpenGLBindPipeline(const OpenGLBindPipeline& command)
+      : m_graphicsPipeline(command.m_graphicsPipeline) {}
   virtual ~OpenGLBindPipeline() = default;
 
  public:
   void
-  SetPipeLine(const std::shared_ptr<GraphicsPipeLine>& graphicsPipeline) override {
-    m_graphicsPipeline = std::dynamic_pointer_cast<OpenGLGraphicsPipeline>(graphicsPipeline);
+  SetPipeLine(const std::shared_ptr<OpenGLGraphicsPipeline>& graphicsPipeline) {
+    m_graphicsPipeline = graphicsPipeline;
     LOG_IF(ERROR, m_graphicsPipeline == nullptr)
         << "graphicsPipeline is not an opengl graphics pipeline";
   }
 
- private:
+ public:
   void
-  Execute() const override {
+  Execute() const {
     if (m_graphicsPipeline != nullptr) {
       m_graphicsPipeline->Bind();
     }
   }
 
   void
-  OnEndRenderPass() const override {
+  OnEndRenderPass() const {
     if (m_graphicsPipeline != nullptr) {
       m_graphicsPipeline->UnBind();
     }
-  }
-
-  std::unique_ptr<ICommand>
-  Clone() const override {
-    return std::make_unique<OpenGLBindPipeline>(*this);
   }
 
  private:
   std::shared_ptr<OpenGLGraphicsPipeline> m_graphicsPipeline = nullptr;
 };
 
-class OpenGLBindVertexBuffer final : public BindVertexBuffer {
+class OpenGLBindVertexBuffer final : public IOpenGLCommand<OpenGLBindVertexBuffer> {
  public:
   OpenGLBindVertexBuffer() = default;
   OpenGLBindVertexBuffer(const OpenGLBindVertexBuffer& command)
@@ -184,28 +188,26 @@ class OpenGLBindVertexBuffer final : public BindVertexBuffer {
 
  public:
   void
-  SetVertexBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer) override {
-    m_vertexBuffer = std::dynamic_pointer_cast<OpenGLVertexBuffer>(vertexBuffer);
+  SetVertexBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer) {
+    m_vertexBuffer = std::static_pointer_cast<OpenGLVertexBuffer>(vertexBuffer);
     LOG_IF(ERROR, m_vertexBuffer == nullptr) << "vertex buffer is not an opengl vertex buffer";
   }
 
   void
-  Execute() const override {
+  Execute() const {
     if (m_vertexBuffer != nullptr) {
       m_vertexBuffer->Bind();
     }
   }
 
-  std::unique_ptr<ICommand>
-  Clone() const override {
-    return std::make_unique<OpenGLBindVertexBuffer>(*this);
-  }
+  void
+  OnEndRenderPass() const {}
 
  private:
   std::shared_ptr<OpenGLVertexBuffer> m_vertexBuffer;
 };
 
-class OpenGLBindIndexBuffer final : public BindIndexBuffer {
+class OpenGLBindIndexBuffer final : public IOpenGLCommand<OpenGLBindIndexBuffer> {
  public:
   OpenGLBindIndexBuffer() = default;
   OpenGLBindIndexBuffer(const OpenGLBindIndexBuffer& command)
@@ -214,26 +216,24 @@ class OpenGLBindIndexBuffer final : public BindIndexBuffer {
 
  public:
   void
-  SetIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer) override {
-    m_indexBuffer = std::dynamic_pointer_cast<OpenGLIndexBuffer>(indexBuffer);
+  SetIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer) {
+    m_indexBuffer = std::static_pointer_cast<OpenGLIndexBuffer>(indexBuffer);
     LOG_IF(ERROR, m_indexBuffer == nullptr) << "index buffer is not an opengl index buffer";
   }
 
   void
-  Execute() const override {
+  Execute() const {
     m_indexBuffer->Bind();
   }
 
-  std::unique_ptr<ICommand>
-  Clone() const override {
-    return std::make_unique<OpenGLBindIndexBuffer>(*this);
-  }
+  void
+  OnEndRenderPass() const {}
 
  private:
   std::shared_ptr<OpenGLIndexBuffer> m_indexBuffer = nullptr;
 };
 
-class OpenGLDrawIndex final : public DrawIndex {
+class OpenGLDrawIndex final : public IOpenGLCommand<OpenGLDrawIndex> {
  public:
   OpenGLDrawIndex() = default;
   OpenGLDrawIndex(const OpenGLDrawIndex& command)
@@ -249,17 +249,17 @@ class OpenGLDrawIndex final : public DrawIndex {
   }
 
   void
-  SetIndexCount(int count) override {
+  SetIndexCount(int count) {
     m_indexCount = count;
   }
 
   void
-  SetInstanceCount(int count) override {
+  SetInstanceCount(int count) {
     m_instanceCount = count;
   }
 
   void
-  Execute() const override {
+  Execute() const {
     if (m_pipeline->GetVertexInputRate() == VertexInputRate::INSTANCE) {
       glDrawElementsInstanced(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0, m_instanceCount);
     } else {
@@ -267,10 +267,8 @@ class OpenGLDrawIndex final : public DrawIndex {
     }
   }
 
-  std::unique_ptr<ICommand>
-  Clone() const override {
-    return std::make_unique<OpenGLDrawIndex>(*this);
-  }
+  void
+  OnEndRenderPass() const {}
 
  private:
   std::shared_ptr<OpenGLGraphicsPipeline> m_pipeline;
@@ -278,10 +276,13 @@ class OpenGLDrawIndex final : public DrawIndex {
   uint32_t m_instanceCount = 0;
 };
 
-class OpenGLDrawArray final : public DrawArray {
+class OpenGLDrawArray final : public IOpenGLCommand<OpenGLDrawArray> {
  public:
   OpenGLDrawArray() = default;
-  OpenGLDrawArray(const OpenGLDrawArray& command) : m_vertexCount(command.m_vertexCount) {}
+  OpenGLDrawArray(const OpenGLDrawArray& command)
+      : m_vertexCount(command.m_vertexCount),
+        m_instanceCount(command.m_instanceCount),
+        m_pipeline(command.m_pipeline) {}
   virtual ~OpenGLDrawArray() = default;
 
  public:
@@ -291,17 +292,17 @@ class OpenGLDrawArray final : public DrawArray {
   }
 
   void
-  SetVertexCount(int count) override {
+  SetVertexCount(int count) {
     m_vertexCount = count;
   }
 
   void
-  SetInstanceCount(int count) override {
+  SetInstanceCount(int count) {
     m_instanceCount = count;
   }
 
   void
-  Execute() const override {
+  Execute() const {
     if (m_pipeline->GetVertexInputRate() == VertexInputRate::INSTANCE) {
       glDrawArraysInstanced(GL_TRIANGLES, 0, m_vertexCount, m_instanceCount);
     } else {
@@ -309,10 +310,8 @@ class OpenGLDrawArray final : public DrawArray {
     }
   }
 
-  std::unique_ptr<ICommand>
-  Clone() const override {
-    return std::make_unique<OpenGLDrawArray>(*this);
-  }
+  void
+  OnEndRenderPass() const {}
 
  private:
   std::shared_ptr<OpenGLGraphicsPipeline> m_pipeline;
@@ -320,7 +319,7 @@ class OpenGLDrawArray final : public DrawArray {
   uint32_t m_instanceCount = 0;
 };
 
-class OpenGLCopyImageToImage final : public CopyImageToImage {
+class OpenGLCopyImageToImage final : public IOpenGLCommand<OpenGLCopyImageToImage> {
  public:
   OpenGLCopyImageToImage() = default;
   OpenGLCopyImageToImage(const OpenGLCopyImageToImage& command)
@@ -330,84 +329,39 @@ class OpenGLCopyImageToImage final : public CopyImageToImage {
 
  public:
   void
-  SetSrcImage(const std::shared_ptr<Texture2D>& srcTexture) override {
-    m_srcTexture = std::dynamic_pointer_cast<OpenGLTexture2D>(srcTexture);
+  SetSrcImage(const std::shared_ptr<Texture>& srcTexture) {
+    m_srcTexture = std::static_pointer_cast<OpenGLTexture>(srcTexture);
   }
 
   void
-  SetDstImage(const std::shared_ptr<Texture2D>& dstTexture) override {
-    m_dstTexture = std::dynamic_pointer_cast<OpenGLTexture2D>(dstTexture);
+  SetDstImage(const std::shared_ptr<Texture>& dstTexture) {
+    m_dstTexture = std::static_pointer_cast<OpenGLTexture>(dstTexture);
   }
 
   void
-  Execute() const override {
-    auto srcTex = m_srcTexture->GetOpenGLTexture();
-    auto srcLevel = m_srcTexture->GetLevel();
+  Execute() const {
+    // auto srcTex = *static_cast<GLuint*>(m_srcTexture->GetOriginHandle());
+    auto srcTex = m_srcTexture->GetOpenGLTarget();
+    // auto srcLevel = m_srcTexture->GetLevels();
     auto width = m_srcTexture->GetWidth();
     auto height = m_srcTexture->GetHeight();
-    auto depth = m_srcTexture->GetDepth();
-    auto dstTex = m_dstTexture->GetOpenGLTexture();
-    auto dstLevel = m_dstTexture->GetLevel();
-    glCopyImageSubData(srcTex, GL_TEXTURE_2D, srcLevel - 1, 0, 0, 0, dstTex, GL_TEXTURE_2D,
-                       dstLevel - 1, 0, 0, 0, width, height, 1);
+    auto dstTex = m_dstTexture->GetOpenGLTarget();
+    // auto dstLevel = m_dstTexture->GetLevels();
+    glCopyImageSubData(srcTex, GL_TEXTURE_2D, 0, 0, 0, 0, dstTex, GL_TEXTURE_2D, 0, 0, 0, 0, width,
+                       height, 1);
   }
 
-  std::unique_ptr<ICommand>
-  Clone() const override {
-    return std::make_unique<OpenGLCopyImageToImage>(*this);
-  }
+  void
+  OnEndRenderPass() const {}
 
  private:
-  std::shared_ptr<OpenGLTexture2D> m_srcTexture = nullptr;
-  std::shared_ptr<OpenGLTexture2D> m_dstTexture = nullptr;
+  std::shared_ptr<OpenGLTexture> m_srcTexture = nullptr;
+  std::shared_ptr<OpenGLTexture> m_dstTexture = nullptr;
 };
 
-// TODO
-class OpenGLCopyImageToFrameBuffer final : public CopyImageToFrameBuffer {
- public:
-  OpenGLCopyImageToFrameBuffer() = default;
-  OpenGLCopyImageToFrameBuffer(const OpenGLCopyImageToFrameBuffer& command)
-      : m_texture(command.m_texture),
-        m_frameBuffer(command.m_frameBuffer),
-        m_type(command.m_type),
-        m_attachmentIndex(command.m_attachmentIndex) {}
-
-  virtual ~OpenGLCopyImageToFrameBuffer() = default;
-
- public:
-  void
-  SetImage(const std::shared_ptr<Texture2D>& texture) override {
-    m_texture = std::dynamic_pointer_cast<OpenGLTexture2D>(texture);
-  }
-
-  void
-  SetFrameBuffer(const std::shared_ptr<FrameBuffer>& frameBuffer) override {
-    m_frameBuffer = std::dynamic_pointer_cast<OpenGLFrameBuffer>(frameBuffer);
-  }
-
-  void
-  ChooseAttachment(AttachmentType attachmentType, uint32_t index) override {
-    m_type = attachmentType;
-    m_attachmentIndex = index;
-  }
-
-  void
-  Execute() const override {
-    if (m_type == AttachmentType::Depth) {
-      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    }
-  }
-
-  std::unique_ptr<ICommand>
-  Clone() const override {
-    return std::make_unique<OpenGLCopyImageToFrameBuffer>(*this);
-  }
-
- private:
-  std::shared_ptr<OpenGLTexture2D> m_texture;
-  std::shared_ptr<OpenGLFrameBuffer> m_frameBuffer;
-  AttachmentType m_type;
-  uint32_t m_attachmentIndex = 0;
-};
+using OpenGLCommandPoly_T =
+    std::variant<OpenGLBeginRenderPass, OpenGLBindDescriptorSet, OpenGLEndRenderpass,
+                 OpenGLBindPipeline, OpenGLBindIndexBuffer, OpenGLBindVertexBuffer, OpenGLDrawArray,
+                 OpenGLDrawIndex, OpenGLCopyImageToImage>;
 
 }  // namespace Marbas

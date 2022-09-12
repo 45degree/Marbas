@@ -6,67 +6,61 @@
 
 namespace Marbas {
 
-class OpenGLTexture2D : public Texture2D, public IOpenGLBindable {
- public:
-  OpenGLTexture2D(int width, int height, uint32_t level, TextureFormat format);
-  ~OpenGLTexture2D() override;
+class OpenGLTexture;
+struct OpenGLImageView final : public ImageView {
+  std::shared_ptr<OpenGLTexture> texture;
+  uint32_t level = 0;
+  uint32_t layer = 0;
 
- public:
   void
-  SetData(void* data, uint32_t size) override;
-
-  void*
-  GetTexture() override;
-
-  GLuint
-  GetOpenGLTexture() const noexcept {
-    return m_textureID;
+  SetTexture(const std::shared_ptr<Texture>& tex) override {
+    texture = std::static_pointer_cast<OpenGLTexture>(tex);
   }
 
   void
-  Bind(uint16_t bindingPoint) const noexcept override {
-    glBindTextureUnit(bindingPoint, m_textureID);
+  SetRangeInfo(uint32_t layerBase, uint32_t layerCount, uint32_t levelBase,
+               uint32_t levelCount) override {
+    level = levelBase;
+    layer = layerBase;
+  }
+};
+
+class OpenGLTexture final : public Texture {
+ public:
+  explicit OpenGLTexture(const ImageDesc& desc);
+  virtual ~OpenGLTexture() = default;
+
+ public:
+  void
+  SetData(void* data, size_t size, uint32_t level = 0, uint32_t layer = 0) override;
+
+ public:
+  void*
+  GetOriginHandle() override {
+    return reinterpret_cast<void*>(m_target);
+  }
+
+  GLuint
+  GetOpenGLTarget() const {
+    return m_target;
+  }
+
+  void
+  Bind(uint16_t bindingPoint) const noexcept {
+    glBindTextureUnit(bindingPoint, m_target);
   };
 
   void
-  UnBind() const noexcept override {
-    glBindTexture(GL_TEXTURE_2D, 0);
-  }
+  UnBind() const noexcept;
 
   GLenum
-  GetOpenGLFormat() const noexcept;
+  GetOpenGLType() const;
 
- private:
-  GLuint m_textureID = 0;
-};
+  GLenum
+  GetOpenGLFormat() const;
 
-class OpenGLTextureCubeMap : public TextureCubeMap, public IOpenGLBindable {
- public:
-  explicit OpenGLTextureCubeMap(int width, int height, TextureFormat format);
-
-  ~OpenGLTextureCubeMap() override = default;
-
- public:
-  void
-  SetData(void* data, uint32_t size, CubeMapPosition position) override;
-
-  void
-  Bind(uint16_t bindingPoint) const noexcept override {
-    glBindTextureUnit(bindingPoint, m_textureID);
-  }
-
-  void
-  UnBind() const noexcept override {
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-  }
-
-  GLuint
-  GetOpenGLTexture() const noexcept {
-    return m_textureID;
-  }
-
- private:
-  GLuint m_textureID;
+ protected:
+  GLuint m_target;
 };
 
 }  // namespace Marbas

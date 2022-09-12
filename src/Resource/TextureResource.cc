@@ -13,7 +13,7 @@ Texture2DResource::LoadResource(RHIFactory* rhiFactory, const ResourceManager* r
     path = resourceManager->GetWorkspace() / m_path;
   }
 
-  m_texture = rhiFactory->CreateTexutre2D(path, m_levels);
+  m_texture = rhiFactory->CreateTexture2D(path, m_levels);
 
   m_isLoad = true;
 }

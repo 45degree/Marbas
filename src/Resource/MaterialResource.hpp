@@ -33,7 +33,7 @@ class MaterialResource final : public ResourceBase {
     m_ambientTexture = ambientTexture;
   }
 
-  std::shared_ptr<Texture2D>
+  std::shared_ptr<Texture>
   GetAmbientTexture() const {
     if (m_ambientTexture != nullptr) {
       return m_ambientTexture->GetTexture();
@@ -46,7 +46,7 @@ class MaterialResource final : public ResourceBase {
     m_diffuseTexture = diffuseTexture;
   }
 
-  std::shared_ptr<Texture2D>
+  std::shared_ptr<Texture>
   GetDiffuseTexture() const {
     if (m_diffuseTexture != nullptr) {
       return m_diffuseTexture->GetTexture();

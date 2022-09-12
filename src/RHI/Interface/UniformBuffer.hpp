@@ -29,11 +29,14 @@ class DynamicUniformBuffer : public IBuffer {
   virtual ~DynamicUniformBuffer() = default;
 
  public:
-  // virtual std::shared_ptr<IDynamicBufferDescriptor>
-  // GetIDynamicBufferDescriptor() const = 0;
   virtual BufferDescriptorType
   GetBufferDescriptorType() const {
     return BufferDescriptorType::DYNAMIC_UNIFORM_BUFFER;
+  }
+
+  size_t
+  GetSize() const {
+    return m_size;
   }
 
  protected:

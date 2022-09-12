@@ -75,7 +75,6 @@ struct DepthStencilInfo {
 
 struct MultisampleInfo {
   bool sampleShadingEnable = false;
-  // rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 };
 
 enum class BlendOp {

@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 
-#include "RHI/Interface/Command.hpp"
+#include "RHI/Interface/CommandBuffer.hpp"
 #include "RHI/Interface/DescriptorSet.hpp"
 #include "RHI/OpenGL/IOpenGLCommon.hpp"
 #include "RHI/OpenGL/OpenGLTexture.hpp"
@@ -31,7 +31,7 @@ class OpenGLDescriptorSet final : public DescriptorSet {
 
  private:
   std::unordered_map<uint16_t, std::shared_ptr<OpenGLUniformBuffer>> m_bufferDescripor;
-  std::unordered_map<uint16_t, std::shared_ptr<IOpenGLBindable>> m_imageDescriptor;
+  std::unordered_map<uint16_t, std::shared_ptr<OpenGLTexture>> m_imageDescriptor;
   std::unordered_map<uint16_t, std::shared_ptr<OpenGLDynamicUniformBuffer>> m_dynamicBuffer;
 };
 

@@ -17,6 +17,14 @@ LightInformation::DrawInformation(entt::entity entity, Scene *scene,
     ImGui::InputFloat3("location", glm::value_ptr(pos));
     pointLight.SetPos(pos);
   } else if (Entity::HasComponent<ParallelLightComponent>(scene, entity)) {
+    auto &directionLight = Entity::GetComponent<ParallelLightComponent>(scene, entity).m_light;
+    auto pos = directionLight.GetPos();
+    auto direction = directionLight.GetDirection();
+    ImGui::Text("type: Direction Light");
+    ImGui::InputFloat3("location", glm::value_ptr(pos));
+    ImGui::InputFloat3("direction", glm::value_ptr(direction));
+    directionLight.SetPos(pos);
+    directionLight.SetDirection(direction);
   }
 }
 

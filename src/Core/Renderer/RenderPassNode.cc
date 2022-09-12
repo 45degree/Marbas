@@ -11,9 +11,20 @@ RenderPassNode::RenderPassNode(const RenderPassNodeCreateInfo& createInfo)
   auto bufferSize = sizeof(CameraUniformBlock);
   m_cameraUniformBuffer = m_rhiFactory->CreateUniformBuffer(bufferSize);
 
+  m_clearDepthRenderPass = m_rhiFactory->CreateRenderPass(RenderPassCreateInfo{
+      .attachments =
+          {
+              AttachmentDescription{
+                  .format = TextureFormat::DEPTH,
+                  .type = AttachmentType::Depth,
+                  .loadOp = AttachmentLoadOp::Clear,
+              },
+          },
+  });
+  m_clearCommandBuffer = m_rhiFactory->CreateCommandBuffer();
+
   // create command factory
-  m_commandFactory = m_rhiFactory->CreateCommandFactory();
-  m_commandBuffer = m_commandFactory->CreateCommandBuffer();
+  m_commandBuffer = m_rhiFactory->CreateCommandBuffer();
 
   // set binging point 0 as camera uniform buffer
   m_descriptorSetLayout = {DescriptorSetLayoutBinding{
@@ -38,6 +49,20 @@ RenderPassNode::AddDescriptorSetLayoutBinding(const DescriptorSetLayoutBinding& 
   }
 
   m_descriptorSetLayout.push_back(bindingInfo);
+}
+
+void
+RenderPassNode::RecordClearDepthCommand() {
+  m_clearCommandBuffer->Clear();
+
+  m_clearCommandBuffer->BeginRecordCmd();
+  m_clearCommandBuffer->BeginRenderPass(BeginRenderPassInfo{
+      .renderPass = m_clearDepthRenderPass,
+      .frameBuffer = m_framebuffer,
+      .clearColor = {0, 0, 0, 1},
+  });
+  m_clearCommandBuffer->EndRenderPass();
+  m_clearCommandBuffer->EndRecordCmd();
 }
 
 }  // namespace Marbas

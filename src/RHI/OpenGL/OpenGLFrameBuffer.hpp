@@ -7,7 +7,7 @@
 
 namespace Marbas {
 
-class OpenGLFrameBuffer : public FrameBuffer {
+class OpenGLFrameBuffer final : public FrameBuffer, public IOpenGLTaget {
  public:
   explicit OpenGLFrameBuffer(const FrameBufferInfo& info);
 
@@ -20,11 +20,15 @@ class OpenGLFrameBuffer : public FrameBuffer {
   void
   UnBind() const override;
 
+  GLuint
+  GetOpenGLTarget() const override {
+    return frameBufferID;
+  }
+
  private:
   GLuint frameBufferID;
 
   Vector<AttachmentDescription> m_attachmentInfos;
-  Vector<std::shared_ptr<Texture>> m_attachments;
 };
 
 }  // namespace Marbas

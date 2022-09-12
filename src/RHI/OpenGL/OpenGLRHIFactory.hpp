@@ -48,17 +48,27 @@ class OpenGLRHIFactory final : public RHIFactory {
   [[nodiscard]] std::unique_ptr<GraphicsPipeLine>
   CreateGraphicsPipeLine() override;
 
-  [[nodiscard]] std::unique_ptr<Texture2D>
-  CreateTexutre2D(const Path& imagePath, uint32_t level) const override;
+  [[nodiscard]] std::unique_ptr<Texture>
+  CreateTexture(const ImageDesc& imageDesc) const override;
 
-  [[nodiscard]] std::unique_ptr<Texture2D>
-  CreateTexutre2D(int width, int height, uint32_t level, TextureFormat formatType) const override;
+  std::unique_ptr<Texture>
+  CreateTexture2D(const Path& imagePath, uint32_t level) const override;
 
-  [[nodiscard]] std::unique_ptr<TextureCubeMap>
-  CreateTextureCubeMap(int width, int height, TextureFormat format) const override;
+  // [[nodiscard]] std::unique_ptr<Texture2D>
+  // CreateTexutre2D(const Path& imagePath, uint32_t level) const override;
+  //
+  // [[nodiscard]] std::unique_ptr<Texture2D>
+  // CreateTexutre2D(int width, int height, uint32_t level, TextureFormat formatType) const
+  // override;
+  //
+  // [[nodiscard]] std::unique_ptr<TextureCubeMap>
+  // CreateTextureCubeMap(int width, int height, TextureFormat format) const override;
+  //
+  [[nodiscard]] std::unique_ptr<Texture>
+  CreateTextureCubeMap(const CubeMapCreateInfo& createInfo, uint32_t level) const override;
 
-  [[nodiscard]] std::unique_ptr<TextureCubeMap>
-  CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) const override;
+  [[nodiscard]] std::unique_ptr<ImageView>
+  CreateImageView() const override;
 
   [[nodiscard]] std::unique_ptr<UniformBuffer>
   CreateUniformBuffer(uint32_t size) const override;
@@ -69,8 +79,8 @@ class OpenGLRHIFactory final : public RHIFactory {
   [[nodiscard]] std::unique_ptr<FrameBuffer>
   CreateFrameBuffer(const FrameBufferInfo& info) const override;
 
-  [[nodiscard]] std::unique_ptr<CommandFactory>
-  CreateCommandFactory() const override;
+  [[nodiscard]] std::unique_ptr<CommandBuffer>
+  CreateCommandBuffer() const override;
 
   [[nodiscard]] std::unique_ptr<DescriptorSet>
   CreateDescriptorSet(const DescriptorSetLayout& info) const override;

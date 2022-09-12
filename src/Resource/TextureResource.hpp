@@ -11,7 +11,7 @@ class Texture2DResource final : public ResourceBase {
       : ResourceBase(), m_path(path), m_levels(levels) {}
 
  public:
-  [[nodiscard]] std::shared_ptr<Texture2D>
+  [[nodiscard]] std::shared_ptr<Texture>
   GetTexture() const noexcept {
     return m_texture;
   }
@@ -27,7 +27,7 @@ class Texture2DResource final : public ResourceBase {
  private:
   Path m_path;
   uint32_t m_levels;
-  std::shared_ptr<Texture2D> m_texture = nullptr;
+  std::shared_ptr<Texture> m_texture = nullptr;
 };
 
 class TextureCubeMapResource final : public ResourceBase {
@@ -36,7 +36,7 @@ class TextureCubeMapResource final : public ResourceBase {
       : ResourceBase(), m_createInfo(createInfo) {}
 
  public:
-  [[nodiscard]] std::shared_ptr<TextureCubeMap>
+  [[nodiscard]] std::shared_ptr<Texture>
   GetTextureCubeMap() const noexcept {
     return m_textureCubeMap;
   }
@@ -50,14 +50,14 @@ class TextureCubeMapResource final : public ResourceBase {
   LoadResource(RHIFactory* rhiFactory, const ResourceManager*) override {
     if (m_isLoad) return;
 
-    m_textureCubeMap = rhiFactory->CreateTextureCubeMap(m_createInfo);
+    m_textureCubeMap = rhiFactory->CreateTextureCubeMap(m_createInfo, 1);
 
     m_isLoad = true;
   }
 
  private:
   CubeMapCreateInfo m_createInfo;
-  std::shared_ptr<TextureCubeMap> m_textureCubeMap = nullptr;
+  std::shared_ptr<Texture> m_textureCubeMap = nullptr;
 };
 
 }  // namespace Marbas

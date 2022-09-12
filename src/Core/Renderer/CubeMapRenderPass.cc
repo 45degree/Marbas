@@ -27,19 +27,11 @@ GetMeshVertexInfoLayout() {
 
 CubeMapRenderPassCreateInfo::CubeMapRenderPassCreateInfo() {
   passName = "CubeMapRenderPass";
-  inputPassNode = PointLightShadowMappingRenderPass::renderPassName;
+  inputPassNode = BlinnPhongRenderPass::renderPassName;
 }
 
 CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createInfo)
-    : ForwardRenderPass(createInfo) {
-  // DLOG_ASSERT(m_rhiFactory != nullptr);
-  // DLOG_ASSERT(m_resourceManager != nullptr);
-  //
-  // CreateRenderPass();
-  // CreateShader();
-  // CreateDescriptorSetLayout();
-  // CreatePipeline();
-}
+    : ForwardRenderPass(createInfo) {}
 
 void
 CubeMapRenderPass::CreateRenderPass() {
@@ -125,49 +117,26 @@ CubeMapRenderPass::RecordCommand(const Scene* scene) {
    * set command
    */
 
-  // set render pass command
-  auto beginRenderPass = m_commandFactory->CreateBeginRenderPassCMD();
-  beginRenderPass->SetRenderPass(m_renderPass);
-  beginRenderPass->SetFrameBuffer(m_framebuffer);
-  beginRenderPass->SetClearColor({0, 0, 0, 1});
-
-  auto endRenderPass = m_commandFactory->CreateEndRenderPassCMD();
-  endRenderPass->SetRenderPass(m_renderPass);
-  endRenderPass->SetFrameBuffer(m_framebuffer);
-
-  // set bind pipeline
-  auto bindPipeline = m_commandFactory->CreateBindPipelineCMD();
-  bindPipeline->SetPipeLine(m_pipeline);
-
-  /**
-   * begin to record command
-   */
-
   m_commandBuffer->BeginRecordCmd();
-  m_commandBuffer->AddCommand(std::move(beginRenderPass));
-  m_commandBuffer->AddCommand(std::move(bindPipeline));
+  m_commandBuffer->BeginRenderPass(BeginRenderPassInfo{
+      .renderPass = m_renderPass,
+      .frameBuffer = m_framebuffer,
+      .clearColor = {0, 0, 0, 1},
+  });
+  m_commandBuffer->BindPipeline(m_pipeline);
 
   const auto& implData = cubeMapComponent.m_implData;
   DLOG_ASSERT(implData->vertexBuffer != nullptr);
   DLOG_ASSERT(implData->indexBuffer != nullptr);
 
-  auto bindVertexBuffer = m_commandFactory->CreateBindVertexBufferCMD();
-  auto bindIndexBuffer = m_commandFactory->CreateBindIndexBufferCMD();
-  auto bindDescriptorSet = m_commandFactory->CreateBindDescriptorSetCMD();
-  auto drawIndex = m_commandFactory->CreateDrawIndexCMD(m_pipeline);
-
-  bindVertexBuffer->SetVertexBuffer(implData->vertexBuffer);
-  bindIndexBuffer->SetIndexBuffer(implData->indexBuffer);
-  bindDescriptorSet->SetDescriptor(implData->descriptorSet);
-
-  drawIndex->SetIndexCount(implData->indexBuffer->GetIndexCount());
-
-  m_commandBuffer->AddCommand(std::move(bindVertexBuffer));
-  m_commandBuffer->AddCommand(std::move(bindIndexBuffer));
-  m_commandBuffer->AddCommand(std::move(bindDescriptorSet));
-  m_commandBuffer->AddCommand(std::move(drawIndex));
-
-  m_commandBuffer->AddCommand(std::move(endRenderPass));
+  m_commandBuffer->BindVertexBuffer(implData->vertexBuffer);
+  m_commandBuffer->BindIndexBuffer(implData->indexBuffer);
+  m_commandBuffer->BindDescriptorSet(BindDescriptorSetInfo{
+      .descriptorSet = implData->descriptorSet,
+      .layouts = m_descriptorSetLayout,
+  });
+  m_commandBuffer->DrawIndex(implData->indexBuffer->GetIndexCount(), 0);
+  m_commandBuffer->EndRenderPass();
   m_commandBuffer->EndRecordCmd();
 }
 

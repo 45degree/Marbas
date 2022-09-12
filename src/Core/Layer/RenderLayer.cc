@@ -36,7 +36,10 @@ RenderLayer::OnAttach() {
   // create beginning render target
   auto beginningDepthTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
       .targetName = BeginningRenderPass::depthTargetName,
-      .buffersType = {{GBufferTexutreType::DEPTH, 1}},
+      .buffersType =
+          {
+              GBufferType{.type = GBufferTexutreType::DEPTH, .levels = 1, .layers = 1},
+          },
       .rhiFactory = m_rhiFactory,
       .width = m_width,
       .height = m_height,
@@ -44,7 +47,10 @@ RenderLayer::OnAttach() {
 
   auto beginningTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
       .targetName = BeginningRenderPass::targetName,
-      .buffersType = {{GBufferTexutreType::COLOR, 1}},
+      .buffersType =
+          {
+              GBufferType{.type = GBufferTexutreType::COLOR, .levels = 1, .layers = 1},
+          },
       .rhiFactory = m_rhiFactory,
       .width = m_width,
       .height = m_height,
@@ -65,7 +71,10 @@ RenderLayer::OnAttach() {
   // create geometry render pass and target
   auto geometryDepthTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
       .targetName = GeometryRenderPass::depthTargetName,
-      .buffersType = {{GBufferTexutreType::DEPTH, 1}},
+      .buffersType =
+          {
+              GBufferType{.type = GBufferTexutreType::DEPTH, .levels = 1, .layers = 1},
+          },
       .rhiFactory = m_rhiFactory,
       .width = m_width,
       .height = m_height,
@@ -74,9 +83,9 @@ RenderLayer::OnAttach() {
       .targetName = GeometryRenderPass::geometryTargetName,
       .buffersType =
           {
-              {GBufferTexutreType::COLOR, 1},
-              {GBufferTexutreType::NORMALS, 1},
-              {GBufferTexutreType::POSITION, 1},
+              GBufferType{.type = GBufferTexutreType::COLOR, .levels = 1, .layers = 1},
+              GBufferType{.type = GBufferTexutreType::NORMALS, .levels = 1, .layers = 1},
+              GBufferType{.type = GBufferTexutreType::POSITION, .levels = 1, .layers = 1},
           },
       .rhiFactory = m_rhiFactory,
       .width = m_width,
@@ -96,10 +105,67 @@ RenderLayer::OnAttach() {
   }());
   m_renderGraph->RegisterDeferredRenderPassNode(geometryRenderPass);
 
+  // shadow mapping render pass
+  auto shadowMappingTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = String(ShadowMappingRenderPass::renderTarget),
+      .buffersType =
+          {
+              GBufferType{
+                  .type = GBufferTexutreType::SHADOW_MAP,
+                  .levels = 1,
+                  .layers = ShadowMappingRenderPass::MAX_LIGHT_COUNT,
+              },
+          },
+      .rhiFactory = m_rhiFactory,
+      .width = 4096,
+      .height = 4096,
+  });
+  m_renderGraph->RegisterRenderTargetNode(shadowMappingTarget);
+
+  auto shadowMappingRenderPass = std::make_shared<ShadowMappingRenderPass>([&]() {
+    ShadowMappingCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = 4096;
+    createInfo.height = 4096;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterDeferredRenderPassNode(shadowMappingRenderPass);
+
+  // point light shadow mapping render pass
+  auto pointLightshadowMappTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = String(PointLightShadowMappingRenderPass::targetName),
+      .buffersType =
+          {
+              GBufferType{
+                  .type = GBufferTexutreType::SHADOW_MAP_CUBE,
+                  .levels = 1,
+                  .layers = PointLightShadowMappingRenderPass::MAX_LIGHT_COUNT,
+              },
+          },
+      .rhiFactory = m_rhiFactory,
+      .width = 2048,
+      .height = 2048,
+  });
+  m_renderGraph->RegisterRenderTargetNode(pointLightshadowMappTarget);
+
+  auto pointLightShadowMapRenderPass = std::make_shared<PointLightShadowMappingRenderPass>([&]() {
+    PointLightShadowMappingRenderPassCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = 2048;
+    createInfo.height = 2048;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterDeferredRenderPassNode(pointLightShadowMapRenderPass);
+
   // blinnPhone Render Pass
   auto blinnPhoneTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
       .targetName = BlinnPhongRenderPass::blinnPhongTargetName,
-      .buffersType = {{GBufferTexutreType::COLOR, 1}},
+      .buffersType =
+          {
+              GBufferType{.type = GBufferTexutreType::COLOR, .levels = 1, .layers = 1},
+          },
       .rhiFactory = m_rhiFactory,
       .width = m_width,
       .height = m_height,
@@ -115,46 +181,6 @@ RenderLayer::OnAttach() {
     return createInfo;
   }());
   m_renderGraph->RegisterDeferredRenderPassNode(blinnPhoneRenderPass);
-
-  // shadow mapping render pass
-  auto shadowMappingTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
-      .targetName = String(ShadowMappingRenderPass::renderTarget),
-      .buffersType = {{GBufferTexutreType::COLOR, 1}},
-      .rhiFactory = m_rhiFactory,
-      .width = m_width,
-      .height = m_height,
-  });
-  m_renderGraph->RegisterRenderTargetNode(shadowMappingTarget);
-
-  auto shadowMappingRenderPass = std::make_shared<ShadowMappingRenderPass>([&]() {
-    ShadowMappingCreateInfo createInfo;
-    createInfo.resourceManager = m_resourceManager;
-    createInfo.rhiFactory = m_rhiFactory;
-    createInfo.width = m_width;
-    createInfo.height = m_height;
-    return createInfo;
-  }());
-  m_renderGraph->RegisterDeferredRenderPassNode(shadowMappingRenderPass);
-
-  // point light shadow mapping render pass
-  auto pointLightshadowMappTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
-      .targetName = String(PointLightShadowMappingRenderPass::targetName),
-      .buffersType = {{GBufferTexutreType::COLOR, 1}},
-      .rhiFactory = m_rhiFactory,
-      .width = m_width,
-      .height = m_height,
-  });
-  m_renderGraph->RegisterRenderTargetNode(pointLightshadowMappTarget);
-
-  auto pointLightShadowMapRenderPass = std::make_shared<PointLightShadowMappingRenderPass>([&]() {
-    PointLightShadowMappingRenderPassCreateInfo createInfo;
-    createInfo.resourceManager = m_resourceManager;
-    createInfo.rhiFactory = m_rhiFactory;
-    createInfo.width = m_width;
-    createInfo.height = m_height;
-    return createInfo;
-  }());
-  m_renderGraph->RegisterDeferredRenderPassNode(pointLightShadowMapRenderPass);
 
   // create billBoard render pass
   auto billBoardRenderPass = std::make_shared<BillBoardRenderPass>([&]() {
@@ -240,10 +266,9 @@ RenderLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
   editorCamera->AddDistance(yOffset * 10);
 }
 
-std::shared_ptr<Texture2D>
+std::shared_ptr<Texture>
 RenderLayer::GetRenderResult() {
-  auto target =
-      m_renderGraph->GetRenderTarget(String(PointLightShadowMappingRenderPass::targetName));
+  auto target = m_renderGraph->GetRenderTarget(String(BlinnPhongRenderPass::blinnPhongTargetName));
 
   return target->GetGBuffer()->GetTexture(GBufferTexutreType::COLOR);
 }

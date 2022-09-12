@@ -4,10 +4,7 @@
 
 #include <memory>
 
-#include "RHI/Interface/Command.hpp"
 #include "RHI/Interface/CommandBuffer.hpp"
-#include "RHI/Interface/CommandFactory.hpp"
-#include "RHI/Interface/DrawBatch.hpp"
 #include "RHI/Interface/FrameBuffer.hpp"
 #include "RHI/Interface/ImguiInterface.hpp"
 #include "RHI/Interface/Pipeline.hpp"
@@ -16,7 +13,6 @@
 #include "RHI/Interface/SwapChain.hpp"
 #include "RHI/Interface/UniformBuffer.hpp"
 #include "RHI/Interface/VertexBuffer.hpp"
-#include "RHI/Interface/Viewport.hpp"
 
 namespace Marbas {
 
@@ -100,20 +96,20 @@ class RHIFactory {
   [[nodiscard]] virtual std::unique_ptr<GraphicsPipeLine>
   CreateGraphicsPipeLine() = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<Texture2D>
-  CreateTexutre2D(const Path& imagePath, uint32_t level) const = 0;
+  [[nodiscard]] virtual std::unique_ptr<Texture>
+  CreateTexture(const ImageDesc& imageDesc) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<Texture2D>
-  CreateTexutre2D(int width, int height, uint32_t level, TextureFormat formatType) const = 0;
+  [[nodiscard]] virtual std::unique_ptr<Texture>
+  CreateTexture2D(const Path& imagePath, uint32_t levels) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<TextureCubeMap>
-  CreateTextureCubeMap(int width, int height, TextureFormat format) const = 0;
+  [[nodiscard]] virtual std::unique_ptr<Texture>
+  CreateTextureCubeMap(const CubeMapCreateInfo& createInfo, uint32_t levels) const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<TextureCubeMap>
-  CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) const = 0;
+  [[nodiscard]] virtual std::unique_ptr<ImageView>
+  CreateImageView() const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<CommandFactory>
-  CreateCommandFactory() const = 0;
+  [[nodiscard]] virtual std::unique_ptr<CommandBuffer>
+  CreateCommandBuffer() const = 0;
 
   [[nodiscard]] virtual std::unique_ptr<UniformBuffer>
   CreateUniformBuffer(uint32_t size) const = 0;
@@ -126,9 +122,6 @@ class RHIFactory {
 
   [[nodiscard]] virtual std::unique_ptr<DescriptorSet>
   CreateDescriptorSet(const DescriptorSetLayout& createInfo) const = 0;
-
-  // [[nodiscard]] virtual std::unique_ptr<DynamicDescriptorSet>
-  // CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const = 0;
 
  public:
   static RHIFactory*

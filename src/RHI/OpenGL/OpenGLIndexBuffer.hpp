@@ -4,7 +4,7 @@
 
 namespace Marbas {
 
-class OpenGLIndexBuffer : public IndexBuffer {
+class OpenGLIndexBuffer final : public IndexBuffer {
  public:
   explicit OpenGLIndexBuffer(size_t size);
   explicit OpenGLIndexBuffer(const Vector<uint32_t>& data);

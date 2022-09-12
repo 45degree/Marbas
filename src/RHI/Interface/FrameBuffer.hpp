@@ -1,6 +1,8 @@
 #pragma once
 
 #include "RHI/Interface/RenderPass.hpp"
+#include "RHI/Interface/Texture.hpp"
+
 namespace Marbas {
 
 struct FrameBufferInfo {
@@ -9,7 +11,7 @@ struct FrameBufferInfo {
 
   // if the renderpass is null, means the frame buffer is a default frame buffer
   const RenderPass* renderPass = nullptr;
-  Vector<std::shared_ptr<Texture>> attachments;
+  Vector<std::shared_ptr<ImageView>> attachments;
 };
 
 class FrameBuffer {

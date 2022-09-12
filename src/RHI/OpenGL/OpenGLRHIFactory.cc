@@ -1,7 +1,7 @@
 #include <GLFW/glfw3.h>
 
 #include "OpenGLSwapChain.hpp"
-#include "RHI/OpenGL/OpenGLCommandFactory.hpp"
+#include "RHI/OpenGL/OpenGLCommandBuffer.hpp"
 #include "RHI/OpenGL/OpenGLDescriptorSet.hpp"
 #include "RHI/OpenGL/OpenGLImguiInterface.hpp"
 #include "RHI/OpenGL/OpenGLPipeline.hpp"
@@ -23,14 +23,12 @@
 
 #include <iostream>
 
-#include "RHI/OpenGL/OpenGLDrawBatch.hpp"
 #include "RHI/OpenGL/OpenGLFrameBuffer.hpp"
 #include "RHI/OpenGL/OpenGLIndexBuffer.hpp"
 #include "RHI/OpenGL/OpenGLRHIFactory.hpp"
 #include "RHI/OpenGL/OpenGLShader.hpp"
 #include "RHI/OpenGL/OpenGLShaderStage.hpp"
 #include "RHI/OpenGL/OpenGLVertexBuffer.hpp"
-#include "RHI/OpenGL/OpenGLViewport.hpp"
 
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
@@ -196,8 +194,8 @@ OpenGLRHIFactory::CreateShader() const {
   return std::make_unique<OpenGLShader>();
 }
 
-std::unique_ptr<Texture2D>
-OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath, uint32_t level) const {
+std::unique_ptr<Texture>
+OpenGLRHIFactory::CreateTexture2D(const Path& imagePath, uint32_t level) const {
   String pathStr = imagePath.string();
 
   // load image
@@ -224,8 +222,16 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath, uint32_t level) const {
 
   formatType = nrChannels == 4 ? TextureFormat::RGBA : TextureFormat::RGB;
 
+  ImageDesc desc{
+      .textureType = TextureType::TEXTURE2D,
+      .format = formatType,
+      .width = static_cast<uint32_t>(width),
+      .height = static_cast<uint32_t>(height),
+      .mipmapLevel = level,
+  };
+
   // create textrue
-  auto texture = std::make_unique<OpenGLTexture2D>(width, height, level, formatType);
+  auto texture = std::make_unique<OpenGLTexture>(desc);
   texture->SetData(data, width * height * nrChannels);
   // texture->SetImageInfo(imagePath.string(), hashCode);
 
@@ -236,14 +242,13 @@ OpenGLRHIFactory::CreateTexutre2D(const Path& imagePath, uint32_t level) const {
   return texture;
 }
 
-std::unique_ptr<Texture2D>
-OpenGLRHIFactory::CreateTexutre2D(int width, int height, uint32_t level,
-                                  TextureFormat format) const {
-  return std::make_unique<OpenGLTexture2D>(width, height, level, format);
+std::unique_ptr<Texture>
+OpenGLRHIFactory::CreateTexture(const ImageDesc& imageDesc) const {
+  return std::make_unique<OpenGLTexture>(imageDesc);
 }
 
-std::unique_ptr<TextureCubeMap>
-OpenGLRHIFactory::CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) const {
+std::unique_ptr<Texture>
+OpenGLRHIFactory::CreateTextureCubeMap(const CubeMapCreateInfo& createInfo, uint32_t levels) const {
   int width, height, nrChannels;
   TextureFormat formatType;
 
@@ -251,31 +256,45 @@ OpenGLRHIFactory::CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) cons
 
   formatType = nrChannels == 4 ? TextureFormat::RGBA : TextureFormat::RGB;
 
+  ImageDesc desc{
+      .textureType = TextureType::CUBEMAP,
+      .format = formatType,
+      .width = static_cast<uint32_t>(width),
+      .height = static_cast<uint32_t>(height),
+      .mipmapLevel = levels,
+  };
+
   // create texture cubemap
-  auto textureCubeMap = std::make_unique<OpenGLTextureCubeMap>(width, height, formatType);
+  auto textureCubeMap = std::make_unique<OpenGLTexture>(desc);
 
   // Set Data
-  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::BACK);
+  // GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+  textureCubeMap->SetData(data, width * height * nrChannels, 0, 5);
   stbi_image_free(data);
 
+  // GL_TEXTURE_CUBE_MAP_POSITIVE_Z
   data = stbi_load(createInfo.front.string().c_str(), &width, &height, &nrChannels, 0);
-  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::FRONT);
+  textureCubeMap->SetData(data, width * height * nrChannels, 0, 4);
   stbi_image_free(data);
 
+  // GL_TEXTURE_CUBE_MAP_NEGATIVE_Y
   data = stbi_load(createInfo.bottom.string().c_str(), &width, &height, &nrChannels, 0);
-  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::BOTTOM);
+  textureCubeMap->SetData(data, width * height * nrChannels, 0, 3);
   stbi_image_free(data);
 
+  // GL_TEXTURE_CUBE_MAP_POSITIVE_Y
   data = stbi_load(createInfo.top.string().c_str(), &width, &height, &nrChannels, 0);
-  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::TOP);
+  textureCubeMap->SetData(data, width * height * nrChannels, 0, 2);
   stbi_image_free(data);
 
+  // GL_TEXTURE_CUBE_MAP_NEGATIVE_X
   data = stbi_load(createInfo.left.string().c_str(), &width, &height, &nrChannels, 0);
-  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::LEFT);
+  textureCubeMap->SetData(data, width * height * nrChannels, 0, 1);
   stbi_image_free(data);
 
+  // GL_TEXTURE_CUBE_MAP_POSITION_X
   data = stbi_load(createInfo.right.string().c_str(), &width, &height, &nrChannels, 0);
-  textureCubeMap->SetData(data, width * height * nrChannels, CubeMapPosition::RIGHT);
+  textureCubeMap->SetData(data, width * height * nrChannels, 0, 0);
   stbi_image_free(data);
 
   LOG(INFO) << FORMAT(
@@ -286,9 +305,9 @@ OpenGLRHIFactory::CreateTextureCubeMap(const CubeMapCreateInfo& createInfo) cons
   return textureCubeMap;
 }
 
-std::unique_ptr<TextureCubeMap>
-OpenGLRHIFactory::CreateTextureCubeMap(int width, int height, TextureFormat format) const {
-  return std::make_unique<OpenGLTextureCubeMap>(width, height, format);
+std::unique_ptr<ImageView>
+OpenGLRHIFactory::CreateImageView() const {
+  return std::make_unique<OpenGLImageView>();
 }
 
 std::unique_ptr<UniformBuffer>
@@ -301,9 +320,9 @@ OpenGLRHIFactory::CreateDynamicUniforBuffer(uint32_t size) const {
   return std::make_unique<OpenGLDynamicUniformBuffer>(size);
 }
 
-std::unique_ptr<CommandFactory>
-OpenGLRHIFactory::CreateCommandFactory() const {
-  return std::make_unique<OpenGLCommandFactory>();
+std::unique_ptr<CommandBuffer>
+OpenGLRHIFactory::CreateCommandBuffer() const {
+  return std::make_unique<OpenGLCommandBuffer>();
 }
 
 std::unique_ptr<SwapChain>
@@ -327,10 +346,5 @@ std::unique_ptr<DescriptorSet>
 OpenGLRHIFactory::CreateDescriptorSet(const DescriptorSetLayout& info) const {
   return std::make_unique<OpenGLDescriptorSet>(info);
 }
-
-// std::unique_ptr<DynamicDescriptorSet>
-// OpenGLRHIFactory::CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const {
-//   return std::make_unique<OpenGLDynamicDescriptorSet>(bindingPoints);
-// }
 
 }  // namespace Marbas

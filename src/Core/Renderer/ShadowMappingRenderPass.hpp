@@ -12,6 +12,7 @@ struct ShadowMappingCreateInfo : public DeferredRenderPassCreateInfo {
 
 class ShadowMappingRenderPass : public DeferredRenderPass {
  public:
+  static constexpr int MAX_LIGHT_COUNT = 3;
   constexpr static StringView renderPassName = "shadow mapping render pass";
   constexpr static StringView renderTarget = "shadow mapping render target";
 
@@ -49,9 +50,6 @@ class ShadowMappingRenderPass : public DeferredRenderPass {
   void
   RecordCommand(const Scene* scene) override;
 
-  void
-  RecordCopyCommand();
-
   /**
    * @berif execute the render pass node after setting the render grpah
    */
@@ -59,7 +57,10 @@ class ShadowMappingRenderPass : public DeferredRenderPass {
   Execute(const Scene* scene, const ResourceManager* resourceManager) override;
 
   void
-  SetUniformBuffer(const Scene* scene, const ParallelLight& light);
+  SetUniformBuffer(const Scene* scene);
+
+  void
+  SetUniformBufferForLight(const Scene* scene, int lightIndex);
 
   /**
    * @brief set descirptor set for every mesh that enable shadow
@@ -72,32 +73,15 @@ class ShadowMappingRenderPass : public DeferredRenderPass {
 
  private:
   struct LightUniformBlock {
+    alignas(4) int lightIndex;
     alignas(16) glm::mat4 view = glm::mat4(1.0);
     alignas(16) glm::mat4 projective = glm::mat4(1.0);
   } m_lightUniformBlock;
 
-  struct LightInfo {
-    alignas(16) glm::vec3 pos = glm::vec3(0, 0, 0);
-  } m_lightInfo;
-
-  Uid m_depthShaderId;
   Uid m_shaderId;
 
-  bool m_needToRecordCopyCommand = true;
-
-  std::shared_ptr<RenderPass> m_depthRenderPass = nullptr;
-  std::shared_ptr<GraphicsPipeLine> m_depthPipeline = nullptr;
-  std::shared_ptr<CommandBuffer> m_depthCommandBuffer = nullptr;
-  std::shared_ptr<CommandBuffer> m_copyFrameCommandBuffer = nullptr;
-  std::shared_ptr<FrameBuffer> m_depthFrameBuffer = nullptr;
-  std::shared_ptr<Texture2D> m_depthTexture = nullptr;
   std::shared_ptr<DynamicUniformBuffer> m_meshDynamicUniformBuffer = nullptr;
   std::shared_ptr<UniformBuffer> m_lightUniformBuffer = nullptr;
-  std::shared_ptr<UniformBuffer> m_lightInfoUniformBuffer = nullptr;
-  DescriptorSetLayout m_depthDescriptorSetLayout;
-
-  std::shared_ptr<VertexBuffer> m_vertexBuffer;
-  std::shared_ptr<DescriptorSet> m_shadowDescriptorSet;
 };
 
 }  // namespace Marbas

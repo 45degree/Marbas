@@ -3,6 +3,7 @@
 #include <nameof.hpp>
 
 #include "Core/Renderer/GeometryRenderPass.hpp"
+#include "Core/Renderer/PointLightShadowMappingRenderPass.hpp"
 #include "Core/Scene/Component/LightComponent.hpp"
 #include "RHI/Interface/Pipeline.hpp"
 
@@ -13,7 +14,11 @@ const String BlinnPhongRenderPass::blinnPhongTargetName = "BlinnPhongTarget";
 
 BlinnPhongRenderPassCreateInfo::BlinnPhongRenderPassCreateInfo() : DeferredRenderPassCreateInfo() {
   passName = BlinnPhongRenderPass::renderPassName;
-  inputResource = {GeometryRenderPass::geometryTargetName};
+  inputResource = {
+      GeometryRenderPass::geometryTargetName,
+      String(PointLightShadowMappingRenderPass::targetName),
+      String(ShadowMappingRenderPass::renderTarget),
+  };
   outputResource = {BlinnPhongRenderPass::blinnPhongTargetName,
                     GeometryRenderPass::depthTargetName};
 }
@@ -85,8 +90,24 @@ BlinnPhongRenderPass::CreateDescriptorSetLayout() {
       .bindingPoint = 2,
   });
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // point light shadow
+      .isBuffer = false,
+      .bindingPoint = 3,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // direction light shadow
+      .isBuffer = false,
+      .bindingPoint = 4,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // direction light info
       .isBuffer = true,
       .bindingPoint = 1,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // point light info
+      .isBuffer = true,
+      .bindingPoint = 2,
   });
 }
 
@@ -96,9 +117,13 @@ BlinnPhongRenderPass::OnInit() {
   m_descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
   m_descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
 
-  auto bufferSize = sizeof(LightsInfo);
-  m_lightUniformBuffer = m_rhiFactory->CreateUniformBuffer(bufferSize);
-  m_descriptorSet->BindBuffer(1, m_lightUniformBuffer);
+  auto directionLightBufferSize = sizeof(DirectionLightBlock);
+  m_dirLightUbo = m_rhiFactory->CreateUniformBuffer(directionLightBufferSize);
+  m_descriptorSet->BindBuffer(1, m_dirLightUbo);
+
+  auto pointLightBufferSize = sizeof(PointLightInfoBlock);
+  m_pointLightUniformBuffer = m_rhiFactory->CreateUniformBuffer(pointLightBufferSize);
+  m_descriptorSet->BindBuffer(2, m_pointLightUniformBuffer);
 
   // set input as image descriptor set
   auto gBuffer = m_inputTarget[GeometryRenderPass::geometryTargetName]->GetGBuffer();
@@ -106,9 +131,19 @@ BlinnPhongRenderPass::OnInit() {
   auto gNormalBuffer = gBuffer->GetTexture(GBufferTexutreType::NORMALS);
   auto gPositionBuffer = gBuffer->GetTexture(GBufferTexutreType::POSITION);
 
+  auto pointShadowGBuffer =
+      m_inputTarget[String(PointLightShadowMappingRenderPass::targetName)]->GetGBuffer();
+  auto pointShadowBuffer = pointShadowGBuffer->GetTexture(GBufferTexutreType::SHADOW_MAP_CUBE);
+
+  auto dirShadowGBuffer =
+      m_inputTarget[String(ShadowMappingRenderPass::renderTarget)]->GetGBuffer();
+  auto dirShadowBuffer = dirShadowGBuffer->GetTexture(GBufferTexutreType::SHADOW_MAP);
+
   m_descriptorSet->BindImage(0, gColorBuffer);
   m_descriptorSet->BindImage(1, gNormalBuffer);
   m_descriptorSet->BindImage(2, gPositionBuffer);
+  m_descriptorSet->BindImage(3, pointShadowBuffer);
+  m_descriptorSet->BindImage(4, dirShadowBuffer);
 }
 
 void
@@ -122,48 +157,27 @@ BlinnPhongRenderPass::RecordCommand(const Scene* scene) {
 
   // recreate uniform buffer
 
-  auto bufferSize = sizeof(BlinnPhongRenderPass::LightsInfo);
-  m_lightUniformBuffer->SetData(&m_uniformBufferBlock, bufferSize, 0);
+  auto bufferSize = sizeof(BlinnPhongRenderPass::DirectionLightBlock);
+  m_dirLightUbo->SetData(&m_dirLightUboBlock, bufferSize, 0);
 
   /**
    * set command
    */
 
-  // set render pass command
-  auto beginRenderPass = m_commandFactory->CreateBeginRenderPassCMD();
-  beginRenderPass->SetRenderPass(m_renderPass);
-  beginRenderPass->SetFrameBuffer(m_framebuffer);
-  beginRenderPass->SetClearColor({0, 0, 0, 1});
-
-  auto endRenderPass = m_commandFactory->CreateEndRenderPassCMD();
-  endRenderPass->SetRenderPass(m_renderPass);
-  endRenderPass->SetFrameBuffer(m_framebuffer);
-
-  // set bind pipeline
-  auto bindPipeline = m_commandFactory->CreateBindPipelineCMD();
-  bindPipeline->SetPipeLine(m_pipeline);
-
-  /**
-   * begin to record command
-   */
-
   m_commandBuffer->BeginRecordCmd();
-  m_commandBuffer->AddCommand(std::move(beginRenderPass));
-  m_commandBuffer->AddCommand(std::move(bindPipeline));
-
-  auto bindVertexBuffer = m_commandFactory->CreateBindVertexBufferCMD();
-  auto bindDescriptorSet = m_commandFactory->CreateBindDescriptorSetCMD();
-  auto drawArray = m_commandFactory->CreateDrawArrayCMD(m_pipeline);
-
-  bindVertexBuffer->SetVertexBuffer(m_vertexBuffer);
-  drawArray->SetVertexCount(6);
-  drawArray->SetInstanceCount(1);
-  bindDescriptorSet->SetDescriptor(m_descriptorSet);
-
-  m_commandBuffer->AddCommand(std::move(bindDescriptorSet));
-  m_commandBuffer->AddCommand(std::move(drawArray));
-
-  m_commandBuffer->AddCommand(std::move(endRenderPass));
+  m_commandBuffer->BeginRenderPass(BeginRenderPassInfo{
+      .renderPass = m_renderPass,
+      .frameBuffer = m_framebuffer,
+      .clearColor = {0, 0, 0, 1},
+  });
+  m_commandBuffer->BindPipeline(m_pipeline);
+  m_commandBuffer->BindVertexBuffer(m_vertexBuffer);
+  m_commandBuffer->BindDescriptorSet(BindDescriptorSetInfo{
+      .descriptorSet = m_descriptorSet,
+      .layouts = m_descriptorSetLayout,
+  });
+  m_commandBuffer->DrawArray(6, 1);
+  m_commandBuffer->EndRenderPass();
   m_commandBuffer->EndRecordCmd();
 }
 
@@ -183,11 +197,16 @@ BlinnPhongRenderPass::CreateFrameBuffer() {
   auto width = colorBuffer->GetWidth();
   auto height = colorBuffer->GetHeight();
 
+  std::shared_ptr colorBufferView = m_rhiFactory->CreateImageView();
+  colorBufferView->SetTexture(colorBuffer);
+  std::shared_ptr depthBufferView = m_rhiFactory->CreateImageView();
+  depthBufferView->SetTexture(depthBuffer);
+
   FrameBufferInfo createInfo{
       .width = width,
       .height = height,
       .renderPass = m_renderPass.get(),
-      .attachments = {colorBuffer, depthBuffer},
+      .attachments = {colorBufferView, depthBufferView},
   };
 
   m_framebuffer = m_rhiFactory->CreateFrameBuffer(createInfo);
@@ -199,41 +218,53 @@ BlinnPhongRenderPass::SetUniformBuffer(const Scene* scene) {
   auto pointLightView = Entity::GetAllEntity<PointLightComponent>(scene);
   uint32_t index = 0;
 
-  // set paralle light
-  for (const auto& [entity, lightComponent] : paralleLightView.each()) {
-    if (index >= maxLightsCount) {
-      LOG(WARNING) << FORMAT("the max count of light is {}", maxLightsCount);
+  // set direction light
+  constexpr int dirLightMaxCount = ShadowMappingRenderPass::MAX_LIGHT_COUNT;
+  constexpr size_t dirLightBufSize = sizeof(DirectionLightBlock);
+  const int directionLightCount = paralleLightView.size();
+  m_dirLightUboBlock.lightCount = std::min(directionLightCount, dirLightMaxCount);
+  for (int i = 0; i < directionLightCount; i++) {
+    if (i >= dirLightMaxCount) {
+      LOG(WARNING) << FORMAT("the max count of light is {}", dirLightMaxCount);
       break;
     }
-
+    const auto entity = paralleLightView[i];
+    const auto& lightComponent = paralleLightView.get<const ParallelLightComponent>(entity);
     auto pos = lightComponent.m_light.GetPos();
     auto color = lightComponent.m_light.GetColor();
+    auto farPlane = lightComponent.m_light.GetFarPlane();
     auto viewPos = scene->GetEditorCamrea()->GetPosition();
-    m_uniformBufferBlock.lights[index].pos = pos;
-    m_uniformBufferBlock.lights[index].color = color;
-    m_uniformBufferBlock.viewPos = viewPos;
-    index++;
+    m_dirLightUboBlock.lights[i].pos = pos;
+    m_dirLightUboBlock.lights[i].color = color;
+    m_dirLightUboBlock.lights[i].direction = lightComponent.m_light.GetDirection();
+    m_dirLightUboBlock.lights[i].view = lightComponent.m_light.GetViewMatrix();
+    m_dirLightUboBlock.lights[i].projection = lightComponent.m_light.GetProjectionMatrix();
+    m_dirLightUboBlock.viewPos = viewPos;
   }
+  m_dirLightUbo->SetData(&m_dirLightUboBlock, dirLightBufSize, 0);
 
   // set point light
-  for (const auto& [entity, lightComponent] : pointLightView.each()) {
-    if (index >= maxLightsCount) {
-      LOG(WARNING) << FORMAT("the max count of light is {}", maxLightsCount);
+  constexpr int pointLightMaxCount = PointLightShadowMappingRenderPass::MAX_LIGHT_COUNT;
+  constexpr size_t pointLightBufSize = sizeof(PointLightInfoBlock);
+  const int pointLightCount = pointLightView.size();
+  m_pointLightUniformBlock.pointLightCount = std::min(pointLightCount, pointLightMaxCount);
+  for (int i = 0; i < pointLightCount; i++) {
+    if (i >= pointLightMaxCount) {
+      LOG(WARNING) << FORMAT("the max count of light is {}", pointLightMaxCount);
       break;
     }
+    const auto entity = pointLightView[i];
+    const auto& lightComponent = pointLightView.get<const PointLightComponent>(entity);
     auto pos = lightComponent.m_light.GetPos();
     auto color = lightComponent.m_light.GetColor();
+    auto farPlane = lightComponent.m_light.GetFarPlane();
     auto viewPos = scene->GetEditorCamrea()->GetPosition();
-    m_uniformBufferBlock.lights[index].pos = pos;
-    m_uniformBufferBlock.lights[index].color = color;
-    m_uniformBufferBlock.viewPos = viewPos;
-    index++;
+    m_pointLightUniformBlock.lights[i].pos = pos;
+    m_pointLightUniformBlock.lights[i].color = color;
+    m_pointLightUniformBlock.lights[i].farPlane = farPlane;
+    m_pointLightUniformBlock.viewPos = viewPos;
   }
-
-  m_uniformBufferBlock.lightsCount = index;
-
-  auto bufferSize = sizeof(LightsInfo);
-  m_lightUniformBuffer->SetData(&m_uniformBufferBlock, bufferSize, 0);
+  m_pointLightUniformBuffer->SetData(&m_pointLightUniformBlock, pointLightBufSize, 0);
 }
 
 void

@@ -5,7 +5,7 @@
 
 namespace Marbas {
 
-class OpenGLRenderPass : public RenderPass {
+class OpenGLRenderPass final : public RenderPass {
  public:
   explicit OpenGLRenderPass(const RenderPassCreateInfo& createInfo) : RenderPass(createInfo) {}
 

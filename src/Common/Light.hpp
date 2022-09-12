@@ -77,6 +77,11 @@ class ParallelLight final : public Light {
     m_direction = direction;
   }
 
+  glm::vec3
+  GetDirection() const {
+    return m_direction;
+  }
+
  private:
   glm::vec3 m_direction = glm::vec3(0, 0, -1);
   float m_near = 0.1f;

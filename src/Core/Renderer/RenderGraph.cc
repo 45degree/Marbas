@@ -61,6 +61,7 @@ RenderGraph::Compile() {
   for (auto &&renderPassNode : m_deferredRenderPassNodes) {
     renderPassNode->CreateFrameBuffer();
     renderPassNode->OnInit();
+    renderPassNode->RecordClearDepthCommand();
   }
 
   for (auto &&renderPassNode : m_forwardRendererPassNodes) {

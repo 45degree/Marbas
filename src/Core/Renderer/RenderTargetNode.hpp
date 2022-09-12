@@ -7,10 +7,10 @@ namespace Marbas {
 
 struct RenderTargetNodeCreateInfo {
   String targetName;
-  Vector<std::tuple<GBufferTexutreType, uint32_t>> buffersType;
-  RHIFactory* rhiFactory;
-  uint32_t width;
-  uint32_t height;
+  Vector<GBufferType> buffersType;
+  RHIFactory* rhiFactory = nullptr;
+  uint32_t width = 1920;
+  uint32_t height = 1080;
 };
 
 class RenderTargetNode final {
@@ -29,7 +29,7 @@ class RenderTargetNode final {
 
  protected:
   String m_targetName;
-  Vector<std::tuple<GBufferTexutreType, uint32_t>> m_gbufferType;
+  Vector<GBufferType> m_gbufferType;
   RHIFactory* m_rhiFactory = nullptr;
 
   std::shared_ptr<GBuffer> m_gbuffer;

@@ -48,6 +48,14 @@ class RenderPassNode {
   virtual void
   CreateDescriptorSetLayout() = 0;
 
+  void
+  ClearDepth() {
+    m_clearCommandBuffer->SubmitCommand();
+  }
+
+  void
+  RecordClearDepthCommand();
+
   /**
    * @brief record the command
    */
@@ -105,9 +113,12 @@ class RenderPassNode {
   std::shared_ptr<FrameBuffer> m_framebuffer = nullptr;
   std::shared_ptr<RenderPass> m_renderPass = nullptr;
   std::shared_ptr<GraphicsPipeLine> m_pipeline = nullptr;
-  std::shared_ptr<CommandFactory> m_commandFactory = nullptr;
   std::unique_ptr<CommandBuffer> m_commandBuffer = nullptr;
   std::shared_ptr<ResourceManager> m_resourceManager = nullptr;
+
+  std::shared_ptr<RenderPass> m_clearDepthRenderPass = nullptr;
+  std::shared_ptr<CommandBuffer> m_clearCommandBuffer = nullptr;
+
   RHIFactory* m_rhiFactory = nullptr;
 };
 

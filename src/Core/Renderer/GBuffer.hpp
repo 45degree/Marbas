@@ -12,6 +12,14 @@ enum class GBufferTexutreType {
   POSITION,
   NORMALS,
   DEPTH,
+  SHADOW_MAP,
+  SHADOW_MAP_CUBE,
+};
+
+struct GBufferType {
+  GBufferTexutreType type = GBufferTexutreType::COLOR;
+  uint32_t levels = 1;
+  uint32_t layers = 1;
 };
 
 class GBuffer final {
@@ -20,16 +28,16 @@ class GBuffer final {
 
  public:
   void
-  AddTexture(GBufferTexutreType type, uint32_t level, RHIFactory* rhiFactory);
+  AddTexture(GBufferType gBufferType, RHIFactory* rhiFactory);
 
-  Vector<std::tuple<GBufferTexutreType, std::shared_ptr<Texture2D>>>
+  Vector<std::tuple<GBufferTexutreType, std::shared_ptr<Texture>>>
   GetAllTextures() const;
 
-  std::shared_ptr<Texture2D>
+  std::shared_ptr<Texture>
   GetTexture(GBufferTexutreType type) const;
 
  private:
-  std::unordered_map<GBufferTexutreType, std::shared_ptr<Texture2D>> m_textures;
+  std::unordered_map<GBufferTexutreType, std::shared_ptr<Texture>> m_textures;
   uint32_t m_width;
   uint32_t m_height;
 };

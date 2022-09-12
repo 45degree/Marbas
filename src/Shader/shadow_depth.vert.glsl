@@ -15,6 +15,7 @@ layout(std140, binding = 0) uniform CameraMatrix {
 };
 
 layout(std140, binding = 1) uniform LightMatrix {
+  int lightIndex;
   mat4 view;
   mat4 projection;
 };

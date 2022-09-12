@@ -101,6 +101,16 @@ SceneTreeWidget::DrawPopup() {
       m_scene->AddBillBoard(id, glm::vec3(0, 0, 0), m_PopupEntity);
     }
 
+    if (ImGui::BeginMenu(ICON_FA_CIRCLE_NODES "Add Light")) {
+      if (ImGui::MenuItem(ICON_FA_CIRCLE_NODES "Add Point Light")) {
+        m_scene->AddLight(LightType::PointLight, glm::vec3(0, 0, 0), m_PopupEntity);
+      }
+      if (ImGui::MenuItem(ICON_FA_CIRCLE_NODES "Add direction Light")) {
+        m_scene->AddLight(LightType::ParalleLight, glm::vec3(0, 0, 0), m_PopupEntity);
+      }
+      ImGui::EndMenu();
+    }
+
     ImGui::EndPopup();
   }
 }

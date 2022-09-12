@@ -37,18 +37,4 @@ class DescriptorSet {
   DescriptorSetLayout m_createInfo;
 };
 
-// class DynamicDescriptorSet {
-//  public:
-//   explicit DynamicDescriptorSet(const Vector<uint16_t>& bindingPoints)
-//       : m_bindingPoints(bindingPoints) {}
-//
-//  public:
-//   virtual void
-//   BindDynamicBuffer(uint16_t bindingPoint,
-//                     const std::shared_ptr<IDynamicBufferDescriptor>& dynamicBuffer) = 0;
-//
-//  protected:
-//   Vector<uint16_t> m_bindingPoints;
-// };
-
 }  // namespace Marbas

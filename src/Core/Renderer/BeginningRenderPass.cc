@@ -60,11 +60,16 @@ BeginningRenderPass::CreateFrameBuffer() {
   auto width = colorBuffer->GetWidth();
   auto height = colorBuffer->GetHeight();
 
+  std::shared_ptr colorBufferView = m_rhiFactory->CreateImageView();
+  colorBufferView->SetTexture(colorBuffer);
+  std::shared_ptr depthBufferView = m_rhiFactory->CreateImageView();
+  depthBufferView->SetTexture(depthBuffer);
+
   FrameBufferInfo createInfo{
       .width = width,
       .height = height,
       .renderPass = m_renderPass.get(),
-      .attachments = {colorBuffer, depthBuffer},
+      .attachments = {colorBufferView, depthBufferView},
   };
 
   m_framebuffer = m_rhiFactory->CreateFrameBuffer(createInfo);
@@ -83,26 +88,13 @@ BeginningRenderPass::RecordCommand(const Scene* scene) {
    * set command
    */
 
-  // set render pass command
-  auto beginRenderPass = m_commandFactory->CreateBeginRenderPassCMD();
-  beginRenderPass->SetRenderPass(m_renderPass);
-  beginRenderPass->SetFrameBuffer(m_framebuffer);
-  beginRenderPass->SetClearColor({0, 0, 0, 1});
-
-  auto endRenderPass = m_commandFactory->CreateEndRenderPassCMD();
-  endRenderPass->SetRenderPass(m_renderPass);
-  endRenderPass->SetFrameBuffer(m_framebuffer);
-
-  // set bind pipeline
-  auto bindPipeline = m_commandFactory->CreateBindPipelineCMD();
-  bindPipeline->SetPipeLine(m_pipeline);
-
-  /**
-   * begin to record command
-   */
   m_commandBuffer->BeginRecordCmd();
-  m_commandBuffer->AddCommand(std::move(beginRenderPass));
-  m_commandBuffer->AddCommand(std::move(endRenderPass));
+  m_commandBuffer->BeginRenderPass(BeginRenderPassInfo{
+      .renderPass = m_renderPass,
+      .frameBuffer = m_framebuffer,
+      .clearColor = {0, 0, 0, 1},
+  });
+  m_commandBuffer->EndRenderPass();
   m_commandBuffer->EndRecordCmd();
 }
 

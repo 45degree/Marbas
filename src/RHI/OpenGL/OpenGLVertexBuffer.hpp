@@ -6,7 +6,7 @@
 
 namespace Marbas {
 
-class OpenGLVertexBuffer : public VertexBuffer {
+class OpenGLVertexBuffer final : public VertexBuffer {
  public:
   explicit OpenGLVertexBuffer(uint32_t size);
   explicit OpenGLVertexBuffer(const void* data, uint32_t size);

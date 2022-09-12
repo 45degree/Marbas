@@ -95,7 +95,7 @@ RenderImage::Draw() {
    * push the render result into the image
    */
   imageSize = ImGui::GetContentRegionAvail();
-  auto textureId = const_cast<ImTextureID>(texture->GetTexture());
+  auto textureId = const_cast<ImTextureID>(texture->GetOriginHandle());
   auto ImagePos = ImGui::GetCursorPos();
   ImGui::Image(textureId, imageSize, ImVec2(0, 1), ImVec2(1, 0));
 
@@ -186,6 +186,14 @@ RenderImage::DrawLightManipulate() {
   auto entity = m_entity.value();
   if (Entity::HasComponent<PointLightComponent>(m_scene.get(), entity)) {
     auto& light = Entity::GetComponent<PointLightComponent>(m_scene.get(), entity).m_light;
+    glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0), light.GetPos());
+    ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
+                         ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL,
+                         glm::value_ptr(modelMatrix));
+    auto newPos = glm::vec3(glm::column(modelMatrix, 3));
+    light.SetPos(newPos);
+  } else if (Entity::HasComponent<ParallelLightComponent>(m_scene.get(), entity)) {
+    auto& light = Entity::GetComponent<ParallelLightComponent>(m_scene.get(), entity).m_light;
     glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0), light.GetPos());
     ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
                          ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL,
