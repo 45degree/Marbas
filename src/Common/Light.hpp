@@ -3,6 +3,11 @@
 #include "Common/Common.hpp"
 #include "Common/MathCommon.hpp"
 
+#ifdef _WIN32
+#undef near
+#undef far
+#endif
+
 namespace Marbas {
 
 class Light {

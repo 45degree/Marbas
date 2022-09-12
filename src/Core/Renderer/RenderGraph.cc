@@ -1,7 +1,5 @@
 #include "Core/Renderer/RenderGraph.hpp"
 
-#include "RHI/OpenGL/OpenGLFrameBuffer.hpp"
-
 namespace Marbas {
 
 void

@@ -6,6 +6,11 @@
 #include "RHI/RHI.hpp"
 #include "Tool/Uid.hpp"
 
+#ifdef _WIN32
+#undef near
+#undef far
+#endif
+
 namespace Marbas {
 
 struct RenderPassNodeCreateInfo {
