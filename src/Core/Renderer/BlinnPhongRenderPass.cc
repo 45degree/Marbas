@@ -3,7 +3,7 @@
 #include <nameof.hpp>
 
 #include "Core/Renderer/GeometryRenderPass.hpp"
-#include "Core/Renderer/PointLightShadowMappingRenderPass.hpp"
+#include "Core/Renderer/PointLightShadowMapRenderPass.hpp"
 #include "Core/Scene/Component/LightComponent.hpp"
 #include "RHI/Interface/Pipeline.hpp"
 
@@ -16,8 +16,8 @@ BlinnPhongRenderPassCreateInfo::BlinnPhongRenderPassCreateInfo() : DeferredRende
   passName = BlinnPhongRenderPass::renderPassName;
   inputResource = {
       GeometryRenderPass::geometryTargetName,
-      String(PointLightShadowMappingRenderPass::targetName),
-      String(ShadowMappingRenderPass::renderTarget),
+      String(PointLightShadowMapRenderPass::targetName),
+      String(DirectionLightShadowMapRenderPass::renderTarget),
   };
   outputResource = {BlinnPhongRenderPass::blinnPhongTargetName,
                     GeometryRenderPass::depthTargetName};
@@ -132,11 +132,11 @@ BlinnPhongRenderPass::OnInit() {
   auto gPositionBuffer = gBuffer->GetTexture(GBufferTexutreType::POSITION);
 
   auto pointShadowGBuffer =
-      m_inputTarget[String(PointLightShadowMappingRenderPass::targetName)]->GetGBuffer();
+      m_inputTarget[String(PointLightShadowMapRenderPass::targetName)]->GetGBuffer();
   auto pointShadowBuffer = pointShadowGBuffer->GetTexture(GBufferTexutreType::SHADOW_MAP_CUBE);
 
   auto dirShadowGBuffer =
-      m_inputTarget[String(ShadowMappingRenderPass::renderTarget)]->GetGBuffer();
+      m_inputTarget[String(DirectionLightShadowMapRenderPass::renderTarget)]->GetGBuffer();
   auto dirShadowBuffer = dirShadowGBuffer->GetTexture(GBufferTexutreType::SHADOW_MAP);
 
   m_descriptorSet->BindImage(0, gColorBuffer);
@@ -216,10 +216,9 @@ void
 BlinnPhongRenderPass::SetUniformBuffer(const Scene* scene) {
   auto paralleLightView = Entity::GetAllEntity<ParallelLightComponent>(scene);
   auto pointLightView = Entity::GetAllEntity<PointLightComponent>(scene);
-  uint32_t index = 0;
 
   // set direction light
-  constexpr int dirLightMaxCount = ShadowMappingRenderPass::MAX_LIGHT_COUNT;
+  constexpr int dirLightMaxCount = DirectionLightShadowMapRenderPass::MAX_LIGHT_COUNT;
   constexpr size_t dirLightBufSize = sizeof(DirectionLightBlock);
   const int directionLightCount = paralleLightView.size();
   m_dirLightUboBlock.lightCount = std::min(directionLightCount, dirLightMaxCount);
@@ -244,7 +243,7 @@ BlinnPhongRenderPass::SetUniformBuffer(const Scene* scene) {
   m_dirLightUbo->SetData(&m_dirLightUboBlock, dirLightBufSize, 0);
 
   // set point light
-  constexpr int pointLightMaxCount = PointLightShadowMappingRenderPass::MAX_LIGHT_COUNT;
+  constexpr int pointLightMaxCount = PointLightShadowMapRenderPass::MAX_LIGHT_COUNT;
   constexpr size_t pointLightBufSize = sizeof(PointLightInfoBlock);
   const int pointLightCount = pointLightView.size();
   m_pointLightUniformBlock.pointLightCount = std::min(pointLightCount, pointLightMaxCount);

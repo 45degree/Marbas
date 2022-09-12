@@ -4,9 +4,7 @@
 
 #include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
-#include "Core/Renderer/PointLightShadowMappingRenderPass.hpp"
 #include "RHI/Interface/Pipeline.hpp"
-#include "ShadowMappingRenderPass.hpp"
 
 namespace Marbas {
 

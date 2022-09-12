@@ -1,9 +1,8 @@
-#include "Core/Renderer/PointLightShadowMappingRenderPass.hpp"
+#include "Core/Renderer/PointLightShadowMapRenderPass.hpp"
 
 #include <nameof.hpp>
 
 #include "Core/Renderer/GeometryRenderPass.hpp"
-#include "Core/Renderer/ShadowMappingRenderPass.hpp"
 #include "Core/Scene/Component/LightComponent.hpp"
 #include "Core/Scene/Component/ShadowComponent.hpp"
 
@@ -22,13 +21,13 @@ GetMeshVertexInfoLayout() {
   return layouts;
 };
 
-PointLightShadowMappingRenderPassCreateInfo::PointLightShadowMappingRenderPassCreateInfo() {
-  passName = PointLightShadowMappingRenderPass::renderPassName;
+PointLightShadowMapRenderPassCreateInfo::PointLightShadowMapRenderPassCreateInfo() {
+  passName = PointLightShadowMapRenderPass::renderPassName;
   inputResource = {
       GeometryRenderPass::geometryTargetName,
   };
   outputResource = {
-      String(PointLightShadowMappingRenderPass::targetName),
+      String(PointLightShadowMapRenderPass::targetName),
   };
 }
 
@@ -36,13 +35,13 @@ PointLightShadowMappingRenderPassCreateInfo::PointLightShadowMappingRenderPassCr
  * point light shadow mapping render pass
  */
 
-PointLightShadowMappingRenderPass::PointLightShadowMappingRenderPass(const CreateInfo &createInfo)
+PointLightShadowMapRenderPass::PointLightShadowMapRenderPass(const CreateInfo &createInfo)
     : DeferredRenderPass(createInfo) {
   m_lightInfoUniformBuffer = m_rhiFactory->CreateUniformBuffer(sizeof(LightInfo));
 }
 
 void
-PointLightShadowMappingRenderPass::CreateRenderPass() {
+PointLightShadowMapRenderPass::CreateRenderPass() {
   RenderPassCreateInfo depthRenderPassCreateInfo{
       .attachments =
           {
@@ -57,20 +56,22 @@ PointLightShadowMappingRenderPass::CreateRenderPass() {
 }
 
 void
-PointLightShadowMappingRenderPass::CreateShader() {
+PointLightShadowMapRenderPass::CreateShader() {
   auto shaderContainer = m_resourceManager->GetContainer<ShaderResource>();
 
   // depth shader
   auto depthShaderRes = shaderContainer->CreateResource();
-  depthShaderRes->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/pointLightDepth.vert.glsl");
-  depthShaderRes->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/pointLightDepth.frag.glsl");
-  depthShaderRes->SetShaderStage(ShaderType::GEOMETRY_SHADER, "Shader/pointLightDepth.geom.glsl");
+  depthShaderRes->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/pointLightShadowMap.vert.glsl");
+  depthShaderRes->SetShaderStage(ShaderType::FRAGMENT_SHADER,
+                                 "Shader/pointLightShadowMap.frag.glsl");
+  depthShaderRes->SetShaderStage(ShaderType::GEOMETRY_SHADER,
+                                 "Shader/pointLightShadowMap.geom.glsl");
   depthShaderRes->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(depthShaderRes);
 }
 
 void
-PointLightShadowMappingRenderPass::CreateDescriptorSetLayout() {
+PointLightShadowMapRenderPass::CreateDescriptorSetLayout() {
   // depth decriptor set layout
   m_descriptorSetLayout = {
       DescriptorSetLayoutBinding{
@@ -95,10 +96,10 @@ PointLightShadowMappingRenderPass::CreateDescriptorSetLayout() {
 }
 
 void
-PointLightShadowMappingRenderPass::OnInit() {}
+PointLightShadowMapRenderPass::OnInit() {}
 
 void
-PointLightShadowMappingRenderPass::CreateFrameBuffer() {
+PointLightShadowMapRenderPass::CreateFrameBuffer() {
   const auto &targetGBuffer = m_outputTarget[String(targetName)]->GetGBuffer();
   auto shadowTexture = targetGBuffer->GetTexture(GBufferTexutreType::SHADOW_MAP_CUBE);
 
@@ -114,8 +115,8 @@ PointLightShadowMappingRenderPass::CreateFrameBuffer() {
 }
 
 void
-PointLightShadowMappingRenderPass::CreateBufferForEveryEntity(const entt::entity &entity,
-                                                              Scene *scene) {
+PointLightShadowMapRenderPass::CreateBufferForEveryEntity(const entt::entity &entity,
+                                                          Scene *scene) {
   DLOG_ASSERT(Entity::HasComponent<ShadowComponent>(scene, entity));
 
   auto &shadowComponent = Entity::GetComponent<ShadowComponent>(scene, entity);
@@ -131,7 +132,7 @@ PointLightShadowMappingRenderPass::CreateBufferForEveryEntity(const entt::entity
 }
 
 void
-PointLightShadowMappingRenderPass::SetUniformBuffer(const Scene *scene) {
+PointLightShadowMapRenderPass::SetUniformBuffer(const Scene *scene) {
   uint32_t index = 0;
   auto view = Entity::GetAllEntity<MeshComponent, ShadowComponent>(const_cast<Scene *>(scene));
   for (auto entity : view) {
@@ -153,7 +154,7 @@ PointLightShadowMappingRenderPass::SetUniformBuffer(const Scene *scene) {
 }
 
 void
-PointLightShadowMappingRenderPass::SetUniformBufferForLight(const Scene *scene, int lightIndex) {
+PointLightShadowMapRenderPass::SetUniformBufferForLight(const Scene *scene, int lightIndex) {
   auto lightView = Entity::GetAllEntity<PointLightComponent>(const_cast<Scene *>(scene));
   auto &light = lightView.get<PointLightComponent>(lightView[lightIndex]).m_light;
 
@@ -169,7 +170,7 @@ PointLightShadowMappingRenderPass::SetUniformBufferForLight(const Scene *scene, 
 }
 
 void
-PointLightShadowMappingRenderPass::RecordCommand(const Scene *scene) {
+PointLightShadowMapRenderPass::RecordCommand(const Scene *scene) {
   m_commandBuffer->Clear();
   // check framebuffer and renderpass
   DLOG_ASSERT(m_renderPass != nullptr);
@@ -226,7 +227,7 @@ PointLightShadowMappingRenderPass::RecordCommand(const Scene *scene) {
 }
 
 void
-PointLightShadowMappingRenderPass::CreatePipeline() {
+PointLightShadowMapRenderPass::CreatePipeline() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
   // depth pipeline
   auto depthShaderRes = shaderContainer->GetResource(m_shaderId);
@@ -244,8 +245,7 @@ PointLightShadowMappingRenderPass::CreatePipeline() {
 }
 
 void
-PointLightShadowMappingRenderPass::Execute(const Scene *scene,
-                                           const ResourceManager *resourceManager) {
+PointLightShadowMapRenderPass::Execute(const Scene *scene, const ResourceManager *resourceManager) {
   auto view = Entity::GetAllEntity<MeshComponent, ShadowComponent>(scene);
   auto lightView = Entity::GetAllEntity<PointLightComponent>(const_cast<Scene *>(scene));
 

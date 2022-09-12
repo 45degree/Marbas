@@ -5,12 +5,12 @@
 
 namespace Marbas {
 
-struct PointLightShadowMappingRenderPassCreateInfo final : public DeferredRenderPassCreateInfo {
-  PointLightShadowMappingRenderPassCreateInfo();
+struct PointLightShadowMapRenderPassCreateInfo final : public DeferredRenderPassCreateInfo {
+  PointLightShadowMapRenderPassCreateInfo();
 };
 
-class PointLightShadowMappingRenderPass final : public DeferredRenderPass {
-  using CreateInfo = PointLightShadowMappingRenderPassCreateInfo;
+class PointLightShadowMapRenderPass final : public DeferredRenderPass {
+  using CreateInfo = PointLightShadowMapRenderPassCreateInfo;
 
  public:
   static constexpr int MAX_LIGHT_COUNT = 3;
@@ -18,8 +18,8 @@ class PointLightShadowMappingRenderPass final : public DeferredRenderPass {
   static constexpr StringView targetName = "point light shadow";
 
  public:
-  explicit PointLightShadowMappingRenderPass(const CreateInfo& createInfo);
-  virtual ~PointLightShadowMappingRenderPass() = default;
+  explicit PointLightShadowMapRenderPass(const CreateInfo& createInfo);
+  virtual ~PointLightShadowMapRenderPass() = default;
 
  public:
   void

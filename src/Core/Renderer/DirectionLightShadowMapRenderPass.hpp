@@ -6,19 +6,19 @@
 
 namespace Marbas {
 
-struct ShadowMappingCreateInfo : public DeferredRenderPassCreateInfo {
-  ShadowMappingCreateInfo();
+struct DirectionLightShadowMapCreateInfo : public DeferredRenderPassCreateInfo {
+  DirectionLightShadowMapCreateInfo();
 };
 
-class ShadowMappingRenderPass : public DeferredRenderPass {
+class DirectionLightShadowMapRenderPass : public DeferredRenderPass {
  public:
   static constexpr int MAX_LIGHT_COUNT = 3;
   constexpr static StringView renderPassName = "shadow mapping render pass";
   constexpr static StringView renderTarget = "shadow mapping render target";
 
  public:
-  explicit ShadowMappingRenderPass(const ShadowMappingCreateInfo& createInfo);
-  virtual ~ShadowMappingRenderPass() = default;
+  explicit DirectionLightShadowMapRenderPass(const DirectionLightShadowMapCreateInfo& createInfo);
+  virtual ~DirectionLightShadowMapRenderPass() = default;
 
  public:
   void
@@ -73,7 +73,7 @@ class ShadowMappingRenderPass : public DeferredRenderPass {
 
  private:
   struct LightUniformBlock {
-    alignas(4) int lightIndex;
+    alignas(4) int lightIndex = 0;
     alignas(16) glm::mat4 view = glm::mat4(1.0);
     alignas(16) glm::mat4 projective = glm::mat4(1.0);
   } m_lightUniformBlock;

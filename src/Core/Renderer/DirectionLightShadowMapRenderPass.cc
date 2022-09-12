@@ -1,4 +1,4 @@
-#include "Core/Renderer/ShadowMappingRenderPass.hpp"
+#include "Core/Renderer/DirectionLightShadowMapRenderPass.hpp"
 
 #include <nameof.hpp>
 
@@ -28,13 +28,14 @@ GetMeshVertexInfoLayout() {
   return layouts;
 };
 
-ShadowMappingCreateInfo::ShadowMappingCreateInfo() : DeferredRenderPassCreateInfo() {
-  passName = ShadowMappingRenderPass::renderPassName;
+DirectionLightShadowMapCreateInfo::DirectionLightShadowMapCreateInfo()
+    : DeferredRenderPassCreateInfo() {
+  passName = DirectionLightShadowMapRenderPass::renderPassName;
   inputResource = {
       GeometryRenderPass::geometryTargetName,
   };
   outputResource = {
-      String(ShadowMappingRenderPass::renderTarget),
+      String(DirectionLightShadowMapRenderPass::renderTarget),
   };
 }
 
@@ -42,16 +43,17 @@ ShadowMappingCreateInfo::ShadowMappingCreateInfo() : DeferredRenderPassCreateInf
  * shadow mapping render pass
  */
 
-ShadowMappingRenderPass::ShadowMappingRenderPass(const ShadowMappingCreateInfo& createInfo)
+DirectionLightShadowMapRenderPass::DirectionLightShadowMapRenderPass(
+    const DirectionLightShadowMapCreateInfo& createInfo)
     : DeferredRenderPass(createInfo) {
   m_lightUniformBuffer = m_rhiFactory->CreateUniformBuffer(sizeof(LightUniformBlock));
 }
 
 void
-ShadowMappingRenderPass::OnInit() {}
+DirectionLightShadowMapRenderPass::OnInit() {}
 
 void
-ShadowMappingRenderPass::CreateRenderPass() {
+DirectionLightShadowMapRenderPass::CreateRenderPass() {
   // depth render pass
   RenderPassCreateInfo depthRenderPassCreateInfo{
       .attachments =
@@ -67,20 +69,23 @@ ShadowMappingRenderPass::CreateRenderPass() {
 }
 
 void
-ShadowMappingRenderPass::CreateShader() {
+DirectionLightShadowMapRenderPass::CreateShader() {
   auto shaderContainer = m_resourceManager->GetContainer<ShaderResource>();
 
   // depth shader
   auto depthShaderRes = shaderContainer->CreateResource();
-  depthShaderRes->SetShaderStage(ShaderType::VERTEX_SHADER, "Shader/shadow_depth.vert.glsl");
-  depthShaderRes->SetShaderStage(ShaderType::GEOMETRY_SHADER, "Shader/shadow_depth.geom.glsl");
-  depthShaderRes->SetShaderStage(ShaderType::FRAGMENT_SHADER, "Shader/shadow_depth.frag.glsl");
+  depthShaderRes->SetShaderStage(ShaderType::VERTEX_SHADER,
+                                 "Shader/directionLightShadowMap.vert.glsl");
+  depthShaderRes->SetShaderStage(ShaderType::GEOMETRY_SHADER,
+                                 "Shader/directionLightShadowMap.geom.glsl");
+  depthShaderRes->SetShaderStage(ShaderType::FRAGMENT_SHADER,
+                                 "Shader/directionLightShadowMap.frag.glsl");
   depthShaderRes->LoadResource(m_rhiFactory, m_resourceManager.get());
   m_shaderId = shaderContainer->AddResource(depthShaderRes);
 }
 
 void
-ShadowMappingRenderPass::CreateFrameBuffer() {
+DirectionLightShadowMapRenderPass::CreateFrameBuffer() {
   const auto& targetGBuffer = m_outputTarget[String(renderTarget)]->GetGBuffer();
   auto shadowTexture = targetGBuffer->GetTexture(GBufferTexutreType::SHADOW_MAP);
 
@@ -95,7 +100,7 @@ ShadowMappingRenderPass::CreateFrameBuffer() {
 }
 
 void
-ShadowMappingRenderPass::CreateDescriptorSetLayout() {
+DirectionLightShadowMapRenderPass::CreateDescriptorSetLayout() {
   // depth binding layout
   m_descriptorSetLayout = {
       DescriptorSetLayoutBinding{
@@ -118,7 +123,7 @@ ShadowMappingRenderPass::CreateDescriptorSetLayout() {
 }
 
 void
-ShadowMappingRenderPass::CreatePipeline() {
+DirectionLightShadowMapRenderPass::CreatePipeline() {
   auto shaderContainer = m_resourceManager->GetShaderResourceContainer();
 
   // depth pipeline
@@ -138,7 +143,7 @@ ShadowMappingRenderPass::CreatePipeline() {
 }
 
 void
-ShadowMappingRenderPass::SetUniformBuffer(const Scene* scene) {
+DirectionLightShadowMapRenderPass::SetUniformBuffer(const Scene* scene) {
   uint32_t index = 0;
   auto view = Entity::GetAllEntity<MeshComponent, ShadowComponent>(const_cast<Scene*>(scene));
   for (auto entity : view) {
@@ -160,7 +165,7 @@ ShadowMappingRenderPass::SetUniformBuffer(const Scene* scene) {
 }
 
 void
-ShadowMappingRenderPass::SetUniformBufferForLight(const Scene* scene, int lightIndex) {
+DirectionLightShadowMapRenderPass::SetUniformBufferForLight(const Scene* scene, int lightIndex) {
   auto lightView = Entity::GetAllEntity<ParallelLightComponent>(const_cast<Scene*>(scene));
   auto& light = lightView.get<ParallelLightComponent>(lightView[lightIndex]).m_light;
 
@@ -173,7 +178,7 @@ ShadowMappingRenderPass::SetUniformBufferForLight(const Scene* scene, int lightI
 }
 
 void
-ShadowMappingRenderPass::RecordCommand(const Scene* scene) {
+DirectionLightShadowMapRenderPass::RecordCommand(const Scene* scene) {
   m_commandBuffer->Clear();
   DLOG_ASSERT(m_renderPass != nullptr);
 
@@ -232,7 +237,8 @@ ShadowMappingRenderPass::RecordCommand(const Scene* scene) {
 }
 
 void
-ShadowMappingRenderPass::CreateBufferForEveryEntity(const entt::entity& entity, Scene* scene) {
+DirectionLightShadowMapRenderPass::CreateBufferForEveryEntity(const entt::entity& entity,
+                                                              Scene* scene) {
   DLOG_ASSERT(Entity::HasComponent<ShadowComponent>(scene, entity));
 
   auto& shadowComponent = Entity::GetComponent<ShadowComponent>(scene, entity);
@@ -248,7 +254,8 @@ ShadowMappingRenderPass::CreateBufferForEveryEntity(const entt::entity& entity, 
 }
 
 void
-ShadowMappingRenderPass::Execute(const Scene* scene, const ResourceManager* resourceManager) {
+DirectionLightShadowMapRenderPass::Execute(const Scene* scene,
+                                           const ResourceManager* resourceManager) {
   auto view = Entity::GetAllEntity<MeshComponent, ShadowComponent>(scene);
   auto lightView = Entity::GetAllEntity<ParallelLightComponent>(const_cast<Scene*>(scene));
 
@@ -266,9 +273,7 @@ ShadowMappingRenderPass::Execute(const Scene* scene, const ResourceManager* reso
   SetUniformBuffer(scene);
   auto lightCount = lightView.size();
   for (int i = 0; i < lightCount; i++) {
-    auto& lightComponent = lightView.get<ParallelLightComponent>(lightView[i]);
     SetUniformBufferForLight(scene, i);
-
     m_commandBuffer->SubmitCommand();
   }
 }

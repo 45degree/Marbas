@@ -4,7 +4,6 @@
 
 #include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
-#include "Core/Renderer/ShadowMappingRenderPass.hpp"
 #include "Core/Scene/Component/BillBoardComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
 

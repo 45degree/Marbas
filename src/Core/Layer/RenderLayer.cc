@@ -8,10 +8,10 @@
 #include "Core/Renderer/BillBoardRenderPass.hpp"
 #include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/CubeMapRenderPass.hpp"
+#include "Core/Renderer/DirectionLightShadowMapRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "Core/Renderer/GridRenderPass.hpp"
-#include "Core/Renderer/PointLightShadowMappingRenderPass.hpp"
-#include "Core/Renderer/ShadowMappingRenderPass.hpp"
+#include "Core/Renderer/PointLightShadowMapRenderPass.hpp"
 #include "RHI/RHI.hpp"
 
 namespace Marbas {
@@ -107,13 +107,13 @@ RenderLayer::OnAttach() {
 
   // shadow mapping render pass
   auto shadowMappingTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
-      .targetName = String(ShadowMappingRenderPass::renderTarget),
+      .targetName = String(DirectionLightShadowMapRenderPass::renderTarget),
       .buffersType =
           {
               GBufferType{
                   .type = GBufferTexutreType::SHADOW_MAP,
                   .levels = 1,
-                  .layers = ShadowMappingRenderPass::MAX_LIGHT_COUNT,
+                  .layers = DirectionLightShadowMapRenderPass::MAX_LIGHT_COUNT,
               },
           },
       .rhiFactory = m_rhiFactory,
@@ -122,8 +122,8 @@ RenderLayer::OnAttach() {
   });
   m_renderGraph->RegisterRenderTargetNode(shadowMappingTarget);
 
-  auto shadowMappingRenderPass = std::make_shared<ShadowMappingRenderPass>([&]() {
-    ShadowMappingCreateInfo createInfo;
+  auto shadowMappingRenderPass = std::make_shared<DirectionLightShadowMapRenderPass>([&]() {
+    DirectionLightShadowMapCreateInfo createInfo;
     createInfo.resourceManager = m_resourceManager;
     createInfo.rhiFactory = m_rhiFactory;
     createInfo.width = 4096;
@@ -134,13 +134,13 @@ RenderLayer::OnAttach() {
 
   // point light shadow mapping render pass
   auto pointLightshadowMappTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
-      .targetName = String(PointLightShadowMappingRenderPass::targetName),
+      .targetName = String(PointLightShadowMapRenderPass::targetName),
       .buffersType =
           {
               GBufferType{
                   .type = GBufferTexutreType::SHADOW_MAP_CUBE,
                   .levels = 1,
-                  .layers = PointLightShadowMappingRenderPass::MAX_LIGHT_COUNT,
+                  .layers = PointLightShadowMapRenderPass::MAX_LIGHT_COUNT,
               },
           },
       .rhiFactory = m_rhiFactory,
@@ -149,8 +149,8 @@ RenderLayer::OnAttach() {
   });
   m_renderGraph->RegisterRenderTargetNode(pointLightshadowMappTarget);
 
-  auto pointLightShadowMapRenderPass = std::make_shared<PointLightShadowMappingRenderPass>([&]() {
-    PointLightShadowMappingRenderPassCreateInfo createInfo;
+  auto pointLightShadowMapRenderPass = std::make_shared<PointLightShadowMapRenderPass>([&]() {
+    PointLightShadowMapRenderPassCreateInfo createInfo;
     createInfo.resourceManager = m_resourceManager;
     createInfo.rhiFactory = m_rhiFactory;
     createInfo.width = 2048;

@@ -6,8 +6,6 @@
 
 #include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
-#include "Core/Renderer/PointLightShadowMappingRenderPass.hpp"
-#include "Core/Renderer/ShadowMappingRenderPass.hpp"
 #include "Core/Scene/Component/CubeMapComponent.hpp"
 
 namespace Marbas {
