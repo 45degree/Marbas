@@ -107,4 +107,25 @@ OpenGLDescriptorSet::Bind(const Vector<DynamicBufferPiece>& bufferPiece) const {
   }
 }
 
+void
+OpenGLDescriptorSet::UnBind() const {
+  for (auto& [bindingPoint, bufferDescriptor] : m_bufferDescripor) {
+    bufferDescriptor->UnBind();
+  }
+
+  for (auto& [bindingPoint, imageDescriptor] : m_imageDescriptor) {
+    if (imageDescriptor != nullptr) {
+      imageDescriptor->UnBind();
+    }
+  }
+
+  for (int i = 0, j = 0; i < m_createInfo.size(); i++) {
+    if (m_createInfo[i].type != BufferDescriptorType::DYNAMIC_UNIFORM_BUFFER) continue;
+    auto bindingPoint = m_createInfo[i].bindingPoint;
+    const auto& buffer = m_dynamicBuffer.at(bindingPoint);
+    buffer->UnBind();
+    j++;
+  }
+}
+
 }  // namespace Marbas

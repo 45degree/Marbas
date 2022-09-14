@@ -19,15 +19,19 @@ class OpenGLUniformBuffer final : public UniformBuffer, IOpenGLBindable {
   void
   Bind(uint16_t bindingPoint) const noexcept override {
     glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, m_target);
+    m_bindingPoint = bindingPoint;
   }
 
   void
   UnBind() const noexcept override {
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    if (m_bindingPoint.has_value()) {
+      glBindBufferBase(GL_UNIFORM_BUFFER, *m_bindingPoint, 0);
+    }
   }
 
  private:
   GLuint m_target;
+  mutable std::optional<uint16_t> m_bindingPoint;
 };
 
 class OpenGLDynamicUniformBuffer final : public DynamicUniformBuffer, IOpenGLDynamicBindable {
@@ -42,15 +46,19 @@ class OpenGLDynamicUniformBuffer final : public DynamicUniformBuffer, IOpenGLDyn
   void
   Bind(uint16_t bindingPoint, uint32_t offset, uint32_t size) const noexcept override {
     glBindBufferRange(GL_UNIFORM_BUFFER, bindingPoint, m_target, offset, size);
+    m_bindingPoint = bindingPoint;
   }
 
   void
   UnBind() const noexcept override {
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    if (m_bindingPoint.has_value()) {
+      glBindBufferBase(GL_UNIFORM_BUFFER, *m_bindingPoint, 0);
+    }
   }
 
  private:
   GLuint m_target;
+  mutable std::optional<uint16_t> m_bindingPoint;
 };
 
 }  // namespace Marbas

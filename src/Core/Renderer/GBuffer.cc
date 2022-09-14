@@ -48,6 +48,14 @@ GBuffer::AddTexture(GBufferType gBufferType, RHIFactory* rhiFactory) {
       desc.arrayLayer = 1;
       texture = rhiFactory->CreateTexture(desc);
       break;
+    case GBufferTexutreType::AMBIENT_OCCLUSION:
+    case GBufferTexutreType::ROUGHTNESS:
+    case GBufferTexutreType::METALLIC:
+      desc.format = TextureFormat::R32;
+      desc.textureType = TextureType::TEXTURE2D;
+      desc.arrayLayer = 1;
+      texture = rhiFactory->CreateTexture(desc);
+      break;
     case GBufferTexutreType::SHADOW_MAP:
       desc.format = TextureFormat::DEPTH;
       desc.textureType = TextureType::TEXTURE2D_ARRAY;

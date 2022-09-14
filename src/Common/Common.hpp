@@ -12,6 +12,7 @@
 
 // format marco
 #define FORMAT(Str, ...) folly::sformat(Str, __VA_ARGS__)
+#define ROUND_UP(s, n) (((s) + (n)-1) & (~((n)-1)))
 #define PATH_TO_CONST_CHAR(Path) reinterpret_cast<const char*>(Path.c_str())
 
 namespace Marbas {

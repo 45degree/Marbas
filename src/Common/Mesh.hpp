@@ -11,6 +11,8 @@ struct Mesh {
   Vector<Vertex> m_vertices;
   Vector<uint32_t> m_indices;
   std::optional<Uid> m_materialId = std::nullopt;
+
+  bool m_needLoad = true;
 };
 
 }  // namespace Marbas

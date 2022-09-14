@@ -2,6 +2,7 @@
 
 #include <nameof.hpp>
 
+#include "Core/Common.hpp"
 #include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/DeferredRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
@@ -14,19 +15,6 @@
 #include "RHI/Interface/RenderPass.hpp"
 
 namespace Marbas {
-
-static Vector<ElementLayout>
-GetMeshVertexInfoLayout() {
-  Vector<ElementLayout> layouts{
-      ElementLayout{0, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
-      ElementLayout{1, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
-      ElementLayout{2, ElementType::FLOAT, sizeof(float), 2, false, 0, 0},
-  };
-
-  ElementLayout::CalculateLayout(layouts);
-
-  return layouts;
-};
 
 DirectionLightShadowMapCreateInfo::DirectionLightShadowMapCreateInfo()
     : DeferredRenderPassCreateInfo() {

@@ -29,6 +29,9 @@ class OpenGLDescriptorSet final : public DescriptorSet {
   void
   Bind(const Vector<DynamicBufferPiece>& bufferPiece) const;
 
+  void
+  UnBind() const;
+
  private:
   std::unordered_map<uint16_t, std::shared_ptr<OpenGLUniformBuffer>> m_bufferDescripor;
   std::unordered_map<uint16_t, std::shared_ptr<OpenGLTexture>> m_imageDescriptor;

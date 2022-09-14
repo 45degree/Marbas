@@ -12,6 +12,9 @@ enum class GBufferTexutreType {
   POSITION,
   NORMALS,
   DEPTH,
+  AMBIENT_OCCLUSION,
+  ROUGHTNESS,
+  METALLIC,
   SHADOW_MAP,
   SHADOW_MAP_CUBE,
 };

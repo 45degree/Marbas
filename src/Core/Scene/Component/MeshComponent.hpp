@@ -25,6 +25,10 @@ struct MeshComponent {
 
   struct UniformBufferBlockData {
     alignas(16) glm::mat4 model = glm::mat4(1.0);
+    alignas(4) bool hasNormalTex = false;
+    alignas(4) bool hasAOTex = false;
+    alignas(4) bool hasRoughnessTex = false;
+    alignas(4) bool hasMetallicTex = false;
   } m_uniformBufferData;
 
   std::shared_ptr<MeshComponent_Impl> m_impldata = nullptr;

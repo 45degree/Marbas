@@ -2,6 +2,7 @@
 
 #include <nameof.hpp>
 
+#include "Core/Common.hpp"
 #include "Core/Renderer/BeginningRenderPass.hpp"
 #include "Core/Scene/Component/MeshComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
@@ -12,19 +13,6 @@ namespace Marbas {
 const String GeometryRenderPass::depthTargetName = "GeometryDepthTexture";
 const String GeometryRenderPass::geometryTargetName = "GeometryColorNormalTexture";
 const String GeometryRenderPass::renderPassName = "GeometryRenderPass";
-
-static Vector<ElementLayout>
-GetMeshVertexInfoLayout() {
-  Vector<ElementLayout> layouts{
-      ElementLayout{0, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
-      ElementLayout{1, ElementType::FLOAT, sizeof(float), 3, false, 0, 0},
-      ElementLayout{2, ElementType::FLOAT, sizeof(float), 2, false, 0, 0},
-  };
-
-  ElementLayout::CalculateLayout(layouts);
-
-  return layouts;
-};
 
 GeometryRenderPassCreatInfo::GeometryRenderPassCreatInfo() : DeferredRenderPassCreateInfo() {
   passName = GeometryRenderPass::renderPassName;
@@ -45,17 +33,38 @@ GeometryRenderPass::CreateRenderPass() {
       .attachments =
           {
               AttachmentDescription{
+                  // color
                   .format = TextureFormat::RGBA,
                   .type = AttachmentType::Color,
                   .loadOp = AttachmentLoadOp::Ignore,
               },
               AttachmentDescription{
+                  // normal
                   .format = TextureFormat::RGB32F,
                   .type = AttachmentType::Color,
                   .loadOp = AttachmentLoadOp::Clear,
               },
               AttachmentDescription{
+                  // position
                   .format = TextureFormat::RGB32F,
+                  .type = AttachmentType::Color,
+                  .loadOp = AttachmentLoadOp::Clear,
+              },
+              AttachmentDescription{
+                  // Ambient Occlusion Texture
+                  .format = TextureFormat::R32,
+                  .type = AttachmentType::Color,
+                  .loadOp = AttachmentLoadOp::Clear,
+              },
+              AttachmentDescription{
+                  // roughtness Texture
+                  .format = TextureFormat::R32,
+                  .type = AttachmentType::Color,
+                  .loadOp = AttachmentLoadOp::Clear,
+              },
+              AttachmentDescription{
+                  // metaliic Texture
+                  .format = TextureFormat::R32,
                   .type = AttachmentType::Color,
                   .loadOp = AttachmentLoadOp::Clear,
               },
@@ -89,12 +98,29 @@ GeometryRenderPass::CreateDescriptorSetLayout() {
       .bindingPoint = 1,
   });
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // albedo texture
       .isBuffer = false,
       .bindingPoint = 0,
   });
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // ambient occlusion texture
       .isBuffer = false,
       .bindingPoint = 1,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // normal texture
+      .isBuffer = false,
+      .bindingPoint = 2,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // roughness texture
+      .isBuffer = false,
+      .bindingPoint = 3,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // metallic texture
+      .isBuffer = false,
+      .bindingPoint = 4,
   });
 }
 
@@ -122,6 +148,9 @@ GeometryRenderPass::CreateFrameBuffer() {
   auto normalBuffer = targetGBuffer->GetTexture(GBufferTexutreType::NORMALS);
   auto colorBuffer = targetGBuffer->GetTexture(GBufferTexutreType::COLOR);
   auto positionBuffer = targetGBuffer->GetTexture(GBufferTexutreType::POSITION);
+  auto ambientOcclusion = targetGBuffer->GetTexture(GBufferTexutreType::AMBIENT_OCCLUSION);
+  auto roughness = targetGBuffer->GetTexture(GBufferTexutreType::ROUGHTNESS);
+  auto metallic = targetGBuffer->GetTexture(GBufferTexutreType::METALLIC);
 
   const auto& depthGBuffer = m_outputTarget[depthTargetName]->GetGBuffer();
   auto depthBuffer = depthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
@@ -142,12 +171,27 @@ GeometryRenderPass::CreateFrameBuffer() {
   positionBufferView->SetTexture(positionBuffer);
   std::shared_ptr depthBufferView = m_rhiFactory->CreateImageView();
   depthBufferView->SetTexture(depthBuffer);
+  std::shared_ptr ambientOcclusionView = m_rhiFactory->CreateImageView();
+  ambientOcclusionView->SetTexture(ambientOcclusion);
+  std::shared_ptr roughtnessView = m_rhiFactory->CreateImageView();
+  roughtnessView->SetTexture(roughness);
+  std::shared_ptr metallicView = m_rhiFactory->CreateImageView();
+  metallicView->SetTexture(metallic);
 
   FrameBufferInfo createInfo{
       .width = width,
       .height = height,
       .renderPass = m_renderPass.get(),
-      .attachments = {colorBufferView, normalBufferView, positionBufferView, depthBufferView},
+      .attachments =
+          {
+              colorBufferView,
+              normalBufferView,
+              positionBufferView,
+              ambientOcclusionView,
+              roughtnessView,
+              metallicView,
+              depthBufferView,
+          },
   };
 
   m_framebuffer = m_rhiFactory->CreateFrameBuffer(createInfo);
@@ -165,7 +209,7 @@ GeometryRenderPass::RecordCommand(const Scene* scene) {
   DLOG_ASSERT(m_pipeline != nullptr);
 
   // recreate dynamic uniform buffer
-  auto bufferSize = view.size() * sizeof(MeshComponent::UniformBufferBlockData);
+  auto bufferSize = view.size() * ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
   m_dynamicUniforBuffer = m_rhiFactory->CreateDynamicUniforBuffer(bufferSize);
 
   /**
@@ -212,8 +256,8 @@ GeometryRenderPass::RecordCommand(const Scene* scene) {
           .layouts = m_descriptorSetLayout,
       };
       if (implData->materialResource != nullptr) {
-        auto size = sizeof(MeshComponent::UniformBufferBlockData);
-        auto offset = sizeof(MeshComponent::UniformBufferBlockData) * meshIndex;
+        auto size = ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
+        auto offset = size * meshIndex;
         bindDescriptorSetInfo.bufferPiece = {
             DynamicBufferPiece{
                 .offset = static_cast<uint32_t>(offset),
@@ -239,11 +283,14 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* sc
   if (!Entity::HasComponent<MeshComponent>(scene, mesh)) return;
 
   auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, mesh);
-  if (meshComponent.m_impldata != nullptr) return;
-
-  auto implData = std::make_shared<MeshComponent_Impl>();
+  std::shared_ptr<MeshComponent_Impl> implData = meshComponent.m_impldata;
+  if (implData == nullptr) {
+    implData = std::make_shared<MeshComponent_Impl>();
+    meshComponent.m_impldata = implData;
+  }
 
   auto _mesh = meshComponent.m_mesh;
+  if (!_mesh->m_needLoad) return;
 
   // create vertex buffer and index buffer
   const auto& vertices = _mesh->m_vertices;
@@ -257,7 +304,9 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* sc
   implData->indexBuffer = std::move(indexBuffer);
 
   // create descriptor Set
-  implData->descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
+  if (implData->descriptorSet == nullptr) {
+    implData->descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
+  }
   implData->descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
 
   // load material
@@ -266,21 +315,37 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* sc
     auto materialResource = m_resourceManager->GetMaterialResourceContainer()->GetResource(id);
     materialResource->LoadResource(m_rhiFactory, m_resourceManager.get());
 
-    auto diffuseTexture = materialResource->GetDiffuseTexture();
-    auto ambientTexture = materialResource->GetAmbientTexture();
+    auto diffuseTexture = materialResource->GetAlbedoTexture();
+    auto ambientTexture = materialResource->GetAmbientOcclusionTexture();
+    auto roughtnessTexture = materialResource->GetRoughnessTexture();
+    auto normalTexture = materialResource->GetNormalTexture();
+    auto metallicTexture = materialResource->GetMetallicTexture();
+
     if (diffuseTexture != nullptr) {
       implData->descriptorSet->BindImage(0, diffuseTexture);
     }
     if (ambientTexture != nullptr) {
       implData->descriptorSet->BindImage(1, ambientTexture);
     }
+    if (normalTexture != nullptr) {
+      implData->descriptorSet->BindImage(2, normalTexture);
+    }
+    if (roughtnessTexture != nullptr) {
+      implData->descriptorSet->BindImage(3, roughtnessTexture);
+    }
+    if (metallicTexture != nullptr) {
+      implData->descriptorSet->BindImage(4, metallicTexture);
+    }
+
     implData->materialResource = materialResource;
   }
-  meshComponent.m_impldata = implData;
+  _mesh->m_needLoad = false;
 }
 
 void
 GeometryRenderPass::SetUniformBuffer(const Scene* scene) {
+  auto materialContainer = m_resourceManager->GetMaterialResourceContainer();
+
   // get matrix
   const auto editorCamera = scene->GetEditorCamrea();
   UpdateCameraUniformBuffer(editorCamera.get());
@@ -289,14 +354,19 @@ GeometryRenderPass::SetUniformBuffer(const Scene* scene) {
   auto view = Entity::GetAllEntity<MeshComponent>(const_cast<Scene*>(scene));
   for (const auto& [entity, meshComponent] : view.each()) {
     if (meshComponent.m_impldata == nullptr) continue;
-    auto offset = index * sizeof(MeshComponent::UniformBufferBlockData);
-    auto size = sizeof(MeshComponent::UniformBufferBlockData);
+    auto size = ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
+    auto offset = index * size;
 
     if (!meshComponent.m_model.expired()) {
       const auto model = meshComponent.m_model.lock();
       const auto& modelMatrix = model->GetModelMatrix();
       meshComponent.m_uniformBufferData.model = modelMatrix;
     }
+    auto material = materialContainer->GetResource(*meshComponent.m_mesh->m_materialId);
+    meshComponent.m_uniformBufferData.hasAOTex = material->HasAmbientOcclusionTexture();
+    meshComponent.m_uniformBufferData.hasNormalTex = material->HasNormalTexture();
+    meshComponent.m_uniformBufferData.hasRoughnessTex = material->HasRoughnessTexture();
+    meshComponent.m_uniformBufferData.hasMetallicTex = material->HasMetallicTexture();
 
     m_dynamicUniforBuffer->SetData(&meshComponent.m_uniformBufferData, size, offset);
     index++;
@@ -310,7 +380,7 @@ GeometryRenderPass::Execute(const Scene* scene, const ResourceManager* resourceM
     CreateBufferForEveryEntity(entity, const_cast<Scene*>(scene));
   }
 
-  auto bufferSize = view.size() * sizeof(MeshComponent::UniformBufferBlockData);
+  auto bufferSize = view.size() * ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
   if (m_dynamicUniforBuffer == nullptr || bufferSize != m_dynamicUniforBuffer->GetSize()) {
     RecordCommand(scene);
   }

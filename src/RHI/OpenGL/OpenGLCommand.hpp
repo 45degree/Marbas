@@ -55,7 +55,9 @@ class OpenGLBindDescriptorSet final : public IOpenGLCommand<OpenGLBindDescriptor
   }
 
   void
-  OnEndRenderPass() const {}
+  OnEndRenderPass() const {
+    m_openGLDescriptor->UnBind();
+  }
 
  private:
   std::shared_ptr<OpenGLDescriptorSet> m_openGLDescriptor = nullptr;

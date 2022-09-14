@@ -125,19 +125,8 @@ OpenGLTexture::OpenGLTexture(const ImageDesc& desc) : Texture(desc) {
 
 void
 OpenGLTexture::UnBind() const noexcept {
-  switch (m_imageDesc.textureType) {
-    case TextureType::TEXTURE2D:
-      glBindTexture(GL_TEXTURE_2D, 0);
-      break;
-    case TextureType::CUBEMAP:
-      glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-      break;
-    case TextureType::TEXTURE2D_ARRAY:
-      glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-      break;
-    case TextureType::CUBEMAP_ARRAY:
-      glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, 0);
-      break;
+  if (m_bindingPoint.has_value()) {
+    glBindTextureUnit(*m_bindingPoint, 0);
   }
 }
 

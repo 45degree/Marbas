@@ -1,5 +1,6 @@
 #include "App/Editor/Widget/Information/ModelInformation.hpp"
 
+#include "App/Editor/Widget/FileDialog.hpp"
 #include "Core/Scene/Component/ModelComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
 
@@ -11,26 +12,119 @@
 namespace Marbas {
 
 static void
-ShowMaterial(const Mesh* mesh, ResourceManager* resourceManager) {
+ShowMaterial(Mesh* mesh, ResourceManager* resourceManager) {
   auto container = resourceManager->GetMaterialResourceContainer();
   if (!mesh->m_materialId.has_value()) return;
   auto materialRes = container->GetResource(*(mesh->m_materialId));
-  auto ambientTexture = materialRes->GetAmbientTexture();
-  auto diffuseTexture = materialRes->GetDiffuseTexture();
+  auto ambientTexture = materialRes->GetAmbientOcclusionTexture();
+  auto diffuseTexture = materialRes->GetAlbedoTexture();
+  auto normalTexture = materialRes->GetNormalTexture();
+  auto roughtnessTexture = materialRes->GetRoughnessTexture();
+  auto metallicTexture = materialRes->GetMetallicTexture();
 
   auto regionSize = ImGui::GetContentRegionAvail();
-  ImGui::Text("ambient Texture:");
-  if (ambientTexture != nullptr) {
-    ImGui::Image(ambientTexture->GetOriginHandle(), ImVec2(regionSize.x, regionSize.x));
-  } else {
-    ImGui::Text("don't have ambient Texture");
-  }
 
   ImGui::Text("diffuse Texture:");
+  if (ImGui::Button("change texture")) {
+    FileDialog fileDialog("jpg,png");
+    fileDialog.Open(".");
+    if (fileDialog.GetResult().has_value()) {
+      auto imagePath = fileDialog.GetResult().value();
+      auto textureContainer = resourceManager->GetTexture2DResourceContainer();
+      auto textureResource = textureContainer->CreateResource(imagePath);
+      textureContainer->AddResource(textureResource);
+      materialRes->SetAlbedoTexture(textureResource);
+      mesh->m_needLoad = true;
+    }
+  }
+
   if (diffuseTexture != nullptr) {
     ImGui::Image(diffuseTexture->GetOriginHandle(), ImVec2(regionSize.x, regionSize.x));
   } else {
     ImGui::Text("don't have diffuse Texture");
+  }
+
+  ImGui::Separator();
+
+  if (ImGui::Button("change AO texture")) {
+    FileDialog fileDialog("jpg,png");
+    fileDialog.Open(".");
+    if (fileDialog.GetResult().has_value()) {
+      auto imagePath = fileDialog.GetResult().value();
+      auto textureContainer = resourceManager->GetTexture2DResourceContainer();
+      auto textureResource = textureContainer->CreateResource(imagePath);
+      textureContainer->AddResource(textureResource);
+      materialRes->SetAmbientOcclusionTexture(textureResource);
+      mesh->m_needLoad = true;
+    }
+  }
+  ImGui::Text("Ambient Occlusion Texture:");
+  if (ambientTexture != nullptr) {
+    ImGui::Image(ambientTexture->GetOriginHandle(), ImVec2(regionSize.x, regionSize.x));
+  } else {
+    ImGui::Text("don't have Ambient Occlusion Texture");
+  }
+
+  ImGui::Separator();
+  if (ImGui::Button("change normal texture")) {
+    FileDialog fileDialog("jpg,png");
+    fileDialog.Open(".");
+    if (fileDialog.GetResult().has_value()) {
+      auto imagePath = fileDialog.GetResult().value();
+      auto textureContainer = resourceManager->GetTexture2DResourceContainer();
+      auto textureResource = textureContainer->CreateResource(imagePath);
+      textureContainer->AddResource(textureResource);
+      materialRes->SetNormalTexture(textureResource);
+      mesh->m_needLoad = true;
+    }
+  }
+  ImGui::Text("Normal Texture:");
+  if (normalTexture != nullptr) {
+    ImGui::Image(normalTexture->GetOriginHandle(), ImVec2(regionSize.x, regionSize.x));
+  } else {
+    ImGui::Text("don't have normal Texture");
+  }
+
+  ImGui::Separator();
+
+  if (ImGui::Button("change roughness texture")) {
+    FileDialog fileDialog("jpg,png");
+    fileDialog.Open(".");
+    if (fileDialog.GetResult().has_value()) {
+      auto imagePath = fileDialog.GetResult().value();
+      auto textureContainer = resourceManager->GetTexture2DResourceContainer();
+      auto textureResource = textureContainer->CreateResource(imagePath);
+      textureContainer->AddResource(textureResource);
+      materialRes->SetRoughnessTexture(textureResource);
+      mesh->m_needLoad = true;
+    }
+  }
+  ImGui::Text("Roughness Texture:");
+  if (roughtnessTexture != nullptr) {
+    ImGui::Image(roughtnessTexture->GetOriginHandle(), ImVec2(regionSize.x, regionSize.x));
+  } else {
+    ImGui::Text("don't have normal Texture");
+  }
+
+  ImGui::Separator();
+
+  if (ImGui::Button("change metallic texture")) {
+    FileDialog fileDialog("jpg,png");
+    fileDialog.Open(".");
+    if (fileDialog.GetResult().has_value()) {
+      auto imagePath = fileDialog.GetResult().value();
+      auto textureContainer = resourceManager->GetTexture2DResourceContainer();
+      auto textureResource = textureContainer->CreateResource(imagePath);
+      textureContainer->AddResource(textureResource);
+      materialRes->SetMetallicTexture(textureResource);
+      mesh->m_needLoad = true;
+    }
+  }
+  ImGui::Text("Metallic Texture:");
+  if (metallicTexture != nullptr) {
+    ImGui::Image(metallicTexture->GetOriginHandle(), ImVec2(regionSize.x, regionSize.x));
+  } else {
+    ImGui::Text("don't have metallic Texture");
   }
 }
 

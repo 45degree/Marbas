@@ -220,7 +220,20 @@ OpenGLRHIFactory::CreateTexture2D(const Path& imagePath, uint32_t level) const {
   // get hash code of the image
   // auto hashCode = folly::hash::fnv32_buf(data, static_cast<size_t>(width) * height * nrChannels);
 
-  formatType = nrChannels == 4 ? TextureFormat::RGBA : TextureFormat::RGB;
+  switch (nrChannels) {
+    case 1:
+      formatType = TextureFormat::RED;
+      break;
+    case 2:
+      formatType = TextureFormat::RG;
+      break;
+    case 3:
+      formatType = TextureFormat::RGB;
+      break;
+    case 4:
+      formatType = TextureFormat::RGBA;
+      break;
+  }
 
   ImageDesc desc{
       .textureType = TextureType::TEXTURE2D,

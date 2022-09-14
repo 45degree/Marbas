@@ -12,15 +12,33 @@ MaterialResource::LoadResource(RHIFactory* rhiFactory, const ResourceManager* re
     }
   }
 
-  if (m_diffuseTexture != nullptr) {
-    if (!m_diffuseTexture->IsLoad()) {
-      m_diffuseTexture->LoadResource(rhiFactory, resourceManager);
+  if (m_albedoTexture != nullptr) {
+    if (!m_albedoTexture->IsLoad()) {
+      m_albedoTexture->LoadResource(rhiFactory, resourceManager);
     }
   }
 
-  if (m_ambientTexture != nullptr) {
-    if (!m_ambientTexture->IsLoad()) {
-      m_ambientTexture->LoadResource(rhiFactory, resourceManager);
+  if (m_AOTexture != nullptr) {
+    if (!m_AOTexture->IsLoad()) {
+      m_AOTexture->LoadResource(rhiFactory, resourceManager);
+    }
+  }
+
+  if (m_normalTexture != nullptr) {
+    if (!m_normalTexture->IsLoad()) {
+      m_normalTexture->LoadResource(rhiFactory, resourceManager);
+    }
+  }
+
+  if (m_metallicTexture != nullptr) {
+    if (!m_metallicTexture->IsLoad()) {
+      m_metallicTexture->LoadResource(rhiFactory, resourceManager);
+    }
+  }
+
+  if (m_roughnessTexture != nullptr) {
+    if (!m_roughnessTexture->IsLoad()) {
+      m_roughnessTexture->LoadResource(rhiFactory, resourceManager);
     }
   }
 

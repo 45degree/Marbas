@@ -38,6 +38,8 @@ ReadMeshFromNode(const aiMesh* aMesh, const aiScene* aScene, const Path& current
   for (unsigned int i = 0; i < aMesh->mNumVertices; i++) {
     auto vertex = aMesh->mVertices[i];
     auto normal = aMesh->mNormals[i];
+    auto tangents = aMesh->mTangents[i];
+    auto bitangents = aMesh->mBitangents[i];
 
     Vertex vertexInfo{
         .posX = vertex.x,
@@ -46,6 +48,12 @@ ReadMeshFromNode(const aiMesh* aMesh, const aiScene* aScene, const Path& current
         .normalX = normal.x,
         .normalY = normal.y,
         .normalZ = normal.z,
+        .tangentX = tangents.x,
+        .tangentY = tangents.y,
+        .tangentZ = tangents.z,
+        .bitangentX = bitangents.x,
+        .bitangentY = bitangents.y,
+        .bitangentZ = bitangents.z,
     };
 
     if (texture == nullptr) {
@@ -74,21 +82,31 @@ ReadMeshFromNode(const aiMesh* aMesh, const aiScene* aScene, const Path& current
     auto materialResourceContainer = resourceManager->GetMaterialResourceContainer();
     auto diffuseTexture = LoadTexturesFromMaterial(material, aiTextureType_DIFFUSE, current,
                                                    textureResourceContainer);
-    auto ambientTexture = LoadTexturesFromMaterial(material, aiTextureType_AMBIENT, current,
-                                                   textureResourceContainer);
-    auto diffusePBRTexture = LoadTexturesFromMaterial(material, aiTextureType_DIFFUSE_ROUGHNESS,
-                                                      current, textureResourceContainer);
-
-    auto ambientPBRTexture = LoadTexturesFromMaterial(material, aiTextureType_AMBIENT_OCCLUSION,
-                                                      current, textureResourceContainer);
+    auto ambientTexture = LoadTexturesFromMaterial(material, aiTextureType_AMBIENT_OCCLUSION,
+                                                   current, textureResourceContainer);
+    auto normalTexture = LoadTexturesFromMaterial(material, aiTextureType_NORMALS, current,
+                                                  textureResourceContainer);
+    auto roughnessTexture = LoadTexturesFromMaterial(material, aiTextureType_DIFFUSE_ROUGHNESS,
+                                                     current, textureResourceContainer);
+    auto metalnessTexture = LoadTexturesFromMaterial(material, aiTextureType_METALNESS, current,
+                                                     textureResourceContainer);
 
     auto materialResource = materialResourceContainer->CreateResource();
 
     if (diffuseTexture.size() > 0) {
-      materialResource->SetDiffuseTexture(diffuseTexture[0]);
+      materialResource->SetAlbedoTexture(diffuseTexture[0]);
     }
     if (ambientTexture.size() > 0) {
-      materialResource->SetAmbientTexture(ambientTexture[0]);
+      materialResource->SetAmbientOcclusionTexture(ambientTexture[0]);
+    }
+    if (normalTexture.size() > 0) {
+      materialResource->SetNormalTexture(normalTexture[0]);
+    }
+    if (metalnessTexture.size() > 0) {
+      materialResource->SetMetallicTexture(metalnessTexture[0]);
+    }
+    if (roughnessTexture.size() > 0) {
+      materialResource->SetRoughnessTexture(roughnessTexture[0]);
     }
 
     auto id = materialResourceContainer->AddResource(materialResource);
@@ -123,8 +141,9 @@ ModelResource::LoadResource(RHIFactory* rhiFactory, const ResourceManager* resou
   const auto pos = filename.find_last_of('.');
   const auto modelName = filename.substr(0, pos);
 
-  const auto* assimpScene =
-      importer.ReadFile(m_modelPath.string().c_str(), aiProcess_Triangulate | aiProcess_FlipUVs);
+  const auto* assimpScene = importer.ReadFile(m_modelPath.string().c_str(),
+                                              aiProcess_Triangulate | aiProcess_GenNormals |
+                                                  aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
   if (assimpScene == nullptr) {
     auto errorStr = String(importer.GetErrorString());

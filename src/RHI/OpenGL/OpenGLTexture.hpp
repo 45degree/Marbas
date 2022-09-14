@@ -48,6 +48,7 @@ class OpenGLTexture final : public Texture {
   void
   Bind(uint16_t bindingPoint) const noexcept {
     glBindTextureUnit(bindingPoint, m_target);
+    m_bindingPoint = bindingPoint;
   };
 
   void
@@ -61,6 +62,7 @@ class OpenGLTexture final : public Texture {
 
  protected:
   GLuint m_target;
+  mutable std::optional<uint16_t> m_bindingPoint = 0;
 };
 
 }  // namespace Marbas

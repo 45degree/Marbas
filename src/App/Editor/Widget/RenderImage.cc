@@ -107,15 +107,16 @@ RenderImage::Draw() {
   auto winPos = ImGui::GetWindowPos();
   auto camera = m_scene->GetEditorCamrea();
 
-  ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+  // ImVec2 vMax = ImGui::GetWindowContentRegionMax();
 
   ImGuizmo::SetOrthographic(false);
   ImGuizmo::SetDrawlist();
-  ImGuizmo::SetRect(winPos.x + ImagePos.x, winPos.y + ImagePos.y, vMax.x, vMax.y);
+  ImGuizmo::SetRect(winPos.x + ImagePos.x, winPos.y + ImagePos.y, imageSize.x, imageSize.y);
 
   auto viewMatrix = camera->GetViewMatrix();
   auto ViewManipulateSize = ImVec2(100, 100);
-  auto ViewManipulatePos = ImVec2(winPos.x + vMax.x - ViewManipulateSize.x, winPos.y + ImagePos.y);
+  auto ViewManipulatePos =
+      ImVec2(winPos.x + ImagePos.x + imageSize.x - ViewManipulateSize.x, winPos.y + ImagePos.y);
   ImGuizmo::ViewManipulate(glm::value_ptr(viewMatrix), camera->GetDistance(), ViewManipulatePos,
                            ViewManipulateSize, 0x4FFFFFFF);
   camera->SetViewMatrix(viewMatrix);
