@@ -113,8 +113,8 @@ Scene::Scene(const std::shared_ptr<ResourceManager>& resourceManager)
   // auto& component = Entity::GetComponent<PointLightComponent>(this, light);
   // component.m_light.SetPos(glm::vec3(0, 30, 0));
   // component.m_light.SetColor(glm::vec3(1, 1, 1));
-  // AddLight(LightType::PointLight, glm::vec3(0, 30, 0), m_rootEntity);
-  AddLight(LightType::ParalleLight, glm::vec3(0, 10, 10), m_rootEntity);
+  AddLight(LightType::PointLight, glm::vec3(0, 30, 0), m_rootEntity);
+  // AddLight(LightType::ParalleLight, glm::vec3(0, 10, 10), m_rootEntity);
   // component.m_light.SetDirection(glm::normalize(glm::vec3(0, -10, -5)));
 }
 

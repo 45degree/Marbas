@@ -56,7 +56,6 @@ class BlinnPhongRenderPass final : public DeferredRenderPass {
   struct PointLightInfoBlock {
     alignas(16) PointLight lights[PointLightShadowMapRenderPass::MAX_LIGHT_COUNT];
     alignas(4) uint32_t pointLightCount = 0;
-    alignas(16) glm::vec3 viewPos = glm::vec3(0, 0, 0);
   } m_pointLightUniformBlock;
 
   struct DirectionLight {
@@ -70,7 +69,6 @@ class BlinnPhongRenderPass final : public DeferredRenderPass {
   struct DirectionLightBlock {
     alignas(16) DirectionLight lights[DirectionLightShadowMapRenderPass::MAX_LIGHT_COUNT];
     alignas(4) uint32_t lightCount = 0;
-    alignas(16) glm::vec3 viewPos = glm::vec3(0, 0, 0);
   } m_dirLightUboBlock;
 
  private:

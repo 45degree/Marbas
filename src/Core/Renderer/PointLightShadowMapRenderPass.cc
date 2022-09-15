@@ -2,6 +2,7 @@
 
 #include <nameof.hpp>
 
+#include "Common/Common.hpp"
 #include "Core/Common.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "Core/Scene/Component/LightComponent.hpp"
@@ -127,8 +128,8 @@ PointLightShadowMapRenderPass::SetUniformBuffer(const Scene *scene) {
     auto &meshComponent = view.get<MeshComponent>(entity);
 
     if (meshComponent.m_impldata == nullptr) continue;
-    auto offset = index * sizeof(MeshComponent::UniformBufferBlockData);
-    auto size = sizeof(MeshComponent::UniformBufferBlockData);
+    auto size = ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
+    auto offset = index * size;
 
     if (!meshComponent.m_model.expired()) {
       const auto model = meshComponent.m_model.lock();
@@ -167,7 +168,7 @@ PointLightShadowMapRenderPass::RecordCommand(const Scene *scene) {
   auto entityCount = view.size_hint();
 
   // recreate dynamic uniform buffer
-  auto bufferSize = entityCount * sizeof(MeshComponent::UniformBufferBlockData);
+  auto bufferSize = entityCount * ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
   m_meshDynamicUniformBuffer = m_rhiFactory->CreateDynamicUniforBuffer(bufferSize);
 
   /**
@@ -192,8 +193,8 @@ PointLightShadowMapRenderPass::RecordCommand(const Scene *scene) {
     shadowImplData->descriptorSet->BindDynamicBuffer(2, m_meshDynamicUniformBuffer);
 
     if (meshImplData->vertexBuffer != nullptr && meshImplData->indexBuffer != nullptr) {
-      auto size = sizeof(MeshComponent::UniformBufferBlockData);
-      auto offset = sizeof(MeshComponent::UniformBufferBlockData) * meshIndex;
+      auto size = ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
+      auto offset = size * meshIndex;
 
       m_commandBuffer->BindVertexBuffer(meshImplData->vertexBuffer);
       m_commandBuffer->BindIndexBuffer(meshImplData->indexBuffer);
@@ -240,8 +241,7 @@ PointLightShadowMapRenderPass::Execute(const Scene *scene, const ResourceManager
   for (auto mesh : view) {
     CreateBufferForEveryEntity(mesh, const_cast<Scene *>(scene));
   }
-
-  auto bufferSize = view.size_hint() * sizeof(MeshComponent::UniformBufferBlockData);
+  auto bufferSize = view.size_hint() * ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
   if (m_meshDynamicUniformBuffer == nullptr ||
       bufferSize != m_meshDynamicUniformBuffer->GetSize()) {
     RecordCommand(scene);

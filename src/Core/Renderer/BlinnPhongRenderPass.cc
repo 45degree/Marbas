@@ -78,14 +78,17 @@ BlinnPhongRenderPass::CreatePipeline() {
 void
 BlinnPhongRenderPass::CreateDescriptorSetLayout() {
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // base color
       .isBuffer = false,
       .bindingPoint = 0,
   });
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // normal
       .isBuffer = false,
       .bindingPoint = 1,
   });
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // position
       .isBuffer = false,
       .bindingPoint = 2,
   });
@@ -99,6 +102,22 @@ BlinnPhongRenderPass::CreateDescriptorSetLayout() {
       .isBuffer = false,
       .bindingPoint = 4,
   });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // roughness
+      .isBuffer = false,
+      .bindingPoint = 5,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // metallic
+      .isBuffer = false,
+      .bindingPoint = 6,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // ao
+      .isBuffer = false,
+      .bindingPoint = 7,
+  });
+
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
       // direction light info
       .isBuffer = true,
@@ -130,6 +149,9 @@ BlinnPhongRenderPass::OnInit() {
   auto gColorBuffer = gBuffer->GetTexture(GBufferTexutreType::COLOR);
   auto gNormalBuffer = gBuffer->GetTexture(GBufferTexutreType::NORMALS);
   auto gPositionBuffer = gBuffer->GetTexture(GBufferTexutreType::POSITION);
+  auto gRoughnessBuffer = gBuffer->GetTexture(GBufferTexutreType::ROUGHTNESS);
+  auto gMetallic = gBuffer->GetTexture(GBufferTexutreType::METALLIC);
+  auto gAO = gBuffer->GetTexture(GBufferTexutreType::AMBIENT_OCCLUSION);
 
   auto pointShadowGBuffer =
       m_inputTarget[String(PointLightShadowMapRenderPass::targetName)]->GetGBuffer();
@@ -144,6 +166,9 @@ BlinnPhongRenderPass::OnInit() {
   m_descriptorSet->BindImage(2, gPositionBuffer);
   m_descriptorSet->BindImage(3, pointShadowBuffer);
   m_descriptorSet->BindImage(4, dirShadowBuffer);
+  m_descriptorSet->BindImage(5, gRoughnessBuffer);
+  m_descriptorSet->BindImage(6, gMetallic);
+  m_descriptorSet->BindImage(7, gAO);
 }
 
 void
@@ -232,13 +257,11 @@ BlinnPhongRenderPass::SetUniformBuffer(const Scene* scene) {
     auto pos = lightComponent.m_light.GetPos();
     auto color = lightComponent.m_light.GetColor();
     auto farPlane = lightComponent.m_light.GetFarPlane();
-    auto viewPos = scene->GetEditorCamrea()->GetPosition();
     m_dirLightUboBlock.lights[i].pos = pos;
     m_dirLightUboBlock.lights[i].color = color;
     m_dirLightUboBlock.lights[i].direction = lightComponent.m_light.GetDirection();
     m_dirLightUboBlock.lights[i].view = lightComponent.m_light.GetViewMatrix();
     m_dirLightUboBlock.lights[i].projection = lightComponent.m_light.GetProjectionMatrix();
-    m_dirLightUboBlock.viewPos = viewPos;
   }
   m_dirLightUbo->SetData(&m_dirLightUboBlock, dirLightBufSize, 0);
 
@@ -257,11 +280,9 @@ BlinnPhongRenderPass::SetUniformBuffer(const Scene* scene) {
     auto pos = lightComponent.m_light.GetPos();
     auto color = lightComponent.m_light.GetColor();
     auto farPlane = lightComponent.m_light.GetFarPlane();
-    auto viewPos = scene->GetEditorCamrea()->GetPosition();
     m_pointLightUniformBlock.lights[i].pos = pos;
     m_pointLightUniformBlock.lights[i].color = color;
     m_pointLightUniformBlock.lights[i].farPlane = farPlane;
-    m_pointLightUniformBlock.viewPos = viewPos;
   }
   m_pointLightUniformBuffer->SetData(&m_pointLightUniformBlock, pointLightBufSize, 0);
 }
@@ -273,6 +294,8 @@ BlinnPhongRenderPass::Execute(const Scene* scene, const ResourceManager* resourc
     m_needToRecordComand = false;
   }
 
+  const auto editorCamera = scene->GetEditorCamrea();
+  UpdateCameraUniformBuffer(editorCamera.get());
   SetUniformBuffer(const_cast<Scene*>(scene));
   m_commandBuffer->SubmitCommand();
 }
