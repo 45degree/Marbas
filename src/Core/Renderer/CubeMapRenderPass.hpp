@@ -18,7 +18,7 @@ class CubeMapRenderPass final : public ForwardRenderPass {
 
  public:
   void
-  OnInit() override {}
+  OnInit() override;
 
   void
   RecordCommand(const Scene* scene) override;
@@ -36,7 +36,7 @@ class CubeMapRenderPass final : public ForwardRenderPass {
   CreatePipeline() override;
 
   void
-  CreateBufferForEveryEntity(const entt::entity entity, Scene* scene);
+  BindDescriptorSet(const Scene* scene);
 
   void
   SetUniformBuffer(Scene* scene);
@@ -46,6 +46,9 @@ class CubeMapRenderPass final : public ForwardRenderPass {
 
  private:
   Uid m_shaderId;
+  std::shared_ptr<VertexBuffer> m_vertexBuffer;
+  std::shared_ptr<IndexBuffer> m_indexBuffer;
+  std::shared_ptr<DescriptorSet> m_descriptorSet;
 };
 
 }  // namespace Marbas

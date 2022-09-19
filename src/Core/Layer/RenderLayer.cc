@@ -11,6 +11,8 @@
 #include "Core/Renderer/DirectionLightShadowMapRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "Core/Renderer/GridRenderPass.hpp"
+#include "Core/Renderer/HDRImageRenderPass.hpp"
+#include "Core/Renderer/IrradianceRenderPass.hpp"
 #include "Core/Renderer/PointLightShadowMapRenderPass.hpp"
 #include "RHI/RHI.hpp"
 
@@ -107,6 +109,54 @@ RenderLayer::OnAttach() {
     return createInfo;
   }());
   m_renderGraph->RegisterDeferredRenderPassNode(geometryRenderPass);
+
+  // hdr render pass
+  auto hdrImageTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = String(HDRImageRenderPass::targetName),
+      .buffersType =
+          {
+              GBufferType{.type = GBufferTexutreType::HDR_IMAGE, .levels = 1, .layers = 1},
+          },
+      .rhiFactory = m_rhiFactory,
+      .width = 512,
+      .height = 512,
+  });
+  m_renderGraph->RegisterRenderTargetNode(hdrImageTarget);
+
+  auto hdrImageRenderPass = std::make_shared<HDRImageRenderPass>([&]() {
+    HDRImageRenderPassCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = m_width;
+    createInfo.height = m_height;
+    createInfo.isStatic = true;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterDeferredRenderPassNode(hdrImageRenderPass);
+
+  // irradiance render pass
+  auto irradianceImageTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = String(IrradianceRenderPass::targetName),
+      .buffersType =
+          {
+              GBufferType{.type = GBufferTexutreType::HDR_IMAGE, .levels = 1, .layers = 1},
+          },
+      .rhiFactory = m_rhiFactory,
+      .width = 32,
+      .height = 32,
+  });
+  m_renderGraph->RegisterRenderTargetNode(irradianceImageTarget);
+
+  auto irradianceRenderPass = std::make_shared<IrradianceRenderPass>([&]() {
+    IrradianceRenderPassCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = m_width;
+    createInfo.height = m_height;
+    createInfo.isStatic = true;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterDeferredRenderPassNode(irradianceRenderPass);
 
   // shadow mapping render pass
   auto shadowMappingTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
@@ -220,6 +270,8 @@ RenderLayer::OnAttach() {
 
   // compile render graph
   m_renderGraph->Compile();
+
+  m_renderGraph->ExecuteStaticRenderPass(m_resourceManager, m_allScene[m_activeSceneIndex]);
 }
 
 void

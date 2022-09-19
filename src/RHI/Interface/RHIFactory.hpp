@@ -100,7 +100,7 @@ class RHIFactory {
   CreateTexture(const ImageDesc& imageDesc) const = 0;
 
   [[nodiscard]] virtual std::unique_ptr<Texture>
-  CreateTexture2D(const Path& imagePath, uint32_t levels) const = 0;
+  CreateTexture2D(const Path& imagePath, uint32_t levels, bool isHDR) const = 0;
 
   [[nodiscard]] virtual std::unique_ptr<Texture>
   CreateTextureCubeMap(const CubeMapCreateInfo& createInfo, uint32_t levels) const = 0;

@@ -15,6 +15,7 @@ enum class GBufferTexutreType {
   AMBIENT_OCCLUSION,
   ROUGHTNESS,
   METALLIC,
+  HDR_IMAGE,
   SHADOW_MAP,
   SHADOW_MAP_CUBE,
 };

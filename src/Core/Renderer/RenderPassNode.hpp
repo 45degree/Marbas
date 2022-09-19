@@ -17,6 +17,7 @@ struct RenderPassNodeCreateInfo {
   String passName;
   std::shared_ptr<ResourceManager> resourceManager;
   RHIFactory* rhiFactory = nullptr;
+  bool isStatic = false;
   uint32_t width = 800;
   uint32_t height = 600;
 };
@@ -82,6 +83,11 @@ class RenderPassNode {
   void
   AddDescriptorSetLayoutBinding(const DescriptorSetLayoutBinding& bindingInfo);
 
+  bool
+  IsStatic() const {
+    return m_isStatic;
+  }
+
   void
   UpdateCameraUniformBuffer(Camera* camera) {
     m_cameraUniformBlock.view = camera->GetViewMatrix();
@@ -123,6 +129,8 @@ class RenderPassNode {
 
   std::shared_ptr<RenderPass> m_clearDepthRenderPass = nullptr;
   std::shared_ptr<CommandBuffer> m_clearCommandBuffer = nullptr;
+
+  bool m_isStatic = false;
 
   RHIFactory* m_rhiFactory = nullptr;
 };

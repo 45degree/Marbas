@@ -52,7 +52,7 @@ class OpenGLRHIFactory final : public RHIFactory {
   CreateTexture(const ImageDesc& imageDesc) const override;
 
   std::unique_ptr<Texture>
-  CreateTexture2D(const Path& imagePath, uint32_t level) const override;
+  CreateTexture2D(const Path& imagePath, uint32_t level, bool isHDR) const override;
 
   // [[nodiscard]] std::unique_ptr<Texture2D>
   // CreateTexutre2D(const Path& imagePath, uint32_t level) const override;

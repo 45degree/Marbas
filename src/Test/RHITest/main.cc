@@ -138,8 +138,9 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   quadVertexBuffer->SetLayout(quadVertexBufferLayout);
 
   std::shared_ptr<Marbas::Texture> cubeTexture =
-      rhiFactory->CreateTexture2D("Test/container.jpg", 1);
-  std::shared_ptr<Marbas::Texture> floorTexture = rhiFactory->CreateTexture2D("Test/metal.png", 1);
+      rhiFactory->CreateTexture2D("Test/container.jpg", 1, false);
+  std::shared_ptr<Marbas::Texture> floorTexture =
+      rhiFactory->CreateTexture2D("Test/metal.png", 1, false);
 
   std::shared_ptr<Marbas::ShaderStage> frameVertexShaderStage =
       rhiFactory->CreateShaderStage(Marbas::ShaderType::VERTEX_SHADER);

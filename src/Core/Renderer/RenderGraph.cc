@@ -6,8 +6,7 @@ void
 RenderGraph::RegisterDeferredRenderPassNode(
     const std::shared_ptr<DeferredRenderPass> &renderPassNode) {
   const String &passNodeName = renderPassNode->GetNodeName();
-  DLOG_ASSERT(m_renderTargetMap.find(passNodeName) == m_renderTargetMap.cend())
-      << FORMAT("the resource target node: {} has beed added into the render graph", passNodeName);
+  DLOG_ASSERT(m_renderTargetMap.find(passNodeName) == m_renderTargetMap.cend());
 
   const auto inputResource = renderPassNode->GetAllInputTargetName();
   const auto outputResources = renderPassNode->GetAllOutputTargetName();
@@ -42,6 +41,13 @@ void
 RenderGraph::RegisterForwardRenderPassNode(
     const std::shared_ptr<ForwardRenderPass> &renderPassNode) {
   renderPassNode->Initialize();
+
+  const auto inputResource = renderPassNode->GetAllInputTargetName();
+  for (const auto &inputName : inputResource) {
+    const auto &resource = m_renderTargetNode[m_renderTargetMap[inputName]];
+    renderPassNode->SetInputTarget(resource);
+  }
+
   m_forwardRendererPassNodes.push_back(renderPassNode);
 }
 
@@ -119,7 +125,11 @@ RenderGraph::Compile() {
   // get render pass node
   for (int id : order) {
     if (id < passCount) {
-      m_renderOrder.push_back(id);
+      if (m_deferredRenderPassNodes[id]->IsStatic()) {
+        m_staticRenderOrder.push_back(id);
+      } else {
+        m_renderOrder.push_back(id);
+      }
     }
   }
 
@@ -131,6 +141,14 @@ RenderGraph::Compile() {
     auto id = m_deferredRenderPassMap[std::move(inputName)];
     auto frameBuffer = m_deferredRenderPassNodes[id]->GetFrameBuffer();
     forwardRenderPass->SetFrameBuffer(std::move(frameBuffer));
+  }
+}
+
+void
+RenderGraph::ExecuteStaticRenderPass(const std::shared_ptr<ResourceManager> &resourceManager,
+                                     const std::shared_ptr<Scene> &scene) {
+  for (int i = 0; i < m_staticRenderOrder.size(); i++) {
+    m_deferredRenderPassNodes[m_staticRenderOrder[i]]->Execute(scene.get(), resourceManager.get());
   }
 }
 

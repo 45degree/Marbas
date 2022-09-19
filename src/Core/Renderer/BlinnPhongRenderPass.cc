@@ -3,6 +3,7 @@
 #include <nameof.hpp>
 
 #include "Core/Renderer/GeometryRenderPass.hpp"
+#include "Core/Renderer/IrradianceRenderPass.hpp"
 #include "Core/Renderer/PointLightShadowMapRenderPass.hpp"
 #include "Core/Scene/Component/LightComponent.hpp"
 #include "RHI/Interface/Pipeline.hpp"
@@ -18,6 +19,7 @@ BlinnPhongRenderPassCreateInfo::BlinnPhongRenderPassCreateInfo() : DeferredRende
       GeometryRenderPass::geometryTargetName,
       String(PointLightShadowMapRenderPass::targetName),
       String(DirectionLightShadowMapRenderPass::renderTarget),
+      String(IrradianceRenderPass::targetName),
   };
   outputResource = {BlinnPhongRenderPass::blinnPhongTargetName,
                     GeometryRenderPass::depthTargetName};
@@ -117,6 +119,11 @@ BlinnPhongRenderPass::CreateDescriptorSetLayout() {
       .isBuffer = false,
       .bindingPoint = 7,
   });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // irradiance
+      .isBuffer = false,
+      .bindingPoint = 8,
+  });
 
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
       // direction light info
@@ -144,6 +151,9 @@ BlinnPhongRenderPass::OnInit() {
   m_pointLightUniformBuffer = m_rhiFactory->CreateUniformBuffer(pointLightBufferSize);
   m_descriptorSet->BindBuffer(2, m_pointLightUniformBuffer);
 
+  auto irradianceGBuffer = m_inputTarget[String(IrradianceRenderPass::targetName)]->GetGBuffer();
+  auto irradianceBuffer = irradianceGBuffer->GetTexture(GBufferTexutreType::HDR_IMAGE);
+
   // set input as image descriptor set
   auto gBuffer = m_inputTarget[GeometryRenderPass::geometryTargetName]->GetGBuffer();
   auto gColorBuffer = gBuffer->GetTexture(GBufferTexutreType::COLOR);
@@ -169,6 +179,7 @@ BlinnPhongRenderPass::OnInit() {
   m_descriptorSet->BindImage(5, gRoughnessBuffer);
   m_descriptorSet->BindImage(6, gMetallic);
   m_descriptorSet->BindImage(7, gAO);
+  m_descriptorSet->BindImage(8, irradianceBuffer);
 }
 
 void

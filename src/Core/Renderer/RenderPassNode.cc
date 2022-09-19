@@ -7,6 +7,7 @@ RenderPassNode::RenderPassNode(const RenderPassNodeCreateInfo& createInfo)
       m_rhiFactory(createInfo.rhiFactory),
       m_width(createInfo.width),
       m_height(createInfo.height),
+      m_isStatic(createInfo.isStatic),
       m_resourceManager(createInfo.resourceManager) {
   auto bufferSize = sizeof(CameraUniformBlock);
   m_cameraUniformBuffer = m_rhiFactory->CreateUniformBuffer(bufferSize);

@@ -7,8 +7,8 @@ namespace Marbas {
 
 class Texture2DResource final : public ResourceBase {
  public:
-  explicit Texture2DResource(const Path& path, uint32_t levels = 1)
-      : ResourceBase(), m_path(path), m_levels(levels) {}
+  explicit Texture2DResource(const Path& path, uint32_t levels = 1, bool isHDR = false)
+      : ResourceBase(), m_path(path), m_levels(levels), m_isHDR(isHDR) {}
 
  public:
   [[nodiscard]] std::shared_ptr<Texture>
@@ -27,6 +27,7 @@ class Texture2DResource final : public ResourceBase {
  private:
   Path m_path;
   uint32_t m_levels;
+  bool m_isHDR = false;
   std::shared_ptr<Texture> m_texture = nullptr;
 };
 

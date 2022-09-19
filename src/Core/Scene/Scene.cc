@@ -14,6 +14,7 @@
 #include "Core/Scene/Entity/BillBoardEntity.hpp"
 #include "Core/Scene/Entity/CubeMapEntity.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
+#include "Core/Scene/Entity/EnvironmentEntity.hpp"
 #include "Core/Scene/Entity/LightEntity.hpp"
 #include "Core/Scene/Entity/MeshEntity.hpp"
 #include "Core/Scene/Entity/ModelEntity.hpp"
@@ -108,14 +109,9 @@ Scene::Scene(const std::shared_ptr<ResourceManager>& resourceManager)
   HierarchyComponent::AddChild(m_rootEntity, m_world, cubeMap);
 
   // TODO: need to remove
-  // create a light
-  // auto light = LightPolicy::Create(m_world, LightType::PointLight);
-  // auto& component = Entity::GetComponent<PointLightComponent>(this, light);
-  // component.m_light.SetPos(glm::vec3(0, 30, 0));
-  // component.m_light.SetColor(glm::vec3(1, 1, 1));
   AddLight(LightType::PointLight, glm::vec3(0, 30, 0), m_rootEntity);
-  // AddLight(LightType::ParalleLight, glm::vec3(0, 10, 10), m_rootEntity);
-  // component.m_light.SetDirection(glm::normalize(glm::vec3(0, -10, -5)));
+
+  Entity::CreateEntity<EnvironmentPolicy>(this, "assert/sIBL_Collection/OfficeEden/Eden_Pano.jpg");
 }
 
 void
@@ -181,10 +177,7 @@ void
 Scene::AddBillBoard(Uid texture2DResourceId, glm::vec3 point, const entt::entity& parent) {
   DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(this, parent));
 
-  // auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(this, parent);
   auto billBoardEntity = Entity::CreateEntity<BillBoardPolicy>(this, texture2DResourceId);
-  // auto& billBoardTagComponent = Entity::GetComponent<UniqueTagComponent>(this, billBoardEntity);
-
   HierarchyComponent::AddChild(parent, m_world, billBoardEntity);
 }
 
@@ -195,131 +188,5 @@ Scene::AddLight(LightType type, glm::vec3 point, const entt::entity& parent) {
   auto lightEntity = Entity::CreateEntity<LightPolicy>(this, type, point);
   HierarchyComponent::AddChild(parent, m_world, lightEntity);
 }
-
-// static bool DeleteNode(SceneNode* sceneNode) {
-//   auto subNodes = sceneNode->GetSubSceneNodes();
-//   for (const auto* subNode : subNodes) {
-//     if (DeleteNode(const_cast<SceneNode*>(subNode))) {
-//       sceneNode->DeleteSubSceneNode(subNode);
-//     }
-//   }
-//
-//   return sceneNode->GetSubSceneNodes().empty() && sceneNode->GetMeshesCount() == 0;
-// }
-
-// static void ProcessSubNode(SceneNode* node, ResourceManager* resourceManager, const Path& path,
-//                            const aiScene* aScene, const aiNode* aNode) {
-//   if (node == nullptr) {
-//     throw std::runtime_error("scene is null or lastSceneNode is null");
-//   }
-//
-//   if (aNode->mNumMeshes > 0) {
-//     for (int i = 0; i < aNode->mNumMeshes; i++) {
-//       auto aMesh = aScene->mMeshes[aNode->mMeshes[i]];
-//       auto* scene = const_cast<Scene*>(node->GetScene());
-//
-//       auto mesh = Entity::CreateEntity<MeshPolicy>(scene);
-//
-//       auto& tagsComponent = Entity::GetComponent<TagsCompoment>(scene, mesh);
-//       tagsComponent.name = String(aMesh->mName.C_Str());
-//
-//       auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, mesh);
-//       MeshPolicy::ReadVertexFromNode(aMesh, aScene, meshComponent);
-//
-//       if (Entity::HasComponent<RenderComponent>(scene, mesh)) {
-//         auto& renderComponent = Entity::GetComponent<RenderComponent>(scene, mesh);
-//         MeshPolicy::ReadMaterialFromNode(aMesh, aScene, path, renderComponent, resourceManager);
-//       }
-//
-//       node->AddEntity(mesh);
-//     }
-//   }
-//
-//   for (int i = 0; i < aNode->mNumChildren; i++) {
-//     ProcessSubNode(node, resourceManager, path, aScene, aNode->mChildren[i]);
-//   }
-// }
-//
-// std::unique_ptr<SceneNode> SceneNode::ReadModelFromFile(const Path& filePath, Scene* scene,
-//                                                         ResourceManager* resourceManager) {
-//   Assimp::Importer importer;
-//
-//   auto filename = filePath.filename().string();
-//
-//   const auto pos = filename.find_last_of('.');
-//   const auto modelName = filename.substr(0, pos);
-//
-//   const auto* assimpScene =
-//       importer.ReadFile(filePath.string().c_str(), aiProcess_Triangulate | aiProcess_FlipUVs);
-//
-//   if (assimpScene == nullptr) {
-//     auto errorStr = String(importer.GetErrorString());
-//     LOG(ERROR) << FORMAT("can't load scene because: {}", errorStr);
-//     return nullptr;
-//   }
-//
-//   auto aRootNode = assimpScene->mRootNode;
-//   auto modelSceneNode = std::make_unique<SceneNode>(scene, modelName.c_str());
-//
-//   ProcessSubNode(modelSceneNode.get(), resourceManager, filePath.parent_path(), assimpScene,
-//                  aRootNode);
-//
-//   return modelSceneNode;
-// }
-//
-// void Scene::CombineStaticEntity() {
-//   const auto& entities = m_registry.view<MeshComponent, StaticMeshComponent>();
-//   for (const auto& entity : entities) {
-//     auto& mesh = entities.get<MeshComponent>(entity);
-//   }
-// }
-//
-// Scene::Scene(const Path& path, ResourceManager* resourceManager)
-//     : m_rootNode(std::make_unique<SceneNode>(this, "RootNode")),
-//       m_path(path),
-//       m_resourceManager(resourceManager) {
-//   m_skybox = CubeMapPolicy::Create(m_registry);
-//   auto& component = Entity::GetComponent<CubeMapComponent>(this, m_skybox);
-//
-//   CubeMapCreateInfo defaultCreateInfo = {
-//       .top = Path("assert/skybox/top.jpg"),
-//       .bottom = Path("assert/skybox/bottom.jpg"),
-//       .back = Path("assert/skybox/back.jpg"),
-//       .front = Path("assert/skybox/front.jpg"),
-//       .left = Path("assert/skybox/left.jpg"),
-//       .right = Path("assert/skybox/right.jpg"),
-//   };
-//   component.m_cubeMapResource = m_resourceManager->AddCubeMap(defaultCreateInfo);
-//   component.m_materialResource = m_resourceManager->AddMaterial();
-//   auto shader = m_resourceManager->GetDefaultCubeMapShader();
-//   component.m_materialResource->SetShader(shader);
-// }
-//
-// void Scene::DeleteSceneNode(SceneNode* sceneNode) {
-//   std::function<const SceneNode*(const SceneNode*, const SceneNode*)> findParent =
-//       [&, this](const SceneNode* sceneNode, const SceneNode* currentNode) -> const SceneNode* {
-//     if (this->m_rootNode.get() == sceneNode) {
-//       return nullptr;
-//     }
-//
-//     auto subNodes = currentNode->GetSubSceneNodes();
-//     for (const auto* subNode : subNodes) {
-//       if (subNode == sceneNode) {
-//         return currentNode;
-//       }
-//
-//       auto parent = findParent(sceneNode, subNode);
-//       if (parent != nullptr) {
-//         return parent;
-//       }
-//     }
-//     return nullptr;
-//   };
-//
-//   auto parent = const_cast<SceneNode*>(findParent(sceneNode, m_rootNode.get()));
-//   if (parent == nullptr) return;
-//
-//   parent->DeleteSubSceneNode(sceneNode);
-// }
 
 }  // namespace Marbas

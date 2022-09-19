@@ -195,7 +195,7 @@ OpenGLRHIFactory::CreateShader() const {
 }
 
 std::unique_ptr<Texture>
-OpenGLRHIFactory::CreateTexture2D(const Path& imagePath, uint32_t level) const {
+OpenGLRHIFactory::CreateTexture2D(const Path& imagePath, uint32_t level, bool isHDR) const {
   String pathStr = imagePath.string();
 
   // load image
@@ -210,15 +210,19 @@ OpenGLRHIFactory::CreateTexture2D(const Path& imagePath, uint32_t level) const {
   std::replace(filename.begin(), filename.end(), '\\', '/');
 #endif
 
-  unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
+  void* data = nullptr;
+  if (isHDR) {
+    stbi_set_flip_vertically_on_load(true);
+    data = stbi_loadf(filename.c_str(), &width, &height, &nrChannels, 0);
+    stbi_set_flip_vertically_on_load(false);
+  } else {
+    data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
+  }
 
   if (data == nullptr) {
     LOG(ERROR) << FORMAT("failed to load image from {}", filename);
     return nullptr;
   }
-
-  // get hash code of the image
-  // auto hashCode = folly::hash::fnv32_buf(data, static_cast<size_t>(width) * height * nrChannels);
 
   switch (nrChannels) {
     case 1:
@@ -234,6 +238,8 @@ OpenGLRHIFactory::CreateTexture2D(const Path& imagePath, uint32_t level) const {
       formatType = TextureFormat::RGBA;
       break;
   }
+
+  if (isHDR) formatType = TextureFormat::RGB16F;
 
   ImageDesc desc{
       .textureType = TextureType::TEXTURE2D,

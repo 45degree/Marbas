@@ -46,6 +46,7 @@ layout(binding = 4) uniform sampler2DArray gDirectionLightShadow;
 layout(binding = 5) uniform sampler2D gRoughness;
 layout(binding = 6) uniform sampler2D gMetallic;
 layout(binding = 7) uniform sampler2D gAO;
+layout(binding = 8) uniform samplerCube irradianceCubeMap;
 
 const float PI = 3.14159265359;
 
@@ -91,6 +92,10 @@ float DirectionLightShadow(vec4 fragPos, int lightIndex, float bias) {
 
 vec3 fresnelSchlick(float cosTheta, vec3 FO) {
   return FO + (1.0 - FO) * pow(1.0 - cosTheta, 5.0);
+}
+
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 FO, float roughness) {
+  return FO + (max(vec3(1.0 - roughness), FO) - FO) * pow(1.0 - cosTheta, 5.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
@@ -203,7 +208,11 @@ void main() {
     Lo += (1 - shadow) * (KD * Albedo / PI + specular) * radiance * NdotL;
   }
 
-  vec3 ambient = vec3(0.03) * Albedo * AO;
+  vec3 KS = fresnelSchlickRoughness(max(dot(Normal, viewDir), 0.0), F0, Roughness);
+  vec3 KD = vec3(1.0) - KS;
+  vec3 irradiance = texture(irradianceCubeMap, Normal).rgb;
+  vec3 diffuse    = irradiance * Albedo;
+  vec3 ambient = KD * diffuse * AO;
 
   vec3 color = ambient + Lo;
   color = color / (color + vec3(1.0));

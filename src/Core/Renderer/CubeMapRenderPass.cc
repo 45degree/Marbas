@@ -7,6 +7,7 @@
 #include "Core/Common.hpp"
 #include "Core/Renderer/BlinnPhongRenderPass.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
+#include "Core/Renderer/HDRImageRenderPass.hpp"
 #include "Core/Scene/Component/CubeMapComponent.hpp"
 
 namespace Marbas {
@@ -14,6 +15,7 @@ namespace Marbas {
 CubeMapRenderPassCreateInfo::CubeMapRenderPassCreateInfo() {
   passName = "CubeMapRenderPass";
   inputPassNode = BlinnPhongRenderPass::renderPassName;
+  inputResource = {String(HDRImageRenderPass::targetName)};
 }
 
 CubeMapRenderPass::CubeMapRenderPass(const CubeMapRenderPassCreateInfo& createInfo)
@@ -86,18 +88,9 @@ CubeMapRenderPass::RecordCommand(const Scene* scene) {
 
   // check framebuffer and renderpass
   DLOG_ASSERT(view.size() == 1) << "cube map should only have one in the scene";
-  DLOG_ASSERT(m_framebuffer != nullptr)
-      << FORMAT("{}'s framebuffer is null, can't record command", NAMEOF_TYPE(CubeMapRenderPass));
-
-  DLOG_ASSERT(m_renderPass != nullptr)
-      << FORMAT("{}'s render pass is null, can't record command", NAMEOF_TYPE(CubeMapRenderPass));
-
-  DLOG_ASSERT(m_pipeline != nullptr)
-      << FORMAT("{}'s pipeline is null, can't record command", NAMEOF_TYPE(CubeMapRenderPass));
-
-  // recreate uniform buffer
-  auto entity = view.front();
-  auto& cubeMapComponent = Entity::GetComponent<CubeMapComponent>(scene, entity);
+  DLOG_ASSERT(m_framebuffer != nullptr);
+  DLOG_ASSERT(m_renderPass != nullptr);
+  DLOG_ASSERT(m_pipeline != nullptr);
 
   /**
    * set command
@@ -111,58 +104,36 @@ CubeMapRenderPass::RecordCommand(const Scene* scene) {
   });
   m_commandBuffer->BindPipeline(m_pipeline);
 
-  const auto& implData = cubeMapComponent.m_implData;
-  DLOG_ASSERT(implData->vertexBuffer != nullptr);
-  DLOG_ASSERT(implData->indexBuffer != nullptr);
-
-  m_commandBuffer->BindVertexBuffer(implData->vertexBuffer);
-  m_commandBuffer->BindIndexBuffer(implData->indexBuffer);
+  m_commandBuffer->BindVertexBuffer(m_vertexBuffer);
+  m_commandBuffer->BindIndexBuffer(m_indexBuffer);
   m_commandBuffer->BindDescriptorSet(BindDescriptorSetInfo{
-      .descriptorSet = implData->descriptorSet,
+      .descriptorSet = m_descriptorSet,
       .layouts = m_descriptorSetLayout,
   });
-  m_commandBuffer->DrawIndex(implData->indexBuffer->GetIndexCount(), 0);
+  m_commandBuffer->DrawIndex(m_indexBuffer->GetIndexCount(), 0);
   m_commandBuffer->EndRenderPass();
   m_commandBuffer->EndRecordCmd();
 }
 
 void
-CubeMapRenderPass::CreateBufferForEveryEntity(const entt::entity cubeMap, Scene* scene) {
-  DLOG_ASSERT(Entity::HasComponent<CubeMapComponent>(scene, cubeMap));
+CubeMapRenderPass::BindDescriptorSet(const Scene* scene) {
+  auto hdrGBuffer = m_inputTarget[String(HDRImageRenderPass::targetName)]->GetGBuffer();
+  auto hdrBuffer = hdrGBuffer->GetTexture(GBufferTexutreType::HDR_IMAGE);
 
-  auto& cubeMapComponent = Entity::GetComponent<CubeMapComponent>(scene, cubeMap);
-  if (cubeMapComponent.m_implData != nullptr) return;
+  m_descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
+  m_descriptorSet->BindImage(0, hdrBuffer);
+}
 
-  auto implData = std::make_shared<CubeMapComponent_Impl>();
-
-  // create vertex buffer and index buffer
+void
+CubeMapRenderPass::OnInit() {
   const auto& vertices = CubeMapComponent::vertices;
   Vector<uint32_t> indices(CubeMapComponent::indices.begin(), CubeMapComponent::indices.end());
 
   auto verticesLen = sizeof(Vertex) * vertices.size();
-  auto vertexBuffer = m_rhiFactory->CreateVertexBuffer(vertices.data(), verticesLen);
-  vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
-  implData->vertexBuffer = std::move(vertexBuffer);
-
-  auto indexBuffer = m_rhiFactory->CreateIndexBuffer(std::move(indices));
-  implData->indexBuffer = std::move(indexBuffer);
-
-  // create descriptor set
-  implData->descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
-  implData->descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
-
-  // load material
-  if (cubeMapComponent.cubeMapResourceId.has_value()) {
-    auto id = cubeMapComponent.cubeMapResourceId.value();
-    auto cubeMapResource = m_resourceManager->GetCubeMapResourceContainer()->GetResource(id);
-    cubeMapResource->LoadResource(m_rhiFactory, m_resourceManager.get());
-
-    implData->descriptorSet->BindImage(0, cubeMapResource->GetTextureCubeMap());
-
-    implData->textureCubeMapResource = cubeMapResource;
-  }
-  cubeMapComponent.m_implData = implData;
-  m_needToRecordComand = true;
+  m_vertexBuffer = m_rhiFactory->CreateVertexBuffer(vertices.data(), verticesLen);
+  m_vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
+  m_indexBuffer = m_rhiFactory->CreateIndexBuffer(indices);
+  m_descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
 }
 
 void
@@ -174,10 +145,7 @@ CubeMapRenderPass::SetUniformBuffer(Scene* scene) {
 
 void
 CubeMapRenderPass::Execute(const Scene* scene, const ResourceManager* resourceMnager) {
-  auto view = Entity::GetAllEntity<CubeMapComponent>(scene);
-  for (auto&& [entity, cubeMapComponent] : view.each()) {
-    CreateBufferForEveryEntity(entity, const_cast<Scene*>(scene));
-  }
+  BindDescriptorSet(scene);
 
   if (m_needToRecordComand) {
     RecordCommand(scene);

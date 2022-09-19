@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common/Common.hpp"
+#include "Tool/Uid.hpp"
 
 namespace Marbas {
 
@@ -13,6 +14,7 @@ enum class EntityType {
 };
 
 struct UniqueTagComponent {
+  Uid uid;
   String tagName;
   EntityType type = EntityType::None;
 };

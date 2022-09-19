@@ -132,33 +132,33 @@ OpenGLTexture::UnBind() const noexcept {
 
 void
 OpenGLTexture::SetData(void* data, size_t size, uint32_t level, uint32_t layer) {
-  size_t bpp = 0;
-  switch (m_imageDesc.format) {
-    case TextureFormat::RED:
-      bpp = 1;
-      break;
-    case TextureFormat::RG:
-      bpp = 2;
-      break;
-    case TextureFormat::BGR:
-    case TextureFormat::RGB:
-      bpp = 3;
-      break;
-    case TextureFormat::RGBA:
-    case TextureFormat::R32:
-    case TextureFormat::BGRA:
-    case TextureFormat::DEPTH:
-      bpp = 4;
-      break;
-    case TextureFormat::RGB16F:
-      bpp = 6;
-      break;
-    case TextureFormat::RGB32F:
-      bpp = 12;
-      break;
-  }
-  LOG_IF(ERROR, size != m_imageDesc.width * m_imageDesc.height * bpp)
-      << "size and texture size do not match";
+  // size_t bpp = 0;
+  // switch (m_imageDesc.format) {
+  //   case TextureFormat::RED:
+  //     bpp = 1;
+  //     break;
+  //   case TextureFormat::RG:
+  //     bpp = 2;
+  //     break;
+  //   case TextureFormat::BGR:
+  //   case TextureFormat::RGB:
+  //     bpp = 3;
+  //     break;
+  //   case TextureFormat::RGBA:
+  //   case TextureFormat::R32:
+  //   case TextureFormat::BGRA:
+  //   case TextureFormat::DEPTH:
+  //     bpp = 4;
+  //     break;
+  //   case TextureFormat::RGB16F:
+  //     bpp = 6;
+  //     break;
+  //   case TextureFormat::RGB32F:
+  //     bpp = 12;
+  //     break;
+  // }
+  // LOG_IF(ERROR, size != m_imageDesc.width * m_imageDesc.height * bpp)
+  //     << "size and texture size do not match";
 
   auto dataFormat = ConvertToOpenglDataFormat(m_imageDesc.format);
   auto type = ConvertToOpenGLTextureType(m_imageDesc.format);

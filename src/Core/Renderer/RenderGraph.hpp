@@ -35,6 +35,10 @@ class RenderGraph final {
   Execute(const std::shared_ptr<ResourceManager>& resourceManager,
           const std::shared_ptr<Scene>& scene);
 
+  void
+  ExecuteStaticRenderPass(const std::shared_ptr<ResourceManager>& resourceManager,
+                          const std::shared_ptr<Scene>& scene);
+
   std::shared_ptr<RenderTargetNode>
   GetRenderTarget(const String& renderTargetName) const;
 
@@ -46,6 +50,7 @@ class RenderGraph final {
   Vector<std::shared_ptr<ForwardRenderPass>> m_forwardRendererPassNodes;
 
   Vector<int> m_renderOrder;
+  Vector<int> m_staticRenderOrder;
 
   RHIFactory* m_rhiFactory;
   uint32_t m_width;
