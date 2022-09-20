@@ -6,6 +6,7 @@
 #include "RHI/OpenGL/OpenGLImguiInterface.hpp"
 #include "RHI/OpenGL/OpenGLPipeline.hpp"
 #include "RHI/OpenGL/OpenGLRenderPass.hpp"
+#include "RHI/OpenGL/OpenGLTexture.hpp"
 
 #ifndef GLEW_STATIC
 #define GLEW_STATIC
@@ -325,8 +326,29 @@ OpenGLRHIFactory::CreateTextureCubeMap(const CubeMapCreateInfo& createInfo, uint
 }
 
 std::unique_ptr<ImageView>
-OpenGLRHIFactory::CreateImageView() const {
-  return std::make_unique<OpenGLImageView>();
+OpenGLRHIFactory::CreateImageView(const ImageViewDesc& imageViewDesc) const {
+  GLuint textureTarget;
+  GLenum textureType = ConvertToOpenGLTextureType(imageViewDesc.m_type);
+  GLenum textureFormat = ConvertToOpenglInternalFormat(imageViewDesc.m_format);
+
+  // glCreateTextures(textureType, 1, &textureTarget);
+  glGenTextures(1, &textureTarget);
+  auto originalTarget = (uintptr_t)imageViewDesc.m_texture->GetOriginHandle();
+  auto minLevel = imageViewDesc.m_levelBase;
+  auto numLevels = imageViewDesc.m_levelCount;
+  auto minLayers = imageViewDesc.m_layerBase;
+  auto numLayers = imageViewDesc.m_layerCount;
+  glTextureView(textureTarget, textureType, originalTarget, textureFormat, minLayers, numLevels,
+                minLayers, numLayers);
+
+  auto imageView = std::make_unique<OpenGLImageView>();
+  imageView->m_textureTarget = textureTarget;
+  imageView->format = imageViewDesc.m_format;
+  imageView->type = imageViewDesc.m_type;
+  imageView->m_openGLFormat = textureFormat;
+  imageView->m_openGLType = textureType;
+
+  return imageView;
 }
 
 std::unique_ptr<UniformBuffer>

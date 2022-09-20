@@ -93,8 +93,14 @@ PointLightShadowMapRenderPass::CreateFrameBuffer() {
   auto shadowTexture = targetGBuffer->GetTexture(GBufferTexutreType::SHADOW_MAP_CUBE);
 
   // depth framebuffer
-  std::shared_ptr shadowTextureView = m_rhiFactory->CreateImageView();
-  shadowTextureView->SetTexture(shadowTexture);
+  std::shared_ptr shadowTextureView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = shadowTexture,
+      .m_format = shadowTexture->GetFormat(),
+      .m_type = shadowTexture->GetTextureType(),
+      .m_layerBase = 0,
+      .m_layerCount = 6,
+  });
+
   m_framebuffer = m_rhiFactory->CreateFrameBuffer(FrameBufferInfo{
       .width = 4096,
       .height = 4096,

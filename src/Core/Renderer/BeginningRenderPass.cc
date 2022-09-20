@@ -60,10 +60,16 @@ BeginningRenderPass::CreateFrameBuffer() {
   auto width = colorBuffer->GetWidth();
   auto height = colorBuffer->GetHeight();
 
-  std::shared_ptr colorBufferView = m_rhiFactory->CreateImageView();
-  colorBufferView->SetTexture(colorBuffer);
-  std::shared_ptr depthBufferView = m_rhiFactory->CreateImageView();
-  depthBufferView->SetTexture(depthBuffer);
+  std::shared_ptr colorBufferView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = colorBuffer,
+      .m_format = colorBuffer->GetFormat(),
+      .m_type = colorBuffer->GetTextureType(),
+  });
+  std::shared_ptr depthBufferView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = depthBuffer,
+      .m_format = depthBuffer->GetFormat(),
+      .m_type = depthBuffer->GetTextureType(),
+  });
 
   FrameBufferInfo createInfo{
       .width = width,

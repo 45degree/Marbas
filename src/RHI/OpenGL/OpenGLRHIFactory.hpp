@@ -54,21 +54,11 @@ class OpenGLRHIFactory final : public RHIFactory {
   std::unique_ptr<Texture>
   CreateTexture2D(const Path& imagePath, uint32_t level, bool isHDR) const override;
 
-  // [[nodiscard]] std::unique_ptr<Texture2D>
-  // CreateTexutre2D(const Path& imagePath, uint32_t level) const override;
-  //
-  // [[nodiscard]] std::unique_ptr<Texture2D>
-  // CreateTexutre2D(int width, int height, uint32_t level, TextureFormat formatType) const
-  // override;
-  //
-  // [[nodiscard]] std::unique_ptr<TextureCubeMap>
-  // CreateTextureCubeMap(int width, int height, TextureFormat format) const override;
-  //
   [[nodiscard]] std::unique_ptr<Texture>
   CreateTextureCubeMap(const CubeMapCreateInfo& createInfo, uint32_t level) const override;
 
   [[nodiscard]] std::unique_ptr<ImageView>
-  CreateImageView() const override;
+  CreateImageView(const ImageViewDesc& imageViewDesc) const override;
 
   [[nodiscard]] std::unique_ptr<UniformBuffer>
   CreateUniformBuffer(uint32_t size) const override;

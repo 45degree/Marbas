@@ -6,23 +6,25 @@
 
 namespace Marbas {
 
+GLenum
+ConvertToOpenglDataFormat(TextureFormat type);
+
+GLenum
+ConvertToOpenGLTextureType(TextureType type);
+
+GLenum
+ConvertToOpenGLTextureDataType(TextureFormat type);
+
+GLenum
+ConvertToOpenglInternalFormat(TextureFormat type);
+
 class OpenGLTexture;
 struct OpenGLImageView final : public ImageView {
-  std::shared_ptr<OpenGLTexture> texture;
-  uint32_t level = 0;
-  uint32_t layer = 0;
+  GLuint m_textureTarget;
+  GLenum m_openGLFormat;
+  GLenum m_openGLType;
 
-  void
-  SetTexture(const std::shared_ptr<Texture>& tex) override {
-    texture = std::static_pointer_cast<OpenGLTexture>(tex);
-  }
-
-  void
-  SetRangeInfo(uint32_t layerBase, uint32_t layerCount, uint32_t levelBase,
-               uint32_t levelCount) override {
-    level = levelBase;
-    layer = layerBase;
-  }
+  virtual ~OpenGLImageView() { glDeleteTextures(1, &m_textureTarget); }
 };
 
 class OpenGLTexture final : public Texture {

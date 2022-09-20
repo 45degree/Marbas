@@ -233,10 +233,24 @@ BlinnPhongRenderPass::CreateFrameBuffer() {
   auto width = colorBuffer->GetWidth();
   auto height = colorBuffer->GetHeight();
 
-  std::shared_ptr colorBufferView = m_rhiFactory->CreateImageView();
-  colorBufferView->SetTexture(colorBuffer);
-  std::shared_ptr depthBufferView = m_rhiFactory->CreateImageView();
-  depthBufferView->SetTexture(depthBuffer);
+  std::shared_ptr colorBufferView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = colorBuffer,
+      .m_format = colorBuffer->GetFormat(),
+      .m_type = colorBuffer->GetTextureType(),
+      .m_layerBase = 0,
+      .m_layerCount = 1,
+      .m_levelBase = 0,
+      .m_levelCount = 1,
+  });
+  std::shared_ptr depthBufferView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = depthBuffer,
+      .m_format = depthBuffer->GetFormat(),
+      .m_type = depthBuffer->GetTextureType(),
+      .m_layerBase = 0,
+      .m_layerCount = 1,
+      .m_levelBase = 0,
+      .m_levelCount = 1,
+  });
 
   FrameBufferInfo createInfo{
       .width = width,

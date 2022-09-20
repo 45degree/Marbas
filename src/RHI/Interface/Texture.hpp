@@ -29,15 +29,15 @@ enum TextureType {
 
 class Texture;
 struct ImageView {
-  virtual void
-  SetTexture(const std::shared_ptr<Texture>& texture) = 0;
-
-  virtual void
-  SetRangeInfo(uint32_t layerBase, uint32_t layerCount, uint32_t levelBase,
-               uint32_t levelCount) = 0;
+  TextureFormat format;
+  TextureType type;
+  virtual ~ImageView() = default;
 };
 
 struct ImageViewDesc final {
+  std::shared_ptr<Texture> m_texture = nullptr;
+  TextureFormat m_format = TextureFormat::RGB;
+  TextureType m_type = TextureType::TEXTURE2D;
   uint32_t m_layerBase = 0;
   uint32_t m_layerCount = 1;
   uint32_t m_levelBase = 0;

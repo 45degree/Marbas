@@ -28,45 +28,29 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(const FrameBufferInfo& info) : FrameBuffer(
       throw std::runtime_error(strMsg);
     }
     auto attachment = std::static_pointer_cast<OpenGLImageView>(info.attachments[i]);
-    auto texture = attachment->texture;
-    auto textureId = texture->GetOpenGLTarget();
-    auto textureType = texture->GetTextureType();
-    auto textureFormat = texture->GetFormat();
-    auto level = attachment->level;
-    auto layer = attachment->layer;
+    auto texture = attachment->m_textureTarget;
+    auto textureType = attachment->type;
+    auto textureFormat = attachment->format;
+    // auto level = attachment->level;
+    // auto layer = attachment->layer;
 
     // check type
-    if (texture->GetFormat() != m_attachmentInfos[i].format) {
+    if (textureFormat != m_attachmentInfos[i].format) {
       auto strMsg = "the texture's format is not equal the attachment info format";
       LOG(ERROR) << strMsg;
       throw std::runtime_error(strMsg);
     }
 
     // TODO:
-
-    // if (textureType == TextureType::TEXTURE2D || textureType == TextureType::CUBEMAP) {
     if (textureFormat == TextureFormat::DEPTH) {
-      glNamedFramebufferTexture(frameBufferID, GL_DEPTH_ATTACHMENT, textureId, 0);
+      glNamedFramebufferTexture(frameBufferID, GL_DEPTH_ATTACHMENT, texture, 0);
       depthAttachmentCount++;
     } else {
-      glNamedFramebufferTexture(frameBufferID, GL_COLOR_ATTACHMENT0 + colorAttachmentCount,
-                                textureId, 0);
+      glNamedFramebufferTexture(frameBufferID, GL_COLOR_ATTACHMENT0 + colorAttachmentCount, texture,
+                                0);
       colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + colorAttachmentCount);
       colorAttachmentCount++;
     }
-    //
-    // } else {
-    //   if (textureFormat == TextureFormat::DEPTH) {
-    //     glNamedFramebufferTextureLayer(frameBufferID, GL_DEPTH_ATTACHMENT, textureId, level,
-    //     layer); depthAttachmentCount++;
-    //   } else {
-    //     glNamedFramebufferTextureLayer(frameBufferID, GL_COLOR_ATTACHMENT0 +
-    //     colorAttachmentCount,
-    //                                    textureId, level, layer);
-    //     colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + colorAttachmentCount);
-    //     colorAttachmentCount++;
-    //   }
-    // }
   }
   glDrawBuffers(colorAttachmentCount, colorAttachments.data());
 

@@ -213,9 +213,16 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
       .height = 600,
       .mipmapLevel = 1,
   });
-  std::shared_ptr<Marbas::ImageView> textureColorBufferView = rhiFactory->CreateImageView();
-  textureColorBufferView->SetTexture(textureColorBuffer);
-  textureColorBufferView->SetRangeInfo(0, 1, 0, 1);
+  std::shared_ptr<Marbas::ImageView> textureColorBufferView =
+      rhiFactory->CreateImageView(Marbas::ImageViewDesc{
+          .m_texture = textureColorBuffer,
+          .m_format = Marbas::TextureFormat::RGB,
+          .m_type = Marbas::TextureType::TEXTURE2D,
+          .m_layerBase = 0,
+          .m_layerCount = 1,
+          .m_levelBase = 0,
+          .m_levelCount = 1,
+      });
 
   std::shared_ptr<Marbas::Texture> textureDepthBuffer = rhiFactory->CreateTexture(Marbas::ImageDesc{
       .textureType = Marbas::TextureType::TEXTURE2D,
@@ -224,9 +231,16 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
       .height = 600,
       .mipmapLevel = 1,
   });
-  std::shared_ptr<Marbas::ImageView> textureDepthBufferView = rhiFactory->CreateImageView();
-  textureDepthBufferView->SetTexture(textureDepthBuffer);
-  textureDepthBufferView->SetRangeInfo(0, 1, 0, 1);
+  std::shared_ptr<Marbas::ImageView> textureDepthBufferView =
+      rhiFactory->CreateImageView(Marbas::ImageViewDesc{
+          .m_texture = textureDepthBuffer,
+          .m_format = Marbas::TextureFormat::DEPTH,
+          .m_type = Marbas::TextureType::TEXTURE2D,
+          .m_layerBase = 0,
+          .m_layerCount = 1,
+          .m_levelBase = 0,
+          .m_levelCount = 1,
+      });
   Marbas::FrameBufferInfo frameBufferInfo{
       .width = 800,
       .height = 600,

@@ -4,7 +4,7 @@
 
 namespace Marbas {
 
-static GLenum
+GLenum
 ConvertToOpenglDataFormat(TextureFormat type) {
   switch (type) {
     case TextureFormat::BGR:
@@ -30,8 +30,25 @@ ConvertToOpenglDataFormat(TextureFormat type) {
   }
 }
 
-static constexpr GLenum
-ConvertToOpenGLTextureType(TextureFormat type) {
+GLenum
+ConvertToOpenGLTextureType(TextureType type) {
+  switch (type) {
+    case TextureType::TEXTURE2D:
+      return GL_TEXTURE_2D;
+    case TextureType::TEXTURE2D_ARRAY:
+      return GL_TEXTURE_2D_ARRAY;
+    case TextureType::CUBEMAP:
+      return GL_TEXTURE_CUBE_MAP;
+    case TextureType::CUBEMAP_ARRAY:
+      return GL_TEXTURE_CUBE_MAP_ARRAY;
+    default:
+      // never enter this line
+      DLOG_ASSERT(false);
+  }
+}
+
+GLenum
+ConvertToOpenGLTextureDataType(TextureFormat type) {
   switch (type) {
     case TextureFormat::BGR:
       return GL_UNSIGNED_BYTE;
@@ -57,7 +74,7 @@ ConvertToOpenGLTextureType(TextureFormat type) {
   return GL_UNSIGNED_BYTE;
 }
 
-static GLenum
+GLenum
 ConvertToOpenglInternalFormat(TextureFormat type) {
   switch (type) {
     case TextureFormat::BGR:
@@ -161,7 +178,7 @@ OpenGLTexture::SetData(void* data, size_t size, uint32_t level, uint32_t layer) 
   //     << "size and texture size do not match";
 
   auto dataFormat = ConvertToOpenglDataFormat(m_imageDesc.format);
-  auto type = ConvertToOpenGLTextureType(m_imageDesc.format);
+  auto type = ConvertToOpenGLTextureDataType(m_imageDesc.format);
   auto width = m_imageDesc.width;
   auto height = m_imageDesc.height;
 
@@ -184,7 +201,7 @@ OpenGLTexture::SetData(void* data, size_t size, uint32_t level, uint32_t layer) 
 
 GLenum
 OpenGLTexture::GetOpenGLType() const {
-  return ConvertToOpenGLTextureType(m_imageDesc.format);
+  return ConvertToOpenGLTextureDataType(m_imageDesc.format);
 }
 
 GLenum

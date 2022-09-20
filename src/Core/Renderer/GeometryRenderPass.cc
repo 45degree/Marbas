@@ -163,20 +163,41 @@ GeometryRenderPass::CreateFrameBuffer() {
   auto width = normalBuffer->GetWidth();
   auto height = normalBuffer->GetHeight();
 
-  std::shared_ptr colorBufferView = m_rhiFactory->CreateImageView();
-  colorBufferView->SetTexture(colorBuffer);
-  std::shared_ptr normalBufferView = m_rhiFactory->CreateImageView();
-  normalBufferView->SetTexture(normalBuffer);
-  std::shared_ptr positionBufferView = m_rhiFactory->CreateImageView();
-  positionBufferView->SetTexture(positionBuffer);
-  std::shared_ptr depthBufferView = m_rhiFactory->CreateImageView();
-  depthBufferView->SetTexture(depthBuffer);
-  std::shared_ptr ambientOcclusionView = m_rhiFactory->CreateImageView();
-  ambientOcclusionView->SetTexture(ambientOcclusion);
-  std::shared_ptr roughtnessView = m_rhiFactory->CreateImageView();
-  roughtnessView->SetTexture(roughness);
-  std::shared_ptr metallicView = m_rhiFactory->CreateImageView();
-  metallicView->SetTexture(metallic);
+  std::shared_ptr colorBufferView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = colorBuffer,
+      .m_format = colorBuffer->GetFormat(),
+      .m_type = colorBuffer->GetTextureType(),
+  });
+  std::shared_ptr normalBufferView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = normalBuffer,
+      .m_format = normalBuffer->GetFormat(),
+      .m_type = normalBuffer->GetTextureType(),
+  });
+  std::shared_ptr positionBufferView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = positionBuffer,
+      .m_format = positionBuffer->GetFormat(),
+      .m_type = positionBuffer->GetTextureType(),
+  });
+  std::shared_ptr depthBufferView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = depthBuffer,
+      .m_format = depthBuffer->GetFormat(),
+      .m_type = depthBuffer->GetTextureType(),
+  });
+  std::shared_ptr ambientOcclusionView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = ambientOcclusion,
+      .m_format = ambientOcclusion->GetFormat(),
+      .m_type = ambientOcclusion->GetTextureType(),
+  });
+  std::shared_ptr roughnessView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = roughness,
+      .m_format = roughness->GetFormat(),
+      .m_type = roughness->GetTextureType(),
+  });
+  std::shared_ptr metallicView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = metallic,
+      .m_format = metallic->GetFormat(),
+      .m_type = metallic->GetTextureType(),
+  });
 
   FrameBufferInfo createInfo{
       .width = width,
@@ -188,7 +209,7 @@ GeometryRenderPass::CreateFrameBuffer() {
               normalBufferView,
               positionBufferView,
               ambientOcclusionView,
-              roughtnessView,
+              roughnessView,
               metallicView,
               depthBufferView,
           },

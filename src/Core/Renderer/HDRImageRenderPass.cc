@@ -52,8 +52,13 @@ HDRImageRenderPass::CreateFrameBuffer() {
   const auto& targetGBuffer = m_outputTarget[String(targetName)]->GetGBuffer();
   auto targetBuffer = targetGBuffer->GetTexture(GBufferTexutreType::HDR_IMAGE);
 
-  std::shared_ptr hdrImageView = m_rhiFactory->CreateImageView();
-  hdrImageView->SetTexture(targetBuffer);
+  std::shared_ptr hdrImageView = m_rhiFactory->CreateImageView(ImageViewDesc{
+      .m_texture = targetBuffer,
+      .m_format = targetBuffer->GetFormat(),
+      .m_type = targetBuffer->GetTextureType(),
+      .m_layerBase = 0,
+      .m_layerCount = 6,
+  });
 
   FrameBufferInfo createInfo{
       .width = 512,

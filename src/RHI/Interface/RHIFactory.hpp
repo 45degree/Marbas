@@ -106,7 +106,7 @@ class RHIFactory {
   CreateTextureCubeMap(const CubeMapCreateInfo& createInfo, uint32_t levels) const = 0;
 
   [[nodiscard]] virtual std::unique_ptr<ImageView>
-  CreateImageView() const = 0;
+  CreateImageView(const ImageViewDesc& imageViewDesc) const = 0;
 
   [[nodiscard]] virtual std::unique_ptr<CommandBuffer>
   CreateCommandBuffer() const = 0;
