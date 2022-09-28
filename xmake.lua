@@ -1,4 +1,4 @@
----@diagnostic disable: undefined-global
+---@diagnostic disable: undefined-global, undefined-field
 
 add_rules("mode.debug", "mode.release")
 
@@ -19,7 +19,49 @@ add_requires("nativefiledialog 1.1.6")
 add_requires("shaderc")
 add_requires("openssl")
 
--- add_requires("uchardet")
+if is_plat("linux") then
+  add_requires("vulkan")
+else
+  option("Vulkan SDK Path")
+    set_default("D:/VulkanSDK/1.3.224.1")
+    set_description("Vulkan SDK Path")
+    set_showmenu(true)
+  option_end()
+end
+
+rule("LoadVulkan")
+  on_load(function (target)
+    if is_plat("linux") then
+      target:add("packages", "vulkan")
+    else
+      local vulkanIncludePath = path.join('$(Vulkan SDK Path)', 'include')
+      local vulkanLibPath = path.join('$(Vulkan SDK Path)', 'lib')
+      local vulkanBinPath = path.join('$(Vulkan SDK Path)', 'bin')
+
+      if not os.exists(vulkanIncludePath) then
+        if os.exists(path.join('$(Vulkan SDK Path)', 'Include')) then
+          vulkanIncludePath = path.join('$(Vulkan SDK Path)', 'Include')
+        end
+      end
+
+      if os.exists(vulkanBinPath) then
+        if os.exists(path.join('$(Vulkan SDK Path)', 'Bin')) then
+          vulkanBinPath = path.join('$(Vulkan SDK Path)', 'Bin')
+        end
+      end
+
+      if os.exists(vulkanLibPath) then
+        if os.exists(path.join('$(Vulkan SDK Path)', 'Lib')) then
+          vulkanLibPath = path.join('$(Vulkan SDK Path)', 'Lib')
+        end
+      end
+
+      target:add('includedirs', vulkanIncludePath)
+      target:add("links", path.join(vulkanLibPath, "vulkan-1"))
+      target:add('rpathdirs', vulkanBinPath)
+    end
+  end)
+rule_end()
 
 includes("src/App/Editor/")
 includes("src/App/Games/")

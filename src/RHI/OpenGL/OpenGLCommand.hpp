@@ -2,6 +2,8 @@
 
 #include <glog/logging.h>
 
+#include <variant>
+
 #include "RHI/Interface/CommandBuffer.hpp"
 #include "RHI/OpenGL/OpenGLDescriptorSet.hpp"
 #include "RHI/OpenGL/OpenGLIndexBuffer.hpp"
@@ -361,9 +363,37 @@ class OpenGLCopyImageToImage final : public IOpenGLCommand<OpenGLCopyImageToImag
   std::shared_ptr<OpenGLTexture> m_dstTexture = nullptr;
 };
 
+class OpenGLSetViewPorts final : public IOpenGLCommand<OpenGLSetViewPorts> {
+ public:
+  OpenGLSetViewPorts() = default;
+  OpenGLSetViewPorts(const OpenGLSetViewPorts& command) : m_viewPorts(command.m_viewPorts) {}
+  virtual ~OpenGLSetViewPorts() = default;
+
+ public:
+  void
+  SetViewPorts(const Vector<ViewportInfo>& viewports) {
+    m_viewPorts = viewports;
+  }
+
+  void
+  Execute() const {
+    for (int i = 0; i < m_viewPorts.size(); i++) {
+      const auto& viewport = m_viewPorts[i];
+      glViewportIndexedf(i, viewport.x, viewport.y, viewport.width, viewport.height);
+      glDepthRangeIndexed(i, viewport.minDepth, viewport.maxDepth);
+    }
+  }
+
+  void
+  OnEndRenderPass() const {}
+
+ private:
+  Vector<ViewportInfo> m_viewPorts;
+};
+
 using OpenGLCommandPoly_T =
     std::variant<OpenGLBeginRenderPass, OpenGLBindDescriptorSet, OpenGLEndRenderpass,
                  OpenGLBindPipeline, OpenGLBindIndexBuffer, OpenGLBindVertexBuffer, OpenGLDrawArray,
-                 OpenGLDrawIndex, OpenGLCopyImageToImage>;
+                 OpenGLDrawIndex, OpenGLCopyImageToImage, OpenGLSetViewPorts>;
 
 }  // namespace Marbas

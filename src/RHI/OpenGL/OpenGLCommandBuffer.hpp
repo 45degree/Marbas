@@ -68,6 +68,13 @@ class OpenGLCommandBuffer final : public CommandBuffer {
   }
 
   void
+  SetViewports(const Vector<ViewportInfo>& viewportInfos) override {
+    OpenGLSetViewPorts cmd;
+    cmd.SetViewPorts(viewportInfos);
+    m_commands.push_back(std::move(cmd));
+  }
+
+  void
   BindVertexBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer) override {
     DLOG_ASSERT(m_isBeginRecord);
 

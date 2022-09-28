@@ -1,4 +1,4 @@
----@diagnostic disable: undefined-global
+---@diagnostic disable: undefined-global, undefined-field
 
 target("Marbas.Test")
     set_kind("binary")
@@ -31,12 +31,8 @@ target_end()
 target("Marbas.RHITest")
   set_kind("binary")
   set_languages("c11", "cxx20")
-  -- add_rules("utils.glsl2spv", {
-  --     outputdir = path.join("$(buildir)", "$(os)", "$(arch)", "$(mode)", "Test/")
-  -- })
 
-  add_files("$(projectdir)/src/Test/RHITest/*.cc");
-  -- add_files("$(projectdir)/src/Test/RHITest/*.glsl");
+  add_files("$(projectdir)/src/Test/RHITest/main.cc");
   add_includedirs("$(projectdir)/src")
 
 
@@ -52,11 +48,29 @@ target("Marbas.RHITest")
     os.cp("$(projectdir)/src/Test/RHITest/*.png", path.join(executedir, "Test"))
   end)
 
+  -- add_rules("LoadVulkan")
   if is_mode("debug") then
       add_defines("DEBUG")
   end
 
   add_deps("Marbas.RHI")
   add_packages("glfw", "glm", "glog", "glew", "folly", "stb")
+
+target_end()
+
+target("Marbas.VulkanRHITest")
+  set_kind("binary")
+  set_languages("c11", "cxx20")
+
+  add_rules("LoadVulkan")
+  add_files("$(projectdir)/src/Test/RHITest/vulkanMain.cc");
+  add_includedirs("$(projectdir)/src")
+
+  if is_mode("debug") then
+    add_defines("DEBUG")
+  end
+
+  add_deps("Marbas.RHI")
+  add_packages("glfw", "glm", "glog", "folly", "stb")
 
 target_end()

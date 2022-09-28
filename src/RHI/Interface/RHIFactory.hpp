@@ -67,7 +67,7 @@ class RHIFactory {
   }
 
   virtual void
-  Init(const RHICreateInfo& extraInfo) const = 0;
+  Init(const RHICreateInfo& extraInfo) = 0;
 
   [[nodiscard]] virtual std::unique_ptr<ImguiInterface>
   CreateImguiInterface() const = 0;

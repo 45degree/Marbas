@@ -6,6 +6,7 @@
 
 #include "Common/Common.hpp"
 #include "RHI/OpenGL/OpenGLRHIFactory.hpp"
+#include "RHI/Vulkan/VulkanRHIFactory.hpp"
 
 namespace Marbas {
 
@@ -19,7 +20,7 @@ RHIFactory::GetInstance(const RendererType& rendererType) {
       m_rhiFactory.reset(new OpenGLRHIFactory());
     } else if (rendererType == RendererType::VULKAN) {
       // TODO(45degree): change to vulkan api
-      m_rhiFactory.reset(new OpenGLRHIFactory());
+      m_rhiFactory.reset(new VulkanRHIFactory());
     } else {
       LOG(ERROR) << "can't create the renderer api";
     }

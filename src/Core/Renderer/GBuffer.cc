@@ -62,6 +62,19 @@ GBuffer::AddTexture(GBufferType gBufferType, RHIFactory* rhiFactory) {
       desc.arrayLayer = 1;
       texture = rhiFactory->CreateTexture(desc);
       break;
+    case GBufferTexutreType::PRE_FILTER_CUBEMAP:
+      desc.format = TextureFormat::RGB16F;
+      desc.textureType = TextureType::CUBEMAP;
+      desc.arrayLayer = 1;
+      desc.mipmapLevel = 5;
+      texture = rhiFactory->CreateTexture(desc);
+      break;
+    case GBufferTexutreType::IBL_BRDF_LOD:
+      desc.format = TextureFormat::RG16F;
+      desc.textureType = TextureType::TEXTURE2D;
+      desc.arrayLayer = 1;
+      texture = rhiFactory->CreateTexture(desc);
+      break;
     case GBufferTexutreType::SHADOW_MAP:
       desc.format = TextureFormat::DEPTH;
       desc.textureType = TextureType::TEXTURE2D_ARRAY;

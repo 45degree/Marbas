@@ -16,6 +16,8 @@ enum class GBufferTexutreType {
   ROUGHTNESS,
   METALLIC,
   HDR_IMAGE,
+  PRE_FILTER_CUBEMAP,
+  IBL_BRDF_LOD,
   SHADOW_MAP,
   SHADOW_MAP_CUBE,
 };

@@ -18,7 +18,7 @@ namespace Marbas {
 
 DirectionLightShadowMapCreateInfo::DirectionLightShadowMapCreateInfo()
     : DeferredRenderPassCreateInfo() {
-  passName = DirectionLightShadowMapRenderPass::renderPassName;
+  passName = String(DirectionLightShadowMapRenderPass::renderPassName);
   inputResource = {
       GeometryRenderPass::geometryTargetName,
   };

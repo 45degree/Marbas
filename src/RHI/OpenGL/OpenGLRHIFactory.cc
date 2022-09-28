@@ -126,7 +126,7 @@ OpenGLRHIFactory::OpenGLRHIFactory() : RHIFactory() {
 }
 
 void
-OpenGLRHIFactory::Init(const RHICreateInfo& createInfo) const {
+OpenGLRHIFactory::Init(const RHICreateInfo& createInfo) {
   m_enableSpriv = createInfo.m_openglRHICreateInfo.useSPIRV;
 
   glfwMakeContextCurrent(m_glfwWindow);
@@ -338,7 +338,7 @@ OpenGLRHIFactory::CreateImageView(const ImageViewDesc& imageViewDesc) const {
   auto numLevels = imageViewDesc.m_levelCount;
   auto minLayers = imageViewDesc.m_layerBase;
   auto numLayers = imageViewDesc.m_layerCount;
-  glTextureView(textureTarget, textureType, originalTarget, textureFormat, minLayers, numLevels,
+  glTextureView(textureTarget, textureType, originalTarget, textureFormat, minLevel, numLevels,
                 minLayers, numLayers);
 
   auto imageView = std::make_unique<OpenGLImageView>();

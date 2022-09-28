@@ -111,7 +111,8 @@ Scene::Scene(const std::shared_ptr<ResourceManager>& resourceManager)
   // TODO: need to remove
   AddLight(LightType::PointLight, glm::vec3(0, 30, 0), m_rootEntity);
 
-  Entity::CreateEntity<EnvironmentPolicy>(this, "assert/sIBL_Collection/OfficeEden/Eden_Pano.jpg");
+  Entity::CreateEntity<EnvironmentPolicy>(
+      this, "assert/sIBL_Collection/apartment/Apartment_Spherical_HiRes.jpg");
 }
 
 void

@@ -3,8 +3,10 @@
 #include <nameof.hpp>
 
 #include "Core/Renderer/GeometryRenderPass.hpp"
+#include "Core/Renderer/IBL_BRDF_RenderPass.hpp"
 #include "Core/Renderer/IrradianceRenderPass.hpp"
 #include "Core/Renderer/PointLightShadowMapRenderPass.hpp"
+#include "Core/Renderer/PrefilterRenderPass.hpp"
 #include "Core/Scene/Component/LightComponent.hpp"
 #include "RHI/Interface/Pipeline.hpp"
 
@@ -20,6 +22,8 @@ BlinnPhongRenderPassCreateInfo::BlinnPhongRenderPassCreateInfo() : DeferredRende
       String(PointLightShadowMapRenderPass::targetName),
       String(DirectionLightShadowMapRenderPass::renderTarget),
       String(IrradianceRenderPass::targetName),
+      String(PrefilterRenderPass::targetName),
+      String(IBLBRDFRenderPass::targetName),
   };
   outputResource = {BlinnPhongRenderPass::blinnPhongTargetName,
                     GeometryRenderPass::depthTargetName};
@@ -124,6 +128,16 @@ BlinnPhongRenderPass::CreateDescriptorSetLayout() {
       .isBuffer = false,
       .bindingPoint = 8,
   });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // prefilter map
+      .isBuffer = false,
+      .bindingPoint = 9,
+  });
+  AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
+      // ibl brdf lod
+      .isBuffer = false,
+      .bindingPoint = 10,
+  });
 
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
       // direction light info
@@ -154,6 +168,12 @@ BlinnPhongRenderPass::OnInit() {
   auto irradianceGBuffer = m_inputTarget[String(IrradianceRenderPass::targetName)]->GetGBuffer();
   auto irradianceBuffer = irradianceGBuffer->GetTexture(GBufferTexutreType::HDR_IMAGE);
 
+  auto prefilterGBuffer = m_inputTarget[String(PrefilterRenderPass::targetName)]->GetGBuffer();
+  auto prefilterBuffer = prefilterGBuffer->GetTexture(GBufferTexutreType::PRE_FILTER_CUBEMAP);
+
+  auto iblBRDFGBuffer = m_inputTarget[String(IBLBRDFRenderPass::targetName)]->GetGBuffer();
+  auto iblBRDFBuffer = iblBRDFGBuffer->GetTexture(GBufferTexutreType::IBL_BRDF_LOD);
+
   // set input as image descriptor set
   auto gBuffer = m_inputTarget[GeometryRenderPass::geometryTargetName]->GetGBuffer();
   auto gColorBuffer = gBuffer->GetTexture(GBufferTexutreType::COLOR);
@@ -180,6 +200,8 @@ BlinnPhongRenderPass::OnInit() {
   m_descriptorSet->BindImage(6, gMetallic);
   m_descriptorSet->BindImage(7, gAO);
   m_descriptorSet->BindImage(8, irradianceBuffer);
+  m_descriptorSet->BindImage(9, prefilterBuffer);
+  m_descriptorSet->BindImage(10, iblBRDFBuffer);
 }
 
 void

@@ -12,8 +12,10 @@
 #include "Core/Renderer/GeometryRenderPass.hpp"
 #include "Core/Renderer/GridRenderPass.hpp"
 #include "Core/Renderer/HDRImageRenderPass.hpp"
+#include "Core/Renderer/IBL_BRDF_RenderPass.hpp"
 #include "Core/Renderer/IrradianceRenderPass.hpp"
 #include "Core/Renderer/PointLightShadowMapRenderPass.hpp"
+#include "Core/Renderer/PrefilterRenderPass.hpp"
 #include "RHI/RHI.hpp"
 
 namespace Marbas {
@@ -157,6 +159,54 @@ RenderLayer::OnAttach() {
     return createInfo;
   }());
   m_renderGraph->RegisterDeferredRenderPassNode(irradianceRenderPass);
+
+  // filter render pass
+  auto prefilterRenderPassTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = String(PrefilterRenderPass::targetName),
+      .buffersType =
+          {
+              GBufferType{.type = GBufferTexutreType::PRE_FILTER_CUBEMAP, .levels = 5, .layers = 6},
+          },
+      .rhiFactory = m_rhiFactory,
+      .width = 128,
+      .height = 128,
+  });
+  m_renderGraph->RegisterRenderTargetNode(prefilterRenderPassTarget);
+
+  auto prefilterRenderPass = std::make_shared<PrefilterRenderPass>([&]() {
+    PrefilterRenderPassCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = m_width;
+    createInfo.height = m_height;
+    createInfo.isStatic = true;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterDeferredRenderPassNode(prefilterRenderPass);
+
+  // IBL BRDF
+  auto iblBRDFRenderPassTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{
+      .targetName = String(IBLBRDFRenderPass::targetName),
+      .buffersType =
+          {
+              GBufferType{.type = GBufferTexutreType::IBL_BRDF_LOD, .levels = 1, .layers = 1},
+          },
+      .rhiFactory = m_rhiFactory,
+      .width = 512,
+      .height = 512,
+  });
+  m_renderGraph->RegisterRenderTargetNode(iblBRDFRenderPassTarget);
+
+  auto iblBRDFRenderPass = std::make_shared<IBLBRDFRenderPass>([&]() {
+    IBLBRDFRenderPassCreateInfo createInfo;
+    createInfo.resourceManager = m_resourceManager;
+    createInfo.rhiFactory = m_rhiFactory;
+    createInfo.width = 512;
+    createInfo.height = 512;
+    createInfo.isStatic = true;
+    return createInfo;
+  }());
+  m_renderGraph->RegisterDeferredRenderPassNode(iblBRDFRenderPass);
 
   // shadow mapping render pass
   auto shadowMappingTarget = std::make_shared<RenderTargetNode>(RenderTargetNodeCreateInfo{

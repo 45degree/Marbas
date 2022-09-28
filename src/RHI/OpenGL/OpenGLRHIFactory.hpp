@@ -19,7 +19,7 @@ class OpenGLRHIFactory final : public RHIFactory {
 
  public:
   void
-  Init(const RHICreateInfo& createInfo) const override;
+  Init(const RHICreateInfo& createInfo) override;
 
   [[nodiscard]] std::unique_ptr<ImguiInterface>
   CreateImguiInterface() const override;

@@ -11,7 +11,7 @@
 namespace Marbas {
 
 PointLightShadowMapRenderPassCreateInfo::PointLightShadowMapRenderPassCreateInfo() {
-  passName = PointLightShadowMapRenderPass::renderPassName;
+  passName = String(PointLightShadowMapRenderPass::renderPassName);
   inputResource = {
       GeometryRenderPass::geometryTargetName,
   };

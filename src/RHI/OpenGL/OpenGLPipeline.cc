@@ -255,7 +255,6 @@ OpenGLGraphicsPipeline::Create() {
     auto stride = static_cast<GLsizei>(elementInfo.stride);
     auto offset = elementInfo.offset;
 
-    glEnableVertexArrayAttrib(m_VAO, index);
     switch (elementInfo.mateType) {
       case ElementType::BYTE:
       case ElementType::UNSIGNED_BYTE:
@@ -273,6 +272,8 @@ OpenGLGraphicsPipeline::Create() {
                                   isNormalized, offset);
     }
     glVertexArrayAttribBinding(m_VAO, index, 0);
+
+    glEnableVertexArrayAttrib(m_VAO, index);
   }
   if (m_vertexInputRate == VertexInputRate::INSTANCE) {
     for (const auto& [binding, divisor] : m_bindingDivisorInfo) {
@@ -285,6 +286,7 @@ OpenGLGraphicsPipeline::Create() {
 
 void
 OpenGLGraphicsPipeline::Bind() const {
+  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
   glViewport(m_viewPortInfo.x, m_viewPortInfo.y, m_viewPortInfo.width, m_viewPortInfo.height);
   // glScissor(m_scissorInfo.x, m_scissorInfo.y, m_scissorInfo.x, m_scissorInfo.y);
 
@@ -353,6 +355,7 @@ OpenGLGraphicsPipeline::Bind() const {
 
 void
 OpenGLGraphicsPipeline::UnBind() const {
+  glBindVertexArray(0);
   glDisable(GL_DEPTH_TEST);
   if (m_blendInfo.logicOpEnable) {
     glDisable(GL_COLOR_LOGIC_OP);

@@ -83,6 +83,7 @@ HDRImageRenderPass::CreatePipeline() {
   m_pipeline->SetVertexBufferLayout(GetMeshVertexInfoLayout(), VertexInputRate::VERTEX);
   m_pipeline->SetDepthStencilInfo(DepthStencilInfo{
       .depthTestEnable = false,
+      .depthCompareOp = DepthCompareOp::LEQUAL,
   });
   m_pipeline->Create();
 }
@@ -100,7 +101,7 @@ HDRImageRenderPass::CreateShader() {
 
 void
 HDRImageRenderPass::OnInit() {
-  auto& vertices = CubeMapComponent::vertices;
+  auto vertices = CubeMapComponent::vertices;
   constexpr auto verticesSize = sizeof(vertices[0]) * vertices.size();
   Vector<uint32_t> indices(CubeMapComponent::indices.begin(), CubeMapComponent::indices.end());
 

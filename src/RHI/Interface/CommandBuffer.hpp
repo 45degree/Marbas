@@ -26,7 +26,7 @@ struct BindDescriptorSetInfo {
 struct BeginRenderPassInfo {
   std::shared_ptr<RenderPass> renderPass;
   std::shared_ptr<FrameBuffer> frameBuffer;
-  std::array<float, 4> clearColor = {0, 0, 0, 0};
+  std::array<float, 4> clearColor = {0, 0, 0, 1};
 };
 
 // copy image info
@@ -51,6 +51,9 @@ class CommandBuffer {
 
   virtual void
   BindPipeline(const std::shared_ptr<GraphicsPipeLine>& graphicsPipeline) = 0;
+
+  virtual void
+  SetViewports(const Vector<ViewportInfo>& viewportInfos) = 0;
 
   virtual void
   BindVertexBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer) = 0;

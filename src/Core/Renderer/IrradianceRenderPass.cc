@@ -101,7 +101,7 @@ IrradianceRenderPass::CreateShader() {
 
 void
 IrradianceRenderPass::OnInit() {
-  auto& vertices = CubeMapComponent::vertices;
+  auto vertices = CubeMapComponent::vertices;
   constexpr auto verticesSize = sizeof(vertices[0]) * vertices.size();
   Vector<uint32_t> indices(CubeMapComponent::indices.begin(), CubeMapComponent::indices.end());
 

@@ -47,6 +47,8 @@ layout(binding = 5) uniform sampler2D gRoughness;
 layout(binding = 6) uniform sampler2D gMetallic;
 layout(binding = 7) uniform sampler2D gAO;
 layout(binding = 8) uniform samplerCube irradianceCubeMap;
+layout(binding = 9) uniform samplerCube prefilterMap;
+layout(binding = 10) uniform sampler2D brdfLUT;
 
 const float PI = 3.14159265359;
 
@@ -146,6 +148,8 @@ void main() {
   vec3 F0 = vec3(0.04);
   F0 = mix(F0, Albedo, Metallic);
 
+  vec3 R = reflect(-viewDir, Normal); 
+
   vec3 Lo = vec3(0.0);
   for(int i = 0; i < min(pointLightsInfo.count, MAX_POINT_LIGHT_COUNT); i++) {
     vec3 lightPos = pointLightsInfo.lights[i].pos;
@@ -208,11 +212,18 @@ void main() {
     Lo += (1 - shadow) * (KD * Albedo / PI + specular) * radiance * NdotL;
   }
 
+  const float MAX_REFLECTION_LOD = 4.0;
+  vec3 prefilteredColor = textureLod(prefilterMap, R,  Roughness * MAX_REFLECTION_LOD).rgb;
   vec3 KS = fresnelSchlickRoughness(max(dot(Normal, viewDir), 0.0), F0, Roughness);
+  vec2 envBRDF  = texture(brdfLUT, vec2(max(dot(Normal, viewDir), 0.0), Roughness)).rg;
+  vec3 specular = prefilteredColor * (KS * envBRDF.x + envBRDF.y);
+
   vec3 KD = vec3(1.0) - KS;
+  KD *= 1.0 - Metallic;
+
   vec3 irradiance = texture(irradianceCubeMap, Normal).rgb;
   vec3 diffuse    = irradiance * Albedo;
-  vec3 ambient = KD * diffuse * AO;
+  vec3 ambient = (KD * diffuse + specular) * AO;
 
   vec3 color = ambient + Lo;
   color = color / (color + vec3(1.0));
