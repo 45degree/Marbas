@@ -5,4 +5,8 @@
 5. 修改renderpass
 6. 重构texture的创建方法
 7. SSAO
-8. PBR IBL SSR
+8. SSR
+9. 简化RenderPass创建
+10. 简化shader(google extension: #line)
+11. 统一shader(DSL??, DX12需要考虑)
+12. 添加vulkan
