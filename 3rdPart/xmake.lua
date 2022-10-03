@@ -28,7 +28,9 @@ target("Imgui")
     add_files("$(projectdir)/3rdPart/imgui/*.cpp")
     add_files("$(projectdir)/3rdPart/imgui/backends/imgui_impl_glfw.cpp")
     add_files("$(projectdir)/3rdPart/imgui/backends/imgui_impl_opengl3.cpp")
+    add_files("$(projectdir)/3rdPart/imgui/backends/imgui_impl_vulkan.cpp")
 
+    add_rules("LoadVulkan")
     add_packages("glfw")
 target_end()
 
@@ -50,4 +52,14 @@ target_end()
 target("nameof")
   set_kind("headeronly")
   add_includedirs("$(projectdir)/3rdPart/nameof/include", { public = true })
+target_end()
+
+target("Imgui_Example")
+    set_kind("binary")
+    add_rules("LoadVulkan")
+
+    add_deps("Imgui")
+    add_files("$(projectdir)/3rdPart/imgui/examples/example_glfw_vulkan/main.cpp")
+
+    add_packages("glfw")
 target_end()

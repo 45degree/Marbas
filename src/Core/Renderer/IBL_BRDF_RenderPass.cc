@@ -37,8 +37,8 @@ IBLBRDFRenderPass::CreateDescriptorSetLayout(){};
 
 void
 IBLBRDFRenderPass::CreateFrameBuffer() {
-  const auto& targetGBuffer = m_outputTarget[String(targetName)]->GetGBuffer();
-  auto targetBuffer = targetGBuffer->GetTexture(GBufferTexutreType::IBL_BRDF_LOD);
+  const auto& targetGBuffer = m_outputTarget[String(targetName)];
+  auto targetBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::IBL_BRDF_LOD);
 
   std::shared_ptr targetBufferView = m_rhiFactory->CreateImageView(ImageViewDesc{
       .m_texture = targetBuffer,

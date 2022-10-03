@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "RHI/Interface/RHIFactory.hpp"
+#include "RHI/OpenGL/OpenGLSwapChain.hpp"
 #include "RHI/OpenGL/OpenGLTexture.hpp"
 
 namespace Marbas {
@@ -39,8 +40,8 @@ class OpenGLRHIFactory final : public RHIFactory {
   [[nodiscard]] std::unique_ptr<Shader>
   CreateShader() const override;
 
-  [[nodiscard]] std::unique_ptr<SwapChain>
-  CreateSwapChain() override;
+  [[nodiscard]] std::shared_ptr<SwapChain>
+  GetSwapChain() override;
 
   [[nodiscard]] std::unique_ptr<RenderPass>
   CreateRenderPass(const RenderPassCreateInfo& createInfo) override;
@@ -75,11 +76,9 @@ class OpenGLRHIFactory final : public RHIFactory {
   [[nodiscard]] std::unique_ptr<DescriptorSet>
   CreateDescriptorSet(const DescriptorSetLayout& info) const override;
 
-  // [[nodiscard]] std::unique_ptr<DynamicDescriptorSet>
-  // CreateDynamicDescriptorSet(const Vector<uint16_t>& bindingPoints) const override;
-
  private:
   mutable bool m_enableSpriv = true;
+  std::shared_ptr<OpenGLSwapChain> m_swapChain;
   friend RHIFactory;
 };
 

@@ -4,102 +4,47 @@
 
 namespace Marbas {
 
-GBuffer::GBuffer(uint32_t width, uint32_t height) : m_height(height), m_width(width) {}
+struct _GBufferTextureInfo {
+  TextureFormat format;
+  TextureType type;
+};
 
-std::shared_ptr<Texture>
-GBuffer::GetTexture(GBufferTexutreType type) const {
-  if (m_textures.find(type) == m_textures.end()) {
-    LOG(ERROR) << "can't find texture in gbuffer";
-    return nullptr;
-  }
+using GBufferTextureLookUpTableType = std::unordered_map<GBufferTexutreType, _GBufferTextureInfo>;
+const static GBufferTextureLookUpTableType gBufferTextureLookUpTable = {
+    {GBufferTexutreType::COLOR, {TextureFormat::RGBA, TextureType::TEXTURE2D}},
+    {GBufferTexutreType::POSITION, {TextureFormat::RGB32F, TextureType::TEXTURE2D}},
+    {GBufferTexutreType::NORMALS, {TextureFormat::RGB32F, TextureType::TEXTURE2D}},
+    {GBufferTexutreType::DEPTH, {TextureFormat::DEPTH, TextureType::TEXTURE2D}},
+    {GBufferTexutreType::AMBIENT_OCCLUSION, {TextureFormat::R32, TextureType::TEXTURE2D}},
+    {GBufferTexutreType::ROUGHTNESS, {TextureFormat::R32, TextureType::TEXTURE2D}},
+    {GBufferTexutreType::METALLIC, {TextureFormat::R32, TextureType::TEXTURE2D}},
+    {GBufferTexutreType::HDR_IMAGE, {TextureFormat::RGB16F, TextureType::CUBEMAP}},
+    {GBufferTexutreType::PRE_FILTER_CUBEMAP, {TextureFormat::RGB16F, TextureType::CUBEMAP}},
+    {GBufferTexutreType::IBL_BRDF_LOD, {TextureFormat::RG16F, TextureType::TEXTURE2D}},
+    {GBufferTexutreType::SHADOW_MAP, {TextureFormat::DEPTH, TextureType::TEXTURE2D_ARRAY}},
+    {GBufferTexutreType::SHADOW_MAP_CUBE, {TextureFormat::DEPTH, TextureType::CUBEMAP_ARRAY}},
+};
 
-  return m_textures.at(type);
-}
+GBuffer::GBuffer(uint32_t width, uint32_t height, RHIFactory* rhiFactory, GBufferTexutreType type,
+                 uint32_t levels, uint32_t layers)
+    : m_height(height), m_width(width), m_type(type), m_levels(levels), m_layers(layers) {
+  auto textureInfo = gBufferTextureLookUpTable.at(m_type);
+  DLOG_ASSERT(textureInfo.type != TextureType::TEXTURE2D || layers == 1);
 
-void
-GBuffer::AddTexture(GBufferType gBufferType, RHIFactory* rhiFactory) {
-  LOG_IF(WARNING, m_textures.find(gBufferType.type) != m_textures.end())
-      << "the texture has add to gbuffer, this will override it";
-
-  std::shared_ptr<Texture> texture = nullptr;
   ImageDesc desc{
+      .textureType = textureInfo.type,
+      .format = textureInfo.format,
       .width = m_width,
       .height = m_height,
-      .mipmapLevel = gBufferType.levels,
+      .arrayLayer = m_layers,
+      .mipmapLevel = m_levels,
   };
-
-  switch (gBufferType.type) {
-    case GBufferTexutreType::COLOR:
-      desc.format = TextureFormat::RGBA;
-      desc.textureType = TextureType::TEXTURE2D;
-      desc.arrayLayer = 1;
-      texture = rhiFactory->CreateTexture(desc);
-      break;
-    case GBufferTexutreType::NORMALS:
-    case GBufferTexutreType::POSITION:
-      desc.format = TextureFormat::RGB32F;
-      desc.textureType = TextureType::TEXTURE2D;
-      desc.arrayLayer = 1;
-      texture = rhiFactory->CreateTexture(desc);
-      break;
-    case GBufferTexutreType::DEPTH:
-      desc.format = TextureFormat::DEPTH;
-      desc.textureType = TextureType::TEXTURE2D;
-      desc.arrayLayer = 1;
-      texture = rhiFactory->CreateTexture(desc);
-      break;
-    case GBufferTexutreType::AMBIENT_OCCLUSION:
-    case GBufferTexutreType::ROUGHTNESS:
-    case GBufferTexutreType::METALLIC:
-      desc.format = TextureFormat::R32;
-      desc.textureType = TextureType::TEXTURE2D;
-      desc.arrayLayer = 1;
-      texture = rhiFactory->CreateTexture(desc);
-      break;
-    case GBufferTexutreType::HDR_IMAGE:
-      desc.format = TextureFormat::RGB16F;
-      desc.textureType = TextureType::CUBEMAP;
-      desc.arrayLayer = 1;
-      texture = rhiFactory->CreateTexture(desc);
-      break;
-    case GBufferTexutreType::PRE_FILTER_CUBEMAP:
-      desc.format = TextureFormat::RGB16F;
-      desc.textureType = TextureType::CUBEMAP;
-      desc.arrayLayer = 1;
-      desc.mipmapLevel = 5;
-      texture = rhiFactory->CreateTexture(desc);
-      break;
-    case GBufferTexutreType::IBL_BRDF_LOD:
-      desc.format = TextureFormat::RG16F;
-      desc.textureType = TextureType::TEXTURE2D;
-      desc.arrayLayer = 1;
-      texture = rhiFactory->CreateTexture(desc);
-      break;
-    case GBufferTexutreType::SHADOW_MAP:
-      desc.format = TextureFormat::DEPTH;
-      desc.textureType = TextureType::TEXTURE2D_ARRAY;
-      desc.arrayLayer = gBufferType.layers;
-      texture = rhiFactory->CreateTexture(desc);
-      break;
-    case GBufferTexutreType::SHADOW_MAP_CUBE:
-      desc.format = TextureFormat::DEPTH;
-      desc.textureType = TextureType::CUBEMAP_ARRAY;
-      desc.arrayLayer = gBufferType.layers * 6;
-      texture = rhiFactory->CreateTexture(desc);
-      break;
-  }
-  m_textures[gBufferType.type] = texture;
+  m_texture = rhiFactory->CreateTexture(desc);
 }
 
-Vector<std::tuple<GBufferTexutreType, std::shared_ptr<Texture>>>
-GBuffer::GetAllTextures() const {
-  Vector<std::tuple<GBufferTexutreType, std::shared_ptr<Texture>>> result;
-
-  for (auto iter = m_textures.cbegin(); iter != m_textures.cend(); iter++) {
-    result.push_back({iter->first, iter->second});
-  }
-
-  return result;
+std::shared_ptr<Texture>
+GBuffer::GetTexture() const {
+  return m_texture;
 }
 
 }  // namespace Marbas

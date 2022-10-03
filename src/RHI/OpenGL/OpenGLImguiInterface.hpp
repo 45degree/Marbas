@@ -11,6 +11,9 @@ class OpenGLImguiInterface final : public ImguiInterface {
 
  public:
   void
+  Resize() override {}
+
+  void
   CreateImguiContext() override;
 
   void

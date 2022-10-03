@@ -50,8 +50,8 @@ IrradianceRenderPass::CreateDescriptorSetLayout() {
 
 void
 IrradianceRenderPass::CreateFrameBuffer() {
-  const auto& targetGBuffer = m_outputTarget[String(targetName)]->GetGBuffer();
-  auto targetBuffer = targetGBuffer->GetTexture(GBufferTexutreType::HDR_IMAGE);
+  const auto& targetGBuffer = m_outputTarget[String(targetName)];
+  auto targetBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::HDR_IMAGE);
 
   std::shared_ptr hdrImageView = m_rhiFactory->CreateImageView(ImageViewDesc{
       .m_texture = targetBuffer,
@@ -167,8 +167,8 @@ void
 IrradianceRenderPass::Execute(const Scene* scene, const ResourceManager* resourceManager) {
   // bind image
 
-  const auto& targetGBuffer = m_inputTarget[String(HDRImageRenderPass::targetName)]->GetGBuffer();
-  auto targetBuffer = targetGBuffer->GetTexture(GBufferTexutreType::HDR_IMAGE);
+  const auto& targetGBuffer = m_inputTarget[String(HDRImageRenderPass::targetName)];
+  auto targetBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::HDR_IMAGE);
 
   m_descriptorSet->BindImage(0, targetBuffer);
   m_descriptorSet->BindBuffer(0, m_cameraUniformBuffer);

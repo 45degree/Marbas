@@ -87,8 +87,8 @@ class RHIFactory {
   [[nodiscard]] virtual std::unique_ptr<Shader>
   CreateShader() const = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<SwapChain>
-  CreateSwapChain() = 0;
+  [[nodiscard]] virtual std::shared_ptr<SwapChain>
+  GetSwapChain() = 0;
 
   [[nodiscard]] virtual std::unique_ptr<RenderPass>
   CreateRenderPass(const RenderPassCreateInfo& createInfo) = 0;

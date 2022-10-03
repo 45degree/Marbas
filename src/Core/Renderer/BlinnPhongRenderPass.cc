@@ -165,31 +165,29 @@ BlinnPhongRenderPass::OnInit() {
   m_pointLightUniformBuffer = m_rhiFactory->CreateUniformBuffer(pointLightBufferSize);
   m_descriptorSet->BindBuffer(2, m_pointLightUniformBuffer);
 
-  auto irradianceGBuffer = m_inputTarget[String(IrradianceRenderPass::targetName)]->GetGBuffer();
-  auto irradianceBuffer = irradianceGBuffer->GetTexture(GBufferTexutreType::HDR_IMAGE);
+  const auto& irradianceResource = m_inputTarget[String(IrradianceRenderPass::targetName)];
+  auto irradianceBuffer = irradianceResource->GetGBuffer(GBufferTexutreType::HDR_IMAGE);
 
-  auto prefilterGBuffer = m_inputTarget[String(PrefilterRenderPass::targetName)]->GetGBuffer();
-  auto prefilterBuffer = prefilterGBuffer->GetTexture(GBufferTexutreType::PRE_FILTER_CUBEMAP);
+  const auto& prefilterResource = m_inputTarget[String(PrefilterRenderPass::targetName)];
+  auto prefilterBuffer = prefilterResource->GetGBuffer(GBufferTexutreType::PRE_FILTER_CUBEMAP);
 
-  auto iblBRDFGBuffer = m_inputTarget[String(IBLBRDFRenderPass::targetName)]->GetGBuffer();
-  auto iblBRDFBuffer = iblBRDFGBuffer->GetTexture(GBufferTexutreType::IBL_BRDF_LOD);
+  const auto& iblBRDFResource = m_inputTarget[String(IBLBRDFRenderPass::targetName)];
+  auto iblBRDFBuffer = iblBRDFResource->GetGBuffer(GBufferTexutreType::IBL_BRDF_LOD);
 
   // set input as image descriptor set
-  auto gBuffer = m_inputTarget[GeometryRenderPass::geometryTargetName]->GetGBuffer();
-  auto gColorBuffer = gBuffer->GetTexture(GBufferTexutreType::COLOR);
-  auto gNormalBuffer = gBuffer->GetTexture(GBufferTexutreType::NORMALS);
-  auto gPositionBuffer = gBuffer->GetTexture(GBufferTexutreType::POSITION);
-  auto gRoughnessBuffer = gBuffer->GetTexture(GBufferTexutreType::ROUGHTNESS);
-  auto gMetallic = gBuffer->GetTexture(GBufferTexutreType::METALLIC);
-  auto gAO = gBuffer->GetTexture(GBufferTexutreType::AMBIENT_OCCLUSION);
+  auto gBuffer = m_inputTarget[GeometryRenderPass::geometryTargetName];
+  auto gColorBuffer = gBuffer->GetGBuffer(GBufferTexutreType::COLOR);
+  auto gNormalBuffer = gBuffer->GetGBuffer(GBufferTexutreType::NORMALS);
+  auto gPositionBuffer = gBuffer->GetGBuffer(GBufferTexutreType::POSITION);
+  auto gRoughnessBuffer = gBuffer->GetGBuffer(GBufferTexutreType::ROUGHTNESS);
+  auto gMetallic = gBuffer->GetGBuffer(GBufferTexutreType::METALLIC);
+  auto gAO = gBuffer->GetGBuffer(GBufferTexutreType::AMBIENT_OCCLUSION);
 
-  auto pointShadowGBuffer =
-      m_inputTarget[String(PointLightShadowMapRenderPass::targetName)]->GetGBuffer();
-  auto pointShadowBuffer = pointShadowGBuffer->GetTexture(GBufferTexutreType::SHADOW_MAP_CUBE);
+  auto pointShadowGBuffer = m_inputTarget[String(PointLightShadowMapRenderPass::targetName)];
+  auto pointShadowBuffer = pointShadowGBuffer->GetGBuffer(GBufferTexutreType::SHADOW_MAP_CUBE);
 
-  auto dirShadowGBuffer =
-      m_inputTarget[String(DirectionLightShadowMapRenderPass::renderTarget)]->GetGBuffer();
-  auto dirShadowBuffer = dirShadowGBuffer->GetTexture(GBufferTexutreType::SHADOW_MAP);
+  auto dirShadowGBuffer = m_inputTarget[String(DirectionLightShadowMapRenderPass::renderTarget)];
+  auto dirShadowBuffer = dirShadowGBuffer->GetGBuffer(GBufferTexutreType::SHADOW_MAP);
 
   m_descriptorSet->BindImage(0, gColorBuffer);
   m_descriptorSet->BindImage(1, gNormalBuffer);
@@ -241,11 +239,11 @@ BlinnPhongRenderPass::RecordCommand(const Scene* scene) {
 
 void
 BlinnPhongRenderPass::CreateFrameBuffer() {
-  const auto& targetGBuffer = m_outputTarget[blinnPhongTargetName]->GetGBuffer();
-  auto colorBuffer = targetGBuffer->GetTexture(GBufferTexutreType::COLOR);
+  const auto& targetGBuffer = m_outputTarget[blinnPhongTargetName];
+  auto colorBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::COLOR);
 
-  const auto& depthGBuffer = m_outputTarget[GeometryRenderPass::depthTargetName]->GetGBuffer();
-  auto depthBuffer = depthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
+  const auto& depthGBuffer = m_outputTarget[GeometryRenderPass::depthTargetName];
+  auto depthBuffer = depthGBuffer->GetGBuffer(GBufferTexutreType::DEPTH);
 
   if (colorBuffer == nullptr) {
     LOG(ERROR) << "can't get normal buffer or color buffer from the gbuffer";

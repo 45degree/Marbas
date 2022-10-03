@@ -22,6 +22,17 @@ OpenGLSwapChain::GetDefaultFrameBuffer() {
 }
 
 void
+OpenGLSwapChain::Update(uint32_t width, uint32_t height) {
+  // create a default frame buffer
+  FrameBufferInfo info{
+      .width = width,
+      .height = height,
+      .renderPass = nullptr,
+  };
+  m_defaultFrameBuffer = std::make_shared<OpenGLFrameBuffer>(info);
+}
+
+void
 OpenGLSwapChain::Present() {
   glfwSwapBuffers(m_glfwWindow);
 }

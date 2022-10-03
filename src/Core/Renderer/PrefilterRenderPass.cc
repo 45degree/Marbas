@@ -21,8 +21,8 @@ PrefilterRenderPass::PrefilterRenderPass(const PrefilterRenderPassCreateInfo &cr
 
 void
 PrefilterRenderPass::CreateFrameBuffer() {
-  auto targetGBuffer = m_outputTarget[String(targetName)]->GetGBuffer();
-  auto targetBuffer = targetGBuffer->GetTexture(GBufferTexutreType::PRE_FILTER_CUBEMAP);
+  auto targetGBuffer = m_outputTarget[String(targetName)];
+  auto targetBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::PRE_FILTER_CUBEMAP);
   for (uint32_t i = 0; i < maxMipmapLevel; i++) {
     m_frameBufferImageViews[i] = m_rhiFactory->CreateImageView(ImageViewDesc{
         .m_texture = targetBuffer,
@@ -171,8 +171,8 @@ PrefilterRenderPass::SetUniformBuffer(Scene *scene) {
 
 void
 PrefilterRenderPass::Execute(const Scene *scene, const ResourceManager *resourceManager) {
-  const auto &targetGBuffer = m_inputTarget[String(HDRImageRenderPass::targetName)]->GetGBuffer();
-  auto targetBuffer = targetGBuffer->GetTexture(GBufferTexutreType::HDR_IMAGE);
+  const auto &targetGBuffer = m_inputTarget[String(HDRImageRenderPass::targetName)];
+  auto targetBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::HDR_IMAGE);
 
   m_descriptorSet->BindImage(0, targetBuffer);
   m_descriptorSet->BindBuffer(0, m_cameraUniformBuffer);

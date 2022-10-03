@@ -165,7 +165,11 @@ RenderLayer::OnAttach() {
       .targetName = String(PrefilterRenderPass::targetName),
       .buffersType =
           {
-              GBufferType{.type = GBufferTexutreType::PRE_FILTER_CUBEMAP, .levels = 5, .layers = 6},
+              GBufferType{
+                  .type = GBufferTexutreType::PRE_FILTER_CUBEMAP,
+                  .levels = 5,
+                  .layers = 6,
+              },
           },
       .rhiFactory = m_rhiFactory,
       .width = 128,
@@ -243,7 +247,7 @@ RenderLayer::OnAttach() {
               GBufferType{
                   .type = GBufferTexutreType::SHADOW_MAP_CUBE,
                   .levels = 1,
-                  .layers = PointLightShadowMapRenderPass::MAX_LIGHT_COUNT,
+                  .layers = PointLightShadowMapRenderPass::MAX_LIGHT_COUNT * 6,
               },
           },
       .rhiFactory = m_rhiFactory,
@@ -375,7 +379,7 @@ std::shared_ptr<Texture>
 RenderLayer::GetRenderResult() {
   auto target = m_renderGraph->GetRenderTarget(String(BlinnPhongRenderPass::blinnPhongTargetName));
 
-  return target->GetGBuffer()->GetTexture(GBufferTexutreType::COLOR);
+  return target->GetGBuffer(GBufferTexutreType::COLOR);
 }
 
 }  // namespace Marbas

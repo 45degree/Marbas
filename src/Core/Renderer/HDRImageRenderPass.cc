@@ -49,8 +49,8 @@ HDRImageRenderPass::CreateDescriptorSetLayout() {
 
 void
 HDRImageRenderPass::CreateFrameBuffer() {
-  const auto& targetGBuffer = m_outputTarget[String(targetName)]->GetGBuffer();
-  auto targetBuffer = targetGBuffer->GetTexture(GBufferTexutreType::HDR_IMAGE);
+  const auto& targetGBuffer = m_outputTarget[String(targetName)];
+  auto targetBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::HDR_IMAGE);
 
   std::shared_ptr hdrImageView = m_rhiFactory->CreateImageView(ImageViewDesc{
       .m_texture = targetBuffer,

@@ -74,8 +74,8 @@ DirectionLightShadowMapRenderPass::CreateShader() {
 
 void
 DirectionLightShadowMapRenderPass::CreateFrameBuffer() {
-  const auto& targetGBuffer = m_outputTarget[String(renderTarget)]->GetGBuffer();
-  auto shadowTexture = targetGBuffer->GetTexture(GBufferTexutreType::SHADOW_MAP);
+  const auto& targetGBuffer = m_outputTarget[String(renderTarget)];
+  auto shadowTexture = targetGBuffer->GetGBuffer(GBufferTexutreType::SHADOW_MAP);
 
   std::shared_ptr shadowTextureView = m_rhiFactory->CreateImageView(ImageViewDesc{
       .m_texture = shadowTexture,

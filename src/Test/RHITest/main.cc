@@ -12,7 +12,7 @@
 
 void
 ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
-  auto swapChain = rhiFactory->CreateSwapChain();
+  auto swapChain = rhiFactory->GetSwapChain();
   auto defaultFrameBuffer = swapChain->GetDefaultFrameBuffer();
 
   // vertices

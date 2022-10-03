@@ -117,8 +117,8 @@ CubeMapRenderPass::RecordCommand(const Scene* scene) {
 
 void
 CubeMapRenderPass::BindDescriptorSet(const Scene* scene) {
-  auto hdrGBuffer = m_inputTarget[String(HDRImageRenderPass::targetName)]->GetGBuffer();
-  auto hdrBuffer = hdrGBuffer->GetTexture(GBufferTexutreType::HDR_IMAGE);
+  const auto& hdrGBuffer = m_inputTarget[String(HDRImageRenderPass::targetName)];
+  auto hdrBuffer = hdrGBuffer->GetGBuffer(GBufferTexutreType::HDR_IMAGE);
 
   m_descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
   m_descriptorSet->BindImage(0, hdrBuffer);

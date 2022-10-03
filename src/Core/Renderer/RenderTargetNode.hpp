@@ -17,10 +17,8 @@ class RenderTargetNode final {
  public:
   explicit RenderTargetNode(const RenderTargetNodeCreateInfo& createInfo);
 
-  std::shared_ptr<GBuffer>
-  GetGBuffer() const {
-    return m_gbuffer;
-  }
+  std::shared_ptr<Texture>
+  GetGBuffer(GBufferTexutreType type) const;
 
   const String&
   GetTargetName() const noexcept {
@@ -32,7 +30,7 @@ class RenderTargetNode final {
   Vector<GBufferType> m_gbufferType;
   RHIFactory* m_rhiFactory = nullptr;
 
-  std::shared_ptr<GBuffer> m_gbuffer;
+  std::unordered_map<GBufferTexutreType, std::shared_ptr<GBuffer>> m_gbuffers;
   uint32_t m_width;
   uint32_t m_height;
 };

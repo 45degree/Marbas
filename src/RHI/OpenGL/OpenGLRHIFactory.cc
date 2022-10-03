@@ -366,8 +366,8 @@ OpenGLRHIFactory::CreateCommandBuffer() const {
   return std::make_unique<OpenGLCommandBuffer>();
 }
 
-std::unique_ptr<SwapChain>
-OpenGLRHIFactory::CreateSwapChain() {
+std::shared_ptr<SwapChain>
+OpenGLRHIFactory::GetSwapChain() {
   int width, height;
   glfwGetFramebufferSize(m_glfwWindow, &width, &height);
   return std::make_unique<OpenGLSwapChain>(m_glfwWindow, width, height);

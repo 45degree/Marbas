@@ -80,7 +80,7 @@ SceneTreeWidget::DrawPopup() {
 
     if (ImGui::MenuItem(ICON_FA_CIRCLE_NODES " Add Model")) {
       // Add Model to the scene
-      FileDialog fileDialog("obj,pmx");
+      FileDialog fileDialog("obj,pmx,FBX");
       fileDialog.Open(".");
       if (fileDialog.GetResult().has_value()) {
         auto modelPath = fileDialog.GetResult().value();

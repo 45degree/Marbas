@@ -17,6 +17,9 @@ class OpenGLSwapChain final : public SwapChain {
   void
   Present() override;
 
+  void
+  Update(uint32_t width, uint32_t height) override;
+
  private:
   std::shared_ptr<OpenGLFrameBuffer> m_defaultFrameBuffer = nullptr;
   GLFWwindow* m_glfwWindow;

@@ -46,11 +46,11 @@ BeginningRenderPass::CreatePipeline() {
 
 void
 BeginningRenderPass::CreateFrameBuffer() {
-  const auto& targetGBuffer = m_outputTarget[targetName]->GetGBuffer();
-  auto colorBuffer = targetGBuffer->GetTexture(GBufferTexutreType::COLOR);
+  const auto& targetGBuffer = m_outputTarget[targetName];
+  auto colorBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::COLOR);
 
-  const auto& depthGBuffer = m_outputTarget[depthTargetName]->GetGBuffer();
-  auto depthBuffer = depthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
+  const auto& depthGBuffer = m_outputTarget[depthTargetName];
+  auto depthBuffer = depthGBuffer->GetGBuffer(GBufferTexutreType::DEPTH);
 
   if (colorBuffer == nullptr) {
     LOG(ERROR) << "can't get normal buffer or color buffer from the gbuffer";

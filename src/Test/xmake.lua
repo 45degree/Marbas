@@ -70,7 +70,7 @@ target("Marbas.VulkanRHITest")
     add_defines("DEBUG")
   end
 
-  add_deps("Marbas.RHI")
+  add_deps("Marbas.RHI", "Imgui")
   add_packages("glfw", "glm", "glog", "folly", "stb")
 
 target_end()

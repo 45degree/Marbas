@@ -11,6 +11,9 @@ class ImguiInterface {
 
  public:
   virtual void
+  Resize() = 0;
+
+  virtual void
   CreateImguiContext() = 0;
 
   virtual void

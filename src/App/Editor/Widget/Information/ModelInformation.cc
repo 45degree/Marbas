@@ -24,9 +24,10 @@ ShowMaterial(Mesh* mesh, ResourceManager* resourceManager) {
 
   auto regionSize = ImGui::GetContentRegionAvail();
 
+  const static std::string imageExtension = "jpg,png,tga";
   ImGui::Text("diffuse Texture:");
   if (ImGui::Button("change texture")) {
-    FileDialog fileDialog("jpg,png");
+    FileDialog fileDialog(imageExtension);
     fileDialog.Open(".");
     if (fileDialog.GetResult().has_value()) {
       auto imagePath = fileDialog.GetResult().value();
@@ -47,7 +48,7 @@ ShowMaterial(Mesh* mesh, ResourceManager* resourceManager) {
   ImGui::Separator();
 
   if (ImGui::Button("change AO texture")) {
-    FileDialog fileDialog("jpg,png");
+    FileDialog fileDialog(imageExtension);
     fileDialog.Open(".");
     if (fileDialog.GetResult().has_value()) {
       auto imagePath = fileDialog.GetResult().value();
@@ -67,7 +68,7 @@ ShowMaterial(Mesh* mesh, ResourceManager* resourceManager) {
 
   ImGui::Separator();
   if (ImGui::Button("change normal texture")) {
-    FileDialog fileDialog("jpg,png");
+    FileDialog fileDialog(imageExtension);
     fileDialog.Open(".");
     if (fileDialog.GetResult().has_value()) {
       auto imagePath = fileDialog.GetResult().value();
@@ -88,7 +89,7 @@ ShowMaterial(Mesh* mesh, ResourceManager* resourceManager) {
   ImGui::Separator();
 
   if (ImGui::Button("change roughness texture")) {
-    FileDialog fileDialog("jpg,png");
+    FileDialog fileDialog(imageExtension);
     fileDialog.Open(".");
     if (fileDialog.GetResult().has_value()) {
       auto imagePath = fileDialog.GetResult().value();
@@ -109,7 +110,7 @@ ShowMaterial(Mesh* mesh, ResourceManager* resourceManager) {
   ImGui::Separator();
 
   if (ImGui::Button("change metallic texture")) {
-    FileDialog fileDialog("jpg,png");
+    FileDialog fileDialog(imageExtension);
     fileDialog.Open(".");
     if (fileDialog.GetResult().has_value()) {
       auto imagePath = fileDialog.GetResult().value();

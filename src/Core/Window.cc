@@ -61,7 +61,7 @@ Window::InitializeWindow() {
   });
 
   // TODO: need to impove it
-  m_swapChain = m_rhiFactory->CreateSwapChain();
+  m_swapChain = m_rhiFactory->GetSwapChain();
 
   /**
    * setup callback function

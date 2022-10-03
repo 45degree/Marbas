@@ -144,16 +144,16 @@ GeometryRenderPass::CreatePipeline() {
 
 void
 GeometryRenderPass::CreateFrameBuffer() {
-  const auto& targetGBuffer = m_outputTarget[geometryTargetName]->GetGBuffer();
-  auto normalBuffer = targetGBuffer->GetTexture(GBufferTexutreType::NORMALS);
-  auto colorBuffer = targetGBuffer->GetTexture(GBufferTexutreType::COLOR);
-  auto positionBuffer = targetGBuffer->GetTexture(GBufferTexutreType::POSITION);
-  auto ambientOcclusion = targetGBuffer->GetTexture(GBufferTexutreType::AMBIENT_OCCLUSION);
-  auto roughness = targetGBuffer->GetTexture(GBufferTexutreType::ROUGHTNESS);
-  auto metallic = targetGBuffer->GetTexture(GBufferTexutreType::METALLIC);
+  const auto& targetGBuffer = m_outputTarget[geometryTargetName];
+  auto normalBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::NORMALS);
+  auto colorBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::COLOR);
+  auto positionBuffer = targetGBuffer->GetGBuffer(GBufferTexutreType::POSITION);
+  auto ambientOcclusion = targetGBuffer->GetGBuffer(GBufferTexutreType::AMBIENT_OCCLUSION);
+  auto roughness = targetGBuffer->GetGBuffer(GBufferTexutreType::ROUGHTNESS);
+  auto metallic = targetGBuffer->GetGBuffer(GBufferTexutreType::METALLIC);
 
-  const auto& depthGBuffer = m_outputTarget[depthTargetName]->GetGBuffer();
-  auto depthBuffer = depthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
+  const auto& depthGBuffer = m_outputTarget[depthTargetName];
+  auto depthBuffer = depthGBuffer->GetGBuffer(GBufferTexutreType::DEPTH);
 
   if (normalBuffer == nullptr || colorBuffer == nullptr) {
     LOG(ERROR) << "can't get normal buffer or color buffer from the gbuffer";
@@ -237,15 +237,15 @@ GeometryRenderPass::RecordCommand(const Scene* scene) {
    * set command
    */
   // get input target GBuffer
-  const auto& inputTargetGBuffer = m_inputTarget[BeginningRenderPass::targetName]->GetGBuffer();
-  auto inputDepthGBuffer = m_inputTarget[BeginningRenderPass::depthTargetName]->GetGBuffer();
-  auto inputColorTexture = inputTargetGBuffer->GetTexture(GBufferTexutreType::COLOR);
-  auto inputdepthTexture = inputDepthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
+  const auto& inputTargetGBuffer = m_inputTarget[BeginningRenderPass::targetName];
+  auto inputDepthGBuffer = m_inputTarget[BeginningRenderPass::depthTargetName];
+  auto inputColorTexture = inputTargetGBuffer->GetGBuffer(GBufferTexutreType::COLOR);
+  auto inputdepthTexture = inputDepthGBuffer->GetGBuffer(GBufferTexutreType::DEPTH);
 
-  const auto& outputTargetGBuffer = m_outputTarget[geometryTargetName]->GetGBuffer();
-  auto outputColorBuffer = outputTargetGBuffer->GetTexture(GBufferTexutreType::COLOR);
-  const auto& outputDepthGBuffer = m_outputTarget[depthTargetName]->GetGBuffer();
-  auto outputDepthBuffer = outputDepthGBuffer->GetTexture(GBufferTexutreType::DEPTH);
+  const auto& outputTargetGBuffer = m_outputTarget[geometryTargetName];
+  auto outputColorBuffer = outputTargetGBuffer->GetGBuffer(GBufferTexutreType::COLOR);
+  const auto& outputDepthGBuffer = m_outputTarget[depthTargetName];
+  auto outputDepthBuffer = outputDepthGBuffer->GetGBuffer(GBufferTexutreType::DEPTH);
 
   /**
    * begin to record command
