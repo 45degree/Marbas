@@ -8,6 +8,12 @@
 
 namespace Marbas {
 
+struct GlobalLayerInfo {
+  const Semaphore& globalStartSemaphore;
+  const Semaphore& gloablEndSemaphore;
+  uint32_t swapChianImageIndex;
+};
+
 class Window;
 class LayerBase {
  public:
@@ -29,13 +35,16 @@ class LayerBase {
   Detach();
 
   void
-  Update();
+  Update(const GlobalLayerInfo& info);
 
   void
-  Begin();
+  Begin(const GlobalLayerInfo& info);
 
   void
-  End();
+  End(const GlobalLayerInfo& info);
+
+  void
+  Resize(uint32_t width, uint32_t height);
 
   void
   BroadcastEvent(const Event&);
@@ -48,13 +57,13 @@ class LayerBase {
   OnDetach(){};
 
   virtual void
-  OnUpdate(){};
+  OnUpdate(const GlobalLayerInfo& info){};
 
   virtual void
-  OnBegin(){};
+  OnBegin(const GlobalLayerInfo& info){};
 
   virtual void
-  OnEnd(){};
+  OnEnd(const GlobalLayerInfo& info){};
 
   void
   EventDistribution(const Event& event);
@@ -73,10 +82,13 @@ class LayerBase {
   OnKeyRelase(const KeyEvent& e) {}
 
   virtual void
-  OnMouseMove(const MouseMoveEvent& e){};
+  OnMouseMove(const MouseMoveEvent& e) {}
 
   virtual void
-  OnMouseScrolled(const MouseScrolledEvent& e){};
+  OnMouseScrolled(const MouseScrolledEvent& e) {}
+
+  virtual void
+  OnResize(uint32_t width, uint32_t height) {}
 
  protected:
   const std::weak_ptr<Window> m_window;

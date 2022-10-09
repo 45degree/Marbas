@@ -123,6 +123,12 @@ class RHIFactory {
   [[nodiscard]] virtual std::unique_ptr<DescriptorSet>
   CreateDescriptorSet(const DescriptorSetLayout& createInfo) const = 0;
 
+  [[nodiscard]] virtual Semaphore
+  CreateSemaphore() const = 0;
+
+  virtual void
+  DestroySemaphore(const Semaphore& semaphore) const = 0;
+
  public:
   static RHIFactory*
   GetInstance(const RendererType& rendererType);

@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "RHI/Interface/ImguiInterface.hpp"
+#include "RHI/Interface/Semaphore.hpp"
 #include "RHI/Vulkan/VulkanSwapChain.hpp"
 
 namespace Marbas {
@@ -39,10 +40,11 @@ class VulkanImgui final : public ImguiInterface {
   NewFrame() override;
 
   void
-  RenderData(uint32_t width, uint32_t height) override;
+  RenderData(const Semaphore& semaphore, const Semaphore& signalSemaphore,
+             uint32_t imageIndex) override;
 
   void
-  Resize() override;
+  Resize(uint32_t width, uint32_t height) override;
 
  protected:
   void
@@ -54,12 +56,6 @@ class VulkanImgui final : public ImguiInterface {
   void
   CreateWindowCommandBuffer();
 
-  void
-  FrameRender();
-
-  void
-  FramePresent();
-
  private:
   GLFWwindow* m_glfwWindow = nullptr;
   const vk::Instance m_instance;
@@ -68,8 +64,15 @@ class VulkanImgui final : public ImguiInterface {
   const vk::Queue m_graphicsQueue;
 
   vk::Device m_device;
+  Vector<vk::Framebuffer> m_framebuffers;
+  Vector<vk::Fence> m_fences;
+  Vector<vk::CommandBuffer> m_commandBuffers;
+  vk::ClearValue m_clearColor;
+  vk::RenderPass m_renderPass;
+  vk::CommandPool m_commandPool;
+  vk::DescriptorPool m_descriptorPool;
+
   std::shared_ptr<VulkanSwapChain> m_swapChain;
-  // Vector<vk::Framebuffer> m_frameBuffers;
 };
 
 }  // namespace Marbas

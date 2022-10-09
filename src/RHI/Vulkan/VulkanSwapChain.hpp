@@ -1,10 +1,14 @@
 #pragma once
 
+#include <span>
 #include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_handles.hpp>
 
 #include "Common/Common.hpp"
 #include "GLFW/glfw3.h"
+#include "RHI/Interface/Semaphore.hpp"
 #include "RHI/Interface/SwapChain.hpp"
+#include "RHI/Vulkan/VulkanTexture.hpp"
 
 namespace Marbas {
 
@@ -13,7 +17,9 @@ struct VulkanSwapChainCreateInfo {
   vk::Device device;
   vk::SurfaceKHR surface;
   Vector<uint32_t> queueFamilyIndices;
-  GLFWwindow* glfwWindow;
+  uint32_t transferQueueFamilyIndex = 0;
+  vk::Queue transferQueue;
+  vk::Queue presentQueue;
 };
 
 class VulkanSwapChain final : public SwapChain {
@@ -27,11 +33,31 @@ class VulkanSwapChain final : public SwapChain {
     return nullptr;
   }
 
-  void
-  Present() override {}
+  /**
+   * @brief present the image to the surface
+   *
+   * @param waitSemaphores indicate the render has finshed
+   * @return
+   */
+  int
+  Present(const Vector<Semaphore>& waitSemaphores, uint32_t imageIndex) override;
+
+  /**
+   * @brief
+   *
+   * @param semaphore
+   * @return
+   */
+  int
+  AcquireNextImage(const Semaphore& semaphore) override;
+
+  size_t
+  GetImageCount() const override {
+    return m_images.size();
+  }
 
   void
-  Update(uint32_t width, uint32_t height);
+  Resize(uint32_t width, uint32_t height) override;
 
  public:
   vk::SurfaceKHR
@@ -44,14 +70,9 @@ class VulkanSwapChain final : public SwapChain {
     return m_surfaceFormat;
   }
 
-  size_t
-  GetImageCount() const {
-    return m_images.size();
-  }
-
   vk::Image
   GetImage(int index) const {
-    return m_images[index];
+    return m_images[index].GetImageHandle<vk::Image>();
   }
 
   vk::ImageView
@@ -77,7 +98,6 @@ class VulkanSwapChain final : public SwapChain {
   UpdateInfo(uint32_t width, uint32_t height);
 
  private:
-  GLFWwindow* m_glfwWindow;
   vk::SwapchainKHR m_swapChain;
   vk::SurfaceKHR m_surface;
   vk::Device m_device;
@@ -85,10 +105,12 @@ class VulkanSwapChain final : public SwapChain {
   vk::SurfaceFormatKHR m_surfaceFormat;
   vk::SurfaceCapabilitiesKHR m_capabilities;
   vk::PresentModeKHR m_presentMode;
+  vk::Queue m_presentQueue;
   uint32_t m_imageCount;
   Vector<uint32_t> m_queueFamilyIndices;
 
-  Vector<vk::Image> m_images;
+  // swapChain image
+  Vector<VulkanTexture> m_images;
   Vector<vk::ImageView> m_imageViews;
 };
 

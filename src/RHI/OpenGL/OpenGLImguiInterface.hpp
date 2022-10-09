@@ -11,7 +11,10 @@ class OpenGLImguiInterface final : public ImguiInterface {
 
  public:
   void
-  Resize() override {}
+  Resize(uint32_t width, uint32_t height) override {
+    m_width = width;
+    m_height = height;
+  }
 
   void
   CreateImguiContext() override;
@@ -26,7 +29,8 @@ class OpenGLImguiInterface final : public ImguiInterface {
   NewFrame() override;
 
   void
-  RenderData(uint32_t width, uint32_t height) override;
+  RenderData(const Semaphore& semaphore, const Semaphore& signalSemaphore,
+             uint32_t imageIndex) override;
 };
 
 }  // namespace Marbas

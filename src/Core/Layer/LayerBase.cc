@@ -33,29 +33,37 @@ LayerBase::Detach() {
 }
 
 void
-LayerBase::Begin() {
-  OnBegin();
+LayerBase::Begin(const GlobalLayerInfo& info) {
+  OnBegin(info);
 
   if (m_nextLayer != nullptr) {
-    m_nextLayer->Begin();
+    m_nextLayer->Begin(info);
   }
 }
 
 void
-LayerBase::End() {
+LayerBase::End(const GlobalLayerInfo& info) {
   if (m_nextLayer != nullptr) {
-    m_nextLayer->End();
+    m_nextLayer->End(info);
   }
 
-  OnEnd();
+  OnEnd(info);
 }
 
 void
-LayerBase::Update() {
-  OnUpdate();
+LayerBase::Resize(uint32_t width, uint32_t height) {
+  OnResize(width, height);
+  if (m_nextLayer != nullptr) {
+    m_nextLayer->Resize(width, height);
+  }
+}
+
+void
+LayerBase::Update(const GlobalLayerInfo& info) {
+  OnUpdate(info);
 
   if (m_nextLayer != nullptr) {
-    m_nextLayer->Update();
+    m_nextLayer->Update(info);
   }
 }
 

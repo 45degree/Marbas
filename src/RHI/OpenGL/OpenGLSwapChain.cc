@@ -22,7 +22,7 @@ OpenGLSwapChain::GetDefaultFrameBuffer() {
 }
 
 void
-OpenGLSwapChain::Update(uint32_t width, uint32_t height) {
+OpenGLSwapChain::Resize(uint32_t width, uint32_t height) {
   // create a default frame buffer
   FrameBufferInfo info{
       .width = width,
@@ -32,9 +32,10 @@ OpenGLSwapChain::Update(uint32_t width, uint32_t height) {
   m_defaultFrameBuffer = std::make_shared<OpenGLFrameBuffer>(info);
 }
 
-void
-OpenGLSwapChain::Present() {
+int
+OpenGLSwapChain::Present(const Vector<Semaphore>& waitSemaphores, uint32_t imageIndex) {
   glfwSwapBuffers(m_glfwWindow);
+  return 1;
 }
 
 }  // namespace Marbas

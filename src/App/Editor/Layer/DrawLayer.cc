@@ -31,7 +31,7 @@ DrawLayer::OnAttach() {
 }
 
 void
-DrawLayer::OnUpdate() {
+DrawLayer::OnUpdate(const GlobalLayerInfo&) {
   if (m_window.expired()) {
     throw std::runtime_error("m_window's pointer is empty");
   }

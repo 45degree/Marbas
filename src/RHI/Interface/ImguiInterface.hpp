@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GLFW/glfw3.h"
+#include "RHI/Interface/Semaphore.hpp"
 
 namespace Marbas {
 
@@ -11,7 +12,7 @@ class ImguiInterface {
 
  public:
   virtual void
-  Resize() = 0;
+  Resize(uint32_t width, uint32_t height) = 0;
 
   virtual void
   CreateImguiContext() = 0;
@@ -26,7 +27,12 @@ class ImguiInterface {
   NewFrame() = 0;
 
   virtual void
-  RenderData(uint32_t width, uint32_t height) = 0;
+  RenderData(const Semaphore& waitSemaphore, const Semaphore& signalSemaphore,
+             uint32_t imageIndex) = 0;
+
+ protected:
+  uint32_t m_width = 800;
+  uint32_t m_height = 600;
 };
 
 }  // namespace Marbas

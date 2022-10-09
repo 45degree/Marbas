@@ -6,6 +6,8 @@
 
 namespace Marbas {
 
+VulkanRHIFactory::VulkanRHIFactory() { glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); }
+
 void
 VulkanRHIFactory::Init(const RHICreateInfo& extraInfo) {
   // get glfw extensions
@@ -58,50 +60,60 @@ VulkanRHIFactory::Init(const RHICreateInfo& extraInfo) {
     if (family.queueFlags | vk::QueueFlagBits::eGraphics) {
       m_graphicsQueueFamilyIndex = index;
     }
+    if (family.queueFlags | vk::QueueFlagBits::eTransfer) {
+      m_transferQueueFamilyIndex = index;
+    }
     if (m_physicalDevice.getSurfaceSupportKHR(index, m_surface)) {
       m_presentQueueFamilyIndex = index;
     }
-    if (m_graphicsQueueFamilyIndex && m_presentQueueFamilyIndex) break;
+    if (m_graphicsQueueFamilyIndex && m_presentQueueFamilyIndex && m_transferQueueFamilyIndex)
+      break;
     index++;
   }
 
-  // create logical device
+  /**
+   * create logical device and queue
+   */
   vk::DeviceCreateInfo deviceCreateInfo;
   std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
   deviceCreateInfo.setPEnabledExtensionNames(deviceExtensions);
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
-  std::vector<float> priorities = {1.0};
-  if (*m_graphicsQueueFamilyIndex == *m_presentQueueFamilyIndex) {
-    vk::DeviceQueueCreateInfo createInfo;
-    createInfo.setQueueFamilyIndex(*m_graphicsQueueFamilyIndex);
+  std::array<float, 1> priorities = {1.0};
 
-    createInfo.setQueuePriorities(priorities);
-    createInfo.setQueueCount(1);
-    queueCreateInfos.push_back(createInfo);
-  } else {
-    vk::DeviceQueueCreateInfo createInfo;
+  // create graphics queue create info
+  vk::DeviceQueueCreateInfo queueCreateInfo;
+  queueCreateInfo.setQueueFamilyIndex(*m_graphicsQueueFamilyIndex);
+  queueCreateInfo.setQueuePriorities(priorities);
+  queueCreateInfo.setQueueCount(1);
+  queueCreateInfos.push_back(queueCreateInfo);
 
-    createInfo.setQueueCount(1);
-    createInfo.setQueuePriorities(priorities);
-    createInfo.setQueueFamilyIndex(*m_graphicsQueueFamilyIndex);
-    queueCreateInfos.push_back(createInfo);
-
-    createInfo.setQueueFamilyIndex(*m_presentQueueFamilyIndex);
-    queueCreateInfos.push_back(createInfo);
+  if (*m_presentQueueFamilyIndex != *m_graphicsQueueFamilyIndex) {
+    queueCreateInfo.setQueueFamilyIndex(*m_presentQueueFamilyIndex);
+    queueCreateInfos.push_back(queueCreateInfo);
   }
 
+  if (*m_transferQueueFamilyIndex != *m_graphicsQueueFamilyIndex &&
+      *m_transferQueueFamilyIndex != *m_presentQueueFamilyIndex) {
+    queueCreateInfo.setQueueFamilyIndex(*m_transferQueueFamilyIndex);
+    queueCreateInfos.push_back(queueCreateInfo);
+  }
+
+  // create device and queue
   deviceCreateInfo.setQueueCreateInfos(queueCreateInfos);
   m_device = m_physicalDevice.createDevice(deviceCreateInfo);
 
   m_graphicsQueue = m_device.getQueue(*m_graphicsQueueFamilyIndex, 0);
   m_presentQueue = m_device.getQueue(*m_presentQueueFamilyIndex, 0);
+  m_transferQueue = m_device.getQueue(*m_transferQueueFamilyIndex, 0);
 
   // create swapChain
   VulkanSwapChainCreateInfo createInfo;
   createInfo.device = m_device;
   createInfo.surface = m_surface;
-  createInfo.glfwWindow = m_glfwWindow;
   createInfo.physicalDevice = m_physicalDevice;
+  createInfo.presentQueue = m_presentQueue;
+  createInfo.transferQueue = m_transferQueue;
+  createInfo.transferQueueFamilyIndex = *m_transferQueueFamilyIndex;
   if (*m_graphicsQueueFamilyIndex == *m_presentQueueFamilyIndex) {
     createInfo.queueFamilyIndices = {*m_graphicsQueueFamilyIndex};
   } else {

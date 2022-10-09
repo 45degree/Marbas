@@ -14,11 +14,21 @@ class OpenGLSwapChain final : public SwapChain {
   std::shared_ptr<FrameBuffer>
   GetDefaultFrameBuffer() override;
 
-  void
-  Present() override;
+  int
+  Present(const Vector<Semaphore>& waitSemaphores, uint32_t imageIndex) override;
 
   void
-  Update(uint32_t width, uint32_t height) override;
+  Resize(uint32_t width, uint32_t height) override;
+
+  size_t
+  GetImageCount() const override {
+    return 1;
+  }
+
+  int
+  AcquireNextImage(const Semaphore& semaphore) override {
+    return 1;
+  }
 
  private:
   std::shared_ptr<OpenGLFrameBuffer> m_defaultFrameBuffer = nullptr;

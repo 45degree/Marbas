@@ -22,7 +22,7 @@ class RenderLayer : public LayerBase {
   OnDetach() override;
 
   void
-  OnUpdate() override;
+  OnUpdate(const GlobalLayerInfo&) override;
 
   void
   OnMouseMove(const MouseMoveEvent& e) override;

@@ -17,13 +17,13 @@ class DockspaceLayer : public LayerBase {
   OnDetach() override;
 
   void
-  OnUpdate() override;
+  OnUpdate(const GlobalLayerInfo&) override;
 
   void
-  OnBegin() override;
+  OnBegin(const GlobalLayerInfo&) override;
 
   void
-  OnEnd() override;
+  OnEnd(const GlobalLayerInfo&) override;
 };
 
 }  // namespace Marbas

@@ -76,6 +76,15 @@ class OpenGLRHIFactory final : public RHIFactory {
   [[nodiscard]] std::unique_ptr<DescriptorSet>
   CreateDescriptorSet(const DescriptorSetLayout& info) const override;
 
+  Semaphore
+  CreateSemaphore() const override {
+    Semaphore res;
+    return res;
+  }
+
+  void
+  DestroySemaphore(const Semaphore& semaphore) const override {}
+
  private:
   mutable bool m_enableSpriv = true;
   std::shared_ptr<OpenGLSwapChain> m_swapChain;

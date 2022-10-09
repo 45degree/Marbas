@@ -13,6 +13,14 @@
 void
 ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   auto swapChain = rhiFactory->GetSwapChain();
+  std::vector<Marbas::Semaphore> aviableSemaphores;
+  std::vector<Marbas::Semaphore> renderFinsihedSemaphores;
+
+  for (int i = 0; i < swapChain->GetImageCount(); i++) {
+    aviableSemaphores.push_back(rhiFactory->CreateSemaphore());
+    renderFinsihedSemaphores.push_back(rhiFactory->CreateSemaphore());
+  }
+
   auto defaultFrameBuffer = swapChain->GetDefaultFrameBuffer();
 
   // vertices
@@ -426,7 +434,10 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
   screenCommandBuffer->EndRenderPass();
   screenCommandBuffer->EndRecordCmd();
 
+  int frameIndex = 0;
   while (!glfwWindowShouldClose(glfwWindow)) {
+    auto imageIndex = swapChain->AcquireNextImage(aviableSemaphores[frameIndex]);
+
     cubeCommandBuffer->SubmitCommand();
     planeCommandBuffer->SubmitCommand();
 
@@ -436,7 +447,7 @@ ShowBox(GLFWwindow* glfwWindow, Marbas::RHIFactory* rhiFactory) {
 
     screenCommandBuffer->SubmitCommand();
 
-    swapChain->Present();
+    swapChain->Present({renderFinsihedSemaphores[frameIndex]}, imageIndex);
     glfwPollEvents();
   }
 }

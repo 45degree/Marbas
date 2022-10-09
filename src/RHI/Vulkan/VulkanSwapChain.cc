@@ -1,21 +1,74 @@
 #include "RHI/Vulkan/VulkanSwapChain.hpp"
 
+#include "RHI/Interface/Semaphore.hpp"
 #include "glog/logging.h"
 
 namespace Marbas {
+static void
+insertImageMemoryBarrier(VkCommandBuffer cmdbuffer, VkImage image, VkAccessFlags srcAccessMask,
+                         VkAccessFlags dstAccessMask, VkImageLayout oldImageLayout,
+                         VkImageLayout newImageLayout, VkPipelineStageFlags srcStageMask,
+                         VkPipelineStageFlags dstStageMask,
+                         VkImageSubresourceRange subresourceRange) {
+  VkImageMemoryBarrier imageMemoryBarrier;
+  imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  imageMemoryBarrier.pNext = NULL;
+  imageMemoryBarrier.srcAccessMask = srcAccessMask;
+  imageMemoryBarrier.dstAccessMask = dstAccessMask;
+  imageMemoryBarrier.oldLayout = oldImageLayout;
+  imageMemoryBarrier.newLayout = newImageLayout;
+  imageMemoryBarrier.image = image;
+  imageMemoryBarrier.subresourceRange = subresourceRange;
+  imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+  vkCmdPipelineBarrier(cmdbuffer, srcStageMask, dstStageMask, 0, 0, nullptr, 0, nullptr, 1,
+                       &imageMemoryBarrier);
+}
 
 VulkanSwapChain::VulkanSwapChain(const VulkanSwapChainCreateInfo& createInfo)
     : SwapChain(800, 600),
       m_device(createInfo.device),
       m_physicalDevice(createInfo.physicalDevice),
       m_surface(createInfo.surface),
-      m_glfwWindow(createInfo.glfwWindow),
-      m_queueFamilyIndices(createInfo.queueFamilyIndices) {
-  int width, height;
-  glfwGetFramebufferSize(m_glfwWindow, &width, &height);
-
-  UpdateInfo(width, height);
+      m_queueFamilyIndices(createInfo.queueFamilyIndices),
+      m_presentQueue(createInfo.presentQueue) {
+  UpdateInfo(m_width, m_height);
   CreateSwapChain();
+}
+
+int
+VulkanSwapChain::AcquireNextImage(const Semaphore& semaphore) {
+  auto currentSemaphore = semaphore.GetHandler<vk::Semaphore>();
+  auto nextImageResult = m_device.acquireNextImageKHR(m_swapChain, UINT64_MAX, currentSemaphore);
+  if (nextImageResult.result == vk::Result::eErrorOutOfDateKHR ||
+      nextImageResult.result == vk::Result::eSuboptimalKHR) {
+    // TODO: need add a handler to notify other should change the size
+    return -1;
+  }
+  DLOG_ASSERT(nextImageResult.result == vk::Result::eSuccess);
+  return nextImageResult.value;
+}
+
+int
+VulkanSwapChain::Present(const Vector<Semaphore>& waitSemaphores, uint32_t imageIndex) {
+  std::vector<vk::Semaphore> semaphores;
+  for (const auto& waitSemaphore : waitSemaphores) {
+    semaphores.push_back(waitSemaphore.GetHandler<vk::Semaphore>());
+  }
+
+  vk::PresentInfoKHR presentInfo;
+  presentInfo.setWaitSemaphores(semaphores);
+  presentInfo.setSwapchains(m_swapChain);
+  presentInfo.setImageIndices(imageIndex);
+  auto err2 = m_presentQueue.presentKHR(&presentInfo);
+
+  if (err2 == vk::Result::eErrorOutOfDateKHR || err2 == vk::Result::eSuboptimalKHR) {
+    // TODO: need add a handler to notify other should change the size
+    return -1;
+  }
+  DLOG_ASSERT(err2 == vk::Result::eSuccess);
+  return 1;
 }
 
 void
@@ -25,8 +78,10 @@ VulkanSwapChain::UpdateInfo(uint32_t width, uint32_t height) {
   m_surfaceFormat = surfaceFormats[0];
   auto formatResultIter =
       std::find_if(surfaceFormats.cbegin(), surfaceFormats.cend(), [](const auto& surfaceFormat) {
-        return surfaceFormat.format == vk::Format::eR8G8B8A8Srgb ||
-               surfaceFormat.format == vk::Format::eB8G8R8Srgb;
+        return surfaceFormat.format == vk::Format::eR8G8B8A8Unorm ||
+               surfaceFormat.format == vk::Format::eB8G8R8A8Unorm ||
+               surfaceFormat.format == vk::Format::eR8G8B8Unorm ||
+               surfaceFormat.format == vk::Format::eB8G8R8Unorm;
       });
   if (formatResultIter != surfaceFormats.cend()) {
     m_surfaceFormat = *formatResultIter;
@@ -63,7 +118,7 @@ VulkanSwapChain::~VulkanSwapChain() {
 }
 
 void
-VulkanSwapChain::Update(uint32_t width, uint32_t height) {
+VulkanSwapChain::Resize(uint32_t width, uint32_t height) {
   m_device.waitIdle();
 
   for (int i = 0; i < m_imageViews.size(); i++) {
@@ -101,11 +156,16 @@ VulkanSwapChain::CreateSwapChain() {
   m_swapChain = m_device.createSwapchainKHR(swapChainCreateInfo);
 
   // create image and image view
-  m_images = m_device.getSwapchainImagesKHR(m_swapChain);
+  auto images = m_device.getSwapchainImagesKHR(m_swapChain);
+  m_images.clear();
+  for (const auto& image : images) {
+    auto handler = reinterpret_cast<uintptr_t>(static_cast<VkImage>(image));
+    m_images.emplace_back(handler);
+  }
   m_imageViews.clear();
   for (int i = 0; i < m_images.size(); i++) {
     vk::ImageViewCreateInfo imageViewCreateInfo;
-    imageViewCreateInfo.setImage(m_images[i]);
+    imageViewCreateInfo.setImage(m_images[i].GetImageHandle<vk::Image>());
     imageViewCreateInfo.setFormat(m_surfaceFormat.format);
     imageViewCreateInfo.setViewType(vk::ImageViewType::e2D);
 

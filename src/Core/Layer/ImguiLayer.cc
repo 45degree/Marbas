@@ -76,14 +76,19 @@ ImguiLayer::OnDetach() {
 }
 
 void
-ImguiLayer::OnBegin() {
+ImguiLayer::OnBegin(const GlobalLayerInfo&) {
   // Start the Dear ImGui frame
   m_imguiInterface->NewFrame();
   ImGuizmo::BeginFrame();
 }
 
 void
-ImguiLayer::OnEnd() {
+ImguiLayer::OnResize(uint32_t width, uint32_t height) {
+  m_imguiInterface->Resize(width, height);
+}
+
+void
+ImguiLayer::OnEnd(const GlobalLayerInfo& info) {
   ImGui::Render();
 
   if (m_window.expired()) {
@@ -91,7 +96,8 @@ ImguiLayer::OnEnd() {
   }
   auto [display_w, display_h] = m_window.lock()->GetWindowsSize();
 
-  m_imguiInterface->RenderData(display_w, display_h);
+  m_imguiInterface->RenderData(info.globalStartSemaphore, info.gloablEndSemaphore,
+                               info.swapChianImageIndex);
 
   ImGuiIO& io = ImGui::GetIO();
   (void)io;

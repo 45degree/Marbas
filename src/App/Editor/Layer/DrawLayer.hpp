@@ -17,7 +17,7 @@ class DrawLayer final : public LayerBase {
   OnAttach() override;
 
   void
-  OnUpdate() override;
+  OnUpdate(const GlobalLayerInfo&) override;
 
   void
   AddWidget(std::unique_ptr<Widget>&& widget) noexcept {

@@ -332,7 +332,7 @@ void
 RenderLayer::OnDetach() {}
 
 void
-RenderLayer::OnUpdate() {
+RenderLayer::OnUpdate(const GlobalLayerInfo&) {
   m_renderGraph->Execute(m_resourceManager, m_allScene[m_activeSceneIndex]);
 }
 

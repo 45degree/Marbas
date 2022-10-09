@@ -16,10 +16,10 @@ void
 DockspaceLayer::OnDetach() {}
 
 void
-DockspaceLayer::OnUpdate() {}
+DockspaceLayer::OnUpdate(const GlobalLayerInfo&) {}
 
 void
-DockspaceLayer::OnBegin() {
+DockspaceLayer::OnBegin(const GlobalLayerInfo&) {
   /**
    * set dockingspace
    */
@@ -78,7 +78,7 @@ DockspaceLayer::OnBegin() {
 }
 
 void
-DockspaceLayer::OnEnd() {
+DockspaceLayer::OnEnd(const GlobalLayerInfo&) {
   ImGui::End();
 }
 

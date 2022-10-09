@@ -21,17 +21,19 @@ class ImguiLayer : public LayerBase {
   OnDetach() override;
 
   void
-  OnBegin() override;
+  OnBegin(const GlobalLayerInfo& info) override;
 
   void
-  OnEnd() override;
+  OnEnd(const GlobalLayerInfo& info) override;
+
+  void
+  OnResize(uint32_t width, uint32_t height) override;
 
   ImGuiContext*
   GetCurrentContext();
 
   void
-  GetAllocateFunction(ImGuiMemAllocFunc* allocFunc, ImGuiMemFreeFunc* freeFunc,
-                      void** userData) {
+  GetAllocateFunction(ImGuiMemAllocFunc* allocFunc, ImGuiMemFreeFunc* freeFunc, void** userData) {
     ImGui::GetAllocatorFunctions(allocFunc, freeFunc, userData);
   }
 

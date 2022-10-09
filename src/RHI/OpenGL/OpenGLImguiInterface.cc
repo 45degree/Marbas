@@ -43,8 +43,8 @@ OpenGLImguiInterface::NewFrame() {
 }
 
 void
-OpenGLImguiInterface::RenderData(uint32_t width, uint32_t height) {
-  glViewport(0, 0, width, height);
+OpenGLImguiInterface::RenderData(const Semaphore&, const Semaphore&, uint32_t) {
+  glViewport(0, 0, m_width, m_height);
   glClearColor(0, 0, 0, 0);
   glClear(GL_COLOR_BUFFER_BIT);
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

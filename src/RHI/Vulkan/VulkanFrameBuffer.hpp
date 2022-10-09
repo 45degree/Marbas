@@ -19,7 +19,9 @@ class VulkanFrameBuffer final : public FrameBuffer {
   UnBind() const override {}
 
  private:
+  Vector<vk::ImageView> m_attachments;
   vk::Framebuffer m_frameBuffer;
+  vk::Semaphore m_semaphore;
 };
 
 }  // namespace Marbas

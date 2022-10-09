@@ -10,7 +10,7 @@ namespace Marbas {
 
 class VulkanRHIFactory final : public RHIFactory {
  public:
-  explicit VulkanRHIFactory() = default;
+  explicit VulkanRHIFactory();
   virtual ~VulkanRHIFactory();
 
   VulkanRHIFactory(const VulkanRHIFactory&) = delete;
@@ -123,15 +123,32 @@ class VulkanRHIFactory final : public RHIFactory {
     return nullptr;
   }
 
+  Semaphore
+  CreateSemaphore() const override {
+    vk::SemaphoreCreateInfo createInfo;
+    auto semaphore = m_device.createSemaphore(createInfo);
+
+    Semaphore res;
+    res.SetHandler(semaphore);
+    return res;
+  }
+
+  void
+  DestroySemaphore(const Semaphore& semaphore) const override {
+    m_device.destroySemaphore(semaphore.GetHandler<vk::Semaphore>());
+  }
+
  private:
   vk::Device m_device;
   vk::PhysicalDevice m_physicalDevice;
 
   std::optional<uint32_t> m_graphicsQueueFamilyIndex = std::nullopt;
   std::optional<uint32_t> m_presentQueueFamilyIndex = std::nullopt;
+  std::optional<uint32_t> m_transferQueueFamilyIndex = std::nullopt;
 
   vk::Queue m_graphicsQueue;
   vk::Queue m_presentQueue;
+  vk::Queue m_transferQueue;
 
   vk::Instance m_instance;
   vk::SurfaceKHR m_surface;

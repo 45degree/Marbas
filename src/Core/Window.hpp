@@ -74,6 +74,12 @@ class Window : public std::enable_shared_from_this<Window> {
   RHIFactory* m_rhiFactory = nullptr;
   std::shared_ptr<ResourceManager> m_resourceManager = nullptr;
   std::shared_ptr<SwapChain> m_swapChain;
+
+  // TODO: need add raii
+  Vector<Semaphore> m_aviableSemaphore;
+  Vector<Semaphore> m_renderFinishSemaphore;
+  uint32_t m_frameIndex = 0;
+  bool m_needResize = false;
 };
 
 }  // namespace Marbas

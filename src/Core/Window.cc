@@ -60,8 +60,12 @@ Window::InitializeWindow() {
       .m_openglRHICreateInfo = OpenGLRHICreateInfo{.useSPIRV = false},
   });
 
-  // TODO: need to impove it
   m_swapChain = m_rhiFactory->GetSwapChain();
+  auto imageCount = m_swapChain->GetImageCount();
+  for (int i = 0; i < imageCount; i++) {
+    m_aviableSemaphore.push_back(m_rhiFactory->CreateSemaphore());
+    m_renderFinishSemaphore.push_back(m_rhiFactory->CreateSemaphore());
+  }
 
   /**
    * setup callback function
@@ -96,10 +100,47 @@ Window::ShowWindow() {
   windowData->eventCollection->BroadcastEventFromLayer(m_firstLayer.get());
   windowData->eventCollection->ClearEvent();
 
-  m_firstLayer->Begin();
-  m_firstLayer->Update();
-  m_firstLayer->End();
-  m_swapChain->Present();
+  if (m_needResize) {
+    int width, height;
+    glfwGetFramebufferSize(glfwWindow, &width, &height);
+
+    if (width > 0 && height > 0) {
+      m_swapChain->Resize(width, height);
+      m_firstLayer->Resize(width, height);
+      m_frameIndex = 0;
+      m_needResize = false;
+      return;
+    }
+  }
+
+  int w, h;
+  glfwGetWindowSize(glfwWindow, &w, &h);
+  const bool is_minimized = (w <= 0.0f || h <= 0.0f);
+  if (!is_minimized) {
+    auto imageIndex = m_swapChain->AcquireNextImage(m_aviableSemaphore[m_frameIndex]);
+    if (imageIndex == -1) {
+      m_needResize = true;
+      return;
+    }
+
+    // TODO: add semaphore(wait semaphore and finish semaphore)
+    GlobalLayerInfo info{
+        .globalStartSemaphore = m_aviableSemaphore[m_frameIndex],
+        .gloablEndSemaphore = m_renderFinishSemaphore[m_frameIndex],
+        .swapChianImageIndex = static_cast<uint32_t>(imageIndex),
+    };
+    m_firstLayer->Begin(info);
+    m_firstLayer->Update(info);
+    m_firstLayer->End(info);
+
+    // imguiInterface->RenderData(avaliableImageSemaphore[currentFrame],
+    //                            renderFinishSemaphore[currentFrame], imageIndex);
+
+    if (m_swapChain->Present({m_renderFinishSemaphore[m_frameIndex]}, imageIndex) == -1) {
+      m_needResize = true;
+      return;
+    }
+  }
 }
 
 std::shared_ptr<RenderLayer>
