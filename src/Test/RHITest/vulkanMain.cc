@@ -105,7 +105,6 @@ main(int argc, char* argv[]) {
   bool needResize = false;
   while (!glfwWindowShouldClose(glfwWindow)) {
     if (needResize) {
-      int width, height;
       glfwGetFramebufferSize(glfwWindow, &width, &height);
 
       if (width > 0 && height > 0) {

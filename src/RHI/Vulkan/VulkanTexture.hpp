@@ -11,15 +11,7 @@ class VulkanTexture {
 
   template <typename T>
   T
-  GetImageHandle() const {
-    return static_cast<T>(m_handler);
-  }
-
-  template <>
-  vk::Image
-  GetImageHandle<vk::Image>() const {
-    return static_cast<vk::Image>(reinterpret_cast<VkImage>(m_handler));
-  }
+  GetImageHandle() const;
 
  private:
   uintptr_t m_handler;
