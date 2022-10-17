@@ -78,6 +78,10 @@ SceneTreeWidget::DrawPopup() {
     ImGui::Text("%s", name.c_str());
     ImGui::Separator();
 
+    if (ImGui::MenuItem("empty node")) {
+      m_scene->AddEmptyNode(m_PopupEntity);
+    }
+
     if (ImGui::MenuItem(ICON_FA_CIRCLE_NODES " Add Model")) {
       // Add Model to the scene
       FileDialog fileDialog("obj,pmx,FBX");

@@ -13,6 +13,7 @@
 #include "Core/Scene/Component/TagComponent.hpp"
 #include "Core/Scene/Entity/BillBoardEntity.hpp"
 #include "Core/Scene/Entity/CubeMapEntity.hpp"
+#include "Core/Scene/Entity/EmptySceneNodeEntity.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
 #include "Core/Scene/Entity/EnvironmentEntity.hpp"
 #include "Core/Scene/Entity/LightEntity.hpp"
@@ -188,6 +189,13 @@ Scene::AddLight(LightType type, glm::vec3 point, const entt::entity& parent) {
 
   auto lightEntity = Entity::CreateEntity<LightPolicy>(this, type, point);
   HierarchyComponent::AddChild(parent, m_world, lightEntity);
+}
+
+void
+Scene::AddEmptyNode(const entt::entity& parent) {
+  DLOG_ASSERT(Entity::HasComponent<HierarchyComponent>(this, parent));
+  auto emptyNode = Entity::CreateEntity<EmptySceneNodeEntityPolicy>(this);
+  HierarchyComponent::AddChild(parent, m_world, emptyNode);
 }
 
 }  // namespace Marbas

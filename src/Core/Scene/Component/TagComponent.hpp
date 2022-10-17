@@ -11,6 +11,7 @@ enum class EntityType {
   Model,
   CubeMap,
   Light,
+  Emtpy,
 };
 
 struct UniqueTagComponent {

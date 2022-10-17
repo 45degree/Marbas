@@ -5,6 +5,7 @@
 #include "Common/Common.hpp"
 #include "Core/Common.hpp"
 #include "Core/Renderer/GeometryRenderPass.hpp"
+#include "Core/Scene/Component/HierarchyComponent.hpp"
 #include "Core/Scene/Component/LightComponent.hpp"
 #include "Core/Scene/Component/ShadowComponent.hpp"
 
@@ -129,9 +130,11 @@ PointLightShadowMapRenderPass::CreateBufferForEveryEntity(const entt::entity &en
 void
 PointLightShadowMapRenderPass::SetUniformBuffer(const Scene *scene) {
   uint32_t index = 0;
-  auto view = Entity::GetAllEntity<MeshComponent, ShadowComponent>(const_cast<Scene *>(scene));
+  auto view = Entity::GetAllEntity<MeshComponent, ShadowComponent, HierarchyComponent>(
+      const_cast<Scene *>(scene));
   for (auto entity : view) {
     auto &meshComponent = view.get<MeshComponent>(entity);
+    const auto &hierarchyComponent = view.get<HierarchyComponent>(entity);
 
     if (meshComponent.m_impldata == nullptr) continue;
     auto size = ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
@@ -139,7 +142,7 @@ PointLightShadowMapRenderPass::SetUniformBuffer(const Scene *scene) {
 
     if (!meshComponent.m_model.expired()) {
       const auto model = meshComponent.m_model.lock();
-      const auto &modelMatrix = model->GetModelMatrix();
+      const auto &modelMatrix = hierarchyComponent.globalTransformMatrix;
       meshComponent.m_uniformBufferData.model = modelMatrix;
     }
 

@@ -5,8 +5,10 @@
 
 #include "Common/Common.hpp"
 #include "Core/Application.hpp"
+#include "Core/Scene/Component/HierarchyComponent.hpp"
 #include "Core/Scene/Component/LightComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
+#include "Core/Scene/System/HierarchySystem.hpp"
 #include "Core/Window.hpp"
 #include "RHI/RHI.hpp"
 #include "imgui.h"
@@ -62,11 +64,11 @@ RenderImage::ShowToolBar() {
         auto camera = m_scene->GetEditorCamrea();
         auto perspectiveMatrix = camera->GetProjectionMatrix();
         const auto& modelComponent = Entity::GetComponent<ModelComponent>(m_scene.get(), entity);
+        auto modelMatrix =
+            Entity::GetComponent<HierarchyComponent>(m_scene.get(), entity).globalTransformMatrix;
         auto id = modelComponent.modelResourceId;
         auto resource = m_resourceManager->GetModelResourceContainer()->GetResource(id);
         DLOG_ASSERT(resource != nullptr);
-
-        auto modelMatrix = resource->GetModel()->GetModelMatrix();
 
         float modelPos[3], unused1[3], unused2[3];
         ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(modelMatrix), modelPos, unused1,
@@ -122,12 +124,13 @@ RenderImage::Draw() {
   camera->SetViewMatrix(viewMatrix);
 
   // draw
-  // TODO:
+  // TODO: handle all entity type
   if (m_entity.has_value()) {
     const auto& tagComp = Entity::GetComponent<UniqueTagComponent>(m_scene.get(), *m_entity);
     auto type = tagComp.type;
     switch (type) {
       case EntityType::Model:
+      case EntityType::Emtpy:
         DrawModelManipulate();
         break;
       case EntityType::Light:
@@ -151,13 +154,8 @@ RenderImage::DrawModelManipulate() {
   const auto viewMatrix = camera->GetViewMatrix();
   const auto perspectiveMatrix = camera->GetProjectionMatrix();
 
-  auto entity = m_entity.value();
-  const auto& modelComponent = Entity::GetComponent<ModelComponent>(m_scene.get(), entity);
-  auto id = modelComponent.modelResourceId;
-  auto resource = m_resourceManager->GetModelResourceContainer()->GetResource(id);
-  DLOG_ASSERT(resource != nullptr);
-
-  auto modelMatrix = resource->GetModel()->GetModelMatrix();
+  auto modelMatrix =
+      Entity::GetComponent<HierarchyComponent>(m_scene.get(), *m_entity).globalTransformMatrix;
 
   if (m_showMove && m_showRotate && m_showScale) {
     ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
@@ -175,7 +173,7 @@ RenderImage::DrawModelManipulate() {
                          ImGuizmo::OPERATION::SCALE, ImGuizmo::LOCAL, glm::value_ptr(modelMatrix));
   }
 
-  resource->GetModel()->SetModelMatrix(modelMatrix);
+  HierarchySystem::ResetGlobalTransformMatrix(m_scene->GetWorld(), *m_entity, modelMatrix);
 }
 
 void

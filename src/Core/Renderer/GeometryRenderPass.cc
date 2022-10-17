@@ -4,6 +4,7 @@
 
 #include "Core/Common.hpp"
 #include "Core/Renderer/BeginningRenderPass.hpp"
+#include "Core/Scene/Component/HierarchyComponent.hpp"
 #include "Core/Scene/Component/MeshComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
 #include "RHI/Interface/DescriptorSet.hpp"
@@ -372,15 +373,15 @@ GeometryRenderPass::SetUniformBuffer(const Scene* scene) {
   UpdateCameraUniformBuffer(editorCamera.get());
 
   uint32_t index = 0;
-  auto view = Entity::GetAllEntity<MeshComponent>(const_cast<Scene*>(scene));
-  for (const auto& [entity, meshComponent] : view.each()) {
+  auto view = Entity::GetAllEntity<MeshComponent, HierarchyComponent>(const_cast<Scene*>(scene));
+  for (const auto& [entity, meshComponent, hierarchyComponent] : view.each()) {
     if (meshComponent.m_impldata == nullptr) continue;
     auto size = ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
     auto offset = index * size;
 
     if (!meshComponent.m_model.expired()) {
       const auto model = meshComponent.m_model.lock();
-      const auto& modelMatrix = model->GetModelMatrix();
+      const auto& modelMatrix = hierarchyComponent.globalTransformMatrix;
       meshComponent.m_uniformBufferData.model = modelMatrix;
     }
     auto material = materialContainer->GetResource(*meshComponent.m_mesh->m_materialId);

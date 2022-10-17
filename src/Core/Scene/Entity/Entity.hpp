@@ -44,7 +44,7 @@ class Entity {
   static const T&
   GetComponent(const Scene* scene, const entt::entity& entityHandle) {
     if (!HasComponent<T>(scene, entityHandle)) {
-      String errorMsg = FORMAT("this entity has {}", typeid(T).name());
+      String errorMsg = FORMAT("this entity don't has {}", typeid(T).name());
       LOG(INFO) << errorMsg;
       throw std::runtime_error(errorMsg.c_str());
     }
@@ -56,7 +56,7 @@ class Entity {
   static T&
   GetComponent(Scene* scene, const entt::entity& entityHandle) {
     if (!HasComponent<T>(scene, entityHandle)) {
-      String errorMsg = FORMAT("this entity has {}", typeid(T).name());
+      String errorMsg = FORMAT("this entity don't has {}", typeid(T).name());
       LOG(INFO) << errorMsg;
       throw std::runtime_error(errorMsg.c_str());
     }

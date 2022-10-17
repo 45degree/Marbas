@@ -1,8 +1,10 @@
 #include "App/Editor/Widget/Information/ModelInformation.hpp"
 
 #include "App/Editor/Widget/FileDialog.hpp"
+#include "Core/Scene/Component/HierarchyComponent.hpp"
 #include "Core/Scene/Component/ModelComponent.hpp"
 #include "Core/Scene/Entity/Entity.hpp"
+#include "Core/Scene/System/HierarchySystem.hpp"
 
 // clang-format off
 #include "imgui.h"
@@ -135,6 +137,7 @@ ModelInformation::DrawInformation(entt::entity entity, Scene* scene,
   if (!Entity::HasComponent<ModelComponent>(scene, entity)) return;
 
   auto& modelComponent = Entity::GetComponent<ModelComponent>(scene, entity);
+  auto& modelHierarchyComponent = Entity::GetComponent<HierarchyComponent>(scene, entity);
   auto modelResourceContainer = resourceManager->GetModelResourceContainer();
   auto modelResource = modelResourceContainer->GetResource(modelComponent.modelResourceId);
   auto model = modelResource->GetModel();
@@ -143,7 +146,8 @@ ModelInformation::DrawInformation(entt::entity entity, Scene* scene,
   ImGui::Separator();
 
   // transform information
-  auto modelMatrix = model->GetModelMatrix();
+  // auto modelMatrix = model->GetModelMatrix();
+  auto modelMatrix = modelHierarchyComponent.globalTransformMatrix;
 
   ImGui::Text("model transform infomation");
 
@@ -158,7 +162,7 @@ ModelInformation::DrawInformation(entt::entity entity, Scene* scene,
   ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale,
                                           glm::value_ptr(modelMatrix));
 
-  model->SetModelMatrix(modelMatrix);
+  HierarchySystem::ResetGlobalTransformMatrix(scene->GetWorld(), entity, modelMatrix);
 
   // mesh info
   ImGui::Separator();
