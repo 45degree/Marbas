@@ -17,6 +17,7 @@ struct MeshComponent_Impl {
   std::shared_ptr<IndexBuffer> indexBuffer;
   std::shared_ptr<DescriptorSet> descriptorSet;
   std::shared_ptr<MaterialResource> materialResource;
+  std::shared_ptr<UniformBuffer> uniformBuffer;
 };
 
 struct MeshComponent {
@@ -34,7 +35,7 @@ struct MeshComponent {
   std::shared_ptr<MeshComponent_Impl> m_impldata = nullptr;
 
   void
-  LoadMeshImpl(RHIFactory* rhiFactory);
+  LoadMeshImpl(RHIFactory* rhiFactory, const DescriptorSetLayout& layout);
 };
 
 }  // namespace Marbas

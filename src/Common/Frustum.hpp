@@ -6,8 +6,29 @@
 namespace Marbas {
 
 struct Plan {
-  glm::vec3 normal = {0, 1, 0};
-  glm::vec3 point = {0, 0, 0};
+  Plan() = default;
+  Plan(const glm::vec3& point, const glm::vec3& normal)
+      : normal(glm::normalize(normal)), distance(glm::dot(point, glm::normalize(normal))) {}
+
+  Plan(const Plan& plan) : normal(plan.normal), distance(plan.distance) {}
+
+  Plan&
+  operator=(const Plan& plan) {
+    normal = plan.normal;
+    distance = plan.distance;
+    return *this;
+  }
+
+  ~Plan() = default;
+
+  float
+  getSignedDistanceToPlan(const glm::vec3& point) const {
+    return glm::dot(normal, point) - distance;
+  }
+
+ public:
+  glm::vec3 normal = glm::vec3(0, 1, 0);
+  float distance = 0;
 };
 
 struct Frustum {
@@ -21,7 +42,7 @@ struct Frustum {
   Plan nearFace;
 
   static Frustum
-  CreateFrustumFromCamera(const Camera& camera);
+  CreateFrustumFromCamera(const Camera& camera, float fov, float aspect);
 };
 
 }  // namespace Marbas

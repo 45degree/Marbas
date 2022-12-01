@@ -158,6 +158,11 @@ ModelResource::LoadResource(RHIFactory* rhiFactory, const ResourceManager* resou
 
   m_model->SetModelName(modelName);
   for (auto&& mesh : meshes) {
+    auto volume = std::make_unique<AABB>(AABB::GenerateAABB(*mesh));
+    auto center = glm::to_string(volume->GetCenter());
+    auto extent = glm::to_string(volume->GetExtent());
+    DLOG(INFO) << FORMAT("generate a AABB vloume, center:{},  extent:{}", center, extent);
+    mesh->m_volume = std::move(volume);
     m_model->AddMesh(mesh);
   }
 

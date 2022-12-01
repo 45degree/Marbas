@@ -95,7 +95,7 @@ GeometryRenderPass::CreateDescriptorSetLayout() {
   // set descriptor set layout
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
       .isBuffer = true,
-      .type = BufferDescriptorType::DYNAMIC_UNIFORM_BUFFER,
+      .type = BufferDescriptorType::UNIFORM_BUFFER,
       .bindingPoint = 1,
   });
   AddDescriptorSetLayoutBinding(DescriptorSetLayoutBinding{
@@ -220,88 +220,10 @@ GeometryRenderPass::CreateFrameBuffer() {
 }
 
 void
-GeometryRenderPass::RecordCommand(const Scene* scene) {
-  m_commandBuffer->Clear();
-
-  auto view = Entity::GetAllEntity<MeshComponent>(scene);
-
-  // check framebuffer and renderpass
-  DLOG_ASSERT(m_framebuffer != nullptr);
-  DLOG_ASSERT(m_renderPass != nullptr);
-  DLOG_ASSERT(m_pipeline != nullptr);
-
-  // recreate dynamic uniform buffer
-  auto bufferSize = view.size() * ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
-  m_dynamicUniforBuffer = m_rhiFactory->CreateDynamicUniforBuffer(bufferSize);
-
-  /**
-   * set command
-   */
-  // get input target GBuffer
-  const auto& inputTargetGBuffer = m_inputTarget[BeginningRenderPass::targetName];
-  auto inputDepthGBuffer = m_inputTarget[BeginningRenderPass::depthTargetName];
-  auto inputColorTexture = inputTargetGBuffer->GetGBuffer(GBufferTexutreType::COLOR);
-  auto inputdepthTexture = inputDepthGBuffer->GetGBuffer(GBufferTexutreType::DEPTH);
-
-  const auto& outputTargetGBuffer = m_outputTarget[geometryTargetName];
-  auto outputColorBuffer = outputTargetGBuffer->GetGBuffer(GBufferTexutreType::COLOR);
-  const auto& outputDepthGBuffer = m_outputTarget[depthTargetName];
-  auto outputDepthBuffer = outputDepthGBuffer->GetGBuffer(GBufferTexutreType::DEPTH);
-
-  /**
-   * begin to record command
-   */
-  m_commandBuffer->BeginRecordCmd();
-  m_commandBuffer->BeginRenderPass(BeginRenderPassInfo{
-      .renderPass = m_renderPass,
-      .frameBuffer = m_framebuffer,
-      .clearColor = {0, 0, 0, 1},
-  });
-  m_commandBuffer->BindPipeline(m_pipeline);
-  m_commandBuffer->CopyImageToImage(CopyImageToImageInfo{
-      .srcTexture = inputColorTexture,
-      .dstTexture = outputColorBuffer,
-  });
-  m_commandBuffer->CopyImageToImage(CopyImageToImageInfo{
-      .srcTexture = inputdepthTexture,
-      .dstTexture = outputDepthBuffer,
-  });
-
-  // for every mesh entity, create bindVertexBuffer and bindIndexBuffer command and draw it
-  uint32_t meshIndex = 0;
-  for (auto&& [entity, meshComponent] : view.each()) {
-    const auto& implData = meshComponent.m_impldata;
-    implData->descriptorSet->BindDynamicBuffer(1, m_dynamicUniforBuffer);
-    if (implData->vertexBuffer != nullptr && implData->indexBuffer != nullptr) {
-      BindDescriptorSetInfo bindDescriptorSetInfo{
-          .descriptorSet = implData->descriptorSet,
-          .layouts = m_descriptorSetLayout,
-      };
-      if (implData->materialResource != nullptr) {
-        auto size = ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
-        auto offset = size * meshIndex;
-        bindDescriptorSetInfo.bufferPiece = {
-            DynamicBufferPiece{
-                .offset = static_cast<uint32_t>(offset),
-                .size = static_cast<uint32_t>(size),
-            },
-        };
-      }
-
-      m_commandBuffer->BindDescriptorSet(std::move(bindDescriptorSetInfo));
-      m_commandBuffer->BindVertexBuffer(implData->vertexBuffer);
-      m_commandBuffer->BindIndexBuffer(implData->indexBuffer);
-      m_commandBuffer->DrawIndex(implData->indexBuffer->GetIndexCount(), 0);
-
-      meshIndex++;
-    }
-  }
-  m_commandBuffer->EndRenderPass();
-  m_commandBuffer->EndRecordCmd();
-}
+GeometryRenderPass::RecordCommand(const Scene* scene) {}
 
 void
-GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* scene) {
+GeometryRenderPass::CreateBufferForEntity(const MeshEntity& mesh, Scene* scene) {
   if (!Entity::HasComponent<MeshComponent>(scene, mesh)) return;
 
   auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, mesh);
@@ -314,21 +236,7 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* sc
   auto _mesh = meshComponent.m_mesh;
   if (!_mesh->m_needLoad) return;
 
-  // create vertex buffer and index buffer
-  const auto& vertices = _mesh->m_vertices;
-  auto verticesLen = sizeof(Vertex) * vertices.size();
-  auto vertexBuffer = m_rhiFactory->CreateVertexBuffer(vertices.data(), verticesLen);
-  vertexBuffer->SetLayout(GetMeshVertexInfoLayout());
-  implData->vertexBuffer = std::move(vertexBuffer);
-
-  const auto& indices = _mesh->m_indices;
-  auto indexBuffer = m_rhiFactory->CreateIndexBuffer(indices);
-  implData->indexBuffer = std::move(indexBuffer);
-
-  // create descriptor Set
-  if (implData->descriptorSet == nullptr) {
-    implData->descriptorSet = m_rhiFactory->CreateDescriptorSet(m_descriptorSetLayout);
-  }
+  meshComponent.LoadMeshImpl(m_rhiFactory, m_descriptorSetLayout);
   implData->descriptorSet->BindBuffer(0, m_cameraUniformBuffer);
 
   // load material
@@ -365,49 +273,80 @@ GeometryRenderPass::CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* sc
 }
 
 void
-GeometryRenderPass::SetUniformBuffer(const Scene* scene) {
+GeometryRenderPass::SetUniformBufferForEntity(const Scene* scene, const MeshEntity& mesh) {
   auto materialContainer = m_resourceManager->GetMaterialResourceContainer();
 
-  // get matrix
-  const auto editorCamera = scene->GetEditorCamrea();
+  // TODO: remove
+  const auto editorCamera = scene->GetEditorCamera();
   UpdateCameraUniformBuffer(editorCamera.get());
 
-  uint32_t index = 0;
-  auto view = Entity::GetAllEntity<MeshComponent, HierarchyComponent>(const_cast<Scene*>(scene));
-  for (const auto& [entity, meshComponent, hierarchyComponent] : view.each()) {
-    if (meshComponent.m_impldata == nullptr) continue;
-    auto size = ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
-    auto offset = index * size;
+  auto size = sizeof(MeshComponent::UniformBufferBlockData);
+  auto meshComponent = Entity::GetComponent<MeshComponent>(const_cast<Scene*>(scene), mesh);
+  meshComponent.m_impldata->uniformBuffer->SetData(&meshComponent.m_uniformBufferData, size, 0);
+}
 
-    if (!meshComponent.m_model.expired()) {
-      const auto model = meshComponent.m_model.lock();
-      const auto& modelMatrix = hierarchyComponent.globalTransformMatrix;
-      meshComponent.m_uniformBufferData.model = modelMatrix;
-    }
-    auto material = materialContainer->GetResource(*meshComponent.m_mesh->m_materialId);
-    meshComponent.m_uniformBufferData.hasAOTex = material->HasAmbientOcclusionTexture();
-    meshComponent.m_uniformBufferData.hasNormalTex = material->HasNormalTexture();
-    meshComponent.m_uniformBufferData.hasRoughnessTex = material->HasRoughnessTexture();
-    meshComponent.m_uniformBufferData.hasMetallicTex = material->HasMetallicTexture();
+void
+GeometryRenderPass::RecordCommandForEntity(const Scene* scene, const entt::entity mesh) {
+  const auto& hierarchyComponent = Entity::GetComponent<HierarchyComponent>(scene, mesh);
+  const auto& meshComponent = Entity::GetComponent<MeshComponent>(scene, mesh);
+  const auto& transformMAtrix = hierarchyComponent.globalTransformMatrix;
+  const auto implData = meshComponent.m_impldata;
 
-    m_dynamicUniforBuffer->SetData(&meshComponent.m_uniformBufferData, size, offset);
-    index++;
-  }
+  implData->descriptorSet->BindBuffer(1, implData->uniformBuffer);
+
+  BindDescriptorSetInfo bindDescriptorSetInfo{
+      .descriptorSet = implData->descriptorSet,
+      .layouts = m_descriptorSetLayout,
+  };
+  m_commandBuffer->BindDescriptorSet(std::move(bindDescriptorSetInfo));
+  m_commandBuffer->BindVertexBuffer(implData->vertexBuffer);
+  m_commandBuffer->BindIndexBuffer(implData->indexBuffer);
+  m_commandBuffer->DrawIndex(implData->indexBuffer->GetIndexCount(), 0);
 }
 
 void
 GeometryRenderPass::Execute(const Scene* scene, const ResourceManager* resourceManager) {
-  auto view = Entity::GetAllEntity<MeshComponent>(scene);
-  for (auto&& [entity, meshComponent] : view.each()) {
-    CreateBufferForEveryEntity(entity, const_cast<Scene*>(scene));
-  }
+  auto camera = scene->GetEditorCamera();
+  auto view = Entity::GetAllEntity<MeshComponent, HierarchyComponent>(scene);
 
-  auto bufferSize = view.size() * ROUND_UP(sizeof(MeshComponent::UniformBufferBlockData), 32);
-  if (m_dynamicUniforBuffer == nullptr || bufferSize != m_dynamicUniforBuffer->GetSize()) {
-    RecordCommand(scene);
-  }
+  // get input target GBuffer
+  const auto& inputTargetGBuffer = m_inputTarget[BeginningRenderPass::targetName];
+  auto inputDepthGBuffer = m_inputTarget[BeginningRenderPass::depthTargetName];
+  auto inputColorTexture = inputTargetGBuffer->GetGBuffer(GBufferTexutreType::COLOR);
+  auto inputdepthTexture = inputDepthGBuffer->GetGBuffer(GBufferTexutreType::DEPTH);
 
-  SetUniformBuffer(scene);
+  const auto& outputTargetGBuffer = m_outputTarget[geometryTargetName];
+  auto outputColorBuffer = outputTargetGBuffer->GetGBuffer(GBufferTexutreType::COLOR);
+  const auto& outputDepthGBuffer = m_outputTarget[depthTargetName];
+  auto outputDepthBuffer = outputDepthGBuffer->GetGBuffer(GBufferTexutreType::DEPTH);
+
+  m_commandBuffer->Clear();
+  m_commandBuffer->BeginRecordCmd();
+  m_commandBuffer->BeginRenderPass(BeginRenderPassInfo{
+      .renderPass = m_renderPass,
+      .frameBuffer = m_framebuffer,
+      .clearColor = {0, 0, 0, 1},
+  });
+  m_commandBuffer->BindPipeline(m_pipeline);
+  m_commandBuffer->CopyImageToImage(CopyImageToImageInfo{
+      .srcTexture = inputColorTexture,
+      .dstTexture = outputColorBuffer,
+  });
+  m_commandBuffer->CopyImageToImage(CopyImageToImageInfo{
+      .srcTexture = inputdepthTexture,
+      .dstTexture = outputDepthBuffer,
+  });
+
+  for (auto&& [entity, meshComponent, hierarchyComponent] : view.each()) {
+    if (camera->IsMeshVisible(*meshComponent.m_mesh, hierarchyComponent.globalTransformMatrix)) {
+      CreateBufferForEntity(entity, const_cast<Scene*>(scene));
+      SetUniformBufferForEntity(scene, entity);
+      RecordCommandForEntity(scene, entity);
+    }
+  }
+  m_commandBuffer->EndRenderPass();
+  m_commandBuffer->EndRecordCmd();
+
   m_commandBuffer->SubmitCommand();
 }
 

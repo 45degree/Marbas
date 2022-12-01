@@ -123,7 +123,7 @@ GridRenderPass::RecordCommand(const Scene* scene) {
 
 void
 GridRenderPass::SetUniformBuffer(const Scene* scene) {
-  const auto editorCamera = scene->GetEditorCamrea();
+  const auto editorCamera = scene->GetEditorCamera();
   UpdateCameraUniformBuffer(editorCamera.get());
 }
 

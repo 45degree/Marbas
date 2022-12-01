@@ -8,7 +8,7 @@
 namespace Marbas {
 
 void
-MeshComponent::LoadMeshImpl(RHIFactory* rhiFactory) {
+MeshComponent::LoadMeshImpl(RHIFactory* rhiFactory, const DescriptorSetLayout& layout) {
   if (m_mesh == nullptr) return;
 
   const auto& vertices = m_mesh->m_vertices;
@@ -20,6 +20,13 @@ MeshComponent::LoadMeshImpl(RHIFactory* rhiFactory) {
   const auto& indices = m_mesh->m_indices;
   auto indexBuffer = rhiFactory->CreateIndexBuffer(indices);
   m_impldata->indexBuffer = std::move(indexBuffer);
+
+  m_impldata->uniformBuffer = rhiFactory->CreateUniformBuffer(sizeof(UniformBufferBlockData));
+
+  // create descriptor Set
+  if (m_impldata->descriptorSet == nullptr) {
+    m_impldata->descriptorSet = rhiFactory->CreateDescriptorSet(layout);
+  }
 }
 
 }  // namespace Marbas

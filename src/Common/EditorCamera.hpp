@@ -2,6 +2,7 @@
 
 #include "Common/Camera.hpp"
 #include "Common/Common.hpp"
+#include "Common/Frustum.hpp"
 #include "Common/MathCommon.hpp"
 #include "glog/logging.h"
 
@@ -15,6 +16,7 @@ class EditorCamera final : public Camera {
   EditorCamera() {
     auto pos = glm::normalize(glm::vec3(-1, 1, 1)) * m_distance;
     m_viewMatrix = glm::lookAt(pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+    m_frustum = Frustum::CreateFrustumFromCamera(*this, m_fov, m_aspect);
   }
   ~EditorCamera() = default;
 
@@ -36,7 +38,7 @@ class EditorCamera final : public Camera {
 
   [[nodiscard]] glm::mat4
   GetProjectionMatrix() const noexcept override {
-    return glm::perspective(glm::radians(fov), m_aspect, m_near, m_far);
+    return glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);
   }
 
   glm::vec3
@@ -49,6 +51,11 @@ class EditorCamera final : public Camera {
     return glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 0)));
   }
 
+  glm::vec3
+  GetFrontVector() const noexcept override {
+    return -glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 2)));
+  }
+
   float
   GetNear() const noexcept override {
     return m_near;
@@ -58,6 +65,9 @@ class EditorCamera final : public Camera {
   GetFar() const noexcept override {
     return m_far;
   }
+
+  bool
+  IsMeshVisible(const Mesh& mesh, const glm::mat4& tranform) override;
 
   glm::vec3
   GetLookAtVector() const noexcept {
@@ -72,6 +82,7 @@ class EditorCamera final : public Camera {
   void
   SetAspect(float aspect) noexcept {
     m_aspect = aspect;
+    m_frustum = Frustum::CreateFrustumFromCamera(*this, m_fov, m_aspect);
   }
 
   glm::vec3
@@ -118,15 +129,16 @@ class EditorCamera final : public Camera {
 
   void
   AddFov(float fovOffset) noexcept {
-    if (fov >= 1.0f && fov <= 45.0f) {
-      fov -= fovOffset;
+    if (m_fov >= 1.0f && m_fov <= 45.0f) {
+      m_fov -= fovOffset;
     }
-    if (fov <= 1.0f) {
-      fov = 1.0f;
+    if (m_fov <= 1.0f) {
+      m_fov = 1.0f;
     }
-    if (fov >= 45.0f) {
-      fov = 45.0f;
+    if (m_fov >= 45.0f) {
+      m_fov = 45.0f;
     }
+    m_frustum = Frustum::CreateFrustumFromCamera(*this, m_fov, m_aspect);
   }
 
   void
@@ -135,16 +147,19 @@ class EditorCamera final : public Camera {
     auto transMatrix = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, distanceDiff));
     m_distance += distanceDiff;
     m_viewMatrix = glm::inverse(glm::inverse(m_viewMatrix) * transMatrix);
+    m_frustum = Frustum::CreateFrustumFromCamera(*this, m_fov, m_aspect);
   }
 
  private:
   float m_near = 0.1f;
   float m_far = MaxDistance;
-  float fov = 45.0f;
+  float m_fov = 45.0f;
   float m_aspect = 800.f / 600.f;
 
   float m_distance = 50.0f;
   glm::mat4 m_viewMatrix;
+
+  Frustum m_frustum;
 
   constexpr static float MaxDistance = 10000.f;
   constexpr static float MinDistance = 1.f;

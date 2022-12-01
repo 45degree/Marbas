@@ -159,7 +159,7 @@ BillBoardRenderPass::RecordCommand(const Scene* scene) {
 void
 BillBoardRenderPass::SetUniformBuffer(const Scene* scene) {
   // set matrix
-  const auto editorCamera = scene->GetEditorCamrea();
+  const auto editorCamera = scene->GetEditorCamera();
   UpdateCameraUniformBuffer(editorCamera.get());
 }
 

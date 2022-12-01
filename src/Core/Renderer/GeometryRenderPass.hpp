@@ -52,17 +52,21 @@ class GeometryRenderPass final : public DeferredRenderPass {
   CreatePipeline() override;
 
   void
-  CreateBufferForEveryEntity(const MeshEntity& mesh, Scene* scene);
+  CreateBufferForEntity(const MeshEntity& mesh, Scene* scene);
 
   void
-  SetUniformBuffer(const Scene* scene);
+  SetUniformBufferForEntity(const Scene* scene, const MeshEntity& mesh);
 
   void
   Execute(const Scene* scene, const ResourceManager* resourceMnager) override;
 
  private:
+  void
+  RecordCommandForEntity(const Scene* scene, const entt::entity mesh);
+
+ private:
   // this buffer used to store all mesh's MVP matrix
-  std::shared_ptr<DynamicUniformBuffer> m_dynamicUniforBuffer = nullptr;
+  // std::shared_ptr<DynamicUniformBuffer> m_dynamicUniforBuffer = nullptr;
 
   Uid m_shaderId;
 };

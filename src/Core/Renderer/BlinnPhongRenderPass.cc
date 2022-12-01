@@ -339,7 +339,7 @@ BlinnPhongRenderPass::Execute(const Scene* scene, const ResourceManager* resourc
     m_needToRecordComand = false;
   }
 
-  const auto editorCamera = scene->GetEditorCamrea();
+  const auto editorCamera = scene->GetEditorCamera();
   UpdateCameraUniformBuffer(editorCamera.get());
   SetUniformBuffer(const_cast<Scene*>(scene));
   m_commandBuffer->SubmitCommand();

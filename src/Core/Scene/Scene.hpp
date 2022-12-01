@@ -65,7 +65,7 @@ class Scene : public std::enable_shared_from_this<Scene> {
   }
 
   const std::shared_ptr<EditorCamera>
-  GetEditorCamrea() const {
+  GetEditorCamera() const {
     return m_editorCamera;
   }
 
