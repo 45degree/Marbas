@@ -1,12 +1,9 @@
 1. 修改GUI
 2. 动态调整渲染精度
-3. 级联移动
-4. 移动灯光, 旋转灯关
-5. 修改renderpass
-6. 重构texture的创建方法
-7. SSAO
-8. SSR
-9. 简化RenderPass创建
-10. 简化shader(google extension: #line)
-11. 统一shader(DSL??, DX12需要考虑)
-12. 添加vulkan
+3. 移动灯光, 旋转灯关
+4. SSAO
+5. SSR
+6. 简化shader(google extension: #line)
+7. 统一shader(DSL??, DX12需要考虑, 最好自定义shader, 完全想用同一套shader不现实)
+8. 添加opengl
+9. 不要重复加载同一个纹理(目前是在模型加载上记录, 但是最好从资源管理器上修改)

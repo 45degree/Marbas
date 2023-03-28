@@ -13,13 +13,8 @@ vec2 TexCoor[6] = vec2[] (
 );
 
 void main() {
-#ifdef OPENGL
-  vec3 p = gridPlane[gl_VertexID].xyz;
-  aTex = TexCoor[gl_VertexID];
-#else
   vec3 p = gridPlane[gl_VertexIndex].xyz;
   aTex = TexCoor[gl_VertexIndex];
-#endif
 
   gl_Position = vec4(p, 1.0);
 }

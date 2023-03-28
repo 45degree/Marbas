@@ -5,7 +5,7 @@
 
 namespace Marbas {
 
-struct Plan {
+struct MARBAS_EXPORT Plan {
   Plan() = default;
   Plan(const glm::vec3& point, const glm::vec3& normal)
       : normal(glm::normalize(normal)), distance(glm::dot(point, glm::normalize(normal))) {}
@@ -31,7 +31,7 @@ struct Plan {
   float distance = 0;
 };
 
-struct Frustum {
+struct MARBAS_EXPORT Frustum {
   Plan topFace;
   Plan bottomFace;
 

@@ -4,65 +4,58 @@
 #include <memory>
 #include <string>
 
+#include "AssetManager/AssetRegistry.hpp"
 #include "Common/Common.hpp"
 #include "Core/Scene/Scene.hpp"
-#include "Resource/ModelResource.hpp"
+#include "Core/Scene/System/SceneSystem.hpp"
 
-using Scene = Marbas::Scene;
+namespace Marbas::Test {
 
 class SceneLoadTest : public ::testing::Test {
+ public:
+  void
+  SetUp() override {
+    if (std::filesystem::exists(projectDir)) {
+      std::filesystem::remove_all(projectDir);
+    }
+    m_assetRegistry->SetProjectDir(projectDir);
+  }
+
  protected:
+  AssetRegistryType* m_assetRegistry = AssetRegistry::GetInstance();
+  Path projectDir = "SceneTestDir";
 };
 
-static Marbas::String tomlString = R"(
-  [scene]
-  name = "scene"
-  resourceFile = "resource.toml"
+TEST_F(SceneLoadTest, SceneNodeTest) {
+  auto scene = std::make_shared<Scene>();
+  auto& world = scene->GetWorld();
+  auto rootEntity = scene->GetRootNode();
 
-  [[scene.node]]
-  type = "Model"
-  path = "Model.model"
-  position = [2, 1, 0]
-  rotate = [0, 0, 0]
-
-  [[scene.node.mesh]]
-  meshIndex = 0
-  materialId = 1231313
-
-  [[scene.node.mesh]]
-  meshIndex = 1
-  materialId = 1231313
-
-  [[scene.node.node]]
-  type = "Light"
-
-  [[scene.node]]
-  type = "Model"
-  path = "Model.model"
-  position = [ 0, 0, 0 ]
-  rotate = [ 0, 0, 0 ]
-
-  [[scene.node.mesh]]
-  meshIndex = 0
-  materialId = 1231313
-
-  [[scene.node.mesh]]
-  meshIndex = 1
-  materialId = 1231313
-
-  [[scene.node]]
-  type = "Light"
-)";
-
-class MockResourceManager : public Marbas::ResourceManager {
-  MOCK_CONST_METHOD0(GetModelResourceContainer,
-                     std::shared_ptr<Marbas::IResourceContainer<Marbas::ModelResource>>());
-};
-
-TEST_F(SceneLoadTest, GetSceneName) {
-  auto resourceManager = std::make_shared<Marbas::ResourceManager>();
-  std::shared_ptr<Scene> scene = std::make_shared<Scene>(resourceManager);
-  scene->ReadFromString(tomlString);
-  auto name = scene->GetSceneName();
-  ASSERT_EQ("scene", name);
+  ASSERT_TRUE(world.any_of<TransformComp>(rootEntity));
 }
+
+TEST_F(SceneLoadTest, SaveLoadScene) {
+  auto scenePath = m_assetRegistry->GetProjectDir() / "scene.xml";
+
+  auto scene = std::make_shared<Scene>();
+  auto& world = scene->GetWorld();
+
+  auto rootNode = scene->GetRootNode();
+  auto child = scene->AddChild(rootNode);
+
+  auto& modelNode = world.emplace<ModelSceneNode>(child);
+  modelNode.modelPath = "res://icon.png";
+
+  scene->SaveToFile(scenePath);
+
+  auto newScene = Scene::LoadFromFile(scenePath);
+  auto newRootNode = newScene->GetRootNode();
+  auto& newWorld = newScene->GetWorld();
+  ASSERT_EQ(1, newScene->GetChildrenCount(newRootNode));
+  ASSERT_TRUE(newWorld.any_of<ModelSceneNode>(newScene->GetChild(newRootNode, 0)));
+
+  auto& newModelName = newWorld.get<ModelSceneNode>(newScene->GetChild(newRootNode, 0));
+  ASSERT_EQ(modelNode.modelPath, newModelName.modelPath);
+}
+
+}  // namespace Marbas::Test

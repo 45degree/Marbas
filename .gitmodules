@@ -1,18 +1,18 @@
-[submodule "3rdPart/imgui"]
-	path = 3rdPart/imgui
-	url = https://github.com/ocornut/imgui.git
 [submodule "3rdPart/ImGuizmo"]
 	path = 3rdPart/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
-[submodule "3rdPart/ImGuiFileDialog"]
-	path = 3rdPart/ImGuiFileDialog
-	url = https://github.com/aiekick/ImGuiFileDialog.git
-[submodule "3rdPart/uchardet"]
-	path = 3rdPart/uchardet
-	url = https://github.com/freedesktop/uchardet.git
-[submodule "3rdPart/IconFontCppHeaders"]
-	path = 3rdPart/IconFontCppHeaders
-	url = https://github.com/juliettef/IconFontCppHeaders.git
 [submodule "3rdPart/nameof"]
 	path = 3rdPart/nameof
 	url = https://github.com/Neargye/nameof.git
+[submodule "3rdPart/IconFontCppHeaders"]
+	path = 3rdPart/IconFontCppHeaders
+	url = https://github.com/juliettef/IconFontCppHeaders.git
+[submodule "3rdPart/Marbas.RHI"]
+	path = 3rdPart/Marbas.RHI
+	url = https://github.com/45degree/Marbas.RHI.git
+[submodule "3rdPart/portable-file-dialogs"]
+	path = 3rdPart/portable-file-dialogs
+	url = https://github.com/samhocevar/portable-file-dialogs.git
+[submodule "3rdPart/Hipe"]
+	path = 3rdPart/Hipe
+	url = https://github.com/CodingHanYa/Hipe.git

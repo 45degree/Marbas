@@ -1,84 +1,37 @@
 ---@diagnostic disable: undefined-global, undefined-field
 
-add_rules("mode.debug", "mode.release")
+add_rules('mode.debug', 'mode.release', 'mode.valgrind')
 
-includes("3rdPart/")
+includes('3rdPart/')
 
-add_requires("glfw 3.3.6")
-add_requires("glew 2.2.0")
-add_requires("glm 0.9.9+8")
-add_requires("glog v0.5.0")
-add_requires("folly 2022.08.29")
-add_requires("stb 2021.09.10")
-add_requires("assimp v5.2.3")
-add_requires("toml++ v3.1.0")
-add_requires("libiconv 1.16")
-add_requires("gtest 1.11.0")
-add_requires("entt v3.9.0")
-add_requires("nativefiledialog 1.1.6")
-add_requires("shaderc")
-add_requires("openssl")
+add_requires('glfw 3.3.8')
+add_requires('glm 0.9.9+8')
+add_requires('glog v0.6.0')
+add_requires('abseil 20220623.0')
+add_requires('stb 2021.09.10')
+add_requires('assimp v5.2.3')
+add_requires('fmt 9.1.0')
+add_requires('gtest 1.11.0')
+add_requires('entt master')
+add_requires('nativefiledialog 1.1.6')
+add_requires('cereal 1.3.2')
 
-if is_plat("linux") then
-  add_requires("vulkan")
-else
-  option("Vulkan SDK Path")
-    set_default("D:/VulkanSDK/1.3.224.1")
-    set_description("Vulkan SDK Path")
-    set_showmenu(true)
-  option_end()
+if is_plat('windows') then
+  add_requires('icu4c 72.1')
+elseif is_plat('linux') then
+  add_requires('pkgconfig::icu-uc')
+  add_requires('pkgconfig::icu-io')
+  add_requires('pkgconfig::icu-i18n')
 end
 
-rule("LoadVulkan")
-  on_load(function (target)
-    if is_plat("linux") then
-      target:add("packages", "vulkan")
-    else
-      local vulkanIncludePath = path.join('$(Vulkan SDK Path)', 'include')
-      local vulkanLibPath = path.join('$(Vulkan SDK Path)', 'lib')
-      local vulkanBinPath = path.join('$(Vulkan SDK Path)', 'bin')
+includes('src/Common/')
+includes('src/Editor/')
+includes('src/Test')
+includes('src/Core')
+includes('src/AssetManager')
+includes('xmake/glslc.lua')
 
-      if not os.exists(vulkanIncludePath) then
-        if os.exists(path.join('$(Vulkan SDK Path)', 'Include')) then
-          vulkanIncludePath = path.join('$(Vulkan SDK Path)', 'Include')
-        end
-      end
-
-      if os.exists(vulkanBinPath) then
-        if os.exists(path.join('$(Vulkan SDK Path)', 'Bin')) then
-          vulkanBinPath = path.join('$(Vulkan SDK Path)', 'Bin')
-        end
-      end
-
-      if os.exists(vulkanLibPath) then
-        if os.exists(path.join('$(Vulkan SDK Path)', 'Lib')) then
-          vulkanLibPath = path.join('$(Vulkan SDK Path)', 'Lib')
-        end
-      end
-
-      target:add('includedirs', vulkanIncludePath)
-      target:add("links", path.join(vulkanLibPath, "vulkan-1"))
-      target:add('rpathdirs', vulkanBinPath)
-    end
-  end)
-rule_end()
-
-includes("src/App/Editor/")
-includes("src/App/Games/")
-includes("src/Common/")
-includes("src/RHI")
-includes("src/Tool")
-includes("src/Test")
-includes("src/Core")
-includes("src/Resource")
-
-target("Marbas")
-  set_kind("phony")
-  add_deps(
-    "Marbas.Core",
-    "Marbas.RHI",
-    "Marbas.Common",
-    "Marbas.Editor",
-    "Marbas.Resource"
-  )
-target_end()
+target('Marbas', function()
+  set_kind('phony')
+  add_deps('Marbas.Core', 'Marbas.RHI', 'Marbas.Common', 'Marbas.Editor', 'Marbas.AssetManager')
+end)

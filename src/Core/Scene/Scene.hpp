@@ -1,28 +1,24 @@
 #pragma once
 
-#include <toml++/toml.h>
-
 #include <entt/entt.hpp>
 
 #include "Common/Common.hpp"
 #include "Common/EditorCamera.hpp"
-#include "Core/Scene/Entity/LightEntity.hpp"
-#include "Resource/ResourceManager.hpp"
+#include "Core/Scene/Component/SceneNodeComponent.hpp"
+#include "Core/Scene/Component/ShadowComponent.hpp"
+#include "Core/Scene/Component/TransformComp.hpp"
+#include "System/SceneSystem.hpp"
 
 namespace Marbas {
 
-class Scene : public std::enable_shared_from_this<Scene> {
-  friend class Entity;
+class Scene {
+ public:
+  explicit Scene();
+  explicit Scene(entt::registry&& registry);
 
  public:
-  explicit Scene(const std::shared_ptr<ResourceManager>& resourceManager);
-
- public:
-  void
-  ReadFromFile(const Path& scenePath);
-
-  void
-  ReadFromString(const String& sceneStr);
+  static std::shared_ptr<Scene>
+  LoadFromFile(const Path& scenePath);
 
   void
   SaveToFile(const Path& scenePath);
@@ -43,21 +39,21 @@ class Scene : public std::enable_shared_from_this<Scene> {
   }
 
   entt::entity
-  GetRootEntity() const {
+  GetRootNode() const {
     return m_rootEntity;
   }
 
-  void
-  AddModel(Uid modelResourceId, const String& modelName, const entt::entity& parent);
+  entt::entity
+  AddChild(entt::entity parent);
 
-  void
-  AddBillBoard(Uid texture2DResourceId, glm::vec3 point, const entt::entity& parent);
+  Vector<entt::entity>
+  GetChildren(entt::entity node) const;
 
-  void
-  AddEmptyNode(const entt::entity& parent);
+  entt::entity
+  GetChild(entt::entity node, size_t index) const;
 
-  void
-  AddLight(LightType type, glm::vec3 point, const entt::entity& parent);
+  size_t
+  GetChildrenCount(entt::entity node) const;
 
   std::shared_ptr<EditorCamera>
   GetEditorCamrea() {
@@ -69,15 +65,19 @@ class Scene : public std::enable_shared_from_this<Scene> {
     return m_editorCamera;
   }
 
- private:
   void
-  ProcessScene(const toml::table& sceneTomlTable);
+  Update() {
+    // LightSceneNode::Update(m_world);
+    // ModelSceneNode::Update(m_world);
+    // DirectionShadowComponent::Update(m_world, m_editorCamera.get());
+    // RenderMeshComponent::Update(m_world, resourceManager);
+    SceneSystem::UpdateEveryFrame(this);
+  }
 
  private:
   String m_name = "default scene";
   entt::registry m_world;
   entt::entity m_rootEntity;
-  std::shared_ptr<ResourceManager> m_resourceManager = nullptr;
   std::shared_ptr<EditorCamera> m_editorCamera = nullptr;
 };
 

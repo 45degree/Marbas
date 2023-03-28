@@ -10,7 +10,7 @@
 
 namespace Marbas {
 
-class Light {
+class MARBAS_EXPORT Light {
  public:
   Light() = default;
   virtual ~Light() = default;
@@ -41,7 +41,7 @@ class Light {
   glm::vec3 m_color = glm::vec3(1, 1, 1);
 };
 
-class ParallelLight final : public Light {
+class MARBAS_EXPORT ParallelLight final : public Light {
  public:
   ParallelLight() = default;
   ~ParallelLight() = default;
@@ -93,7 +93,7 @@ class ParallelLight final : public Light {
   float m_far = 100.f;
 };
 
-class PointLight final : public Light {
+class MARBAS_EXPORT PointLight final : public Light {
  public:
   PointLight() = default;
   ~PointLight() = default;

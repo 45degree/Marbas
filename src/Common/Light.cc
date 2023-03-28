@@ -1,14 +1,12 @@
 #include "Common/Light.hpp"
 
-#include <glog/logging.h>
-
 namespace Marbas {
 
 glm::mat4
 PointLight::GetViewMatrix(const int direction) const {
   auto dirVec = glm::vec3(0, 0, 0);
   auto upVec = glm::vec3(0, 0, 0);
-  DLOG_ASSERT(direction < 6 && direction >= 0) << "direction must >= 0 and < 6";
+  // DLOG_ASSERT(direction < 6 && direction >= 0) << "direction must >= 0 and < 6";
 
   switch (direction) {
     case 0:

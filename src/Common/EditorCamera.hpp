@@ -4,74 +4,22 @@
 #include "Common/Common.hpp"
 #include "Common/Frustum.hpp"
 #include "Common/MathCommon.hpp"
-#include "glog/logging.h"
+// #include "Common/Mesh.hpp"
 
 /**
  * @brief this camera always looks at a fixed point, and can rotate around it
  */
 namespace Marbas {
 
-class EditorCamera final : public Camera {
+class MARBAS_EXPORT EditorCamera final : public Camera {
  public:
-  EditorCamera() {
-    auto pos = glm::normalize(glm::vec3(-1, 1, 1)) * m_distance;
-    m_viewMatrix = glm::lookAt(pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-    m_frustum = Frustum::CreateFrustumFromCamera(*this, m_fov, m_aspect);
-  }
-  ~EditorCamera() = default;
+  EditorCamera();
+  virtual ~EditorCamera();
 
  public:
-  [[nodiscard]] glm::mat4
-  GetViewMatrix() const noexcept override {
-    return m_viewMatrix;
-  }
-
-  [[nodiscard]] glm::vec3
-  GetPosition() const noexcept override {
-    return glm::vec3(glm::column(glm::inverse(m_viewMatrix), 3));
-  }
-
   [[nodiscard]] float
   GetDistance() const noexcept {
     return m_distance;
-  }
-
-  [[nodiscard]] glm::mat4
-  GetProjectionMatrix() const noexcept override {
-    return glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);
-  }
-
-  glm::vec3
-  GetUpVector() const noexcept override {
-    return glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 1)));
-  }
-
-  glm::vec3
-  GetRightVector() const noexcept override {
-    return glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 0)));
-  }
-
-  glm::vec3
-  GetFrontVector() const noexcept override {
-    return -glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 2)));
-  }
-
-  float
-  GetNear() const noexcept override {
-    return m_near;
-  }
-
-  float
-  GetFar() const noexcept override {
-    return m_far;
-  }
-
-  bool
-  IsMeshVisible(const Mesh& mesh, const glm::mat4& tranform) override;
-
-  glm::vec3
-  GetLookAtVector() const noexcept {
-    return -glm::normalize(glm::vec3(glm::column(glm::inverse(m_viewMatrix), 2)));
   }
 
   void
@@ -150,19 +98,15 @@ class EditorCamera final : public Camera {
     m_frustum = Frustum::CreateFrustumFromCamera(*this, m_fov, m_aspect);
   }
 
- private:
-  float m_near = 0.1f;
-  float m_far = MaxDistance;
-  float m_fov = 45.0f;
-  float m_aspect = 800.f / 600.f;
+  const Frustum&
+  GetFrustum() const {
+    return m_frustum;
+  }
 
+ private:
   float m_distance = 50.0f;
-  glm::mat4 m_viewMatrix;
 
   Frustum m_frustum;
-
-  constexpr static float MaxDistance = 10000.f;
-  constexpr static float MinDistance = 1.f;
 };
 
 }  // namespace Marbas

@@ -1,28 +1,27 @@
 #pragma once
 
+#include <cereal/types/vector.hpp>
 #include <memory>
 
 #include "Common/Common.hpp"
-#include "Common/MathCommon.hpp"
 #include "entt/entity/entity.hpp"
 
 namespace Marbas {
 
-class Scene;
 struct HierarchyComponent {
   entt::entity next = entt::null;
   entt::entity prew = entt::null;
   entt::entity parent = entt::null;
-  Vector<entt::entity> children;
-
-  glm::mat4 localTransformMatrix = glm::mat4(1.0);
-  glm::mat4 globalTransformMatrix = glm::mat4(1.0);
-
-  static void
-  AddChild(const entt::entity parent, const std::shared_ptr<Scene>& scene, entt::entity child);
+  std::vector<entt::entity> children;
 
   static void
   AddChild(const entt::entity parent, entt::registry& registry, entt::entity child);
+
+  template <typename Archive>
+  void
+  serialize(Archive&& archive) {
+    archive(next, prew, parent, children);
+  }
 };
 
 }  // namespace Marbas
