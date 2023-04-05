@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/Renderer/RenderGraph/RenderCommandList.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
 #include "Core/Scene/Scene.hpp"
@@ -25,7 +24,7 @@ class GridRenderPass final {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList);
+  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
  private:
   struct CameraInfo {
@@ -38,6 +37,9 @@ class GridRenderPass final {
     float NEAR;
   } m_cameraInfo;
   Buffer* m_cameraInfoUBO;
+
+  DescriptorSetArgument m_argument;
+  uintptr_t m_descriptorSet;
 
   uint32_t m_width;
   uint32_t m_height;

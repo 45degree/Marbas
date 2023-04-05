@@ -26,6 +26,19 @@ MultiScatterLUT::MultiScatterLUT(const MultiScatterLUTCreateInfo& createInfo)
       .borderColor = Marbas::BorderColor::IntOpaqueBlack,
   };
   m_sampler = pipelineCtx->CreateSampler(samplerCreateInfo);
+
+  // set descirptor set
+  m_argument.Bind(0, DescriptorType::UNIFORM_BUFFER);
+  m_transmittanceLUTArgument.Bind(0, DescriptorType::IMAGE);
+  m_descriptorSet = pipelineCtx->CreateDescriptorSet(m_argument);
+  pipelineCtx->BindBuffer(BindBufferInfo{
+      .descriptorSet = m_descriptorSet,
+      .descriptorType = DescriptorType::UNIFORM_BUFFER,
+      .bindingPoint = 0,
+      .buffer = m_atmosphereInfoBuffer,
+      .offset = 0,
+      .arrayElement = 0,
+  });
 }
 
 MultiScatterLUT::~MultiScatterLUT() {
@@ -39,46 +52,58 @@ MultiScatterLUT::~MultiScatterLUT() {
 void
 MultiScatterLUT::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.WriteTexture(m_multiScatterLUT);
-  builder.ReadTexture(m_transmittanceLUT);
+  builder.ReadTexture(m_transmittanceLUT, m_sampler);
   builder.SetFramebufferSize(m_width, m_height, 1);
 
   // pipeline create info
-  RenderGraphPipelineCreateInfo createInfo;
-  createInfo.SetPipelineLayout({
-      DescriptorSetLayoutBinding{.bindingPoint = 0, .descriptorType = DescriptorType::UNIFORM_BUFFER},
-      DescriptorSetLayoutBinding{.bindingPoint = 0, .descriptorType = DescriptorType::IMAGE},
-  });
-  createInfo.AddShader(ShaderType::VERTEX_SHADER, "Shader/transmittanceLUT.vert.spv");
-  createInfo.AddShader(ShaderType::FRAGMENT_SHADER, "Shader/multiScatterLUT.frag.spv");
-  createInfo.SetColorAttachmentsDesc({{
+  builder.BeginPipeline();
+  builder.AddShaderArgument(m_argument);
+  builder.AddShaderArgument(m_transmittanceLUTArgument);
+  builder.AddShader("Shader/transmittanceLUT.vert.spv", ShaderType::VERTEX_SHADER);
+  builder.AddShader("Shader/multiScatterLUT.frag.spv", ShaderType::FRAGMENT_SHADER);
+  builder.AddColorTarget({
       .initAction = AttachmentInitAction::CLEAR,
       .finalAction = AttachmentFinalAction::READ,
       .usage = ImageUsageFlags::COLOR_RENDER_TARGET | ImageUsageFlags::SHADER_READ,
       .sampleCount = SampleCount::BIT1,
       .format = ImageFormat::RGBA32F,
-  }});
-  createInfo.SetBlendConstance(0, 0, 0, 1);
-  createInfo.SetBlendAttachments({BlendAttachment{.blendEnable = false}});
-  DepthStencilCreateInfo depthStencil;
-  depthStencil.depthTestEnable = false;
-  createInfo.SetDepthStencil(depthStencil);
-
-  builder.SetPipelineInfo(createInfo);
+  });
+  builder.SetBlendConstant(0, 0, 0, 1);
+  builder.AddBlendAttachments({.blendEnable = false});
+  builder.EnableDepthTest(false);
+  builder.EndPipeline();
 }
 
 void
-MultiScatterLUT::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList) {
-  auto* transmittanceLUT = registry.GetRenderBackendTextureSubResource(m_transmittanceLUT, 0, 1, 0, 1);
+MultiScatterLUT::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+  auto pipeline = registry.GetPipeline(0);
+  auto framebuffer = registry.GetFrameBuffer();
+  auto inputSet = registry.GetInputDescriptorSet();
 
-  commandList.SetDescriptorSetCount(1);
+  /**
+   * record command
+   */
+  std::array<ViewportInfo, 1> viewport;
+  viewport[0].x = 0;
+  viewport[0].y = 0;
+  viewport[0].width = m_width;
+  viewport[0].height = m_height;
+  viewport[0].minDepth = 0;
+  viewport[0].maxDepth = 1;
 
-  RenderArgument argument;
-  argument.BindUniformBuffer(0, m_atmosphereInfoBuffer);
-  argument.BindImage(0, m_sampler, transmittanceLUT);
+  std::array<ScissorInfo, 1> scissor;
+  scissor[0].x = 0;
+  scissor[0].y = 0;
+  scissor[0].height = m_height;
+  scissor[0].width = m_width;
 
-  commandList.Begin({{0, 0, 0, 0}});
-  commandList.BindArgument(argument);
+  commandList.Begin();
+  commandList.BeginPipeline(pipeline, framebuffer, {{0, 0, 0, 0}});
+  commandList.SetViewports(viewport);
+  commandList.SetScissors(scissor);
+  commandList.BindDescriptorSet(pipeline, {m_descriptorSet, inputSet});
   commandList.Draw(6, 1, 0, 0);
+  commandList.EndPipeline(pipeline);
   commandList.End();
 }
 

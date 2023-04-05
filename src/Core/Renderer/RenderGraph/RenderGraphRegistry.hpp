@@ -5,20 +5,28 @@
 
 namespace Marbas {
 
+namespace details {
+class RenderGraphPass;
+class RenderGraphGraphicsPass;
+};  // namespace details
+
 class RenderGraph;
 class RenderGraphRegistry final {
  public:
-  RenderGraphRegistry(RenderGraph* graph);
+  RenderGraphRegistry(RenderGraph* graph, details::RenderGraphGraphicsPass* pass);
 
-  Image*
-  GetRenderBackendTexture(const RenderGraphTextureHandler& handler);
+  uintptr_t
+  GetInputDescriptorSet();
 
-  ImageView*
-  GetRenderBackendTextureSubResource(const RenderGraphTextureHandler& handler, uint32_t baseLayer, uint32_t LayerCount,
-                                     uint32_t baseLevel, uint32_t LevelCount);
+  uintptr_t
+  GetPipeline(size_t index);
+
+  FrameBuffer*
+  GetFrameBuffer();
 
  private:
   RenderGraph* m_graph;
+  details::RenderGraphGraphicsPass* m_pass;
 };
 
 }  // namespace Marbas

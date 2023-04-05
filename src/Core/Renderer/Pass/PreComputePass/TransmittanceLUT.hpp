@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/Renderer/RenderGraph/RenderCommandList.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
 
@@ -23,7 +22,7 @@ class TransmittanceLUTPass final {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList);
+  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
  private:
   RHIFactory* m_rhiFactory = nullptr;
@@ -38,6 +37,9 @@ class TransmittanceLUTPass final {
     float ozoneWidth = 15000;
   } m_atmosphereInfo;
   Buffer* m_atmosphereInfoBuffer = nullptr;
+
+  DescriptorSetArgument m_argument;
+  uintptr_t m_descriptorSet;
 
   uint32_t m_width;
   uint32_t m_height;

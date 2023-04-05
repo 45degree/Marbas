@@ -45,7 +45,7 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   s_precomputeFence = rhiFactory->CreateFence();
 
   auto& geometryPassCreateInfo = *Singleton<GeometryPassCreateInfo>::GetInstance();
-  auto& directShadowMapData = *Singleton<DirectShadowMapData>::GetInstance();
+  auto& directShadowMapData = *Singleton<DirectionShadowMapPassCreateInfo>::GetInstance();
   auto& screenSpaceShadowInfo = *Singleton<ScreenSpaceShadowInfo>::GetInstance();
   auto& atmosphereCreateInfo = *Singleton<AtmospherePassCreateInfo>::GetInstance();
   auto& transmittanceLURCreateInfo = *Singleton<TransmittanceLUTPassCreateInfo>::GetInstance();
@@ -88,10 +88,11 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::DEPTH_STENCIL;
   createInfo.format = ImageFormat::DEPTH;
   createInfo.mipMapLevel = 1;
-  createInfo.imageDesc = Image2DArrayDesc{.arraySize = 5};
+  createInfo.imageDesc = Image2DArrayDesc{.arraySize = DirectionShadowComponent::splitCount + 1};
   createInfo.height = 1024;
   createInfo.width = 1024;
-  directShadowMapData.shadowMapTextureHandler = s_resourceManager->CreateTexture("shadowMap", createInfo);
+  directShadowMapData.rhiFactory = rhiFactory;
+  directShadowMapData.directionalShadowMap = s_resourceManager->CreateTexture("shadowMap", createInfo);
 
   createInfo.width = 1920;
   createInfo.height = 1080;
@@ -147,7 +148,7 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
 void
 RenderSystem::Destroy(RHIFactory* rhiFactory) {
   Singleton<GeometryPassCreateInfo>::Destroy();
-  Singleton<DirectShadowMapData>::Destroy();
+  Singleton<DirectionShadowMapPassCreateInfo>::Destroy();
   Singleton<ScreenSpaceShadowInfo>::Destroy();
   Singleton<AtmospherePassCreateInfo>::Destroy();
   Singleton<TransmittanceLUTPassCreateInfo>::Destroy();
@@ -203,7 +204,7 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
    */
 
   auto& geometryPassCreateInfo = *Singleton<GeometryPassCreateInfo>::GetInstance();
-  auto& directShadowMapData = *Singleton<DirectShadowMapData>::GetInstance();
+  auto& directShadowMapData = *Singleton<DirectionShadowMapPassCreateInfo>::GetInstance();
   auto& screenSpaceShadowInfo = *Singleton<ScreenSpaceShadowInfo>::GetInstance();
   auto& atmosphereCreateInfo = *Singleton<AtmospherePassCreateInfo>::GetInstance();
   auto& transmittanceLUTCreateInfo = *Singleton<TransmittanceLUTPassCreateInfo>::GetInstance();
@@ -223,46 +224,12 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
   // 每一个probe用一个compute shader计算
 
   geometryPassCreateInfo.scene = scene;
-  s_renderGraph->AddPass<GeometryPass>("geometryPass", geometryPassCreateInfo);
+  s_renderGraph->AddPass<GeometryPass>("GeometryPass", geometryPassCreateInfo);
+
+  directShadowMapData.scene = scene;
+  s_renderGraph->AddPass<DirectionShadowMapPass>("DirectionLight", directShadowMapData);
 
   auto directLightView = world.view<DirectionLightComponent, DirectionShadowComponent>();
-
-  // TODO: 每一个shadowMap都应该保存下来
-  for (auto entity : directLightView) {
-    s_renderGraph->AddPass<DirectionShadowMapPass>("directionLight", rhiFactory, scene, entity,
-                                                   directShadowMapData.shadowMapTextureHandler);
-    // m_renderGraph->AddPass("ScreenSpaceShadowInfo", [&](RenderGraphGraphicsBuilder& builder) {
-    //   builder.ReadTexture(directShadowMapData.shadowMapTextureHandler);
-    //   builder.ReadTexture(geometryPassCreateInfo.positionTexture);
-    //   builder.WriteTexture(screenSpaceShadowInfo.screenSpaceShadowInfo);
-    //
-    //   RenderGraphPipelineCreateInfo createInfo;
-    //   createInfo.AddShader();
-    //   createInfo.AddShader();
-    //   createInfo.SetColorAttachmentsDesc({{
-    //       .initAction = AttachmentInitAction::CLEAR,
-    //       .finalAction = AttachmentFinalAction::READ,
-    //       .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
-    //       .format = ImageFormat::R32F,
-    //   }});
-    //   createInfo.SetPipelineLayout({
-    //       {.bindingPoint = 0, .descriptorType = DescriptorType::IMAGE},
-    //       {.bindingPoint = 1, .descriptorType = DescriptorType::IMAGE},
-    //       {.bindingPoint = 0, .descriptorType = DescriptorType::UNIFORM_BUFFER},
-    //   });
-    //
-    //   builder.SetPipelineInfo(createInfo);
-    //   builder.SetFramebufferSize(1920, 1080, 1);
-    //   return [=](RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList) {
-    //     RenderArgument argument;
-    //     argument.BindImage(0, registry.GetRenderBackendTexture(directShadowMapData.shadowMapTextureHandler));
-    //
-    //     commandList.Begin({{0, 0, 0, 0}});
-    //     commandList.BindArgument();
-    //     commandList.End();
-    //   };
-    // });
-  }
 
   /** Religth probe
    * 1. 计算每一个surfel的直接光照颜色

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/Renderer/RenderGraph/RenderCommandList.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
 #include "Core/Scene/Scene.hpp"
@@ -27,7 +26,7 @@ class AtmospherePass final {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList);
+  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
   IsEnable();
@@ -57,7 +56,11 @@ class AtmospherePass final {
     float ozoneWidth = 15000;
   } m_atmosphereInfo;
   Buffer* m_atmosphereInfoBuffer = nullptr;
-  Sampler* m_sampler;
+  uintptr_t m_sampler;
+
+  DescriptorSetArgument m_argument;
+  uintptr_t m_descriptorSet;
+  DescriptorSetArgument m_inputArgument;
 
   Buffer* m_vertexBuffer = nullptr;
   Buffer* m_indexBuffer = nullptr;

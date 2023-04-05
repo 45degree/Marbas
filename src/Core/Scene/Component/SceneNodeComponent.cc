@@ -16,6 +16,7 @@ void
 DirectionalLightSceneNode::RegistryNode(entt::registry& world, entt::entity node) {
   world.emplace<TransformComp>(node);
   world.emplace<DirectionLightComponent>(node);
+  world.emplace<DirectionShadowComponent>(node);
 }
 
 void

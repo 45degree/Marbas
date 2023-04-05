@@ -53,6 +53,18 @@ GeometryPass::GeometryPass(const GeometryPassCreateInfo& createInfo)
       .baseArrayLayer = 0,
       .layerCount = 1,
   });
+
+  // create descirptor
+  m_argument.Bind(0, DescriptorType::UNIFORM_BUFFER);
+  m_descriptorSet = pipelineContext->CreateDescriptorSet(m_argument);
+  pipelineContext->BindBuffer(BindBufferInfo{
+      .descriptorSet = m_descriptorSet,
+      .descriptorType = DescriptorType::UNIFORM_BUFFER,
+      .bindingPoint = 0,
+      .buffer = m_cameraBuffer,
+      .offset = 0,
+      .arrayElement = 0,
+  });
 }
 
 void
@@ -65,91 +77,75 @@ GeometryPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.WriteTexture(m_metallicTexture);
   builder.WriteTexture(m_depthTexture, TextureAttachmentType::DEPTH);
 
-  RenderGraphPipelineCreateInfo pipelineCreateInfo;
-
-  Vector<DescriptorSetLayoutBinding> bindings = {
-      DescriptorSetLayoutBinding{0, DescriptorType::IMAGE},
-      DescriptorSetLayoutBinding{1, DescriptorType::IMAGE},
-      DescriptorSetLayoutBinding{2, DescriptorType::IMAGE},
-      DescriptorSetLayoutBinding{3, DescriptorType::IMAGE},
-      DescriptorSetLayoutBinding{4, DescriptorType::IMAGE},
-      DescriptorSetLayoutBinding{0, DescriptorType::UNIFORM_BUFFER},
-      DescriptorSetLayoutBinding{1, DescriptorType::UNIFORM_BUFFER},
-      DescriptorSetLayoutBinding{2, DescriptorType::UNIFORM_BUFFER},
-  };
-
-  pipelineCreateInfo.AddShader(ShaderType::VERTEX_SHADER, "Shader/geometry.vert.spv");
-  pipelineCreateInfo.AddShader(ShaderType::FRAGMENT_SHADER, "Shader/geometry.frag.spv");
-  pipelineCreateInfo.SetPipelineLayout(bindings);
-  pipelineCreateInfo.SetMultiSamples(SampleCount::BIT1);
-  pipelineCreateInfo.SetColorAttachmentsDesc({
-      {
-          .initAction = AttachmentInitAction::CLEAR,
-          .finalAction = AttachmentFinalAction::READ,
-          .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
-          .sampleCount = SampleCount::BIT1,
-          .format = GBuffer_Color::format,
-      },
-      {
-          .initAction = AttachmentInitAction::CLEAR,
-          .finalAction = AttachmentFinalAction::READ,
-          .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
-          .sampleCount = SampleCount::BIT1,
-          .format = GBuffer_Normals::format,
-      },
-      {
-          .initAction = AttachmentInitAction::CLEAR,
-          .finalAction = AttachmentFinalAction::READ,
-          .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
-          .sampleCount = SampleCount::BIT1,
-          .format = GBuffer_Position::format,
-      },
-      {
-          .initAction = AttachmentInitAction::CLEAR,
-          .finalAction = AttachmentFinalAction::READ,
-          .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
-          .sampleCount = SampleCount::BIT1,
-          .format = GBuffer_AmbientOcclusion::format,
-      },
-      {
-          .initAction = AttachmentInitAction::CLEAR,
-          .finalAction = AttachmentFinalAction::READ,
-          .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
-          .sampleCount = SampleCount::BIT1,
-          .format = GBuffer_Roughness::format,
-      },
-      {
-          .initAction = AttachmentInitAction::CLEAR,
-          .finalAction = AttachmentFinalAction::READ,
-          .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
-          .sampleCount = SampleCount::BIT1,
-          .format = GBuffer_Metallic::format,
-      },
+  builder.BeginPipeline();
+  builder.AddShaderArgument(MeshGPUAsset::GetDescriptorSetArgument());
+  builder.AddShaderArgument(m_argument);
+  builder.AddShader("Shader/geometry.vert.spv", ShaderType::VERTEX_SHADER);
+  builder.AddShader("Shader/geometry.frag.spv", ShaderType::FRAGMENT_SHADER);
+  builder.AddColorTarget({
+      .initAction = AttachmentInitAction::CLEAR,
+      .finalAction = AttachmentFinalAction::READ,
+      .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
+      .sampleCount = SampleCount::BIT1,
+      .format = GBuffer_Color::format,
   });
-  pipelineCreateInfo.SetDepthAttachmentDesc({
+  builder.AddColorTarget({
+      .initAction = AttachmentInitAction::CLEAR,
+      .finalAction = AttachmentFinalAction::READ,
+      .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
+      .sampleCount = SampleCount::BIT1,
+      .format = GBuffer_Normals::format,
+  });
+  builder.AddColorTarget({
+      .initAction = AttachmentInitAction::CLEAR,
+      .finalAction = AttachmentFinalAction::READ,
+      .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
+      .sampleCount = SampleCount::BIT1,
+      .format = GBuffer_Position::format,
+  });
+  builder.AddColorTarget({
+      .initAction = AttachmentInitAction::CLEAR,
+      .finalAction = AttachmentFinalAction::READ,
+      .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
+      .sampleCount = SampleCount::BIT1,
+      .format = GBuffer_AmbientOcclusion::format,
+  });
+  builder.AddColorTarget({
+      .initAction = AttachmentInitAction::CLEAR,
+      .finalAction = AttachmentFinalAction::READ,
+      .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
+      .sampleCount = SampleCount::BIT1,
+      .format = GBuffer_Roughness::format,
+  });
+  builder.AddColorTarget({
+      .initAction = AttachmentInitAction::CLEAR,
+      .finalAction = AttachmentFinalAction::READ,
+      .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
+      .sampleCount = SampleCount::BIT1,
+      .format = GBuffer_Metallic::format,
+  });
+  builder.SetDepthTarget({
       .initAction = AttachmentInitAction::CLEAR,
       .finalAction = AttachmentFinalAction::READ,
       .usage = ImageUsageFlags::DEPTH_STENCIL,
       .sampleCount = SampleCount::BIT1,
   });
-  pipelineCreateInfo.SetVertexInputElementDesc(GetMeshVertexInfoLayout());
-  pipelineCreateInfo.SetVertexInputElementView(GetMeshVertexViewInfo());
-  pipelineCreateInfo.SetBlendAttachments({
-      BlendAttachment{false},
-      BlendAttachment{false},
-      BlendAttachment{false},
-      BlendAttachment{false},
-      BlendAttachment{false},
-      BlendAttachment{false},
-  });
-  pipelineCreateInfo.SetBlendConstance(0, 0, 0, 0);
-  builder.SetPipelineInfo(pipelineCreateInfo);
+  builder.SetVertexInputElementDesc(GetMeshVertexInfoLayout());
+  builder.SetVertexInputElementView(GetMeshVertexViewInfo());
+  builder.AddBlendAttachments({false});
+  builder.AddBlendAttachments({false});
+  builder.AddBlendAttachments({false});
+  builder.AddBlendAttachments({false});
+  builder.AddBlendAttachments({false});
+  builder.AddBlendAttachments({false});
+  builder.SetBlendConstant(0, 0, 0, 0);
+  builder.EndPipeline();
 
   builder.SetFramebufferSize(m_width, m_height, 1);
 }
 
 void
-GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList) {
+GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
   auto& world = m_scene->GetWorld();
   auto camera = m_scene->GetEditorCamera();
   auto view = world.view<ModelSceneNode, RenderComponent>();
@@ -164,13 +160,6 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& 
    * load all model and calculate the sum of mesh
    */
 
-  int size = 0;
-  for (auto&& [entity, modelSceneNode] : view.each()) {
-    auto modelAsset = modelManager->Get(modelSceneNode.modelPath);
-    size += modelAsset->GetMeshCount();
-  }
-  commandList.SetDescriptorSetCount(size);
-
   // update camera buffer
   m_cameraMatrix.up = camera->GetUpVector();
   m_cameraMatrix.pos = camera->GetPosition();
@@ -179,15 +168,39 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& 
   m_cameraMatrix.view = camera->GetViewMatrix();
   bufferContext->UpdateBuffer(m_cameraBuffer, &m_cameraMatrix, sizeof(CameraMatrix), 0);
 
-  commandList.Begin({
-      {0, 0, 0, 0},
-      {0, 0, 0, 0},
-      {0, 0, 0, 0},
-      {0, 0, 0, 0},
-      {0, 0, 0, 0},
-      {0, 0, 0, 0},
-      {1, 1},
-  });
+  /**
+   * record command
+   */
+  auto pipeline = registry.GetPipeline(0);
+  auto framebuffer = registry.GetFrameBuffer();
+
+  std::array<ViewportInfo, 1> viewport;
+  viewport[0].x = 0;
+  viewport[0].y = 0;
+  viewport[0].width = m_width;
+  viewport[0].height = m_height;
+  viewport[0].minDepth = 0;
+  viewport[0].maxDepth = 1;
+
+  std::array<ScissorInfo, 1> scissor;
+  scissor[0].x = 0;
+  scissor[0].y = 0;
+  scissor[0].height = m_height;
+  scissor[0].width = m_width;
+
+  commandList.Begin();
+  commandList.BeginPipeline(pipeline, framebuffer,
+                            {
+                                {0, 0, 0, 0},
+                                {0, 0, 0, 0},
+                                {0, 0, 0, 0},
+                                {0, 0, 0, 0},
+                                {0, 0, 0, 0},
+                                {0, 0, 0, 0},
+                                {1, 1},
+                            });
+  commandList.SetViewports(viewport);
+  commandList.SetScissors(scissor);
 
   for (auto&& [entity, modelSceneNode] : view.each()) {
     if (modelSceneNode.modelPath == "res://") {
@@ -214,49 +227,14 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& 
       // update transform matrix
       bufferContext->UpdateBuffer(meshGPUAsset->m_transformBuffer, &model, sizeof(model), 0);
 
-      RenderArgument argument;
-      argument.BindUniformBuffer(0, m_cameraBuffer);
-      argument.BindUniformBuffer(1, meshGPUAsset->m_materialInfoBuffer);
-      argument.BindUniformBuffer(2, meshGPUAsset->m_transformBuffer);
-
-      ImageView* imageView = nullptr;
-      imageView = m_emptyImageView;
-      if (meshGPUAsset->m_materialInfo.hasDiffuseTex) {
-        imageView = meshGPUAsset->m_diffuseTexture->GetImageView(0, 1, 0, 1);
-      }
-      argument.BindImage(0, m_sampler, imageView);
-
-      imageView = m_emptyImageView;
-      if (meshGPUAsset->m_materialInfo.hasAoTex) {
-        imageView = meshGPUAsset->m_aoTexture->GetImageView(0, 1, 0, 1);
-      }
-      argument.BindImage(1, m_sampler, imageView);
-
-      imageView = m_emptyImageView;
-      if (meshGPUAsset->m_materialInfo.hasNormalTex) {
-        imageView = meshGPUAsset->m_normalTexture->GetImageView(0, 1, 0, 1);
-      }
-      argument.BindImage(2, m_sampler, imageView);
-
-      imageView = m_emptyImageView;
-      if (meshGPUAsset->m_materialInfo.hasRoughnessTex) {
-        imageView = meshGPUAsset->m_roughnessTexture->GetImageView(0, 1, 0, 1);
-      }
-      argument.BindImage(3, m_sampler, imageView);
-
-      imageView = m_emptyImageView;
-      if (meshGPUAsset->m_materialInfo.hasMetallicTex) {
-        imageView = meshGPUAsset->m_metallicTexture->GetImageView(0, 1, 0, 1);
-      }
-      argument.BindImage(4, m_sampler, imageView);
-
+      commandList.BindDescriptorSet(pipeline, {meshGPUAsset->m_descriptorSet, m_descriptorSet});
       commandList.BindVertexBuffer(meshGPUAsset->m_vertexBuffer);
       commandList.BindIndexBuffer(meshGPUAsset->m_indexBuffer);
-      commandList.BindArgument(argument);
-      commandList.DrawIndex(indexCount, 1, 0, 0, 0);
+      commandList.DrawIndexed(indexCount, 1, 0, 0, 0);
     }
   }
 
+  commandList.EndPipeline(pipeline);
   commandList.End();
 }
 

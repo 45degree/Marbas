@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AssetManager/AssetManager.hpp"
-#include "Core/Renderer/RenderGraph/RenderCommandList.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
 #include "Core/Scene/Scene.hpp"
@@ -40,7 +39,7 @@ class GeometryPass {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList);
+  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
  private:
   RenderGraphTextureHandler m_normalTexture;
@@ -53,10 +52,13 @@ class GeometryPass {
   Scene* m_scene = nullptr;
   RHIFactory* m_rhiFactory = nullptr;
 
+  DescriptorSetArgument m_argument;
+  uintptr_t m_descriptorSet;
+
   uint32_t m_height = 0;
   uint32_t m_width = 0;
 
-  Sampler* m_sampler = nullptr;
+  uintptr_t m_sampler;
   Buffer* m_cameraBuffer = nullptr;
   Image* m_emptyImage = nullptr;
   ImageView* m_emptyImageView = nullptr;

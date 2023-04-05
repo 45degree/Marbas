@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include "RenderCommandList.hpp"
+// #include "RenderCommandList.hpp"
 #include "RenderGraphBuilder.hpp"
 #include "RenderGraphNode.hpp"
 #include "RenderGraphRegistry.hpp"
@@ -37,8 +37,9 @@ class RenderGraphPass : public RenderGraphNode {
 };
 
 class RenderGraphGraphicsPass : public RenderGraphPass {
-  friend class Marbas::GraphicsRenderCommandList;
   friend class Marbas::RenderGraphGraphicsBuilder;
+  friend class Marbas::RenderGraphRegistry;
+
   struct SubResourceDesc {
     std::optional<RenderGraphTextureHandler> handler;
     uint32_t baseLayer;
@@ -58,21 +59,28 @@ class RenderGraphGraphicsPass : public RenderGraphPass {
   AddSubResDesc(TextureAttachmentType type, const RenderGraphTextureHandler& handler, uint32_t baseLayer,
                 uint32_t layerCount, uint32_t baseLevel, uint32_t levelCount);
 
+  void
+  AddInputAttachment(RenderGraphTextureHandler handler, uintptr_t sampler, uint32_t baseLayer, uint32_t layerCount,
+                     uint32_t baseLevel, uint32_t levelCount);
+
   virtual void
   Submit(Semaphore* waitSemaphore, Semaphore* signedSemaphore, Fence* fence) override final {
-    m_commandList->Submit(waitSemaphore, signedSemaphore, fence);
+    m_commandBuffer->Submit({&waitSemaphore, 1}, {&signedSemaphore, 1}, fence);
   }
 
  protected:
-  DescriptorSetLayout* m_layout;
-  Pipeline* m_pipeline;
-  RenderGraphPipelineCreateInfo m_pipelineCreateInfo;
-  std::unique_ptr<GraphicsRenderCommandList> m_commandList;
+  std::vector<uintptr_t> m_pipelines;
+  std::vector<GraphicsPipeLineCreateInfo> m_pipelineCreateInfos;
+  GraphicsCommandBuffer* m_commandBuffer;
 
   FrameBuffer* m_framebuffer;
   uint32_t m_framebufferWidth;
   uint32_t m_framebufferHeight;
   uint32_t m_framebufferLayer;
+
+  Vector<SubResourceDesc> m_inputAttachment;  // the input from the last pass
+  Vector<uintptr_t> m_inputAttachmentSampler;
+  uintptr_t m_descriptorSet;  // the descriptor set for input attachment
 
   Vector<SubResourceDesc> m_colorAttachment;
   SubResourceDesc m_depthAttachment;
@@ -84,7 +92,7 @@ template <typename T>
 concept RenderGraphLambdaPass = (
   requires(T obj, RenderGraphGraphicsBuilder& builder) {
     obj(builder);
-    { obj(builder) } -> std::invocable<RenderGraphRegistry&, GraphicsRenderCommandList&>;
+    { obj(builder) } -> std::invocable<RenderGraphRegistry&, GraphicsCommandBuffer&>;
   }
 );
 // clang-format on
@@ -93,14 +101,14 @@ concept RenderGraphLambdaPass = (
 template <typename T>
 concept RenderGraphGraphicsStructPass = (
   requires(T obj) {
-    std::invocable<decltype(&T::SetUp), RenderGraphGraphicsBuilder&>;
-    std::invocable<decltype(&T::Execute), RenderGraphRegistry&, GraphicsRenderCommandList&>;
+     std::invocable<decltype(&T::SetUp), RenderGraphGraphicsBuilder&>;
+     std::invocable<decltype(&T::Execute), RenderGraphRegistry&, GraphicsCommandBuffer&>;
   }
 );
 // clang-format on
 
 class LambdaGraphicsRenderGraphPass final : public RenderGraphGraphicsPass {
-  using Lambda = std::function<void(RenderGraphRegistry&, GraphicsRenderCommandList&)>;
+  using Lambda = std::function<void(RenderGraphRegistry&, GraphicsCommandBuffer&)>;
   using EnableFunc = std::function<bool()>;
 
  public:
@@ -154,10 +162,8 @@ class StructRenderGraphPass final : public RenderGraphGraphicsPass {
 
   void
   Execute(RenderGraph* graph) override {
-    RenderGraphRegistry registry(graph);
-    m_commandList->BeginRecord();
-    m_instance.Execute(registry, *m_commandList);
-    m_commandList->EndRecord();
+    RenderGraphRegistry registry(graph, this);
+    m_instance.Execute(registry, *m_commandBuffer);
   }
 
   bool

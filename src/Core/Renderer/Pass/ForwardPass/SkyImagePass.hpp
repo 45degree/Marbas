@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/Renderer/RenderGraph/RenderCommandList.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
 #include "Core/Scene/Scene.hpp"
@@ -26,7 +25,7 @@ class SkyImagePass final {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList);
+  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
   IsEnable();
@@ -42,11 +41,15 @@ class SkyImagePass final {
     alignas(16) glm::vec4 clearValue;
   } m_clearInfo;
 
+  DescriptorSetArgument m_atmosphereArgument;
+  DescriptorSetArgument m_argument;
+  uintptr_t m_descriptorSet;
+
   Buffer* m_cameraInfoUBO = nullptr;
   Buffer* m_clearUBO = nullptr;
   Buffer* m_vertexBuffer = nullptr;
   Buffer* m_indexBuffer = nullptr;
-  Sampler* m_sampler = nullptr;
+  uintptr_t m_sampler;
 
   Scene* m_scene = nullptr;
   RHIFactory* m_rhiFactory = nullptr;

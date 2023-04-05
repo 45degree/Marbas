@@ -13,6 +13,7 @@ target('Marbas.Test', function()
   add_files('$(projectdir)/src/Test/*.cc')
   add_files('$(projectdir)/src/Test/RenderGraphTest/*.cc')
   add_files('$(projectdir)/src/Test/AssetManager/*.cc')
+  add_files('$(projectdir)/src/Test/ToolTest/*.cc')
 
   if is_mode('debug') then
     add_defines('DEBUG')

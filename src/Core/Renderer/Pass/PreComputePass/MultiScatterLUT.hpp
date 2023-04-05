@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/Renderer/RenderGraph/RenderCommandList.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
 
@@ -24,7 +23,7 @@ class MultiScatterLUT final {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList);
+  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
  private:
   uint32_t m_width;
@@ -40,7 +39,11 @@ class MultiScatterLUT final {
     float ozoneWidth = 15000;
   } m_atmosphereInfo;
   Buffer* m_atmosphereInfoBuffer = nullptr;
-  Sampler* m_sampler = nullptr;
+  uintptr_t m_sampler;
+
+  DescriptorSetArgument m_argument;
+  uintptr_t m_descriptorSet;
+  DescriptorSetArgument m_transmittanceLUTArgument;
 
   RenderGraphTextureHandler m_transmittanceLUT;
   RenderGraphTextureHandler m_multiScatterLUT;

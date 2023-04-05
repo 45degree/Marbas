@@ -171,7 +171,7 @@ Application::Run() {
     }
 
     {
-      SceneSystem::UpdateEveryFrame(m_scene.get());
+      SceneSystem::UpdateEveryFrame(m_scene.get(), m_rhiFactory.get());
       RenderSystem::Update(RenderInfo{
           .scene = m_scene.get(),
           .imageIndex = currentFrame,

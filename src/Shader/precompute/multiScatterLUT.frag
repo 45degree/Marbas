@@ -8,7 +8,7 @@
 layout(location = 0) in vec2 inTex;
 layout(location = 0) out vec4 multiScatterValue;
 
-layout(std140, binding = 0) uniform AtmosphereInfo {
+layout(std140, binding = 0, set = 0) uniform AtmosphereInfo {
   float atmosphereHeight;
   float rayleighScalarHeight;
   float mieScalarHeight;
@@ -17,7 +17,7 @@ layout(std140, binding = 0) uniform AtmosphereInfo {
   float ozoneCenterHeight;
   float ozoneWidth;
 };
-layout(binding = 0) uniform sampler2D transmittanceLUT;
+layout(binding = 0, set = 1) uniform sampler2D transmittanceLUT;
 
 const int N_DIRECTION = 64;
 const int N_SAMPLE = 32;
@@ -127,8 +127,7 @@ IntegralMultiScattering(const in AtmosphereParam param, vec3 point, vec3 lightDi
       vec3 s = Scattering(param, p1, lightDir, -dir);
       vec3 t2 = exp(-opticalDepth);
 
-      // 用 1.0 代替太阳光颜色, 该变量在后续的计算中乘上去
-      G_2 += t1 * s * t2 * uniformPhase * ds * 1.0;  
+      G_2 += t1 * s * t2 * uniformPhase * ds;
       f_ms += t2 * scatter * uniformPhase * ds;
 
       p1 += dir * ds;

@@ -4,40 +4,42 @@
 
 namespace Marbas {
 
-class MockCommandBuffer final : public CommandBuffer {
-  MOCK_METHOD(void, BindDescriptorSet, (const Pipeline*, DescriptorSet*));
-  MOCK_METHOD(void, BindVertexBuffer, (Buffer*));
-  MOCK_METHOD(void, BindIndexBuffer, (Buffer*));
+class MockComputeCommandBuffer final : public ComputeCommandBuffer {
   MOCK_METHOD(void, Begin, ());
   MOCK_METHOD(void, End, ());
-  MOCK_METHOD(void, BeginPipeline, (Pipeline*, FrameBuffer*, const std::vector<ClearValue>&));
+  MOCK_METHOD(void, Submit, (std::span<Semaphore*>, std::span<Semaphore*>, Fence*));
+  MOCK_METHOD(void, BeginPipeline, (uintptr_t));
+  MOCK_METHOD(void, EndPipeline, (uintptr_t));
+  MOCK_METHOD(void, BindDescriptorSet, (uintptr_t, const std::vector<uintptr_t>&));
+  MOCK_METHOD(void, Dispatch, (uint32_t, uint32_t, uint32_t));
+};
+
+class MockGraphicsCommandBuffer final : public GraphicsCommandBuffer {
+  MOCK_METHOD(void, Begin, ());
+  MOCK_METHOD(void, End, ());
+  MOCK_METHOD(void, Submit, (std::span<Semaphore*>, std::span<Semaphore*>, Fence*));
+  MOCK_METHOD(void, BeginPipeline, (uintptr_t, FrameBuffer*, const std::vector<ClearValue>&));
+  MOCK_METHOD(void, EndPipeline, (uintptr_t));
+  MOCK_METHOD(void, BindDescriptorSet, (uintptr_t, const std::vector<uintptr_t>&));
   MOCK_METHOD(void, SetViewports, (std::span<ViewportInfo>));
   MOCK_METHOD(void, SetScissors, (std::span<ScissorInfo>));
-  MOCK_METHOD(void, EndPipeline, (Pipeline*));
+  MOCK_METHOD(void, BindVertexBuffer, (Buffer*));
+  MOCK_METHOD(void, BindIndexBuffer, (Buffer*));
   MOCK_METHOD(void, Draw, (uint32_t, uint32_t, uint32_t, uint32_t));
   MOCK_METHOD(void, DrawIndexed, (uint32_t, uint32_t, uint32_t, int32_t, uint32_t));
-  MOCK_METHOD(void, Dispatch, (uint32_t, uint32_t, uint32_t));
-  MOCK_METHOD(void, InsertBufferBarrier, (const std::vector<BufferBarrier>&));
-  MOCK_METHOD(void, InsertImageBarrier, (const std::vector<ImageBarrier>&));
-  MOCK_METHOD(void, Submit, (std::span<Semaphore*>, std::span<Semaphore*>, Fence*));
 };
 
 class MockPipelineContext final : public PipelineContext {
  public:
-  MOCK_METHOD(Pipeline*, CreatePipeline, (const GraphicsPipeLineCreateInfo&));
-  MOCK_METHOD(Pipeline*, CreatePipeline, (const ComputePipelineCreateInfo&));
-
-  MOCK_METHOD(void, DestroyPipeline, (Pipeline*));
-  MOCK_METHOD(Sampler*, CreateSampler, (const SamplerCreateInfo&));
-  MOCK_METHOD(void, DestroySampler, (Sampler*));
-  MOCK_METHOD(DescriptorSetLayout*, CreateDescriptorSetLayout, (const std::vector<DescriptorSetLayoutBinding>&));
-  MOCK_METHOD(void, DestroyDescriptorSetLayout, (DescriptorSetLayout*));
-  MOCK_METHOD(DescriptorSet*, CreateDescriptorSet, (const DescriptorPool*, const DescriptorSetLayout*));
-  MOCK_METHOD(void, DestroyDescriptorSet, (const DescriptorPool*, DescriptorSet*));
+  MOCK_METHOD(uintptr_t, CreatePipeline, (const GraphicsPipeLineCreateInfo&));
+  MOCK_METHOD(uintptr_t, CreatePipeline, (const ComputePipelineCreateInfo&));
+  MOCK_METHOD(void, DestroyPipeline, (uintptr_t));
+  MOCK_METHOD(uintptr_t, CreateSampler, (const SamplerCreateInfo&));
+  MOCK_METHOD(void, DestroySampler, (uintptr_t));
+  MOCK_METHOD(uintptr_t, CreateDescriptorSet, (const DescriptorSetArgument&));
+  MOCK_METHOD(void, DestroyDescriptorSet, (uintptr_t));
   MOCK_METHOD(void, BindImage, (const BindImageInfo&));
   MOCK_METHOD(void, BindBuffer, (const BindBufferInfo&));
-  MOCK_METHOD(DescriptorPool*, CreateDescriptorPool, (std::span<DescriptorPoolSize>, uint32_t));
-  MOCK_METHOD(void, DestroyDescriptorPool, (DescriptorPool*));
   MOCK_METHOD(FrameBuffer*, CreateFrameBuffer, (const FrameBufferCreateInfo&));
   MOCK_METHOD(void, DestroyFrameBuffer, (FrameBuffer*));
 };
@@ -58,10 +60,10 @@ class MockBufferContext final : public BufferContext {
   MOCK_METHOD(void, DestroyImage, (Image*));
   MOCK_METHOD(ImageView*, CreateImageView, (const ImageViewCreateInfo&));
   MOCK_METHOD(void, DestroyImageView, (ImageView*));
-  MOCK_METHOD(CommandPool*, CreateCommandPool, (CommandBufferUsage));
-  MOCK_METHOD(void, DestroyCommandPool, (CommandPool*));
-  MOCK_METHOD(CommandBuffer*, CreateCommandBuffer, (CommandPool*));
-  MOCK_METHOD(void, DestroyCommandBuffer, (CommandPool*, CommandBuffer*));
+  MOCK_METHOD(GraphicsCommandBuffer*, CreateGraphicsCommandBuffer, ());
+  MOCK_METHOD(ComputeCommandBuffer*, CreateComputeCommandBuffer, ());
+  MOCK_METHOD(void, DestroyCommandBuffer, (GraphicsCommandBuffer*));
+  MOCK_METHOD(void, DestroyCommandBuffer, (ComputeCommandBuffer*));
 };
 
 class FakeRHIFactory final : public RHIFactory {

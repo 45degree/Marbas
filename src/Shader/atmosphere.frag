@@ -8,12 +8,12 @@
 layout(location = 0) in vec2 inTex;
 layout(location = 0) out vec4 outColor;
 
-layout(std140, binding = 0) uniform Matrices {
+layout(std140, binding = 0, set = 0) uniform Matrices {
   mat4 view;
   mat4 projection;
 };
 
-layout(std140, binding = 1) uniform AtmosphereInfo {
+layout(std140, binding = 1, set = 0) uniform AtmosphereInfo {
   vec3 lightDir; // the start point is the sun, and it has beed normalized
   vec3 sunLuminace;
 
@@ -27,8 +27,8 @@ layout(std140, binding = 1) uniform AtmosphereInfo {
   float ozoneWidth;
 };
 
-layout(binding = 0) uniform sampler2D transmittanceLUT;
-layout(binding = 1) uniform sampler2D multiscatterLUT;
+layout(binding = 0, set = 1) uniform sampler2D transmittanceLUT;
+layout(binding = 1, set = 1) uniform sampler2D multiscatterLUT;
 
 void main() {
   vec3 cameraPos = vec3(inverse(view)[3]);

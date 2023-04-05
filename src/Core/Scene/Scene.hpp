@@ -65,15 +65,6 @@ class Scene {
     return m_editorCamera;
   }
 
-  void
-  Update() {
-    // LightSceneNode::Update(m_world);
-    // ModelSceneNode::Update(m_world);
-    // DirectionShadowComponent::Update(m_world, m_editorCamera.get());
-    // RenderMeshComponent::Update(m_world, resourceManager);
-    SceneSystem::UpdateEveryFrame(this);
-  }
-
  private:
   String m_name = "default scene";
   entt::registry m_world;

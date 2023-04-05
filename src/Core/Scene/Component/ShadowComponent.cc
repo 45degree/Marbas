@@ -35,7 +35,8 @@ GetLightSpaceMatrix(const Camera* camera, const glm::vec3 lightDir, const float 
   }
   center /= corners.size();
 
-  const auto lightView = glm::lookAt(center - lightDir, center, glm::vec3(0.0f, 1.0f, 0.0f));
+  auto viewDir = camera->GetFrontVector();
+  const auto lightView = glm::lookAt(center - lightDir, center, glm::normalize(glm::cross(viewDir, lightDir)));
 
   float minX = std::numeric_limits<float>::max();
   float maxX = std::numeric_limits<float>::lowest();
@@ -54,17 +55,17 @@ GetLightSpaceMatrix(const Camera* camera, const glm::vec3 lightDir, const float 
   }
 
   // Tune this parameter according to the scene
-  constexpr float zMult = 10.0f;
-  if (minZ < 0) {
-    minZ *= zMult;
-  } else {
-    minZ /= zMult;
-  }
-  if (maxZ < 0) {
-    maxZ /= zMult;
-  } else {
-    maxZ *= zMult;
-  }
+  // constexpr float zMult = 2.f;
+  // if (minZ < 0) {
+  //   minZ *= zMult;
+  // } else {
+  //   minZ /= zMult;
+  // }
+  // if (maxZ < 0) {
+  //   maxZ /= zMult;
+  // } else {
+  //   maxZ *= zMult;
+  // }
 
   const glm::mat4 lightProjection = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
 
@@ -94,25 +95,57 @@ GetLightSpaceMatrices(const Camera* camera, const glm::vec3& lightDir, const std
   return ret;
 }
 
+DirectionShadowComponent::DirectionShadowComponent() {
+  m_shadowGPUInfo.m_argument.Bind(0, DescriptorType::UNIFORM_BUFFER);
+}
+
 void
-DirectionShadowComponent::Update(entt::registry& world, Camera* camera) {
-  auto view = world.view<DirectionShadowComponent, DirectionLightComponent>();
+DirectionShadowComponent::UpdateShadowGPUInfo(RHIFactory* rhiFactory, const glm::vec3& lightDir, const Camera& camera) {
+  float farPlane = camera.GetFar();
+  float nearPlane = camera.GetNear();
 
-  // TODO: FITTING the frustum
-  //
-  // auto sceneAABB = m_scene->GetSceneAABB();
-  // auto center = glm::to_string(sceneAABB.GetCenter());
-  // auto extent = glm::to_string(sceneAABB.GetExtent());
-  // LOG(INFO) << FORMAT("scene AABB, center: {}, extent: {}", center, extent);
-
-  for (auto&& [entity, shadowComponent, lightComponent] : view.each()) {
-    auto& light = lightComponent.m_light;
-    auto lightDir = light.GetDirection();
-    auto lightSpaceMatrices = GetLightSpaceMatrices(camera, lightDir, shadowComponent.split);
-    for (int i = 0; i < lightSpaceMatrices.size(); i++) {
-      shadowComponent.lightSpaceMatrices[i] = lightSpaceMatrices[i];
-    }
+  std::array<float, splitCount> cascadeFarPlane;
+  for (int i = 0; i < splitCount; i++) {
+    cascadeFarPlane[i] = nearPlane + (farPlane - nearPlane) * m_split[i];
   }
+
+  for (size_t i = 0; i < m_lightSpaceMatrices.size(); i++) {
+    glm::mat4 ret;
+    if (i == 0) {
+      ret = GetLightSpaceMatrix(&camera, lightDir, nearPlane, cascadeFarPlane[i]);
+    } else if (i < m_lightSpaceMatrices.size() - 1) {
+      ret = GetLightSpaceMatrix(&camera, lightDir, cascadeFarPlane[i - 1], cascadeFarPlane[i]);
+    } else {
+      ret = GetLightSpaceMatrix(&camera, lightDir, cascadeFarPlane[i - 1], farPlane);
+    }
+    m_lightSpaceMatrices[i] = ret;
+  }
+
+  // Change GPU Buffer
+  auto bufCtx = rhiFactory->GetBufferContext();
+  size_t bufferSize = sizeof(glm::mat4) * m_lightSpaceMatrices.size();
+  auto* bufferData = m_lightSpaceMatrices.data();
+  auto& buffer = m_shadowGPUInfo.m_lightMatricesBuffer;
+  if (buffer == nullptr) {
+    buffer = bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, bufferData, bufferSize, false);
+  } else {
+    bufCtx->UpdateBuffer(buffer, bufferData, bufferSize, 0);
+  }
+
+  if (m_shadowGPUInfo.m_descriptorSet == 0) {
+    auto pipelineCtx = rhiFactory->GetPipelineContext();
+    m_shadowGPUInfo.m_descriptorSet = pipelineCtx->CreateDescriptorSet(m_shadowGPUInfo.m_argument);
+    pipelineCtx->BindBuffer(BindBufferInfo{
+        .descriptorSet = m_shadowGPUInfo.m_descriptorSet,
+        .descriptorType = DescriptorType::UNIFORM_BUFFER,
+        .bindingPoint = 0,
+        .buffer = m_shadowGPUInfo.m_lightMatricesBuffer,
+        .offset = 0,
+        .arrayElement = 0,
+    });
+  }
+
+  return;
 }
 
 }  // namespace Marbas

@@ -96,4 +96,15 @@ SceneSystem::CreateAsset(Scene* scene) {
   }
 }
 
+void
+SceneSystem::UpdateDirectionShadowInfo(Scene* scene, RHIFactory* rhifactory) {
+  auto& world = scene->GetWorld();
+  auto camera = scene->GetEditorCamrea();
+  auto view = world.view<DirectionShadowComponent, DirectionLightComponent>();
+  for (auto&& [entity, shadow, light] : view.each()) {
+    auto dir = light.m_light.GetDirection();
+    shadow.UpdateShadowGPUInfo(rhifactory, dir, *camera);
+  }
+}
+
 }  // namespace Marbas

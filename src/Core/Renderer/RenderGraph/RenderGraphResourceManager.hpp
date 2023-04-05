@@ -7,8 +7,6 @@
 namespace Marbas {
 
 class RenderGraphResourceManager final {
-  friend class RenderGraphResourceManager;
-
  public:
   RenderGraphResourceManager(RHIFactory* rhiFactory) : m_rhiFactory(rhiFactory) {}
   ~RenderGraphResourceManager() = default;

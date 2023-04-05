@@ -1,41 +1,35 @@
 #pragma once
 
-#include "Core/Renderer/RenderGraph/RenderCommandList.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
 #include "Core/Scene/Scene.hpp"
 
 namespace Marbas {
 
-struct DirectShadowMapData {
-  RenderGraphTextureHandler shadowMapTextureHandler;
+struct DirectionShadowMapPassCreateInfo {
+  RHIFactory* rhiFactory;
+  Scene* scene;
+  RenderGraphTextureHandler directionalShadowMap;
 };
 
 class DirectionShadowMapPass final {
  public:
-  DirectionShadowMapPass(RHIFactory* rhiFactory, Scene* scene, entt::entity light, RenderGraphTextureHandler shadowMap)
-      : m_rhiFactory(rhiFactory), m_scene(scene), m_light(light), m_shadowMapTextureHandler(shadowMap) {
-    auto* bufCtx = m_rhiFactory->GetBufferContext();
-    m_lightShadowInfoBuffer =
-        bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, &m_lightShadowInfo, sizeof(LightShadowInfo), false);
-  }
+  DirectionShadowMapPass(const DirectionShadowMapPassCreateInfo& createInfo);
 
   void
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList);
+  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
+
+  bool
+  IsEnable();
 
  private:
   Scene* m_scene = nullptr;
-  entt::entity m_light = entt::null;
   RHIFactory* m_rhiFactory = nullptr;
 
-  struct LightShadowInfo {
-    glm::mat4 lightSpaceMatrices[5];
-    size_t lightSpaceMatricesCount;
-  } m_lightShadowInfo;
-  Buffer* m_lightShadowInfoBuffer = nullptr;
+  DescriptorSetArgument m_argument;
 
   RenderGraphTextureHandler m_shadowMapTextureHandler;
   uint32_t m_width = 1024;

@@ -75,6 +75,29 @@ SkyImagePass::SkyImagePass(const SkyImagePassCreateInfo& createInfo)
       .borderColor = Marbas::BorderColor::IntOpaqueBlack,
   };
   m_sampler = pipelineCtx->CreateSampler(samplerCreateInfo);
+
+  //
+  m_atmosphereArgument.Bind(0, DescriptorType::IMAGE);
+  m_argument.Bind(0, DescriptorType::UNIFORM_BUFFER);
+  m_argument.Bind(1, DescriptorType::UNIFORM_BUFFER);
+
+  m_descriptorSet = pipelineCtx->CreateDescriptorSet(m_argument);
+  pipelineCtx->BindBuffer(BindBufferInfo{
+      .descriptorSet = m_descriptorSet,
+      .descriptorType = DescriptorType::UNIFORM_BUFFER,
+      .bindingPoint = 0,
+      .buffer = m_cameraInfoUBO,
+      .offset = 0,
+      .arrayElement = 0,
+  });
+  pipelineCtx->BindBuffer(BindBufferInfo{
+      .descriptorSet = m_descriptorSet,
+      .descriptorType = DescriptorType::UNIFORM_BUFFER,
+      .bindingPoint = 1,
+      .buffer = m_clearUBO,
+      .offset = 0,
+      .arrayElement = 0,
+  });
 }
 
 SkyImagePass::~SkyImagePass() {
@@ -85,50 +108,46 @@ SkyImagePass::~SkyImagePass() {
   bufCtx->DestroyBuffer(m_indexBuffer);
   bufCtx->DestroyBuffer(m_cameraInfoUBO);
   pipelineCtx->DestroySampler(m_sampler);
+  pipelineCtx->DestroyDescriptorSet(m_descriptorSet);
 }
 
 void
 SkyImagePass::SetUp(RenderGraphGraphicsBuilder& builder) {
-  builder.ReadTexture(m_atmosphereTexture);
+  builder.ReadTexture(m_atmosphereTexture, m_sampler);
   builder.WriteTexture(m_finalColorTexture);
   builder.WriteTexture(m_finalDepthTexture, TextureAttachmentType::DEPTH);
 
-  RenderGraphPipelineCreateInfo createInfo;
-  createInfo.SetPipelineLayout({
-      DescriptorSetLayoutBinding{.bindingPoint = 0, .descriptorType = DescriptorType::UNIFORM_BUFFER},
-      DescriptorSetLayoutBinding{.bindingPoint = 1, .descriptorType = DescriptorType::UNIFORM_BUFFER},
-      DescriptorSetLayoutBinding{.bindingPoint = 0, .descriptorType = DescriptorType::IMAGE},
-  });
-  createInfo.AddShader(ShaderType::VERTEX_SHADER, "Shader/cubeMap.vert.spv");
-  createInfo.AddShader(ShaderType::FRAGMENT_SHADER, "Shader/cubeMap.frag.spv");
-  createInfo.SetColorAttachmentsDesc({{
+  builder.BeginPipeline();
+  builder.AddShader("Shader/cubeMap.vert.spv", ShaderType::VERTEX_SHADER);
+  builder.AddShader("Shader/cubeMap.frag.spv", ShaderType::FRAGMENT_SHADER);
+  builder.AddColorTarget({
       .initAction = AttachmentInitAction::KEEP,
       .finalAction = AttachmentFinalAction::READ,
       .usage = ImageUsageFlags::COLOR_RENDER_TARGET | ImageUsageFlags::SHADER_READ,
       .sampleCount = SampleCount::BIT1,
       .format = ImageFormat::RGBA,
-  }});
-  createInfo.SetDepthAttachmentDesc({
+  });
+  builder.SetDepthTarget({
       .initAction = AttachmentInitAction::KEEP,
       .finalAction = AttachmentFinalAction::READ,
       .usage = ImageUsageFlags::DEPTH_STENCIL,
       .sampleCount = SampleCount::BIT1,
   });
-  createInfo.SetBlendConstance(0, 0, 0, 1);
-  createInfo.SetBlendAttachments({BlendAttachment{.blendEnable = false}});
-  createInfo.SetVertexInputElementDesc(verticesElementDesc);
-  createInfo.SetVertexInputElementView(verticesElementViews);
-  DepthStencilCreateInfo depthStencil;
-  depthStencil.depthTestEnable = true;
-  depthStencil.depthCompareOp = DepthCompareOp::LEQUAL;
-  createInfo.SetDepthStencil(depthStencil);
+  builder.SetBlendConstant(0, 0, 0, 1);
+  builder.AddBlendAttachments({.blendEnable = false});
+  builder.EnableDepthTest(true);
+  builder.SetDepthCampareOp(DepthCompareOp::LEQUAL);
+  builder.SetVertexInputElementDesc(verticesElementDesc);
+  builder.SetVertexInputElementView(verticesElementViews);
+  builder.AddShaderArgument(m_argument);
+  builder.AddShaderArgument(m_atmosphereArgument);
+  builder.EndPipeline();
 
-  builder.SetPipelineInfo(createInfo);
   builder.SetFramebufferSize(m_width, m_height, 1);
 }
 
 void
-SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList) {
+SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
   auto& world = m_scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();
   if (view.size() == 0) return;
@@ -137,7 +156,9 @@ SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& 
   auto& component = world.get<EnvironmentComponent>(entity);
 
   // check framebuffer and renderpass
-  commandList.SetDescriptorSetCount(1);
+  auto pipeline = registry.GetPipeline(0);
+  auto framebuffer = registry.GetFrameBuffer();
+  auto atmosphereSet = registry.GetInputDescriptorSet();
 
   // set camera info
   auto camera = m_scene->GetEditorCamera();
@@ -155,15 +176,7 @@ SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& 
   bufCtx->UpdateBuffer(m_clearUBO, &m_clearInfo, sizeof(ClearValueInfo), 0);
 
   // bind hdr image
-  RenderArgument argument;
-  argument.BindUniformBuffer(0, m_cameraInfoUBO);
-  argument.BindUniformBuffer(1, m_clearUBO);
-
-  if (component.currentItem == EnvironmentComponent::physicalSkyItem ||
-      component.currentItem == EnvironmentComponent::clearValueItem) {
-    auto atmosphereView = registry.GetRenderBackendTextureSubResource(m_atmosphereTexture, 0, 1, 0, 1);
-    argument.BindImage(0, m_sampler, atmosphereView);
-  } else if (component.currentItem == EnvironmentComponent::imageSkyItem) {
+  if (component.currentItem == EnvironmentComponent::imageSkyItem) {
     const auto& assetPath = component.imageSky.hdrImagePath;
     auto textureAssetMgr = AssetManager<TextureAsset>::GetInstance();
 
@@ -177,18 +190,42 @@ SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& 
     }
     auto gpuAsset = gpuTextureAssetMgr->Get(textureAsset->GetUid());
     auto imageView = gpuAsset->GetImageView(0, 1, 0, 1);
-    argument.BindImage(0, m_sampler, imageView);
+
+    auto pipelineCtx = m_rhiFactory->GetPipelineContext();
+    pipelineCtx->BindImage(BindImageInfo{
+        .descriptorSet = atmosphereSet,
+        .bindingPoint = 0,
+        .imageView = imageView,
+        .sampler = m_sampler,
+    });
   }
 
   /**
-   * set command
+   * record command
    */
+  std::array<ViewportInfo, 1> viewport;
+  viewport[0].x = 0;
+  viewport[0].y = 0;
+  viewport[0].width = m_width;
+  viewport[0].height = m_height;
+  viewport[0].minDepth = 0;
+  viewport[0].maxDepth = 1;
 
-  commandList.Begin({{0, 0, 0, 0}, {1, 1}});
+  std::array<ScissorInfo, 1> scissor;
+  scissor[0].x = 0;
+  scissor[0].y = 0;
+  scissor[0].height = m_height;
+  scissor[0].width = m_width;
+
+  commandList.Begin();
+  commandList.BeginPipeline(pipeline, framebuffer, {{0, 0, 0, 0}, {1, 1}});
+  commandList.SetViewports(viewport);
+  commandList.SetScissors(scissor);
   commandList.BindVertexBuffer(m_vertexBuffer);
   commandList.BindIndexBuffer(m_indexBuffer);
-  commandList.BindArgument(argument);
-  commandList.DrawIndex(indices.size(), 1, 0, 0, 0);
+  commandList.BindDescriptorSet(pipeline, {m_descriptorSet, atmosphereSet});
+  commandList.DrawIndexed(indices.size(), 1, 0, 0, 0);
+  commandList.EndPipeline(pipeline);
   commandList.End();
 }
 

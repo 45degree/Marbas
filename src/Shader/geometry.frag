@@ -12,13 +12,13 @@ layout(location = 3) out float AmbientOccu;
 layout(location = 4) out float Roughtness;
 layout(location = 5) out float Metallic;
 
-layout(binding = 0) uniform sampler2D diffuseTexture;
-layout(binding = 1) uniform sampler2D aoTexture;
-layout(binding = 2) uniform sampler2D normalTexture;
-layout(binding = 3) uniform sampler2D roughnessTexture;
-layout(binding = 4) uniform sampler2D metallicTexture;
+layout(binding = 2, set = 0) uniform sampler2D diffuseTexture;
+layout(binding = 3, set = 0) uniform sampler2D aoTexture;
+layout(binding = 4, set = 0) uniform sampler2D normalTexture;
+layout(binding = 5, set = 0) uniform sampler2D roughnessTexture;
+layout(binding = 6, set = 0) uniform sampler2D metallicTexture;
 
-layout(std140, binding = 1) uniform Matrices {
+layout(std140, binding = 0, set = 0) uniform Matrices {
   bool hasAlbedoTex;
   bool hasNormalTex;
   bool hasAOTex;
@@ -30,7 +30,7 @@ layout(std140, binding = 1) uniform Matrices {
   float roughnessValue;
 };
 
-layout(std140, binding = 2) uniform ModelMatrix {
+layout(std140, binding = 1, set = 0) uniform ModelMatrix {
   mat4 model;
 };
 

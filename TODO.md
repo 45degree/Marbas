@@ -7,3 +7,4 @@
 7. 统一shader(DSL??, DX12需要考虑, 最好自定义shader, 完全想用同一套shader不现实)
 8. 添加opengl
 9. 不要重复加载同一个纹理(目前是在模型加载上记录, 但是最好从资源管理器上修改)
+10. 使用vkcmdpushDescriptor避免大量的descirptorset的使用

@@ -34,6 +34,31 @@ AtmospherePass::AtmospherePass(const AtmospherePassCreateInfo& createInfo)
   m_cameraInfoUBO = bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, &m_cameraInfo, sizeof(CameraInfo), true);
   m_atmosphereInfoBuffer =
       bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, &m_atmosphereInfo, sizeof(AtmosphereInfo), false);
+
+  // descriptor set
+
+  m_argument.Bind(0, DescriptorType::UNIFORM_BUFFER);
+  m_argument.Bind(1, DescriptorType::UNIFORM_BUFFER);
+  m_inputArgument.Bind(0, DescriptorType::IMAGE);
+  m_inputArgument.Bind(1, DescriptorType::IMAGE);
+
+  m_descriptorSet = pipelineCtx->CreateDescriptorSet(m_argument);
+  pipelineCtx->BindBuffer(BindBufferInfo{
+      .descriptorSet = m_descriptorSet,
+      .descriptorType = DescriptorType::UNIFORM_BUFFER,
+      .bindingPoint = 0,
+      .buffer = m_cameraInfoUBO,
+      .offset = 0,
+      .arrayElement = 0,
+  });
+  pipelineCtx->BindBuffer(BindBufferInfo{
+      .descriptorSet = m_descriptorSet,
+      .descriptorType = DescriptorType::UNIFORM_BUFFER,
+      .bindingPoint = 1,
+      .buffer = m_atmosphereInfoBuffer,
+      .offset = 0,
+      .arrayElement = 0,
+  });
 }
 
 AtmospherePass::~AtmospherePass() {
@@ -50,37 +75,35 @@ AtmospherePass::~AtmospherePass() {
 void
 AtmospherePass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.WriteTexture(m_finalColorTexture);
+  builder.ReadTexture(m_transmittanceLUT, m_sampler);
+  builder.ReadTexture(m_multiscatterLUT, m_sampler);
 
-  RenderGraphPipelineCreateInfo createInfo;
-  createInfo.SetPipelineLayout({
-      DescriptorSetLayoutBinding{.bindingPoint = 0, .descriptorType = DescriptorType::UNIFORM_BUFFER},
-      DescriptorSetLayoutBinding{.bindingPoint = 1, .descriptorType = DescriptorType::UNIFORM_BUFFER},
-      DescriptorSetLayoutBinding{.bindingPoint = 0, .descriptorType = DescriptorType::IMAGE},
-      DescriptorSetLayoutBinding{.bindingPoint = 1, .descriptorType = DescriptorType::IMAGE},
-  });
-  createInfo.AddShader(ShaderType::VERTEX_SHADER, "Shader/transmittanceLUT.vert.spv");
-  createInfo.AddShader(ShaderType::FRAGMENT_SHADER, "Shader/atmosphere.frag.spv");
-  createInfo.SetColorAttachmentsDesc({{
+  builder.SetFramebufferSize(m_width, m_height, 1);
+
+  // RenderGraphPipelineCreateInfo createInfo;
+  builder.BeginPipeline();
+  builder.AddShaderArgument(m_argument);
+  builder.AddShaderArgument(m_inputArgument);
+  builder.AddShader("Shader/transmittanceLUT.vert.spv", ShaderType::VERTEX_SHADER);
+  builder.AddShader("Shader/atmosphere.frag.spv", ShaderType::FRAGMENT_SHADER);
+  builder.AddColorTarget({
       .initAction = AttachmentInitAction::KEEP,
       .finalAction = AttachmentFinalAction::READ,
       .usage = ImageUsageFlags::COLOR_RENDER_TARGET | ImageUsageFlags::SHADER_READ,
       .sampleCount = SampleCount::BIT1,
       .format = ImageFormat::RGBA32F,
-  }});
-  createInfo.SetBlendConstance(0, 0, 0, 1);
-  createInfo.SetBlendAttachments({BlendAttachment{.blendEnable = false}});
-  DepthStencilCreateInfo depthStencil;
-  depthStencil.depthTestEnable = false;
-  createInfo.SetDepthStencil(depthStencil);
-
-  builder.SetPipelineInfo(createInfo);
-  builder.SetFramebufferSize(m_width, m_height, 1);
+  });
+  builder.SetBlendConstant(0, 0, 0, 1);
+  builder.AddBlendAttachments({.blendEnable = false});
+  builder.EnableDepthTest(false);
+  builder.EndPipeline();
 }
 
 void
-AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList& commandList) {
-  auto* transmittanceLUTView = registry.GetRenderBackendTextureSubResource(m_transmittanceLUT, 0, 1, 0, 1);
-  auto* multiScatterLUTView = registry.GetRenderBackendTextureSubResource(m_multiscatterLUT, 0, 1, 0, 1);
+AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+  auto pipeline = registry.GetPipeline(0);
+  auto framebuffer = registry.GetFrameBuffer();
+  auto inputSet = registry.GetInputDescriptorSet();
 
   auto& world = m_scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();
@@ -89,9 +112,6 @@ AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList
   auto entity = view[0];
   auto& component = world.get<EnvironmentComponent>(entity);
   auto& physicalSky = component.physicalSky;
-
-  // check framebuffer and renderpass
-  commandList.SetDescriptorSetCount(1);
 
   // set camera info
   auto camera = m_scene->GetEditorCamera();
@@ -118,19 +138,30 @@ AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsRenderCommandList
   m_atmosphereInfo.ozoneWidth = physicalSky.ozoneWidth;
   bufCtx->UpdateBuffer(m_atmosphereInfoBuffer, &m_atmosphereInfo, sizeof(AtmosphereInfo), 0);
 
-  // bind resource
-  RenderArgument argument;
-  argument.BindUniformBuffer(0, m_cameraInfoUBO);
-  argument.BindUniformBuffer(1, m_atmosphereInfoBuffer);
-  argument.BindImage(0, m_sampler, transmittanceLUTView);
-  argument.BindImage(1, m_sampler, multiScatterLUTView);
-
   /**
-   * set command
+   * record command
    */
-  commandList.Begin({{0, 0, 0, 0}, {1, 1}});
-  commandList.BindArgument(argument);
+  std::array<ViewportInfo, 1> viewport;
+  viewport[0].x = 0;
+  viewport[0].y = 0;
+  viewport[0].width = m_width;
+  viewport[0].height = m_height;
+  viewport[0].minDepth = 0;
+  viewport[0].maxDepth = 1;
+
+  std::array<ScissorInfo, 1> scissor;
+  scissor[0].x = 0;
+  scissor[0].y = 0;
+  scissor[0].height = m_height;
+  scissor[0].width = m_width;
+
+  commandList.Begin();
+  commandList.BeginPipeline(pipeline, framebuffer, {{0, 0, 0, 0}, {1, 1}});
+  commandList.SetViewports(viewport);
+  commandList.SetScissors(scissor);
+  commandList.BindDescriptorSet(pipeline, {m_descriptorSet, inputSet});
   commandList.Draw(6, 1, 0, 0);
+  commandList.EndPipeline(pipeline);
   commandList.End();
 }
 

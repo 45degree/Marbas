@@ -17,80 +17,6 @@ enum class TextureAttachmentType {
   RESOLVE,
 };
 
-class RenderGraphPipelineCreateInfo {
-  friend class RenderGraphGraphicsBuilder;
-  friend class details::RenderGraphGraphicsPass;
-  friend class GraphicsRenderCommandList;
-
- public:
-  void
-  SetPipelineLayout(const Vector<DescriptorSetLayoutBinding>& bindings) {
-    m_bindings = bindings;
-  }
-
-  void
-  AddShader(ShaderType shaderType, const Path& shaderPath);
-
-  void
-  SetMultiSamples(SampleCount sampleCount) {
-    m_sampleCount = sampleCount;
-  }
-
-  void
-  SetColorAttachmentsDesc(const Vector<ColorTargetDesc>& desc) {
-    m_colorAttachments = desc;
-  }
-
-  void
-  SetDepthAttachmentDesc(const DepthTargetDesc& desc) {
-    m_depthAttachments = desc;
-  }
-
-  void
-  SetResolveAttachmentDesc(const Vector<ResolveTargetDesc>& desc) {
-    m_resolveAttachments = desc;
-  }
-
-  void
-  SetVertexInputElementDesc(const Vector<InputElementDesc>& desc) {
-    m_inputElementDesc = desc;
-  }
-
-  void
-  SetVertexInputElementView(const Vector<InputElementView>& desc) {
-    m_inputElementView = desc;
-  }
-
-  void
-  SetBlendAttachments(const Vector<BlendAttachment>& attachment) {
-    m_blendAttachment = attachment;
-  }
-
-  void
-  SetBlendConstance(float r, float g, float b, float a) {
-    m_blendConstance = {r, g, b, a};
-  }
-
-  void
-  SetDepthStencil(const DepthStencilCreateInfo& createInfo) {
-    m_depthStencilCreateInfo = createInfo;
-  }
-
- private:
-  Vector<DescriptorSetLayoutBinding> m_bindings;
-  Vector<ShaderStageCreateInfo> m_shaders;
-  SampleCount m_sampleCount = SampleCount::BIT1;
-  Vector<ColorTargetDesc> m_colorAttachments;
-  std::optional<DepthTargetDesc> m_depthAttachments;
-  Vector<ResolveTargetDesc> m_resolveAttachments;
-  std::array<float, 4> m_blendConstance;
-  Vector<BlendAttachment> m_blendAttachment;
-  Vector<InputElementDesc> m_inputElementDesc;
-  Vector<InputElementView> m_inputElementView;
-  RasterizationCreateInfo m_rasterizationCreateInfo;
-  DepthStencilCreateInfo m_depthStencilCreateInfo;
-};
-
 class RenderGraphGraphicsBuilder final {
  public:
   RenderGraphGraphicsBuilder(details::RenderGraphGraphicsPass* pass, RenderGraph* graph);
@@ -104,12 +30,89 @@ class RenderGraphGraphicsBuilder final {
                int baseLayer = 0, int LayerCount = 1, int baseLevel = 0, int levelCount = 1);
 
   void
-  ReadTexture(const RenderGraphTextureHandler& handler);
+  ReadTexture(const RenderGraphTextureHandler& handler, uintptr_t sampler, int baseLayer = 0, int LayerCount = 1,
+              int baseLevel = 0, int levelCount = 1);
 
   void
-  SetPipelineInfo(const RenderGraphPipelineCreateInfo& createInfo);
+  BeginPipeline() {
+    m_pipelineCreateInfo = {};
+  }
+
+  void
+  EndPipeline();
+
+  void
+  EnableDepthTest(bool isEnable) {
+    m_pipelineCreateInfo.depthStencilInfo.depthTestEnable = isEnable;
+  }
+
+  void
+  SetDepthCampareOp(DepthCompareOp depthOp) {
+    m_pipelineCreateInfo.depthStencilInfo.depthCompareOp = depthOp;
+  }
+
+  void
+  SetPolygonMode(PolygonMode mode) {
+    m_pipelineCreateInfo.rasterizationInfo.polygonMode = mode;
+  }
+
+  void
+  SetCullMode(CullMode mode) {
+    m_pipelineCreateInfo.rasterizationInfo.cullMode = mode;
+  }
+
+  void
+  SetFrontFace(FrontFace frontFace) {
+    m_pipelineCreateInfo.rasterizationInfo.frontFace = frontFace;
+  }
+
+  void
+  AddShaderArgument(const DescriptorSetArgument& argument) {
+    m_pipelineCreateInfo.layout.push_back(argument);
+  }
+
+  void
+  AddShader(const std::filesystem::path& spirvPath, ShaderType type) {
+    m_pipelineCreateInfo.shaderStageCreateInfo.push_back(ShaderStageCreateInfo(spirvPath, type));
+  }
+
+  void
+  AddColorTarget(const ColorTargetDesc& desc) {
+    m_pipelineCreateInfo.outputRenderTarget.colorAttachments.push_back(desc);
+  }
+
+  void
+  SetDepthTarget(const DepthTargetDesc& desc) {
+    m_pipelineCreateInfo.outputRenderTarget.depthAttachments = desc;
+  }
+
+  void
+  AddResolveTarget(const ResolveTargetDesc& desc) {
+    m_pipelineCreateInfo.outputRenderTarget.resolveAttachments.push_back(desc);
+  }
+
+  void
+  SetBlendConstant(float r, float g, float b, float a) {
+    m_pipelineCreateInfo.blendInfo.constances = {r, g, b, a};
+  }
+
+  void
+  AddBlendAttachments(const BlendAttachment& attachment) {
+    m_pipelineCreateInfo.blendInfo.attachments.push_back(attachment);
+  }
+
+  void
+  SetVertexInputElementDesc(const std::vector<InputElementDesc>& elementDesc) {
+    m_pipelineCreateInfo.vertexInputLayout.elementDesc = elementDesc;
+  }
+
+  void
+  SetVertexInputElementView(const std::vector<InputElementView>& elementView) {
+    m_pipelineCreateInfo.vertexInputLayout.viewDesc = elementView;
+  }
 
  private:
+  GraphicsPipeLineCreateInfo m_pipelineCreateInfo;
   RenderGraph* m_graph;
   details::RenderGraphGraphicsPass* m_pass;
 };

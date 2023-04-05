@@ -39,7 +39,7 @@ struct AssetBase {
 };
 
 template <typename T>
-concept AssetType = requires() { std::derived_from<T, AssetBase>; };
+concept AssetType = requires() { requires std::derived_from<T, AssetBase>; };
 
 /**
  * @brief Assert Manager

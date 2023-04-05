@@ -1,6 +1,8 @@
 #pragma once
 #include <entt/entt.hpp>
 
+#include "RHIFactory.hpp"
+
 namespace Marbas {
 
 class Scene;
@@ -13,12 +15,13 @@ class Scene;
 struct SceneSystem {
  public:
   static void
-  UpdateEveryFrame(Scene* scene) {
+  UpdateEveryFrame(Scene* scene, RHIFactory* rhiFactory) {
     // update scene aabb
     CreateAsset(scene);
 
     UpdateAABBComponent(scene);
     UpdateTransformComp(scene);
+    UpdateDirectionShadowInfo(scene, rhiFactory);
     UploadGPUAsset(scene);
   }
 
@@ -37,6 +40,9 @@ struct SceneSystem {
 
   static void
   UpdateAABBComponent(Scene* scene);
+
+  static void
+  UpdateDirectionShadowInfo(Scene* scene, RHIFactory* rhiFactory);
 };
 
 }  // namespace Marbas

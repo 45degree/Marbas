@@ -68,7 +68,7 @@ class MARBAS_EXPORT Camera {
 
  protected:
   float m_near = 0.05f;
-  float m_far = 100.f;
+  float m_far = 1000.f;
   float m_fov = 45.0f;
   float m_aspect = 800.f / 600.f;
   glm::mat4 m_viewMatrix;

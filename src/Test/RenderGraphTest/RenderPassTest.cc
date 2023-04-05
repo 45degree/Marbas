@@ -1,193 +1,184 @@
-// #include <gtest/gtest.h>
-//
-// #include "Core/Renderer/GBuffer.hpp"
-// #include "Core/Renderer/RenderPassBase.hpp"
-// #include "Test/FakeClass/FakeRHIFactory.hpp"
-//
-// namespace Marbas {
-//
-// class RenderPassTest : public ::testing::Test {
-//  public:
-//   RenderPassTest() {}
-//
-//   void
-//   SetUp() override {
-//     m_rhiFactory = new FakeRHIFactory();
-//     m_bufferContext = static_cast<MockBufferContext*>(m_rhiFactory->GetBufferContext());
-//     m_pipelineContext = static_cast<MockPipelineContext*>(m_rhiFactory->GetPipelineContext());
-//   }
-//
-//   void
-//   TearDown() override {
-//     delete m_rhiFactory;
-//   }
-//
-//  protected:
-//   RHIFactory* m_rhiFactory;
-//   MockBufferContext* m_bufferContext;
-//   MockPipelineContext* m_pipelineContext;
-//
-//   GBufferRegistry m_gBufferMeteRegistry;
-// };
-//
-// class FakeClass final : public unused::RenderPassBase {
-//  public:
-//   FakeClass(const String& passName, int width, int height, GBufferRegistry* registry, RHIFactory* rhiFactory)
-//       : RenderPassBase(passName, registry, rhiFactory) {
-//     AddInput("buffer1", String(GBuffer_Color::typeName));
-//     AddOutput("buffer1", String(GBuffer_Color::typeName), ImageUsageFlags::COLOR_RENDER_TARGET);
-//     AddOutput("buffer2", String(GBuffer_Color::typeName), ImageUsageFlags::COLOR_RENDER_TARGET);
-//   };
-//
-//   Pipeline*
-//   CreatePipeline(PipelineContext* pipelineContext) override {
-//     return nullptr;
-//   }
-//
-//   void
-//   SetFrameBuffer(FrameBufferCreateInfo& createInfo) override {}
-//
-//   void
-//   RecordCommandBuffer(Scene* scene) override {}
-//
-//   void
-//   SubmitCommand(std::span<Semaphore*> waitSemaphore, std::span<Semaphore*> signalSemaphore) override {}
-// };
-//
-// class FakeForwarPass final : public unused::ForwardRenderPassBase {
-//  public:
-//   FakeForwarPass(const String& passName, GBufferRegistry* registry, RHIFactory* rhiFactory)
-//       : ForwardRenderPassBase(passName, registry, rhiFactory) {}
-//
-//   virtual ~FakeForwarPass() = default;
-//
-//  public:
-//   void
-//   RecordCommandBuffer(Scene* scene) override {}
-//
-//   void
-//   SubmitCommand(std::span<Semaphore*> waitSemaphore, std::span<Semaphore*> signalSemaphore) override {}
-//
-//   Pipeline*
-//   CreatePipeline(PipelineContext* pipelineContext) override {
-//     return nullptr;
-//   }
-//
-//   void
-//   SetFrameBuffer(FrameBufferCreateInfo& createInfo) override {}
-// };
-//
-// TEST_F(RenderPassTest, CreatePass) {
-//   using ::testing::_;
-//   using ::testing::Return;
-//
-//   Image fakeImage;
-//   ImageView fakeImageView;
-//
-//   // create 2 images and image views for the render target
-//   EXPECT_CALL(*m_bufferContext, CreateImage(_)).Times(2).WillRepeatedly(Return(&fakeImage));
-//   EXPECT_CALL(*m_bufferContext, CreateImageView(_)).Times(2).WillRepeatedly(Return(&fakeImageView));
-//   EXPECT_CALL(*m_bufferContext, DestroyImageView(_)).Times(2);
-//   EXPECT_CALL(*m_bufferContext, DestroyImage(_)).Times(2);
-//   EXPECT_CALL(*m_pipelineContext, CreateFrameBuffer(_)).Times(1);
-//
-//   auto pass = std::make_unique<FakeClass>("pass", 800, 600, &m_gBufferMeteRegistry, m_rhiFactory);
-//   pass->Initialize(800, 600);
-//   auto* buffer1View = pass->GetOutput("buffer1")->GetWholeImageView();
-//   auto* buffer2View = pass->GetOutput("buffer2")->GetWholeImageView();
-//   ASSERT_EQ(buffer1View, &fakeImageView);
-//   ASSERT_EQ(buffer1View, &fakeImageView);
-//
-//   pass = nullptr;
-// }
-//
-// TEST_F(RenderPassTest, ResizePass) {
-//   using ::testing::_;
-//   using ::testing::Return;
-//
-//   Image originImage, resizedImage;
-//   ImageView originImageView, resizedImageView;
-//
-//   EXPECT_CALL(*m_bufferContext, CreateImage(_))
-//       .Times(4)
-//       .WillOnce(Return(&originImage))
-//       .WillOnce(Return(&originImage))
-//       .WillOnce(Return(&resizedImage))
-//       .WillOnce(Return(&resizedImage));
-//
-//   EXPECT_CALL(*m_bufferContext, CreateImageView(_))
-//       .Times(4)
-//       .WillOnce(Return(&originImageView))
-//       .WillOnce(Return(&originImageView))
-//       .WillOnce(Return(&resizedImageView))
-//       .WillOnce(Return(&resizedImageView));
-//   EXPECT_CALL(*m_bufferContext, DestroyImageView(_)).Times(4);
-//   EXPECT_CALL(*m_bufferContext, DestroyImage(_)).Times(4);
-//   EXPECT_CALL(*m_pipelineContext, CreateFrameBuffer(_)).Times(2);
-//
-//   auto pass = std::make_unique<FakeClass>("pass", 800, 600, &m_gBufferMeteRegistry, m_rhiFactory);
-//   pass->Initialize(800, 600);
-//   pass->Resize(1920, 1080);
-//   auto* buffer1View = pass->GetOutput("buffer1")->GetWholeImageView();
-//
-//   EXPECT_EQ(buffer1View, &resizedImageView);
-// }
-//
-// TEST_F(RenderPassTest, LinkPass) {
-//   using ::testing::_;
-//   using ::testing::Return;
-//
-//   EXPECT_CALL(*m_bufferContext, CreateImage(_)).Times(4);
-//   EXPECT_CALL(*m_bufferContext, CreateImageView(_)).Times(4);
-//   EXPECT_CALL(*m_bufferContext, DestroyImageView(_)).Times(4);
-//   EXPECT_CALL(*m_bufferContext, DestroyImage(_)).Times(4);
-//   EXPECT_CALL(*m_pipelineContext, CreateFrameBuffer(_)).Times(2);
-//
-//   auto pass1 = std::make_unique<FakeClass>("pass1", 800, 600, &m_gBufferMeteRegistry, m_rhiFactory);
-//   pass1->Initialize(800, 600);
-//   auto pass2 = std::make_unique<FakeClass>("pass2", 800, 600, &m_gBufferMeteRegistry, m_rhiFactory);
-//   pass2->Initialize(800, 600);
-//
-//   pass2->AddDependence("buffer1", pass1.get(), "buffer1");
-//
-//   auto* pass2Input = pass2->GetInput("buffer1")->GetWholeImageView();
-//   auto* pass1Output = pass1->GetOutput("buffer1")->GetWholeImageView();
-//   ASSERT_EQ(pass1Output, pass2Input);
-// }
-//
-// TEST_F(RenderPassTest, LinkPass_SelfLink) {
-//   using ::testing::_;
-//   using ::testing::Return;
-//
-//   EXPECT_CALL(*m_bufferContext, CreateImage(_)).Times(2);
-//   EXPECT_CALL(*m_bufferContext, CreateImageView(_)).Times(2);
-//   EXPECT_CALL(*m_bufferContext, DestroyImageView(_)).Times(2);
-//   EXPECT_CALL(*m_bufferContext, DestroyImage(_)).Times(2);
-//   EXPECT_CALL(*m_pipelineContext, CreateFrameBuffer(_)).Times(1);
-//
-//   auto pass = std::make_unique<FakeClass>("pass", 800, 600, &m_gBufferMeteRegistry, m_rhiFactory);
-//   pass->Initialize(800, 600);
-//
-//   ASSERT_THROW(pass->AddDependence("buffer1", pass.get(), "buffer1"), std::runtime_error);
-//   ASSERT_THROW(pass->AddDependence("buffer1", pass.get(), "buffer2"), std::runtime_error);
-// }
-//
-// TEST_F(RenderPassTest, AddNextForwarPass) {
-//   using ::testing::_;
-//   using ::testing::Return;
-//
-//   EXPECT_CALL(*m_bufferContext, CreateImage(_)).Times(2);
-//   EXPECT_CALL(*m_bufferContext, CreateImageView(_)).Times(2);
-//   EXPECT_CALL(*m_bufferContext, DestroyImageView(_)).Times(2);
-//   EXPECT_CALL(*m_bufferContext, DestroyImage(_)).Times(2);
-//   EXPECT_CALL(*m_pipelineContext, CreateFrameBuffer(_)).Times(2);
-//
-//   auto pass = std::make_unique<FakeClass>("pass", 800, 600, &m_gBufferMeteRegistry, m_rhiFactory);
-//   auto forwardPass = std::make_unique<FakeForwarPass>("forwardPass", &m_gBufferMeteRegistry, m_rhiFactory);
-//   pass->AddNextForwardPass(std::move(forwardPass));
-//   pass->AddForwardLink("buffer1", "$forwardPass.buffer1");
-//   pass->AddForwardLink("buffer2", "$forwardPass.buffer2");
-//   pass->Initialize(800, 600);
-// }
-//
-// }  // namespace Marbas
+#include <gtest/gtest.h>
+
+#include "Core/Renderer/RenderGraph/RenderGraph.hpp"
+#include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
+#include "FakeClass/FakeRHIFactory.hpp"
+
+namespace Marbas::Test {
+
+class RenderGraphPassTest : public ::testing::Test {
+ public:
+  RenderGraphPassTest() {
+    m_fakeImageCreateInfo.imageDesc = Image2DDesc();
+    m_fakeImageCreateInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET;
+    m_fakeImageCreateInfo.width = 800;
+    m_fakeImageCreateInfo.height = 600;
+    m_fakeImageCreateInfo.format = ImageFormat::RGBA;
+    m_fakeImageCreateInfo.mipMapLevel = 1;
+    m_fakeImageCreateInfo.sampleCount = SampleCount::BIT1;
+  }
+
+  void
+  SetUp() override {
+    using ::testing::_;
+    using ::testing::Return;
+
+    m_rhiFactory = new FakeRHIFactory();
+    m_bufferContext = static_cast<MockBufferContext*>(m_rhiFactory->GetBufferContext());
+    m_pipelineContext = static_cast<MockPipelineContext*>(m_rhiFactory->GetPipelineContext());
+    m_renderGraphResourceManager = std::make_shared<RenderGraphResourceManager>(m_rhiFactory);
+
+    ON_CALL(*m_bufferContext, CreateGraphicsCommandBuffer()).WillByDefault(Return(&m_mockCommandBuffer));
+  }
+
+  void
+  TearDown() override {
+    m_renderGraphResourceManager = nullptr;
+    delete m_rhiFactory;
+  }
+
+ protected:
+  FakeRHIFactory* m_rhiFactory;
+  MockBufferContext* m_bufferContext;
+  MockPipelineContext* m_pipelineContext;
+  MockGraphicsCommandBuffer m_mockCommandBuffer;
+  std::shared_ptr<RenderGraphResourceManager> m_renderGraphResourceManager;
+
+  ImageCreateInfo m_fakeImageCreateInfo;
+  SamplerCreateInfo m_fakeSamplerCreateInfo;
+  GraphicsPipeLineCreateInfo m_fakePipelineCreateInfo;
+};
+
+TEST_F(RenderGraphPassTest, CreateDescriptorSetFromRead) {
+  using ::testing::_;
+  using ::testing::Return;
+
+  Image image;
+  uintptr_t descriptorSet = 1;  // fake descriptor set
+  uintptr_t fakeSampler = 1;    // fake sampler
+
+  EXPECT_CALL(*m_bufferContext, CreateImage(_)).Times(2).WillOnce(Return(&image));
+  EXPECT_CALL(*m_pipelineContext, CreateDescriptorSet(_)).Times(1).WillOnce(Return(descriptorSet));
+  EXPECT_CALL(*m_pipelineContext, CreateSampler(_)).Times(1).WillOnce(Return(fakeSampler));
+  RenderGraph renderGraph(m_rhiFactory, m_renderGraphResourceManager);
+  auto outputTextureHandler1 = m_renderGraphResourceManager->CreateTexture("output1", m_fakeImageCreateInfo);
+  auto outputTextureHandler2 = m_renderGraphResourceManager->CreateTexture("output2", m_fakeImageCreateInfo);
+
+  renderGraph.AddPass("pass1", [&](RenderGraphGraphicsBuilder& builder) {
+    builder.WriteTexture(outputTextureHandler1);
+    builder.BeginPipeline();
+    builder.EndPipeline();
+    return [](RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {};
+  });
+  renderGraph.AddPass("pass1", [&](RenderGraphGraphicsBuilder& builder) {
+    auto pipelineCtx = m_rhiFactory->GetPipelineContext();
+    auto sampler = pipelineCtx->CreateSampler(m_fakeSamplerCreateInfo);
+
+    EXPECT_EQ(sampler, fakeSampler);
+
+    builder.ReadTexture(outputTextureHandler1, sampler);
+    builder.WriteTexture(outputTextureHandler2);
+    builder.BeginPipeline();
+    builder.EndPipeline();
+    return [&](RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
+      auto set = registry.GetInputDescriptorSet();
+      ASSERT_EQ(set, descriptorSet);
+    };
+  });
+
+  renderGraph.Compile();
+  renderGraph.Execute(nullptr, nullptr);
+}
+
+TEST_F(RenderGraphPassTest, AddRenderGraphResource) {
+  using ::testing::_;
+  using ::testing::Return;
+
+  RenderGraph graph(m_rhiFactory, m_renderGraphResourceManager);
+
+  Image image;
+
+  // don't create any GPU resource
+  EXPECT_CALL(*m_bufferContext, CreateImage(_)).Times(0);
+  auto outputTextureHandler = m_renderGraphResourceManager->CreateTexture("output", m_fakeImageCreateInfo);
+  graph.AddPass("name", [&](RenderGraphGraphicsBuilder& builder) {
+    builder.WriteTexture(outputTextureHandler);
+    builder.BeginPipeline();
+    builder.EndPipeline();
+    return [=, &image](RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {};
+  });
+
+  // create GPU resource on compiling
+  EXPECT_CALL(*m_bufferContext, CreateImage(_)).Times(1).WillOnce(Return(&image));
+
+  graph.Compile();
+  graph.Execute(nullptr, nullptr);
+}
+
+TEST_F(RenderGraphPassTest, CreatePipelinePass) {
+  using ::testing::_;
+  using ::testing::Return;
+
+  RenderGraph graph(m_rhiFactory, m_renderGraphResourceManager);
+
+  auto outputTextureHandler = m_renderGraphResourceManager->CreateTexture("output", m_fakeImageCreateInfo);
+  auto inputTextureHandler = m_renderGraphResourceManager->CreateTexture("input", m_fakeImageCreateInfo);
+
+  auto sampler = m_rhiFactory->GetPipelineContext()->CreateSampler(m_fakeSamplerCreateInfo);
+  auto bindBuffer = m_rhiFactory->GetBufferContext()->CreateBuffer(BufferType::UNIFORM_BUFFER, nullptr, 0, true);
+  auto vertexBuffer = m_rhiFactory->GetBufferContext()->CreateBuffer(BufferType::VERTEX_BUFFER, nullptr, 0, true);
+  auto indexBuffer = m_rhiFactory->GetBufferContext()->CreateBuffer(BufferType::INDEX_BUFFER, nullptr, 0, true);
+
+  FrameBuffer fakeFrameBuffer;
+
+  EXPECT_CALL(*m_pipelineContext, CreateFrameBuffer(_)).Times(1).WillOnce(Return(&fakeFrameBuffer));
+  EXPECT_CALL(*m_pipelineContext, CreateDescriptorSet(_)).Times(2);
+  graph.AddPass("name", [&](RenderGraphGraphicsBuilder& builder) {
+    builder.WriteTexture(outputTextureHandler, TextureAttachmentType::COLOR);
+    builder.ReadTexture(inputTextureHandler, sampler);
+
+    DescriptorSetArgument argument1, argument2;
+    argument1.Bind(0, DescriptorType::UNIFORM_BUFFER);
+    argument1.Bind(0, DescriptorType::IMAGE);
+
+    builder.BeginPipeline();
+    builder.AddShaderArgument(argument1);
+    builder.AddShaderArgument(argument2);
+    builder.EndPipeline();
+
+    builder.SetFramebufferSize(800, 600, 1);
+
+    auto desciptorSet = m_rhiFactory->GetPipelineContext()->CreateDescriptorSet(argument1);
+    m_rhiFactory->GetPipelineContext()->BindBuffer(BindBufferInfo{
+        .descriptorSet = desciptorSet,
+        .descriptorType = DescriptorType::UNIFORM_BUFFER,
+        .bindingPoint = 0,
+        .buffer = bindBuffer,
+        .offset = 0,
+        .arrayElement = 0,
+    });
+
+    return [=](RenderGraphRegistry& registry, GraphicsCommandBuffer& cmdList) {
+      auto inputSet = registry.GetInputDescriptorSet();
+      auto pipeline = registry.GetPipeline(0);
+      auto framebuffer = registry.GetFrameBuffer();
+
+      ASSERT_EQ(framebuffer, &fakeFrameBuffer);
+
+      cmdList.Begin();
+      cmdList.BeginPipeline(pipeline, framebuffer, {{0, 0, 0, 1}});
+      for (int i = 0; i < 3; i++) {
+        cmdList.BindDescriptorSet(0, {desciptorSet, inputSet});
+        cmdList.BindVertexBuffer(vertexBuffer);
+        cmdList.BindIndexBuffer(indexBuffer);
+        cmdList.DrawIndexed(0, 1, 0, 0, 0);
+      }
+      cmdList.EndPipeline(pipeline);
+      cmdList.End();
+    };
+  });
+
+  graph.Compile();
+}
+
+}  // namespace Marbas::Test

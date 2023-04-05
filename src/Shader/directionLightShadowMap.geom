@@ -1,11 +1,10 @@
 #version 450
 
-layout (triangles, invocations = 5) in;
+layout (triangles, invocations = 4) in;
 layout (triangle_strip, max_vertices=3) out;
 
-layout(std140, binding = 1) uniform LightInfo {
-  mat4 lightSpaceMatrices[5];
-  uint lightSpaceMatricesCount;
+layout(std140, binding = 0, set = 1) uniform LightInfo {
+  mat4 lightSpaceMatrices[4];
 };
 
 void main() {
