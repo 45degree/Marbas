@@ -34,11 +34,11 @@ class SSAOPass {
   Scene* m_scene;
 
   struct CameraInfo {
-    alignas(4) float near;
-    alignas(4) float far;
-    alignas(16) glm::vec3 position;
-    alignas(16) glm::mat4 viewMatrix;
-    alignas(16) glm::mat4 projectMatrix;
+    alignas(4) float m_near;
+    alignas(4) float m_far;
+    alignas(16) glm::vec3 m_position;
+    alignas(16) glm::mat4 m_viewMatrix;
+    alignas(16) glm::mat4 m_projectMatrix;
   } m_cameraInfo;
   Buffer* m_cameraBuffer = nullptr;
 

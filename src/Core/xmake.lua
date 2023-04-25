@@ -27,6 +27,9 @@ target('Marbas.Core', function()
   add_rules('glslc2spv', {
     outputdir = path.join('$(buildir)', '$(os)', '$(arch)', '$(mode)', 'Shader'),
   })
+  -- add_rules('utils.glsl2spv', {
+  --   outputdir = path.join('$(buildir)', '$(os)', '$(arch)', '$(mode)', 'Shader'),
+  -- })
 
   add_includedirs('$(projectdir)/src')
   add_files('$(projectdir)/src/Core/Scene/**.cc')
@@ -76,7 +79,7 @@ target('Marbas.Core', function()
 
   add_deps('Marbas.RHI', 'Marbas.Common', 'IconFontCppHeaders', 'ImGuizmo', 'nameof', 'async_simple')
 
-  add_packages('glfw', 'glm', 'glog', 'assimp', 'entt', 'fmt', 'cereal')
+  add_packages('glfw', 'glm', 'glog', 'assimp', 'entt', 'fmt', 'cereal', 'shaderc')
 
   if is_plat('windows') then
     add_defines('NOMINMAX')

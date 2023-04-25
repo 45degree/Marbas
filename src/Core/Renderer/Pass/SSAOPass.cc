@@ -82,11 +82,11 @@ SSAOPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandL
 
   auto bufCtx = m_rhiFactory->GetBufferContext();
   auto camera = m_scene->GetEditorCamrea();
-  m_cameraInfo.far = camera->GetFar();
-  m_cameraInfo.near = camera->GetNear();
-  m_cameraInfo.position = camera->GetPosition();
-  m_cameraInfo.viewMatrix = camera->GetViewMatrix();
-  m_cameraInfo.projectMatrix = camera->GetProjectionMatrix();
+  m_cameraInfo.m_far = camera->GetFar();
+  m_cameraInfo.m_near = camera->GetNear();
+  m_cameraInfo.m_position = camera->GetPosition();
+  m_cameraInfo.m_viewMatrix = camera->GetViewMatrix();
+  m_cameraInfo.m_projectMatrix = camera->GetProjectionMatrix();
   bufCtx->UpdateBuffer(m_cameraBuffer, &m_cameraInfo, sizeof(CameraInfo), 0);
 
   std::array<ViewportInfo, 1> viewport;
