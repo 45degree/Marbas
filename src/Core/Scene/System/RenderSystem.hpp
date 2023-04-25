@@ -42,6 +42,15 @@ struct RenderSystem final {
   }
 
  private:
+  /**
+   * @brief Update the position and size of each shadow map in the texture atlas
+   *
+   * @param scene scene
+   */
+  static void
+  UpdateShadowMapAtlasPosition(Scene* scene);
+
+ private:
   static std::shared_ptr<RenderGraphResourceManager> s_resourceManager;
   static std::unique_ptr<RenderGraph> s_renderGraph;
   static std::unique_ptr<RenderGraph> s_precomputeRenderGraph;

@@ -113,7 +113,7 @@ TransmittanceParamConvertFromUV(const in AtmosphereParam param, vec2 uv) {
 
 
 /**
- * @berif convert mu and rho to uv
+ * @brief convert mu and rho to uv
  * @param mu the cos of Zenith Angle
  * @param r the distance from the center of the earth
  */

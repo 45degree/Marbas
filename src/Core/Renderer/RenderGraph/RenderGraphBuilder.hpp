@@ -111,6 +111,11 @@ class RenderGraphGraphicsBuilder final {
     m_pipelineCreateInfo.vertexInputLayout.viewDesc = elementView;
   }
 
+  void
+  SetPushConstantSize(uint32_t size = 0) {
+    m_pipelineCreateInfo.pushConstantSize = size;
+  }
+
  private:
   GraphicsPipeLineCreateInfo m_pipelineCreateInfo;
   RenderGraph* m_graph;

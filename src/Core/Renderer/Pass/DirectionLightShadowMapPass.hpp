@@ -29,11 +29,13 @@ class DirectionShadowMapPass final {
   Scene* m_scene = nullptr;
   RHIFactory* m_rhiFactory = nullptr;
 
+  Buffer* m_currentIndexBuf = nullptr;
+  int m_currentLightIndex = 0;
+
   DescriptorSetArgument m_argument;
+  uintptr_t m_set;
 
   RenderGraphTextureHandler m_shadowMapTextureHandler;
-  uint32_t m_width = 1024;
-  uint32_t m_height = 1024;
 };
 
 }  // namespace Marbas

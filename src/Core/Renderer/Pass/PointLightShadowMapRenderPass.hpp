@@ -41,7 +41,7 @@ class PointLightShadowMapRenderPass final : public DeferredRenderPass {
   CreateShader() override;
 
   /**
-   * @berif create the frame buffer from the input and output target
+   * @brief create the frame buffer from the input and output target
    *
    * @warning it should be invoked after setting the target
    */

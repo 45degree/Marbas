@@ -21,8 +21,11 @@ struct SceneSystem {
 
     UpdateAABBComponent(scene);
     UpdateTransformComp(scene);
-    UpdateDirectionShadowInfo(scene, rhiFactory);
+    UpdateDirectionShadowInfo(scene);
     UploadGPUAsset(scene);
+
+    UpdateMeshGPUAsset(scene, rhiFactory);
+    UpdateLightGPUData(scene);
   }
 
  private:
@@ -42,7 +45,19 @@ struct SceneSystem {
   UpdateAABBComponent(Scene* scene);
 
   static void
-  UpdateDirectionShadowInfo(Scene* scene, RHIFactory* rhiFactory);
+  UpdateDirectionShadowInfo(Scene* scene);
+
+  /**
+   * @brief update mesh gpu asset, such as material and so on;
+   *
+   * @param scene scene
+   * @param rhiFactory rhi factory
+   */
+  static void
+  UpdateMeshGPUAsset(Scene* scene, RHIFactory* rhiFactory);
+
+  static void
+  UpdateLightGPUData(Scene* scene);
 };
 
 }  // namespace Marbas

@@ -14,10 +14,6 @@ struct Material {
   std::array<float, 4> m_diffuseColor;
   bool m_useDiffuseTexture = false;
 
-  std::optional<AssetPath> m_ambientTexturePath;
-  std::array<float, 4> m_ambientColor;
-  bool m_useAmbientTexture = false;
-
   std::optional<AssetPath> m_normalTexturePath;
   bool m_useNormalTexture = false;
 
@@ -33,7 +29,6 @@ struct Material {
   void
   serialize(Archive& ar) {
     ar(m_diffuseTexturePath, m_diffuseColor, m_useDiffuseTexture,        //
-       m_ambientTexturePath, m_ambientColor, m_useAmbientTexture,        //
        m_normalTexturePath, m_useNormalTexture,                          //
        m_roughnessTexturePath, m_roughnessValue, m_useRoughnessTexture,  //
        m_metalnessTexturePath, m_metalnessValue, m_useMetalnessTexture   //

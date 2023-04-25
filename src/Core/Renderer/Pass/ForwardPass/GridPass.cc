@@ -59,7 +59,7 @@ GridRenderPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.SetDepthTarget(DepthTargetDesc{
       .initAction = AttachmentInitAction::KEEP,
       .finalAction = AttachmentFinalAction::READ,
-      .usage = ImageUsageFlags::DEPTH_STENCIL,
+      .usage = ImageUsageFlags::DEPTH_STENCIL | ImageUsageFlags::SHADER_READ,
       .sampleCount = SampleCount::BIT1,
   });
   builder.AddShader("Shader/grid.vert.spv", ShaderType::VERTEX_SHADER);
@@ -78,8 +78,8 @@ GridRenderPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& co
   auto camera = m_scene->GetEditorCamera();
   auto* bufCtx = m_rhiFactory->GetBufferContext();
   m_cameraInfo.up = camera->GetUpVector();
-  m_cameraInfo.FAR = camera->GetFar();
-  m_cameraInfo.NEAR = camera->GetNear();
+  m_cameraInfo.m_far = camera->GetFar();
+  m_cameraInfo.m_near = camera->GetNear();
   m_cameraInfo.pos = camera->GetPosition();
   m_cameraInfo.view = camera->GetViewMatrix();
   m_cameraInfo.right = camera->GetRightVector();

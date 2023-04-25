@@ -4,10 +4,10 @@
 
 #include <nameof.hpp>
 
-#include "AssetManager/GPUAssetUpLoader.hpp"
 #include "AssetManager/TextureAsset.hpp"
 #include "Core/Common.hpp"
 #include "Core/Scene/Component/EnvironmentComponent.hpp"
+#include "Core/Scene/GPUDataPipeline/TextureGPUData.hpp"
 
 namespace Marbas {
 
@@ -130,7 +130,7 @@ SkyImagePass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.SetDepthTarget({
       .initAction = AttachmentInitAction::KEEP,
       .finalAction = AttachmentFinalAction::READ,
-      .usage = ImageUsageFlags::DEPTH_STENCIL,
+      .usage = ImageUsageFlags::DEPTH_STENCIL | ImageUsageFlags::SHADER_READ,
       .sampleCount = SampleCount::BIT1,
   });
   builder.SetBlendConstant(0, 0, 0, 1);
@@ -176,6 +176,7 @@ SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
   bufCtx->UpdateBuffer(m_clearUBO, &m_clearInfo, sizeof(ClearValueInfo), 0);
 
   // bind hdr image
+  // FIX: 绑定了image后无法还原
   if (component.currentItem == EnvironmentComponent::imageSkyItem) {
     const auto& assetPath = component.imageSky.hdrImagePath;
     auto textureAssetMgr = AssetManager<TextureAsset>::GetInstance();
@@ -184,11 +185,11 @@ SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
       textureAssetMgr->Create(assetPath, true);
     }
     auto textureAsset = textureAssetMgr->Get(assetPath);
-    auto gpuTextureAssetMgr = GPUAssetManager<TextureGPUAsset>::GetInstance();
-    if (!gpuTextureAssetMgr->Exists(textureAsset->GetUid())) {
-      gpuTextureAssetMgr->Create(textureAsset, m_rhiFactory);
+    auto gpuTextureAssetMgr = TextureGPUDataManager::GetInstance();
+    if (!gpuTextureAssetMgr->Existed(*textureAsset)) {
+      gpuTextureAssetMgr->Create(*textureAsset);
     }
-    auto gpuAsset = gpuTextureAssetMgr->Get(textureAsset->GetUid());
+    auto gpuAsset = gpuTextureAssetMgr->TryGet(*textureAsset);
     auto imageView = gpuAsset->GetImageView(0, 1, 0, 1);
 
     auto pipelineCtx = m_rhiFactory->GetPipelineContext();

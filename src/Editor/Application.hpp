@@ -46,7 +46,6 @@ class Application final {
 
  private:
   std::unique_ptr<RHIFactory> m_rhiFactory;
-  // std::unique_ptr<RenderEngine> m_renderEngine;
   std::unique_ptr<Scene> m_scene;
 
   GLFWwindow* m_glfwWindow;

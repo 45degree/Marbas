@@ -1,7 +1,6 @@
 #include "AssetRegistry.hpp"
 
 #include <cereal/archives/binary.hpp>
-#include <cereal/archives/xml.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/memory.hpp>
 #include <cereal/types/unordered_map.hpp>
@@ -30,21 +29,21 @@ AssetRegistryImpl::SetProjectDir(const Path& projectDir) {
 
   if (!std::filesystem::exists(m_assertUidDB)) {
     // create a empty db file
-    std::ofstream os(m_assertUidDB);
-    cereal::XMLOutputArchive archive(os);
+    std::ofstream os(m_assertUidDB, std::ios::binary | std::ios::out);
+    cereal::BinaryOutputArchive archive(os);
     archive(*this);
   }
 
-  std::ifstream os(m_assertUidDB);
-  cereal::XMLInputArchive archive(os);
+  std::ifstream os(m_assertUidDB, std::ios::binary | std::ios::in);
+  cereal::BinaryInputArchive archive(os);
   archive(*this);
 }
 
 void
 AssetRegistryImpl::SaveAllAssert() {
   std::lock_guard lock(m_mutex);
-  std::ofstream os(m_assertUidDB);
-  cereal::XMLOutputArchive archive(os);
+  std::ofstream os(m_assertUidDB, std::ios::binary | std::ios::out);
+  cereal::BinaryOutputArchive archive(os);
   archive(*this);
 }
 
@@ -58,6 +57,12 @@ AssetRegistryImpl::CreateOrFindAssertUid(const AssetPath& path) {
   }
 
   m_assertUid[path] = Uid();
+
+  // save the asset uid
+  std::ofstream os(m_assertUidDB, std::ios::binary|std::ios::out);
+  cereal::BinaryOutputArchive archive(os);
+  archive(*this);
+
   return m_assertUid.at(path);
 }
 

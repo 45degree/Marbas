@@ -79,11 +79,8 @@ GBuffer::Recreate(uint32_t width, uint32_t height, uint32_t usage, const GBuffer
 GBufferRegistry::GBufferRegistry() {
   Emplace<GBuffer_Color>();
   Emplace<GBuffer_Position>();
-  Emplace<GBuffer_Normals>();
+  Emplace<GBuffer_Normal_Metallic_Roughness>();
   Emplace<GBuffer_Depth>();
-  Emplace<GBuffer_AmbientOcclusion>();
-  Emplace<GBuffer_Roughness>();
-  Emplace<GBuffer_Metallic>();
   Emplace<GBuffer_HDR>();
   Emplace<GBuffer_PreFilterCubemap>();
   Emplace<GBuffer_IBL_BRDF_LOD>();

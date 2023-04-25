@@ -2,23 +2,19 @@
 
 #include <nameof.hpp>
 
-#include "AssetManager/GPUAssetUpLoader.hpp"
 #include "AssetManager/ModelAsset.hpp"
 #include "Core/Common.hpp"
 #include "Core/Renderer/GBuffer.hpp"
-#include "Core/Scene/Component/HierarchyComponent.hpp"
 #include "Core/Scene/Component/RenderMeshComponent.hpp"
+#include "Core/Scene/GPUDataPipeline/ModelGPUData.hpp"
 
 namespace Marbas {
 
 GeometryPass::GeometryPass(const GeometryPassCreateInfo& createInfo)
-    : m_normalTexture(createInfo.normalTexture),
+    : m_normal_metallic_roughnessTexture(createInfo.normal_metallic_roughnessTexture),
       m_positionTexture(createInfo.positionTexture),
-      m_metallicTexture(createInfo.metallicTexture),
-      m_roughnessTexture(createInfo.roughnessTexture),
       m_depthTexture(createInfo.depthTexture),
       m_colorTexture(createInfo.colorTexture),
-      m_aoTexture(createInfo.aoTexture),
       m_rhiFactory(createInfo.rhiFactory),
       m_scene(createInfo.scene),
       m_width(createInfo.width),
@@ -70,71 +66,44 @@ GeometryPass::GeometryPass(const GeometryPassCreateInfo& createInfo)
 void
 GeometryPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.WriteTexture(m_colorTexture);
-  builder.WriteTexture(m_normalTexture);
   builder.WriteTexture(m_positionTexture);
-  builder.WriteTexture(m_aoTexture);
-  builder.WriteTexture(m_roughnessTexture);
-  builder.WriteTexture(m_metallicTexture);
+  builder.WriteTexture(m_normal_metallic_roughnessTexture);  // 法线信息纯两个值就行了
   builder.WriteTexture(m_depthTexture, TextureAttachmentType::DEPTH);
 
   builder.BeginPipeline();
-  builder.AddShaderArgument(MeshGPUAsset::GetDescriptorSetArgument());
+  builder.AddShaderArgument(MeshGPUData::GetDescriptorSetArgument());
   builder.AddShaderArgument(m_argument);
   builder.AddShader("Shader/geometry.vert.spv", ShaderType::VERTEX_SHADER);
   builder.AddShader("Shader/geometry.frag.spv", ShaderType::FRAGMENT_SHADER);
   builder.AddColorTarget({
-      .initAction = AttachmentInitAction::CLEAR,
+      .initAction = AttachmentInitAction::CLEAR,  // color
       .finalAction = AttachmentFinalAction::READ,
       .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
       .sampleCount = SampleCount::BIT1,
       .format = GBuffer_Color::format,
   });
   builder.AddColorTarget({
-      .initAction = AttachmentInitAction::CLEAR,
-      .finalAction = AttachmentFinalAction::READ,
-      .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
-      .sampleCount = SampleCount::BIT1,
-      .format = GBuffer_Normals::format,
-  });
-  builder.AddColorTarget({
-      .initAction = AttachmentInitAction::CLEAR,
+      .initAction = AttachmentInitAction::CLEAR,  // position
       .finalAction = AttachmentFinalAction::READ,
       .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
       .sampleCount = SampleCount::BIT1,
       .format = GBuffer_Position::format,
   });
   builder.AddColorTarget({
-      .initAction = AttachmentInitAction::CLEAR,
+      .initAction = AttachmentInitAction::CLEAR,  // normal metaliic roughness
       .finalAction = AttachmentFinalAction::READ,
       .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
       .sampleCount = SampleCount::BIT1,
-      .format = GBuffer_AmbientOcclusion::format,
-  });
-  builder.AddColorTarget({
-      .initAction = AttachmentInitAction::CLEAR,
-      .finalAction = AttachmentFinalAction::READ,
-      .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
-      .sampleCount = SampleCount::BIT1,
-      .format = GBuffer_Roughness::format,
-  });
-  builder.AddColorTarget({
-      .initAction = AttachmentInitAction::CLEAR,
-      .finalAction = AttachmentFinalAction::READ,
-      .usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET,
-      .sampleCount = SampleCount::BIT1,
-      .format = GBuffer_Metallic::format,
+      .format = GBuffer_Normal_Metallic_Roughness::format,
   });
   builder.SetDepthTarget({
       .initAction = AttachmentInitAction::CLEAR,
       .finalAction = AttachmentFinalAction::READ,
-      .usage = ImageUsageFlags::DEPTH_STENCIL,
+      .usage = ImageUsageFlags::DEPTH_STENCIL | ImageUsageFlags::SHADER_READ,
       .sampleCount = SampleCount::BIT1,
   });
   builder.SetVertexInputElementDesc(GetMeshVertexInfoLayout());
   builder.SetVertexInputElementView(GetMeshVertexViewInfo());
-  builder.AddBlendAttachments({false});
-  builder.AddBlendAttachments({false});
-  builder.AddBlendAttachments({false});
   builder.AddBlendAttachments({false});
   builder.AddBlendAttachments({false});
   builder.AddBlendAttachments({false});
@@ -154,7 +123,7 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
   auto* pipelineContext = m_rhiFactory->GetPipelineContext();
 
   auto modelManager = AssetManager<ModelAsset>::GetInstance();
-  auto modelGPUManager = GPUAssetManager<ModelGPUAsset>::GetInstance();
+  auto modelGPUManager = ModelGPUDataManager::GetInstance();
 
   /**
    * load all model and calculate the sum of mesh
@@ -194,9 +163,6 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
                                 {0, 0, 0, 0},
                                 {0, 0, 0, 0},
                                 {0, 0, 0, 0},
-                                {0, 0, 0, 0},
-                                {0, 0, 0, 0},
-                                {0, 0, 0, 0},
                                 {1, 1},
                             });
   commandList.SetViewports(viewport);
@@ -216,20 +182,21 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
     auto modelAsset = modelManager->Get(modelSceneNode.modelPath);
     // Create GPU Asset
     // TODO: move this to scene update
-    if (!modelGPUManager->Exists(modelAsset->GetUid())) {
-      modelGPUManager->Create(modelAsset, m_rhiFactory);
+    if (!modelGPUManager->Existed(*modelAsset)) {
+      modelGPUManager->Create(*modelAsset);
     }
-    modelGPUManager->Update(modelAsset);
-    auto modelGPUAsset = modelGPUManager->Get(modelAsset->GetUid());
-    for (auto& meshGPUAsset : modelGPUAsset->m_meshGPUAsset) {
-      auto& indexCount = meshGPUAsset->m_indexCount;
+    auto modelGPUAsset = modelGPUManager->TryGet(*modelAsset);
+    auto meshCount = modelGPUAsset->MeshCount();
+    for (size_t i = 0; i < meshCount; i++) {
+      auto meshGPUData = modelGPUAsset->GetMeshGPU(i);
+      auto& indexCount = meshGPUData->m_indexCount;
 
       // update transform matrix
-      bufferContext->UpdateBuffer(meshGPUAsset->m_transformBuffer, &model, sizeof(model), 0);
+      bufferContext->UpdateBuffer(meshGPUData->m_transformBuffer, &model, sizeof(model), 0);
 
-      commandList.BindDescriptorSet(pipeline, {meshGPUAsset->m_descriptorSet, m_descriptorSet});
-      commandList.BindVertexBuffer(meshGPUAsset->m_vertexBuffer);
-      commandList.BindIndexBuffer(meshGPUAsset->m_indexBuffer);
+      commandList.BindDescriptorSet(pipeline, {meshGPUData->m_descriptorSet, m_descriptorSet});
+      commandList.BindVertexBuffer(meshGPUData->m_vertexBuffer);
+      commandList.BindIndexBuffer(meshGPUData->m_indexBuffer);
       commandList.DrawIndexed(indexCount, 1, 0, 0, 0);
     }
   }

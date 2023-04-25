@@ -13,7 +13,14 @@ target('Marbas.Test', function()
   add_files('$(projectdir)/src/Test/*.cc')
   add_files('$(projectdir)/src/Test/RenderGraphTest/*.cc')
   add_files('$(projectdir)/src/Test/AssetManager/*.cc')
-  add_files('$(projectdir)/src/Test/ToolTest/*.cc')
+
+  if has_config('CascateCount') then
+    add_defines('CASCATE_COUNT=$(CascateCount)')
+  end
+
+  if has_config('DirectionLightCount') then
+    add_defines('MAX_DIRECTION_LIGHT_COUNT=$(DirectionLightCount)')
+  end
 
   if is_mode('debug') then
     add_defines('DEBUG')

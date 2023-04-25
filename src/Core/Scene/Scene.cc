@@ -6,7 +6,7 @@
 
 #include <algorithm>
 #include <assimp/Importer.hpp>
-#include <cereal/archives/xml.hpp>
+#include <cereal/archives/binary.hpp>
 #include <cereal/cereal.hpp>
 #include <fstream>
 #include <strstream>
@@ -22,11 +22,26 @@
 
 namespace Marbas {
 
+template <typename T>
+static void
+RegistryNode(entt::registry& world) {
+  world.on_construct<T>().template connect<&T::OnCreate>();
+  world.on_update<T>().template connect<&T::OnUpdate>();
+  world.on_destroy<T>().template connect<&T::OnDestroy>();
+}
+
+static void
+RegistryNodes(entt::registry& world) {
+  world.on_construct<EmptySceneNode>().connect<&EmptySceneNode::RegistryNode>();
+  RegistryNode<DirectionalLightSceneNode>(world);
+  RegistryNode<DirectionShadowComponent>(world);
+  RegistryNode<DirectionLightComponent>(world);
+  world.on_construct<PointLightSceneNode>().connect<&PointLightSceneNode::RegistryNode>();
+  world.on_construct<ModelSceneNode>().connect<&ModelSceneNode::RegistryNode>();
+}
+
 Scene::Scene() {
-  m_world.on_construct<EmptySceneNode>().connect<&EmptySceneNode::RegistryNode>();
-  m_world.on_construct<DirectionalLightSceneNode>().connect<&DirectionalLightSceneNode::RegistryNode>();
-  m_world.on_construct<PointLightSceneNode>().connect<&PointLightSceneNode::RegistryNode>();
-  m_world.on_construct<ModelSceneNode>().connect<&ModelSceneNode::RegistryNode>();
+  RegistryNodes(m_world);
 
   m_rootEntity = AddChild(entt::null);
   auto& emptySceneNode = m_world.emplace<EmptySceneNode>(m_rootEntity);
@@ -52,8 +67,8 @@ Scene::Scene(entt::registry&& registry) : m_world(std::move(registry)) {
 
 std::shared_ptr<Scene>
 Scene::LoadFromFile(const Path& scenePath) {
-  std::ifstream file(scenePath, std::ios::in);
-  cereal::XMLInputArchive archive(file);
+  std::ifstream file(scenePath, std::ios::in | std::ios::binary);
+  cereal::BinaryInputArchive archive(file);
 
   entt::registry world;
 
@@ -72,8 +87,8 @@ Scene::LoadFromFile(const Path& scenePath) {
 
 void
 Scene::SaveToFile(const Path& scenePath) {
-  std::ofstream file(scenePath, std::ios::out);
-  cereal::XMLOutputArchive archive(file);
+  std::ofstream file(scenePath, std::ios::out | std::ios::binary);
+  cereal::BinaryOutputArchive archive(file);
 
   entt::snapshot{m_world}
       .entities(archive)
@@ -109,23 +124,5 @@ Scene::GetChildrenCount(entt::entity node) const {
   auto& hierarchyComponent = m_world.get<HierarchyComponent>(node);
   return hierarchyComponent.children.size();
 }
-
-// AABB
-// Scene::GetSceneAABB() const {
-//   auto view = m_world.view<ModelSceneNode, TransformComp>();
-//   Vector<AABB> modelAABB;
-//   // for (auto&& [entity, sceneNode, transform] : view.each()) {
-//   //   AABB aabb(glm::vec3(0), glm::vec3(0));
-//   //   auto newCenter = glm::vec3(transform.GetGlobalTransform() * glm::vec4(sceneNode.aabb.GetCenter(), 1));
-//   //   aabb.SetCenter(newCenter);
-//   //   aabb.SetExtent(sceneNode.aabb.GetExtent());
-//   //   modelAABB.push_back(aabb);
-//   // }
-//
-//   if (modelAABB.empty()) {
-//     return AABB(glm::vec3(0), glm::vec3(0));
-//   }
-//   return AABB::CombineAABB(modelAABB);
-// }
 
 }  // namespace Marbas

@@ -33,8 +33,8 @@ class GridRenderPass final {
     alignas(16) glm::vec3 right;
     alignas(16) glm::vec3 up;
     alignas(16) glm::vec3 pos;
-    float FAR;
-    float NEAR;
+    float m_far;
+    float m_near;
   } m_cameraInfo;
   Buffer* m_cameraInfoUBO;
 

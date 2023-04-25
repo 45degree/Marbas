@@ -39,11 +39,11 @@ rule('glslc2spv', function()
 
     local config = {}
     table.insert(config, '--target-env=' .. targetenv)
-    -- table.insert(config, "-O")
     for i, v in ipairs(includeDirs) do
       table.insert(config, '-I')
       table.insert(config, path(v))
     end
+
     table.insert(config, '-o')
     table.insert(config, path(spvfilepath))
     table.insert(config, path(sourcefile))

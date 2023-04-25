@@ -4,15 +4,15 @@
 
 #include "InformationWidget.hpp"
 
+#include <glog/logging.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 
-#include "AssetManager/GPUAssetUpLoader.hpp"
 #include "AssetManager/ModelAsset.hpp"
-#include "Common/MathCommon.hpp"
 #include "CommonName.hpp"
 #include "Core/Scene/Component/EnvironmentComponent.hpp"
 #include "Core/Scene/Component/LightComponent.hpp"
+#include "Core/Scene/GPUDataPipeline/TextureGPUData.hpp"
 #include "Core/Scene/System/RenderSystem.hpp"
 #include "DirectionArrowControl.hpp"
 #include "ImGuizmo.h"
@@ -35,18 +35,17 @@ _labelPrefix(const char* const label) {
   return labelID;
 }
 
-template <typename Value, typename DrawFunc>
-static void
-ShowTextureOrColor(std::optional<AssetPath>& texPath, bool& isUseTex, Value&& color, DrawFunc func) {
+static bool
+ShowTextureOrColor(std::optional<AssetPath>& texPath, bool& isUseTex) {
   auto texMgr = AssetManager<TextureAsset>::GetInstance();
-  auto texGPUMgr = GPUAssetManager<TextureGPUAsset>::GetInstance();
+  auto texGPUMgr = TextureGPUDataManager::GetInstance();
 
-  std::optional<std::shared_ptr<TextureGPUAsset>> gpuAsset;
+  std::optional<std::shared_ptr<TextureGPUData>> gpuAsset;
   if (texPath.has_value()) {
     if (*texPath != "res://" && texMgr->Existed(*texPath)) {
-      auto uid = texMgr->Get(*texPath)->GetUid();
-      if (texGPUMgr->Exists(uid)) {
-        gpuAsset = texGPUMgr->Get(uid);
+      auto asset = texMgr->Get(*texPath);
+      if (texGPUMgr->Existed(*asset)) {
+        gpuAsset = texGPUMgr->TryGet(*asset);
       }
     }
   }
@@ -65,77 +64,94 @@ ShowTextureOrColor(std::optional<AssetPath>& texPath, bool& isUseTex, Value&& co
     ImGui::ButtonEx("##empty image button", imageSize, ImGuiButtonFlags_NoHoveredOnFocus);
     ImGui::PopStyleColor(3);
   }
+
+  bool texChanged = false;
   if (ImGui::BeginDragDropTarget()) {
     if (auto* payload = ImGui::AcceptDragDropPayload(CONTENT_BROWSER_DRAGDROG); payload != nullptr) {
       const auto& path = *reinterpret_cast<AssetPath*>(payload->Data);
       texPath = path;
+      texChanged = true;
     }
     ImGui::EndDragDropTarget();
   }
 
   ImGui::SameLine();
   ImGui::BeginDisabled(!gpuAsset.has_value());
-  ImGui::Checkbox("use", &isUseTex);
+  bool isClicked = ImGui::Checkbox("use", &isUseTex);
   ImGui::EndDisabled();
 
-  func(std::forward<Value>(color));
+  return texChanged || isClicked;
 }
 
-static void
-ShowTexture(std::optional<AssetPath>& texPath) {
-  auto texMgr = AssetManager<TextureAsset>::GetInstance();
-  auto texGPUMgr = GPUAssetManager<TextureGPUAsset>::GetInstance();
-  auto regionSize = ImGui::GetContentRegionAvail();
-
-  std::optional<std::shared_ptr<TextureGPUAsset>> gpuAsset;
-  if (texPath.has_value()) {
-    if (*texPath != "res://" && texMgr->Existed(*texPath)) {
-      auto uid = texMgr->Get(*texPath)->GetUid();
-      if (texGPUMgr->Exists(uid)) {
-        gpuAsset = texGPUMgr->Get(uid);
-      }
-    }
-  }
-
-  if (gpuAsset.has_value()) {
-    auto id = (*gpuAsset)->GetImGuiTextureId();
-  }
+/**
+ * @brief Show the texture and color in the widget
+ *
+ * @tparam Value color value type
+ * @tparam DrawFunc show color function
+ * @param texPath texture path
+ * @param isUseTex use texture or color
+ * @param color color
+ * @param func show color function
+ * @return whether texture has changed
+ */
+template <typename Value, typename DrawFunc>
+static bool
+ShowTextureOrColor(std::optional<AssetPath>& texPath, bool& isUseTex, Value&& color, DrawFunc func) {
+  auto changed = ShowTextureOrColor(texPath, isUseTex);
+  func(std::forward<Value>(color));
+  return changed;
 }
 
 static void
 ShowMaterial(Mesh& mesh) {
   auto& material = mesh.m_material;
+  auto& texChanged = mesh.m_materialTexChanged;
+  auto& valueChanged = mesh.m_materialValueChanged;
 
-  ImGui::Text("diffuse Texture:");
-  ShowTextureOrColor(material.m_diffuseTexturePath, material.m_useDiffuseTexture, material.m_diffuseColor,
-                     [](std::array<float, 4>& color) {
-                       ImGui::ColorEdit4(_labelPrefix("color").c_str(), color.data(), ImGuiColorEditFlags_AlphaBar);
-                     });
+  auto ShowComponent = [](const std::string& title, auto&& func) {
+    const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed |
+                                             ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap |
+                                             ImGuiTreeNodeFlags_FramePadding;
+    if (ImGui::TreeNodeEx(title.c_str(), treeNodeFlags)) {
+      func();
+      ImGui::TreePop();
+    }
+  };
 
-  ImGui::Separator();
+  ShowComponent("diffuse Texture", [&]() {
+    auto& path = material.m_diffuseTexturePath;
+    auto& useTex = material.m_useDiffuseTexture;
+    auto& color = material.m_diffuseColor;
 
-  ImGui::Text("Ambient Occlusion Texture:");
-  ShowTextureOrColor(material.m_ambientTexturePath, material.m_useAmbientTexture, material.m_ambientColor,
-                     [](std::array<float, 4>& color) {
-                       ImGui::ColorEdit4(_labelPrefix("color").c_str(), color.data(), ImGuiColorEditFlags_AlphaBar);
-                     });
+    texChanged |= ShowTextureOrColor(path, useTex, color, [&](std::array<float, 4>& color) {
+      valueChanged |= ImGui::ColorEdit4(_labelPrefix("color").c_str(), color.data(), ImGuiColorEditFlags_AlphaBar);
+    });
+  });
 
-  ImGui::Separator();
+  ShowComponent("Normal Texture", [&]() {
+    auto& path = material.m_normalTexturePath;
+    auto& useTex = material.m_useNormalTexture;
+    texChanged |= ShowTextureOrColor(path, useTex);
+  });
 
-  ImGui::Text("Normal Texture:");
-  ShowTexture(material.m_normalTexturePath);
+  ShowComponent("Roughness Texture", [&]() {
+    auto& path = material.m_roughnessTexturePath;
+    auto& useTex = material.m_useRoughnessTexture;
+    auto& value = material.m_roughnessValue;
 
-  ImGui::Separator();
+    texChanged |= ShowTextureOrColor(path, useTex, value, [&](float& value) {
+      valueChanged |= ImGui::SliderFloat(_labelPrefix("roughtness").c_str(), &value, 0.f, 1.0f);
+    });
+  });
 
-  ImGui::Text("Roughness Texture:");
-  ShowTextureOrColor(material.m_roughnessTexturePath, material.m_useRoughnessTexture, material.m_roughnessValue,
-                     [](float& value) { ImGui::SliderFloat(_labelPrefix("roughtness").c_str(), &value, 0.f, 1.0f); });
-
-  ImGui::Separator();
-
-  ImGui::Text("Metallic Texture:");
-  ShowTextureOrColor(material.m_metalnessTexturePath, material.m_useMetalnessTexture, material.m_metalnessValue,
-                     [](float& value) { ImGui::SliderFloat(_labelPrefix("metallic").c_str(), &value, 0.f, 1.0f); });
+  ShowComponent("Metallic Texture", [&]() {
+    auto& path = material.m_metalnessTexturePath;
+    auto& useTex = material.m_useMetalnessTexture;
+    auto& value = material.m_metalnessValue;
+    texChanged |= ShowTextureOrColor(path, useTex, value, [&](float& value) {
+      valueChanged |= ImGui::SliderFloat(_labelPrefix("metallic").c_str(), &value, 0.f, 1.0f);
+    });
+  });
 }
 
 template <typename T, typename DrawComponentFunc>
@@ -266,11 +282,16 @@ InformationWidget::Draw() {
     auto& light = node.m_light;
     auto color = light.GetColor();
     auto dir = light.GetDirection();
-    ImGui::InputFloat3("light", glm::value_ptr(color));
-    light.SetColor(color);
-    ImGui::InputFloat3("directional", glm::value_ptr(dir));
-    dir = glm::normalize(dir);
-    light.SetDirection(dir);
+    bool isChangeColor = ImGui::InputFloat3("light", glm::value_ptr(color));
+    bool isChangeDir = ImGui::InputFloat3("directional", glm::value_ptr(dir));
+
+    if (isChangeColor || isChangeDir) {
+      world.patch<DirectionLightComponent>(m_entity, [&color, &dir](auto& node) {
+        dir = glm::normalize(dir);
+        node.m_light.SetColor(color);
+        node.m_light.SetDirection(dir);
+      });
+    }
 
     auto regionSize = ImGui::GetContentRegionAvail();
     DirectionArrowControl({regionSize.x, regionSize.x}, dir);
@@ -289,11 +310,13 @@ InformationWidget::Draw() {
     }
   });
 
-  // if (world.any_of<ModelSceneNode>(m_entity)) {
-  //   m_modelInformation.DrawInformation(m_entity, m_scene, m_resourceManager);
-  // } else if (world.any_of<DirectionalLightSceneNode>(m_entity)) {
-  //   m_lightInformation.DrawInformation(m_entity, m_scene, m_resourceManager);
-  // }
+  DrawComponentProp<DirectionShadowComponent>("directional light shadow", world, m_entity,
+                                              [&](DirectionShadowComponent& node) {
+                                                for (int i = 0; i < node.m_split.size(); i++) {
+                                                  std::string name = "split" + std::to_string(i);
+                                                  ImGui::SliderFloat(name.c_str(), &node.m_split[i], 0, 1);
+                                                }
+                                              });
 }
 
 InformationWidget::InformationWidget(RHIFactory* rhiFactory, Scene* scene)

@@ -21,6 +21,8 @@ class MockGraphicsCommandBuffer final : public GraphicsCommandBuffer {
   MOCK_METHOD(void, BeginPipeline, (uintptr_t, FrameBuffer*, const std::vector<ClearValue>&));
   MOCK_METHOD(void, EndPipeline, (uintptr_t));
   MOCK_METHOD(void, BindDescriptorSet, (uintptr_t, const std::vector<uintptr_t>&));
+  MOCK_METHOD(void, PushConstant, (uintptr_t, const void*, uint32_t, uint32_t));
+
   MOCK_METHOD(void, SetViewports, (std::span<ViewportInfo>));
   MOCK_METHOD(void, SetScissors, (std::span<ScissorInfo>));
   MOCK_METHOD(void, BindVertexBuffer, (Buffer*));

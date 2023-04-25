@@ -9,7 +9,14 @@ namespace Marbas {
 
 class RenderGraph final {
  public:
-  RenderGraph(RHIFactory* rhiFactory, std::shared_ptr<RenderGraphResourceManager>& resourceManager)
+  /**
+   * @brief create a render graph
+   *
+   * @param rhiFactory rhi factory
+   * @param resourceManager render graph resource manager
+   * @param fifCount frame in flight count
+   */
+  RenderGraph(RHIFactory* rhiFactory, std::shared_ptr<RenderGraphResourceManager>& resourceManager, int fifCount = 1)
       : m_rhiFactory(rhiFactory), m_resourceManager(resourceManager) {}
   ~RenderGraph() {
     for (auto pass : m_passes) {

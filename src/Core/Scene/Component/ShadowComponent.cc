@@ -1,6 +1,11 @@
 #include "ShadowComponent.hpp"
 
+#include <glog/logging.h>
+
+#include <Common/MathCommon.hpp>
+
 #include "Core/Scene/Component/LightComponent.hpp"
+#include "Core/Scene/Component/TagComponent.hpp"
 
 namespace Marbas {
 
@@ -22,8 +27,8 @@ GetFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view) {
 }
 
 static glm::mat4
-GetLightSpaceMatrix(const Camera* camera, const glm::vec3 lightDir, const float nearPlane, const float farPlane) {
-  // glm::perspective()
+GetLightSpaceMatrix(const Camera* camera, const glm::vec3 lightDir, const glm::vec3& upDir, const float nearPlane,
+                    const float farPlane) {
   auto fov = camera->GetFov();
   auto aspect = camera->GetAspect();
   const auto proj = glm::perspective(glm::radians(fov), aspect, nearPlane, farPlane);
@@ -35,8 +40,7 @@ GetLightSpaceMatrix(const Camera* camera, const glm::vec3 lightDir, const float 
   }
   center /= corners.size();
 
-  auto viewDir = camera->GetFrontVector();
-  const auto lightView = glm::lookAt(center - lightDir, center, glm::normalize(glm::cross(viewDir, lightDir)));
+  const auto lightView = glm::lookAt(center - lightDir, center, upDir);
 
   float minX = std::numeric_limits<float>::max();
   float maxX = std::numeric_limits<float>::lowest();
@@ -55,97 +59,67 @@ GetLightSpaceMatrix(const Camera* camera, const glm::vec3 lightDir, const float 
   }
 
   // Tune this parameter according to the scene
-  // constexpr float zMult = 2.f;
-  // if (minZ < 0) {
-  //   minZ *= zMult;
-  // } else {
-  //   minZ /= zMult;
-  // }
-  // if (maxZ < 0) {
-  //   maxZ /= zMult;
-  // } else {
-  //   maxZ *= zMult;
-  // }
+  constexpr float zMult = 2.f;
+  if (minZ < 0) {
+    minZ *= zMult;
+  } else {
+    minZ /= zMult;
+  }
+  if (maxZ < 0) {
+    maxZ /= zMult;
+  } else {
+    maxZ *= zMult;
+  }
 
   const glm::mat4 lightProjection = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
 
   return lightProjection * lightView;
 }
 
-template <size_t N>
-static std::array<glm::mat4, N + 1>
-GetLightSpaceMatrices(const Camera* camera, const glm::vec3& lightDir, const std::array<float, N>& splits) {
-  float farPlane = camera->GetFar();
-  float nearPlane = camera->GetNear();
-  std::array<float, N> shadowCascadeLevels;
-  for (int i = 0; i < N; i++) {
-    shadowCascadeLevels[i] = farPlane * splits[i];
-  }
-
-  std::array<glm::mat4, N + 1> ret;
-  for (size_t i = 0; i < N + 1; ++i) {
-    if (i == 0) {
-      ret[i] = GetLightSpaceMatrix(camera, lightDir, nearPlane, shadowCascadeLevels[i]);
-    } else if (i < N) {
-      ret[i] = GetLightSpaceMatrix(camera, lightDir, shadowCascadeLevels[i - 1], shadowCascadeLevels[i]);
-    } else {
-      ret[i] = GetLightSpaceMatrix(camera, lightDir, shadowCascadeLevels[i - 1], farPlane);
-    }
-  }
-  return ret;
-}
-
-DirectionShadowComponent::DirectionShadowComponent() {
-  m_shadowGPUInfo.m_argument.Bind(0, DescriptorType::UNIFORM_BUFFER);
-}
+DirectionShadowComponent::DirectionShadowComponent() {}
 
 void
-DirectionShadowComponent::UpdateShadowGPUInfo(RHIFactory* rhiFactory, const glm::vec3& lightDir, const Camera& camera) {
+DirectionShadowComponent::UpdateShadowInfo(const glm::vec3& lightDir, const Camera& camera) {
   float farPlane = camera.GetFar();
   float nearPlane = camera.GetNear();
 
-  std::array<float, splitCount> cascadeFarPlane;
   for (int i = 0; i < splitCount; i++) {
-    cascadeFarPlane[i] = nearPlane + (farPlane - nearPlane) * m_split[i];
+    m_cascadePlane[i] = nearPlane + (farPlane - nearPlane) * m_split[i];
   }
+  m_cascadePlane[splitCount] = farPlane;
 
+  auto viewDir = camera.GetFrontVector();
+  auto upDir = glm::normalize(glm::cross(viewDir, lightDir));
   for (size_t i = 0; i < m_lightSpaceMatrices.size(); i++) {
     glm::mat4 ret;
     if (i == 0) {
-      ret = GetLightSpaceMatrix(&camera, lightDir, nearPlane, cascadeFarPlane[i]);
+      ret = GetLightSpaceMatrix(&camera, lightDir, upDir, nearPlane, m_cascadePlane[i]);
     } else if (i < m_lightSpaceMatrices.size() - 1) {
-      ret = GetLightSpaceMatrix(&camera, lightDir, cascadeFarPlane[i - 1], cascadeFarPlane[i]);
+      ret = GetLightSpaceMatrix(&camera, lightDir, upDir, m_cascadePlane[i - 1], m_cascadePlane[i]);
     } else {
-      ret = GetLightSpaceMatrix(&camera, lightDir, cascadeFarPlane[i - 1], farPlane);
+      ret = GetLightSpaceMatrix(&camera, lightDir, upDir, m_cascadePlane[i - 1], farPlane);
     }
     m_lightSpaceMatrices[i] = ret;
   }
 
-  // Change GPU Buffer
-  auto bufCtx = rhiFactory->GetBufferContext();
-  size_t bufferSize = sizeof(glm::mat4) * m_lightSpaceMatrices.size();
-  auto* bufferData = m_lightSpaceMatrices.data();
-  auto& buffer = m_shadowGPUInfo.m_lightMatricesBuffer;
-  if (buffer == nullptr) {
-    buffer = bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, bufferData, bufferSize, false);
-  } else {
-    bufCtx->UpdateBuffer(buffer, bufferData, bufferSize, 0);
-  }
-
-  if (m_shadowGPUInfo.m_descriptorSet == 0) {
-    auto pipelineCtx = rhiFactory->GetPipelineContext();
-    m_shadowGPUInfo.m_descriptorSet = pipelineCtx->CreateDescriptorSet(m_shadowGPUInfo.m_argument);
-    pipelineCtx->BindBuffer(BindBufferInfo{
-        .descriptorSet = m_shadowGPUInfo.m_descriptorSet,
-        .descriptorType = DescriptorType::UNIFORM_BUFFER,
-        .bindingPoint = 0,
-        .buffer = m_shadowGPUInfo.m_lightMatricesBuffer,
-        .offset = 0,
-        .arrayElement = 0,
-    });
-  }
-
   return;
 }
+
+void
+DirectionShadowComponent::OnUpdate(entt::registry& world, entt::entity node) {
+  if (!world.any_of<UpdateLightTag>(node)) {
+    world.emplace<UpdateLightTag>(node);
+  }
+}
+
+void
+DirectionShadowComponent::OnCreate(entt::registry& world, entt::entity node) {
+  if (!world.any_of<NewLightTag>(node)) {
+    world.emplace<NewLightTag>(node);
+  }
+}
+
+void
+DirectionShadowComponent::OnDestroy(entt::registry& world, entt::entity node) {}
 
 }  // namespace Marbas

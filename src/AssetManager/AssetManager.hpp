@@ -10,7 +10,7 @@
 #include "AssetPath.hpp"
 #include "AssetRegistry.hpp"
 #include "Common/Common.hpp"
-#include "LRUCache.hpp"
+#include "ResourceDataCache.hpp"
 #include "Singleton.hpp"
 #include "Uid.hpp"
 
@@ -24,7 +24,7 @@ struct AssetBase {
   }
 
   Uid
-  GetUid() {
+  GetUid() const {
     return m_uid;
   }
 
@@ -47,17 +47,8 @@ concept AssetType = requires() { requires std::derived_from<T, AssetBase>; };
  * @tparam Assert Assert class
  */
 template <AssetType Asset>
-class AssetManagerImpl final {
-  /**
-   * @brief the assert cache, all assert loaded or create by this class will store a copy in this cache;
-   */
-  LRUCache<Uid, std::shared_ptr<Asset>> m_assertCache{200};
-
-  /**
-   * @brief all the assert loaded or create by this class will store in it, it cantained the assert that has beed
-   *        removed from cache but still used in the frame.
-   */
-  HashMap<Uid, std::weak_ptr<Asset>> m_usedAssert;
+class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
+  using Base = ResourceDataCache<Uid, Asset>;
 
  public:
   void
@@ -66,14 +57,14 @@ class AssetManagerImpl final {
      * remove all unused assert
      */
     Vector<Uid> needRemovedUid;
-    for (auto& [uid, usedAssert] : m_usedAssert) {
+    for (auto& [uid, usedAssert] : this->m_usingData) {
       if (usedAssert.expired()) {
         needRemovedUid.push_back(uid);
       }
     }
 
     for (auto& uid : needRemovedUid) {
-      m_usedAssert.erase(uid);
+      this->m_usingData.erase(uid);
     }
   }
 
@@ -99,18 +90,10 @@ class AssetManagerImpl final {
 
   std::shared_ptr<Asset>
   Get(Uid uid) {
-    auto* registry = AssetRegistry::GetInstance();
-    if (m_usedAssert.find(uid) != m_usedAssert.end()) {
-      if (!m_usedAssert.at(uid).expired()) {
-        if (!m_assertCache.existed(uid)) {
-          auto assert = m_usedAssert.at(uid).lock();
-          m_assertCache.insert(uid, assert);
-        }
-        return m_assertCache.at(uid);
-      }
-      m_usedAssert.erase(uid);
-    }
+    auto asset = Base::Get(uid);
+    if (asset != nullptr) return asset;
 
+    auto* registry = AssetRegistry::GetInstance();
     auto assertPath = registry->GetAssertAbsolutePath(uid);
     if (!std::filesystem::exists(assertPath)) {
       throw AssetException("can't find resource in the .import dir, maybe you not create it", uid);
@@ -119,11 +102,9 @@ class AssetManagerImpl final {
     std::ifstream file(assertPath, std::ios::binary | std::ios::in);
     cereal::BinaryInputArchive ar(file);
 
-    std::shared_ptr<Asset> assert;
-    ar(assert);
-    m_assertCache.insert(uid, assert);
-    m_usedAssert.insert({uid, assert});
-    return assert;
+    ar(asset);
+    Base::Insert(uid, asset);
+    return asset;
   }
 
   /**
@@ -166,8 +147,7 @@ class AssetManagerImpl final {
     cereal::BinaryOutputArchive ar(file);
     ar(assert);
 
-    m_assertCache.insert(uid, assert);
-    m_usedAssert[uid] = assert;
+    Base::Insert(uid, assert);
 
     return assert;
   }
@@ -194,7 +174,7 @@ class AssetManagerImpl final {
    */
   void
   Save() {
-    for (auto&& [uid, usedAssert] : m_usedAssert) {
+    for (auto&& [uid, usedAssert] : this->m_usingData) {
       if (usedAssert.expired()) {
         continue;
       }
@@ -205,50 +185,10 @@ class AssetManagerImpl final {
       ar(usedAssert);
     }
   }
-
-  /**
-   * @brief insert a asset to the manager
-   */
-  void
-  Insert(const std::shared_ptr<Asset>& asset) {
-    m_assertCache.insert(asset->uid, asset);
-    m_usedAssert[asset->uid] = asset;
-  }
-
-  void
-  RemoveFromCache(Uid uid) {
-    m_assertCache.remove(uid);
-  }
-
-  void
-  ResizeCache(size_t size) {
-    m_assertCache.Resize(size);
-  }
-
-  void
-  ClearCache() {
-    m_assertCache.clear();
-  }
-
-  void
-  ClearAll() {
-    ClearCache();
-    m_usedAssert.clear();
-  }
-
-  bool
-  IsInCache(Uid uid) {
-    return m_assertCache.existed(uid);
-  }
-
-  bool
-  IsInUse(Uid uid) {
-    return !m_usedAssert[uid].expired();
-  }
 };
 
 template <AssetType Assert>
-using AssetManager = Singleton<AssetManagerImpl<Assert>>;
+using AssetManager = Singleton<AssetManagerBase<Assert>>;
 
 template <AssetType Assert>
 using AssetManagerType = std::remove_cvref_t<decltype(*AssetManager<Assert>::GetInstance())>;

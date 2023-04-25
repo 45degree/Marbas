@@ -6,13 +6,15 @@
 // clang-format off
 #include <imgui/imgui.h>
 #include <ImGuizmo.h>
+#include <chrono>
 // clang-format on
 
 #include "AssetManager/AssetRegistry.hpp"
-#include "AssetManager/GPUAssetUpLoader.hpp"
-#include "AssetManager/ModelAsset.hpp"
-#include "AssetManager/TextureAsset.hpp"
+// #include "AssetManager/GPUAssetUpLoader.hpp"
+// #include "AssetManager/ModelAsset.hpp"
+// #include "AssetManager/TextureAsset.hpp"
 #include "Common/Common.hpp"
+#include "Core/Scene/GPUDataPipeline/GPUDataManager.hpp"
 #include "Core/Scene/System/RenderSystem.hpp"
 #include "Editor/Widget/ContentBrowser.hpp"
 #include "GLFW/glfw3.h"
@@ -113,6 +115,7 @@ Application::Initialize() {
 
   // create render engine
   // m_renderEngine = std::make_unique<RenderEngine>(m_rhiFactory.get());
+  GPUDataManager::SetUp(m_rhiFactory.get());
   RenderSystem::Initialize(m_rhiFactory.get());
   RenderSystem::CreateRenderGraph(m_scene.get(), m_rhiFactory.get());
   // m_renderEngine->CreateGraph(m_scene.get());
@@ -172,6 +175,7 @@ Application::Run() {
 
     {
       SceneSystem::UpdateEveryFrame(m_scene.get(), m_rhiFactory.get());
+
       RenderSystem::Update(RenderInfo{
           .scene = m_scene.get(),
           .imageIndex = currentFrame,
@@ -215,8 +219,9 @@ Application::Quit() {
   m_rhiFactory->WaitIdle();
 
   // Clear AssetManager
-  GPUAssetManager<TextureGPUAsset>::Destroy();
-  GPUAssetManager<ModelGPUAsset>::Destroy();
+  // GPUAssetManager<TextureGPUAsset>::Destroy();
+  // GPUAssetManager<ModelGPUAsset>::Destroy();
+  GPUDataManager::TearDown();
 
   // clear context
   m_imguiContext->ClearUp();

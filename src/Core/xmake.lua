@@ -1,8 +1,28 @@
 ---@diagnostic disable: undefined-global
 
+option('CascateCount', function()
+  set_default('3')
+  set_category('Render Configuration')
+  set_description('Max Cascate Count for directional light')
+end)
+
+option('DirectionLightCount', function()
+  set_default('32')
+  set_category('Render Configuration')
+  set_description('Max Cascate Count for directional light')
+end)
+
 target('Marbas.Core', function()
   set_kind('static')
   set_languages('c11', 'cxx20')
+
+  if has_config('CascateCount') then
+    add_defines('CASCATE_COUNT=$(CascateCount)')
+  end
+
+  if has_config('DirectionLightCount') then
+    add_defines('MAX_DIRECTION_LIGHT_COUNT=$(DirectionLightCount)')
+  end
 
   add_rules('glslc2spv', {
     outputdir = path.join('$(buildir)', '$(os)', '$(arch)', '$(mode)', 'Shader'),
@@ -11,15 +31,17 @@ target('Marbas.Core', function()
   add_includedirs('$(projectdir)/src')
   add_files('$(projectdir)/src/Core/Scene/**.cc')
   add_files('$(projectdir)/src/Core/Renderer/*.cc')
-  -- add_files('$(projectdir)/src/Core/Renderer/GI/**.cc')
   add_files('$(projectdir)/src/Core/Renderer/RenderGraph/*.cc')
   add_files('$(projectdir)/src/Core/Renderer/Pass/GeometryPass.cc')
   add_files('$(projectdir)/src/Core/Renderer/Pass/AtmospherePass.cc')
   add_files('$(projectdir)/src/Core/Renderer/Pass/DirectionLightShadowMapPass.cc')
   add_files('$(projectdir)/src/Core/Renderer/Pass/ForwardPass/*.cc')
   add_files('$(projectdir)/src/Core/Renderer/Pass/PreComputePass/*.cc')
+  add_files('$(projectdir)/src/Core/Renderer/Pass/DirectLightPass.cc')
+  add_files('$(projectdir)/src/Core/Renderer/Pass/SSAOPass.cc')
 
   --
+  -- remove_files('Scene/GPUDataPipeline/**.cc')
   remove_files('$(projectdir)/src/Core/Renderer/Pass/PreComputePass/RenderSceneFromProbe.cc')
 
   add_includedirs('$(projectdir)/src/Shader')
@@ -42,6 +64,9 @@ target('Marbas.Core', function()
   add_files('$(projectdir)/src/Shader/precompute/transmittanceLUT.vert')
   add_files('$(projectdir)/src/Shader/precompute/transmittanceLUT.frag')
   add_files('$(projectdir)/src/Shader/precompute/multiScatterLUT.frag')
+  add_files('$(projectdir)/src/Shader/ScreenSpace.vert')
+  add_files('$(projectdir)/src/Shader/directLightPass.frag')
+  add_files('$(projectdir)/src/Shader/SSAO.frag')
 
   if is_plat('windows') then
     add_files('./Platform/WindowsPolicy.cc')
@@ -49,7 +74,7 @@ target('Marbas.Core', function()
     add_files('./Platform/LinuxPolicy.cc')
   end
 
-  add_deps('Marbas.RHI', 'Marbas.Common', 'IconFontCppHeaders', 'ImGuizmo', 'nameof')
+  add_deps('Marbas.RHI', 'Marbas.Common', 'IconFontCppHeaders', 'ImGuizmo', 'nameof', 'async_simple')
 
   add_packages('glfw', 'glm', 'glog', 'assimp', 'entt', 'fmt', 'cereal')
 

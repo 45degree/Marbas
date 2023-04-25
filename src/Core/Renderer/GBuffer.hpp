@@ -23,8 +23,8 @@ struct GBuffer_Position {
   constexpr static uint32_t levels = 1;
 };
 
-struct GBuffer_Normals {
-  constexpr static StringView typeName = "Normal";
+struct GBuffer_Normal_Metallic_Roughness {
+  constexpr static StringView typeName = "NormalMetallicRoughness";
   constexpr static ImageFormat format = ImageFormat::RGBA32F;
   constexpr static ImageViewType type = ImageViewType::TEXTURE2D;
   constexpr static uint32_t layers = 1;
@@ -34,30 +34,6 @@ struct GBuffer_Normals {
 struct GBuffer_Depth {
   constexpr static StringView typeName = "Depth";
   constexpr static ImageFormat format = ImageFormat::DEPTH;
-  constexpr static ImageViewType type = ImageViewType::TEXTURE2D;
-  constexpr static uint32_t layers = 1;
-  constexpr static uint32_t levels = 1;
-};
-
-struct GBuffer_AmbientOcclusion {
-  constexpr static StringView typeName = "Ao";
-  constexpr static ImageFormat format = ImageFormat::R32F;
-  constexpr static ImageViewType type = ImageViewType::TEXTURE2D;
-  constexpr static uint32_t layers = 1;
-  constexpr static uint32_t levels = 1;
-};
-
-struct GBuffer_Roughness {
-  constexpr static StringView typeName = "roughness";
-  constexpr static ImageFormat format = ImageFormat::R32F;
-  constexpr static ImageViewType type = ImageViewType::TEXTURE2D;
-  constexpr static uint32_t layers = 1;
-  constexpr static uint32_t levels = 1;
-};
-
-struct GBuffer_Metallic {
-  constexpr static StringView typeName = "Metallic";
-  constexpr static ImageFormat format = ImageFormat::R32F;
   constexpr static ImageViewType type = ImageViewType::TEXTURE2D;
   constexpr static uint32_t layers = 1;
   constexpr static uint32_t levels = 1;

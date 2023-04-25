@@ -5,7 +5,7 @@ namespace Marbas {
 constexpr static float PI = 3.1415926535;
 
 Frustum
-Frustum::CreateFrustumFromCamera(const Camera &camera, float fov, float aspect) {
+Frustum::CreateFrustumFromCamera(const Camera& camera, float fov, float aspect) {
   auto near = camera.GetNear();
   auto far = camera.GetFar();
   auto pos = camera.GetPosition();

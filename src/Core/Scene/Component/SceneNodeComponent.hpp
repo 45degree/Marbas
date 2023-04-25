@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cereal/types/string.hpp>
 #include <entt/entt.hpp>
 
 #include "AssetManager/AssetPath.hpp"
@@ -29,8 +30,17 @@ struct DirectionalLightSceneNode {
     ar(nodeName);
   }
 
+  // static void
+  // RegistryNode(entt::registry& world);
+
   static void
-  RegistryNode(entt::registry& world, entt::entity node);
+  OnCreate(entt::registry& world, entt::entity node);
+
+  static void
+  OnUpdate(entt::registry& world, entt::entity node);
+
+  static void
+  OnDestroy(entt::registry& world, entt::entity node);
 };
 
 struct PointLightSceneNode {

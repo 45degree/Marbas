@@ -5,12 +5,14 @@
 #include "AssetManager/ModelAsset.hpp"
 #include "AssetManager/Singleton.hpp"
 #include "Core/Renderer/Pass/AtmospherePass.hpp"
+#include "Core/Renderer/Pass/DirectLightPass.hpp"
 #include "Core/Renderer/Pass/DirectionLightShadowMapPass.hpp"
 #include "Core/Renderer/Pass/ForwardPass/GridPass.hpp"
 #include "Core/Renderer/Pass/ForwardPass/SkyImagePass.hpp"
 #include "Core/Renderer/Pass/GeometryPass.hpp"
 #include "Core/Renderer/Pass/PreComputePass/MultiScatterLUT.hpp"
 #include "Core/Renderer/Pass/PreComputePass/TransmittanceLUT.hpp"
+#include "Core/Renderer/Pass/SSAOPass.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraph.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphResourceManager.hpp"
 #include "Core/Scene/Component/AABBComponent.hpp"
@@ -30,10 +32,6 @@ entt::sink<entt::sigh<void(ImageView*)>> RenderSystem::s_sink = {s_newResultImag
 
 static std::optional<ImageView*> s_lastResultImageView;
 
-struct ScreenSpaceShadowInfo {
-  RenderGraphTextureHandler screenSpaceShadowInfo;
-};
-
 void
 RenderSystem::Initialize(RHIFactory* rhiFactory) {
   /**
@@ -46,12 +44,14 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
 
   auto& geometryPassCreateInfo = *Singleton<GeometryPassCreateInfo>::GetInstance();
   auto& directShadowMapData = *Singleton<DirectionShadowMapPassCreateInfo>::GetInstance();
-  auto& screenSpaceShadowInfo = *Singleton<ScreenSpaceShadowInfo>::GetInstance();
   auto& atmosphereCreateInfo = *Singleton<AtmospherePassCreateInfo>::GetInstance();
   auto& transmittanceLURCreateInfo = *Singleton<TransmittanceLUTPassCreateInfo>::GetInstance();
   auto& multiscatterLUTCreateInfo = *Singleton<MultiScatterLUTCreateInfo>::GetInstance();
+  auto& directLightPassCreateInfo = *Singleton<DirectLightPassCreateInfo>::GetInstance();
+  auto& ssaoPassCreateInfo = *Singleton<SSAOCreateInfo>::GetInstance();
 
   ImageCreateInfo createInfo;
+  // geometry pass
   createInfo.sampleCount = SampleCount::BIT1;
   createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET;
   createInfo.width = 1920;
@@ -65,42 +65,45 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   createInfo.format = ImageFormat::RGBA;
   auto colorTextureHandler = s_resourceManager->CreateTexture("colorTexture", createInfo);
 
-  createInfo.format = ImageFormat::R32F;
-  auto aoTextureHandler = s_resourceManager->CreateTexture("aoTexture", createInfo);
-  auto roughnessTextureHandler = s_resourceManager->CreateTexture("roughnessTexture", createInfo);
-  auto metallicTextureHandler = s_resourceManager->CreateTexture("metallicTexture", createInfo);
-
   createInfo.format = ImageFormat::DEPTH;
-  createInfo.usage = ImageUsageFlags::DEPTH_STENCIL;
+  createInfo.usage = ImageUsageFlags::DEPTH_STENCIL | ImageUsageFlags::SHADER_READ;
   auto depthTexture = s_resourceManager->CreateTexture("depthTexture", createInfo);
 
   geometryPassCreateInfo.width = 1920;
   geometryPassCreateInfo.height = 1080;
   geometryPassCreateInfo.rhiFactory = rhiFactory;
-  geometryPassCreateInfo.aoTexture = aoTextureHandler;
-  geometryPassCreateInfo.normalTexture = normalTextureHandler;
+  geometryPassCreateInfo.normal_metallic_roughnessTexture = normalTextureHandler;
   geometryPassCreateInfo.colorTexture = colorTextureHandler;
   geometryPassCreateInfo.positionTexture = positionTextureHandler;
   geometryPassCreateInfo.depthTexture = depthTexture;
-  geometryPassCreateInfo.metallicTexture = metallicTextureHandler;
-  geometryPassCreateInfo.roughnessTexture = roughnessTextureHandler;
 
+  // ssao pass
+  createInfo.sampleCount = SampleCount::BIT1;
+  createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET;
+  createInfo.width = 1920;
+  createInfo.height = 1080;
+  createInfo.format = ImageFormat::R32F;
+  createInfo.imageDesc = Image2DDesc();
+  createInfo.mipMapLevel = 1;
+  auto ssaoTexture = s_resourceManager->CreateTexture("ssaoTexture", createInfo);
+
+  ssaoPassCreateInfo.normalTexture = normalTextureHandler;
+  ssaoPassCreateInfo.posTexture = positionTextureHandler;
+  ssaoPassCreateInfo.depthTexture = depthTexture;
+  ssaoPassCreateInfo.rhiFactory = rhiFactory;
+  ssaoPassCreateInfo.width = 1920;
+  ssaoPassCreateInfo.height = 1080;
+  ssaoPassCreateInfo.ssaoTexture = ssaoTexture;
+
+  // directional light shadow map pass
   createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::DEPTH_STENCIL;
   createInfo.format = ImageFormat::DEPTH;
   createInfo.mipMapLevel = 1;
   createInfo.imageDesc = Image2DArrayDesc{.arraySize = DirectionShadowComponent::splitCount + 1};
-  createInfo.height = 1024;
-  createInfo.width = 1024;
+  createInfo.height = DirectionShadowComponent::MAX_SHADOWMAP_SIZE;
+  createInfo.width = DirectionShadowComponent::MAX_SHADOWMAP_SIZE;
   directShadowMapData.rhiFactory = rhiFactory;
   directShadowMapData.directionalShadowMap = s_resourceManager->CreateTexture("shadowMap", createInfo);
-
-  createInfo.width = 1920;
-  createInfo.height = 1080;
-  createInfo.imageDesc = Image2DDesc();
-  createInfo.mipMapLevel = 1;
-  createInfo.format = ImageFormat::R32F;
-  createInfo.usage = ImageUsageFlags::COLOR_RENDER_TARGET | ImageUsageFlags::SHADER_READ;
-  screenSpaceShadowInfo.screenSpaceShadowInfo = s_resourceManager->CreateTexture("screenSpaceShadowInfo", createInfo);
 
   // transmittanceLUT
   createInfo.sampleCount = SampleCount::BIT1;
@@ -143,13 +146,31 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   atmosphereCreateInfo.colorTexture = s_resourceManager->CreateTexture("Atmosphere", createInfo);
   atmosphereCreateInfo.transmittanceLUT = transmittanceLURCreateInfo.lutTexture;
   atmosphereCreateInfo.multiscatterLUT = multiscatterLUTCreateInfo.multiScatterLUT;
+
+  // direct light pass
+  createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET;
+  createInfo.format = ImageFormat::RGBA;
+  createInfo.mipMapLevel = 1;
+  createInfo.imageDesc = Image2DDesc{};
+  createInfo.width = 1920;
+  createInfo.height = 1080;
+  directLightPassCreateInfo.finalColorTexture = s_resourceManager->CreateTexture("finalColorTexture", createInfo);
+  directLightPassCreateInfo.width = 1920;
+  directLightPassCreateInfo.height = 1080;
+  directLightPassCreateInfo.rhiFactory = rhiFactory;
+  directLightPassCreateInfo.directionalShadowmap = directShadowMapData.directionalShadowMap;
+  directLightPassCreateInfo.aoTeture = ssaoPassCreateInfo.ssaoTexture;
+  directLightPassCreateInfo.diffuseTexture = geometryPassCreateInfo.colorTexture;
+  directLightPassCreateInfo.normalTeture = geometryPassCreateInfo.normal_metallic_roughnessTexture;
+  directLightPassCreateInfo.positionTeture = geometryPassCreateInfo.positionTexture;
 }
 
 void
 RenderSystem::Destroy(RHIFactory* rhiFactory) {
   Singleton<GeometryPassCreateInfo>::Destroy();
+  Singleton<SSAOCreateInfo>::Destroy();
   Singleton<DirectionShadowMapPassCreateInfo>::Destroy();
-  Singleton<ScreenSpaceShadowInfo>::Destroy();
+  // Singleton<ScreenSpaceShadowInfo>::Destroy();
   Singleton<AtmospherePassCreateInfo>::Destroy();
   Singleton<TransmittanceLUTPassCreateInfo>::Destroy();
 
@@ -187,6 +208,8 @@ RenderSystem::Update(const RenderInfo& renderInfo) {
     }
   }
 
+  UpdateShadowMapAtlasPosition(renderInfo.scene);
+
   s_renderGraph->Execute(renderInfo.waitSemaphore, renderInfo.signalSemaphore, renderInfo.fence);
 }
 
@@ -205,10 +228,12 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
 
   auto& geometryPassCreateInfo = *Singleton<GeometryPassCreateInfo>::GetInstance();
   auto& directShadowMapData = *Singleton<DirectionShadowMapPassCreateInfo>::GetInstance();
-  auto& screenSpaceShadowInfo = *Singleton<ScreenSpaceShadowInfo>::GetInstance();
+  // auto& screenSpaceShadowInfo = *Singleton<ScreenSpaceShadowInfo>::GetInstance();
   auto& atmosphereCreateInfo = *Singleton<AtmospherePassCreateInfo>::GetInstance();
   auto& transmittanceLUTCreateInfo = *Singleton<TransmittanceLUTPassCreateInfo>::GetInstance();
   auto& multiScatterLUTCreateInfo = *Singleton<MultiScatterLUTCreateInfo>::GetInstance();
+  auto& directLightPassCreateInfo = *Singleton<DirectLightPassCreateInfo>::GetInstance();
+  auto& ssaoPassCreateInfo = *Singleton<SSAOCreateInfo>::GetInstance();
 
   /**
    * precompute pass
@@ -226,36 +251,14 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
   geometryPassCreateInfo.scene = scene;
   s_renderGraph->AddPass<GeometryPass>("GeometryPass", geometryPassCreateInfo);
 
+  ssaoPassCreateInfo.scene = scene;
+  s_renderGraph->AddPass<SSAOPass>("SSAO", ssaoPassCreateInfo);
+
   directShadowMapData.scene = scene;
   s_renderGraph->AddPass<DirectionShadowMapPass>("DirectionLight", directShadowMapData);
 
-  auto directLightView = world.view<DirectionLightComponent, DirectionShadowComponent>();
-
-  /** Religth probe
-   * 1. 计算每一个surfel的直接光照颜色
-   * screenSpaceLight = 0
-   * for(auto light : lights) {
-   *   // 计算shadow map
-   *   shadowMap = RenderShadomap(light);
-   *
-   *   // compute shader
-   *   for(surfel : surfels) {
-   *     surfel.color += computeLight(surfel, light, shadowMap);
-   *   }
-   *
-   *   // 计算屏幕直接光
-   *
-   * } // 计算直接光
-   *
-   * 2. relight probe
-   * // compute shader
-   * for(auto probe : probes) {
-   *  probe.color = computeProbe(probe, surfels);
-   * }
-   *
-   * 3. 添加间接光照
-   *
-   */
+  directLightPassCreateInfo.scene = scene;
+  s_renderGraph->AddPass<DirectLightPass>("direct light pass", directLightPassCreateInfo);
 
   // draw atmosphere
   atmosphereCreateInfo.scene = scene;
@@ -268,14 +271,14 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
   skyImagePassCreateInfo.scene = scene;
   skyImagePassCreateInfo.rhiFactory = rhiFactory;
   skyImagePassCreateInfo.finalDepthTexture = geometryPassCreateInfo.depthTexture;
-  skyImagePassCreateInfo.finalColorTexture = geometryPassCreateInfo.colorTexture;
+  skyImagePassCreateInfo.finalColorTexture = directLightPassCreateInfo.finalColorTexture;
   skyImagePassCreateInfo.atmosphereTexture = atmosphereCreateInfo.colorTexture;
   s_renderGraph->AddPass<SkyImagePass>("skyImagePass", skyImagePassCreateInfo);
 
   // draw grid
   GridRenderPassCreateInfo gridRenderPassCreateInfo;
   gridRenderPassCreateInfo.finalDepthTexture = geometryPassCreateInfo.depthTexture;
-  gridRenderPassCreateInfo.finalColorTexture = geometryPassCreateInfo.colorTexture;
+  gridRenderPassCreateInfo.finalColorTexture = directLightPassCreateInfo.finalColorTexture;
   gridRenderPassCreateInfo.scene = scene;
   gridRenderPassCreateInfo.rhiFactory = rhiFactory;
   gridRenderPassCreateInfo.width = 1920;
@@ -285,7 +288,7 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
   s_precomputeRenderGraph->Compile();
   s_renderGraph->Compile();
 
-  s_resultImageView = s_resourceManager->GetImageView(geometryPassCreateInfo.colorTexture);
+  s_resultImageView = s_resourceManager->GetImageView(directLightPassCreateInfo.finalColorTexture);
 
   /**
    * precompute all pass
@@ -313,6 +316,36 @@ RenderSystem::RerunPreComputePass(const StringView& passName, RHIFactory* rhiFac
   rhiFactory->WaitForFence(s_precomputeFence);
   rhiFactory->ResetFence(s_precomputeFence);
   LOG(INFO) << FORMAT("re-run the precompute pass:{}.", passName);
+}
+
+void
+RenderSystem::UpdateShadowMapAtlasPosition(Scene* scene) {
+  auto& world = scene->GetWorld();
+  auto view = world.view<DirectionShadowComponent>();
+
+  auto upper_power_of_4 = [](unsigned int x) {
+    unsigned int t = 0;
+    while (pow(4, t) < x) {
+      t++;
+    }
+    return t;
+  };
+
+  auto shadowCount = view.size();
+  int gridCount = 1 << upper_power_of_4(shadowCount);
+
+  for (int i = 0; i < shadowCount; i++) {
+    int row = i / gridCount;
+    int col = i % gridCount;
+
+    float XOffset = static_cast<float>(row) / gridCount;
+    float YOffset = static_cast<float>(col) / gridCount;
+    auto& comp = view.get<DirectionShadowComponent>(view[i]);
+    comp.m_viewport.x = XOffset;
+    comp.m_viewport.y = YOffset;
+    comp.m_viewport.z = 1.0 / gridCount;
+    comp.m_viewport.w = 1.0 / gridCount;
+  }
 }
 
 }  // namespace Marbas

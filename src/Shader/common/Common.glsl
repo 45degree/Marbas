@@ -3,6 +3,30 @@
 
 #include "ConstValue.glsl"
 
+
+/**
+ * the common struct
+ */
+
+// TODO: add this to compile option
+#ifndef CASCADE_COUNT
+#define CASCADE_COUNT 3
+#endif
+
+struct DirectionLightInfo {
+  vec2 direction;
+  ivec3 color;
+  float energy;
+  vec4 atlasViewport;
+  vec4 cascadePlaneDistances[CASCADE_COUNT + 1];
+  mat4 lightMatrix[CASCADE_COUNT + 1];
+};
+
+
+/**
+ * the common functions
+ */
+
 /**
  * @see https://blog.csdn.net/silangquan/article/details/17464821
  */
@@ -22,7 +46,7 @@ RayIntersectSphere(const vec3 spherePoint, const float sphereRadius, const vec3 
 }
 
 /**
- * @berif convert a direction to a Equirectangular UV
+ * @brief convert a direction to a Equirectangular UV
  * @see https://learnopengl.com/PBR/IBL/Diffuse-irradiance
  */
 vec2
@@ -38,7 +62,7 @@ DirToCubemapUV2D(vec3 dir) {
 }
 
 /**
- * @berif convert a Equirectangular UV to direction, the inverse operator of DirToCubemapUV2D.
+ * @brief convert a Equirectangular UV to direction, the inverse operator of DirToCubemapUV2D.
  * @see DirToCubemapUV2D
  */
 vec3

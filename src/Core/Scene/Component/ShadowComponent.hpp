@@ -6,8 +6,11 @@
 #include "Common/Light.hpp"
 #include "Common/MathCommon.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphResource.hpp"
-#include "Core/Tool/Quadtree.hpp"
 #include "RHIFactory.hpp"
+
+#ifndef CASCATE_COUNT
+#define CASCATE_COUNT 3
+#endif
 
 namespace Marbas {
 
@@ -16,29 +19,30 @@ namespace Marbas {
  * this component only store the subresource of the image
  */
 struct DirectionShadowComponent {
-  constexpr static int splitCount = 3;
+  constexpr static int splitCount = CASCATE_COUNT;
+  constexpr static int shadowMapArraySize = CASCATE_COUNT + 1;
+  constexpr static uint32_t MAX_SHADOWMAP_SIZE = 4096;
+
   std::array<float, splitCount> m_split = {0.1, 0.2, 0.5};
   std::array<glm::mat4, splitCount + 1> m_lightSpaceMatrices;
-
-  struct ShadowGPUInfo {
-    Buffer* m_lightMatricesBuffer = nullptr;
-    uintptr_t m_descriptorSet = 0;
-    DescriptorSetArgument m_argument;
-  };
-
- private:
-  ShadowGPUInfo m_shadowGPUInfo;
+  std::array<float, splitCount + 1> m_cascadePlane;
+  glm::vec4 m_viewport;
 
  public:
   DirectionShadowComponent();
 
-  const ShadowGPUInfo&
-  GetShadowInfo() {
-    return m_shadowGPUInfo;
-  }
-
   void
-  UpdateShadowGPUInfo(RHIFactory* rhiFactory, const glm::vec3& lightDir, const Camera& camera);
+  UpdateShadowInfo(const glm::vec3& lightDir, const Camera& camera);
+
+ public:
+  static void
+  OnUpdate(entt::registry& world, entt::entity node);
+
+  static void
+  OnCreate(entt::registry& world, entt::entity node);
+
+  static void
+  OnDestroy(entt::registry& world, entt::entity node);
 };
 
 }  // namespace Marbas

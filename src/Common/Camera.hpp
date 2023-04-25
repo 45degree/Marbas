@@ -67,7 +67,7 @@ class MARBAS_EXPORT Camera {
   // IsMeshVisible(const Mesh& mesh, const glm::mat4& transform) = 0;
 
  protected:
-  float m_near = 0.05f;
+  float m_near = 0.1f;
   float m_far = 1000.f;
   float m_fov = 45.0f;
   float m_aspect = 800.f / 600.f;

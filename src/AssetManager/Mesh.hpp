@@ -20,6 +20,10 @@ struct Mesh {
   serialize(Archive& ar) {
     ar(m_name, m_vertices, m_indices, m_material);
   }
+
+ public:
+  bool m_materialTexChanged = true;
+  bool m_materialValueChanged = true;
 };
 
 }  // namespace Marbas

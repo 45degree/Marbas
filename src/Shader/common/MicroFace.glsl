@@ -1,10 +1,14 @@
-#ifndef micro_face_glsl
-#define micro_face_glsl
+#ifndef MICRO_FACE_GLSL
+#define MiCRO_FACE_GLSL
 
 #include "constValue.glsl"
 
 vec3 fresnelSchlick(float cosTheta, vec3 FO) {
   return FO + (1.0 - FO) * pow(1.0 - cosTheta, 5.0);
+}
+
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 FO, float roughness) {
+  return FO + (max(vec3(1.0 - roughness), FO) - FO) * pow(1.0 - cosTheta, 5.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {

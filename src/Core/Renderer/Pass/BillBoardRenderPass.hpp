@@ -39,7 +39,7 @@ class BillBoardRenderPass final : public ForwardRenderPass {
   SetUniformBuffer(const Scene* scene);
 
   /**
-   * @berif execute the render pass node after setting the render grpah
+   * @brief execute the render pass node after setting the render grpah
    */
   void
   Execute(const Scene* scene, const ResourceManager* resourceManager) override;
