@@ -1,6 +1,5 @@
 #include "DirectLightPass.hpp"
 
-#include "Core/Scene/Component/LightComponent.hpp"
 #include "Core/Scene/Component/ShadowComponent.hpp"
 #include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
 
@@ -8,7 +7,6 @@ namespace Marbas {
 
 DirectLightPass::DirectLightPass(const DirectLightPassCreateInfo& createInfo)
     : m_rhiFactory(createInfo.rhiFactory),
-      m_scene(createInfo.scene),
       m_width(createInfo.width),
       m_height(createInfo.height),
       m_diffuseTexture(createInfo.diffuseTexture),
@@ -106,9 +104,10 @@ DirectLightPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& c
   auto inputSet = registry.GetInputDescriptorSet();
   auto framebuffer = registry.GetFrameBuffer();
   auto pipeline = registry.GetPipeline(0);
+  auto scene = registry.GetCurrentActiveScene();
 
   auto bufCtx = m_rhiFactory->GetBufferContext();
-  auto& camera = m_scene->GetEditorCamera();
+  auto& camera = scene->GetEditorCamera();
   m_cameraInfo.cameraPos = camera->GetPosition();
   m_cameraInfo.cameraView = camera->GetViewMatrix();
   bufCtx->UpdateBuffer(m_cameraInfoBuffer, &m_cameraInfo, sizeof(CameraInfo), 0);
@@ -135,6 +134,12 @@ DirectLightPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& c
   commandList.Draw(6, 1, 0, 0);
   commandList.EndPipeline(pipeline);
   commandList.End();
+}
+
+bool
+DirectLightPass::IsEnable(RenderGraphRegistry& registry) {
+  auto scene = registry.GetCurrentActiveScene();
+  return scene != nullptr;
 }
 
 }  // namespace Marbas

@@ -56,7 +56,7 @@ class Scene {
   GetChildrenCount(entt::entity node) const;
 
   std::shared_ptr<EditorCamera>
-  GetEditorCamrea() {
+  GetEditorCamrea() const {
     return m_editorCamera;
   }
 

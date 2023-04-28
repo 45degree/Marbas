@@ -11,8 +11,7 @@ SSAOPass::SSAOPass(const SSAOCreateInfo& createInfo)
       m_normalTexture(createInfo.normalTexture),
       m_depthTexture(createInfo.depthTexture),
       m_ssaoTexture(createInfo.ssaoTexture),
-      m_rhiFactory(createInfo.rhiFactory),
-      m_scene(createInfo.scene) {
+      m_rhiFactory(createInfo.rhiFactory) {
   auto pipelineCtx = m_rhiFactory->GetPipelineContext();
   auto bufCtx = m_rhiFactory->GetBufferContext();
 
@@ -79,9 +78,10 @@ SSAOPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandL
   auto inputSet = registry.GetInputDescriptorSet();
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
+  auto* scene = registry.GetCurrentActiveScene();
 
   auto bufCtx = m_rhiFactory->GetBufferContext();
-  auto camera = m_scene->GetEditorCamrea();
+  auto camera = scene->GetEditorCamrea();
   m_cameraInfo.m_far = camera->GetFar();
   m_cameraInfo.m_near = camera->GetNear();
   m_cameraInfo.m_position = camera->GetPosition();

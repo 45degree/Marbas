@@ -35,7 +35,7 @@ TEST_F(SceneLoadTest, SceneNodeTest) {
 }
 
 TEST_F(SceneLoadTest, SaveLoadScene) {
-  auto scenePath = m_assetRegistry->GetProjectDir() / "scene.xml";
+  auto scenePath = m_assetRegistry->GetProjectDir() / "scene.scene";
 
   auto scene = std::make_shared<Scene>();
   auto& world = scene->GetWorld();

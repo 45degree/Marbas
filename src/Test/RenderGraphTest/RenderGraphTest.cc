@@ -133,7 +133,7 @@ TEST_F(RenderGraphTest, DisablePass) {
     };
 
     bool
-    IsEnable() {
+    IsEnable(RenderGraphRegistry& registry) {
       return false;
     }
   };
@@ -165,7 +165,7 @@ TEST_F(RenderGraphTest, ExecutePassAlone) {
     };
 
     bool
-    IsEnable() {
+    IsEnable(RenderGraphRegistry& registry) {
       return true;
     }
   };
@@ -175,7 +175,7 @@ TEST_F(RenderGraphTest, ExecutePassAlone) {
   graph.AddPass<TestStruct>("name2", init);
   graph.Compile();
 
-  graph.ExecuteAlone("name2", nullptr, nullptr, nullptr);
+  graph.ExecuteAlone("name2", nullptr, nullptr, nullptr, nullptr);
 }
 
 }  // namespace Marbas

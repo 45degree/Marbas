@@ -12,9 +12,7 @@
 namespace Marbas {
 
 DirectionShadowMapPass::DirectionShadowMapPass(const DirectionShadowMapPassCreateInfo& createInfo)
-    : m_scene(createInfo.scene),
-      m_shadowMapTextureHandler(createInfo.directionalShadowMap),
-      m_rhiFactory(createInfo.rhiFactory) {}
+    : m_shadowMapTextureHandler(createInfo.directionalShadowMap), m_rhiFactory(createInfo.rhiFactory) {}
 
 void
 DirectionShadowMapPass::SetUp(RenderGraphGraphicsBuilder& builder) {
@@ -49,7 +47,8 @@ DirectionShadowMapPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 void
 DirectionShadowMapPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
   // Create Shadow Alias
-  auto& world = m_scene->GetWorld();
+  auto* scene = registry.GetCurrentActiveScene();
+  auto& world = scene->GetWorld();
   auto view = world.view<DirectionLightComponent, DirectionShadowComponent>();
   auto shadowCount = view.size_hint();
 
@@ -120,8 +119,11 @@ DirectionShadowMapPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBu
 }
 
 bool
-DirectionShadowMapPass::IsEnable() {
-  auto& world = m_scene->GetWorld();
+DirectionShadowMapPass::IsEnable(RenderGraphRegistry& registry) {
+  auto scene = registry.GetCurrentActiveScene();
+  if (scene == nullptr) return false;
+
+  auto& world = scene->GetWorld();
   auto view = world.view<DirectionShadowComponent>();
   auto shadowCount = view.size();
   return shadowCount != 0;

@@ -131,8 +131,8 @@ LambdaGraphicsRenderGraphPass::LambdaGraphicsRenderGraphPass(StringView name, RH
     : RenderGraphGraphicsPass(name, rhiFactory) {}
 
 void
-LambdaGraphicsRenderGraphPass::Execute(RenderGraph* graph) {
-  RenderGraphRegistry registry(graph, this);
+LambdaGraphicsRenderGraphPass::Execute(RenderGraph* graph, Scene* scene) {
+  RenderGraphRegistry registry(graph, scene, this);
   m_command(registry, *m_commandBuffer);
 }
 

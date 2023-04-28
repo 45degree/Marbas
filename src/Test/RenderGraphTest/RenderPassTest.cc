@@ -81,6 +81,7 @@ TEST_F(RenderGraphPassTest, CreateDescriptorSetFromRead) {
     builder.BeginPipeline();
     builder.EndPipeline();
     return [&](RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
+      auto* scene = registry.GetCurrentActiveScene();
       auto set = registry.GetInputDescriptorSet();
       ASSERT_EQ(set, descriptorSet);
     };

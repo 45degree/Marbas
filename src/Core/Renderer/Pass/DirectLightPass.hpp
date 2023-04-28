@@ -14,7 +14,6 @@ namespace Marbas {
 
 struct DirectLightPassCreateInfo {
   RHIFactory* rhiFactory;
-  Scene* scene;
   uint32_t width;
   uint32_t height;
   RenderGraphTextureHandler diffuseTexture;
@@ -39,9 +38,11 @@ class DirectLightPass {
   void
   Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
+  bool
+  IsEnable(RenderGraphRegistry& registry);
+
  private:
   RHIFactory* m_rhiFactory;
-  Scene* m_scene;
   uint32_t m_width;
   uint32_t m_height;
 

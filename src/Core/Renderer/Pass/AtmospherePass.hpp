@@ -7,7 +7,6 @@
 namespace Marbas {
 
 struct AtmospherePassCreateInfo {
-  Scene* scene;
   RHIFactory* rhiFactory;
   uint32_t height;
   uint32_t width;
@@ -29,10 +28,9 @@ class AtmospherePass final {
   Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
-  IsEnable();
+  IsEnable(RenderGraphRegistry& registry);
 
  private:
-  Scene* m_scene = nullptr;
   RHIFactory* m_rhiFactory = nullptr;
 
   struct CameraInfo {

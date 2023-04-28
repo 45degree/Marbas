@@ -16,7 +16,7 @@ GeometryPass::GeometryPass(const GeometryPassCreateInfo& createInfo)
       m_depthTexture(createInfo.depthTexture),
       m_colorTexture(createInfo.colorTexture),
       m_rhiFactory(createInfo.rhiFactory),
-      m_scene(createInfo.scene),
+      // m_scene(createInfo.scene),
       m_width(createInfo.width),
       m_height(createInfo.height) {
   auto pipelineContext = m_rhiFactory->GetPipelineContext();
@@ -115,8 +115,11 @@ GeometryPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 
 void
 GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
-  auto& world = m_scene->GetWorld();
-  auto camera = m_scene->GetEditorCamera();
+  auto* scene = registry.GetCurrentActiveScene();
+
+  auto& world = scene->GetWorld();
+  auto camera = scene->GetEditorCamera();
+
   auto view = world.view<ModelSceneNode, RenderComponent>();
 
   auto* bufferContext = m_rhiFactory->GetBufferContext();

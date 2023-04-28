@@ -10,7 +10,6 @@ namespace Marbas {
 AtmospherePass::AtmospherePass(const AtmospherePassCreateInfo& createInfo)
     : m_width(createInfo.width),
       m_height(createInfo.height),
-      m_scene(createInfo.scene),
       m_rhiFactory(createInfo.rhiFactory),
       m_transmittanceLUT(createInfo.transmittanceLUT),
       m_multiscatterLUT(createInfo.multiscatterLUT),
@@ -104,8 +103,9 @@ AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& co
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
   auto inputSet = registry.GetInputDescriptorSet();
+  auto* scene = registry.GetCurrentActiveScene();
 
-  auto& world = m_scene->GetWorld();
+  auto& world = scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();
   if (view.size() == 0) return;
 
@@ -114,7 +114,7 @@ AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& co
   auto& physicalSky = component.physicalSky;
 
   // set camera info
-  auto camera = m_scene->GetEditorCamera();
+  auto camera = scene->GetEditorCamera();
   auto* bufCtx = m_rhiFactory->GetBufferContext();
   m_cameraInfo.view = camera->GetViewMatrix();
   m_cameraInfo.projection = camera->GetProjectionMatrix();
@@ -167,8 +167,11 @@ AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& co
 }
 
 bool
-AtmospherePass::IsEnable() {
-  auto& world = m_scene->GetWorld();
+AtmospherePass::IsEnable(RenderGraphRegistry& registry) {
+  auto scene = registry.GetCurrentActiveScene();
+  if (scene == nullptr) return false;
+
+  auto& world = scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();
   if (view.size() == 0) return false;
 

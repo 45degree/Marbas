@@ -10,7 +10,6 @@ namespace Marbas {
 struct SSAOCreateInfo {
   uint32_t width;
   uint32_t height;
-  Scene* scene;
   RHIFactory* rhiFactory;
   RenderGraphTextureHandler posTexture;
   RenderGraphTextureHandler normalTexture;
@@ -28,10 +27,14 @@ class SSAOPass {
   void
   Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
+  bool
+  IsEnable(RenderGraphRegistry& registry) {
+    return registry.GetCurrentActiveScene() != nullptr;
+  }
+
  private:
   RHIFactory* m_rhiFactory;
   uintptr_t m_sampler;
-  Scene* m_scene;
 
   struct CameraInfo {
     alignas(4) float m_near;

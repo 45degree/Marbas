@@ -170,7 +170,6 @@ RenderSystem::Destroy(RHIFactory* rhiFactory) {
   Singleton<GeometryPassCreateInfo>::Destroy();
   Singleton<SSAOCreateInfo>::Destroy();
   Singleton<DirectionShadowMapPassCreateInfo>::Destroy();
-  // Singleton<ScreenSpaceShadowInfo>::Destroy();
   Singleton<AtmospherePassCreateInfo>::Destroy();
   Singleton<TransmittanceLUTPassCreateInfo>::Destroy();
 
@@ -210,7 +209,7 @@ RenderSystem::Update(const RenderInfo& renderInfo) {
 
   UpdateShadowMapAtlasPosition(renderInfo.scene);
 
-  s_renderGraph->Execute(renderInfo.waitSemaphore, renderInfo.signalSemaphore, renderInfo.fence);
+  s_renderGraph->Execute(scene, renderInfo.waitSemaphore, renderInfo.signalSemaphore, renderInfo.fence);
 }
 
 void
@@ -228,7 +227,6 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
 
   auto& geometryPassCreateInfo = *Singleton<GeometryPassCreateInfo>::GetInstance();
   auto& directShadowMapData = *Singleton<DirectionShadowMapPassCreateInfo>::GetInstance();
-  // auto& screenSpaceShadowInfo = *Singleton<ScreenSpaceShadowInfo>::GetInstance();
   auto& atmosphereCreateInfo = *Singleton<AtmospherePassCreateInfo>::GetInstance();
   auto& transmittanceLUTCreateInfo = *Singleton<TransmittanceLUTPassCreateInfo>::GetInstance();
   auto& multiScatterLUTCreateInfo = *Singleton<MultiScatterLUTCreateInfo>::GetInstance();
@@ -248,20 +246,15 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
   // light all probe
   // 每一个probe用一个compute shader计算
 
-  geometryPassCreateInfo.scene = scene;
   s_renderGraph->AddPass<GeometryPass>("GeometryPass", geometryPassCreateInfo);
 
-  ssaoPassCreateInfo.scene = scene;
   s_renderGraph->AddPass<SSAOPass>("SSAO", ssaoPassCreateInfo);
 
-  directShadowMapData.scene = scene;
   s_renderGraph->AddPass<DirectionShadowMapPass>("DirectionLight", directShadowMapData);
 
-  directLightPassCreateInfo.scene = scene;
   s_renderGraph->AddPass<DirectLightPass>("direct light pass", directLightPassCreateInfo);
 
   // draw atmosphere
-  atmosphereCreateInfo.scene = scene;
   s_renderGraph->AddPass<AtmospherePass>("atmospherePass", atmosphereCreateInfo);
 
   // render the skybox by image
@@ -293,7 +286,7 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
   /**
    * precompute all pass
    */
-  s_precomputeRenderGraph->Execute(nullptr, nullptr, s_precomputeFence);
+  s_precomputeRenderGraph->Execute(nullptr, nullptr, nullptr, s_precomputeFence);
   rhiFactory->WaitForFence(s_precomputeFence);
   rhiFactory->ResetFence(s_precomputeFence);
   LOG(INFO) << "execute the precompute render graph.";
@@ -312,7 +305,7 @@ RenderSystem::RerunPreComputePass(const StringView& passName, RHIFactory* rhiFac
   /**
    * precompute all pass
    */
-  s_precomputeRenderGraph->ExecuteAlone(passName, nullptr, nullptr, s_precomputeFence);
+  s_precomputeRenderGraph->ExecuteAlone(passName, nullptr, nullptr, nullptr, s_precomputeFence);
   rhiFactory->WaitForFence(s_precomputeFence);
   rhiFactory->ResetFence(s_precomputeFence);
   LOG(INFO) << FORMAT("re-run the precompute pass:{}.", passName);

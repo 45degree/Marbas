@@ -2,13 +2,11 @@
 
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
-#include "Core/Scene/Scene.hpp"
 
 namespace Marbas {
 
 struct DirectionShadowMapPassCreateInfo {
   RHIFactory* rhiFactory;
-  Scene* scene;
   RenderGraphTextureHandler directionalShadowMap;
 };
 
@@ -23,10 +21,9 @@ class DirectionShadowMapPass final {
   Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
-  IsEnable();
+  IsEnable(RenderGraphRegistry& registry);
 
  private:
-  Scene* m_scene = nullptr;
   RHIFactory* m_rhiFactory = nullptr;
 
   Buffer* m_currentIndexBuf = nullptr;

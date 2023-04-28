@@ -1,8 +1,9 @@
 #pragma once
 
 #include <functional>
+#include <type_traits>
 
-// #include "RenderCommandList.hpp"
+#include "Core/Scene/Scene.hpp"
 #include "RenderGraphBuilder.hpp"
 #include "RenderGraphNode.hpp"
 #include "RenderGraphRegistry.hpp"
@@ -24,13 +25,13 @@ class RenderGraphPass : public RenderGraphNode {
   Initialize(RenderGraph* graph) = 0;
 
   virtual void
-  Execute(RenderGraph* graph) = 0;
+  Execute(RenderGraph* graph, Scene* scene) = 0;
 
   virtual void
   Submit(Semaphore* waitSemaphore, Semaphore* signedSemaphore, Fence* fence) = 0;
 
   virtual bool
-  IsEnable() = 0;
+  IsEnable(RenderGraph* graph, Scene* scene) = 0;
 
  protected:
   RHIFactory* m_rhiFactory;
@@ -109,7 +110,7 @@ concept RenderGraphGraphicsStructPass = (
 
 class LambdaGraphicsRenderGraphPass final : public RenderGraphGraphicsPass {
   using Lambda = std::function<void(RenderGraphRegistry&, GraphicsCommandBuffer&)>;
-  using EnableFunc = std::function<bool()>;
+  using EnableFunc = std::variant<std::function<bool()>, std::function<bool(RenderGraphRegistry&)>, std::monostate>;
 
  public:
   LambdaGraphicsRenderGraphPass(StringView name, RHIFactory* rhiFactory);
@@ -128,19 +129,24 @@ class LambdaGraphicsRenderGraphPass final : public RenderGraphGraphicsPass {
 
  public:
   void
-  Execute(RenderGraph* graph) override;
+  Execute(RenderGraph* graph, Scene* scene) override;
 
   bool
-  IsEnable() override {
-    if (m_isEnable) {
-      return m_isEnable();
+  IsEnable(RenderGraph* graph, Scene* scene) override {
+    if (std::holds_alternative<std::monostate>(m_isEnable)) {
+      return true;
+    } else if (std::get_if<0>(&m_isEnable)) {
+      return std::get<0>(m_isEnable)();
+    } else if (std::get_if<1>(&m_isEnable)) {
+      RenderGraphRegistry registry(graph, scene, this);
+      return std::get<1>(m_isEnable)(registry);
     }
     return true;
   }
 
  private:
   Lambda m_command;
-  EnableFunc m_isEnable;
+  EnableFunc m_isEnable = std::monostate();
 };
 
 template <details::RenderGraphGraphicsStructPass Pass, typename... Args>
@@ -161,15 +167,20 @@ class StructRenderGraphPass final : public RenderGraphGraphicsPass {
   }
 
   void
-  Execute(RenderGraph* graph) override {
-    RenderGraphRegistry registry(graph, this);
+  Execute(RenderGraph* graph, Scene* scene) override {
+    RenderGraphRegistry registry(graph, scene, this);
     m_instance.Execute(registry, *m_commandBuffer);
   }
 
   bool
-  IsEnable() override {
+  IsEnable(RenderGraph* graph, Scene* scene) override {
     if constexpr (has_member(Pass, IsEnable)) {
-      return m_instance.IsEnable();
+      if constexpr (std::is_invocable_v<decltype(&Pass::IsEnable), Pass&>) {
+        return m_instance.IsEnable();
+      } else if constexpr (std::is_invocable_v<decltype(&Pass::IsEnable), Pass&, RenderGraphRegistry&>) {
+        RenderGraphRegistry registry(graph, scene, this);
+        return m_instance.IsEnable(registry);
+      }
     }
     return true;
   }

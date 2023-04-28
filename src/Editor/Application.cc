@@ -132,7 +132,6 @@ Application::Run() {
   sceneTree.m_selectEntity.Connect<&InformationWidget::SelectEntity>(infoWidget);
 
   auto outputImageView = RenderSystem::GetOutputView();
-  // auto id = m_rhiFactory->GetImguiContext()->CreateImGuiImage(outputImageView);
   renderImage.SetRenderImage(outputImageView);
 
   RenderSystem::RegistryListenerForResultImageChange<&RenderImage::SetRenderImage>(renderImage);
