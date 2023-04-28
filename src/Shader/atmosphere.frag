@@ -15,7 +15,8 @@ layout(std140, binding = 0, set = 0) uniform Matrices {
 
 layout(std140, binding = 1, set = 0) uniform AtmosphereInfo {
   vec3 lightDir; // the start point is the sun, and it has beed normalized
-  vec3 sunLuminace;
+  vec3 lightColor;
+  float sunLuminace;
 
   // Atmosphere Parap
   float atmosphereHeight;
@@ -33,7 +34,7 @@ layout(binding = 1, set = 1) uniform sampler2D multiscatterLUT;
 void main() {
   vec3 cameraPos = vec3(inverse(view)[3]);
   vec3 viewDir = CubemapUV2DToDir(inTex);
-  vec3 eyePos = vec3(0, cameraPos.y + planetRadius, 0) + 100; // add the bias so that can see the sky when y < 0;
+  vec3 eyePos = vec3(0, cameraPos.y + planetRadius, 0) + 500; // add the bias so that can see the sky when y < 0;
 
   const int N_SAMPLE = 64;
   AtmosphereParam atmosphereParam;
@@ -79,12 +80,12 @@ void main() {
     vec3 s = Scattering(atmosphereParam, p1, lightDir, -viewDir);
     vec3 t2 = exp(-TSum);
 
-    vec3 inScattering = t1 * s * t2 * ds * sunLuminace;
+    vec3 inScattering = t1 * s * t2 * ds * sunLuminace * lightColor;
     color += inScattering;
 
     // multi scatter
     vec3 multiScattering = GetMultiScattering(atmosphereParam, p1, lightDir, multiscatterLUT);
-    color += multiScattering * t2 * ds * sunLuminace;
+    color += multiScattering * t2 * ds * sunLuminace * lightColor;
 
     p1 += viewDir * ds;
   }

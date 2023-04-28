@@ -72,9 +72,9 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   geometryPassCreateInfo.width = 1920;
   geometryPassCreateInfo.height = 1080;
   geometryPassCreateInfo.rhiFactory = rhiFactory;
-  geometryPassCreateInfo.normal_metallic_roughnessTexture = normalTextureHandler;
+  geometryPassCreateInfo.normalMetallicTexture = normalTextureHandler;
   geometryPassCreateInfo.colorTexture = colorTextureHandler;
-  geometryPassCreateInfo.positionTexture = positionTextureHandler;
+  geometryPassCreateInfo.positionRoughnessTexture = positionTextureHandler;
   geometryPassCreateInfo.depthTexture = depthTexture;
 
   // ssao pass
@@ -161,8 +161,8 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   directLightPassCreateInfo.directionalShadowmap = directShadowMapData.directionalShadowMap;
   directLightPassCreateInfo.aoTeture = ssaoPassCreateInfo.ssaoTexture;
   directLightPassCreateInfo.diffuseTexture = geometryPassCreateInfo.colorTexture;
-  directLightPassCreateInfo.normalTeture = geometryPassCreateInfo.normal_metallic_roughnessTexture;
-  directLightPassCreateInfo.positionTeture = geometryPassCreateInfo.positionTexture;
+  directLightPassCreateInfo.normalTeture = geometryPassCreateInfo.normalMetallicTexture;
+  directLightPassCreateInfo.positionTeture = geometryPassCreateInfo.positionRoughnessTexture;
 }
 
 void

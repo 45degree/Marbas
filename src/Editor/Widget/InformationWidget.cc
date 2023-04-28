@@ -278,23 +278,26 @@ InformationWidget::Draw() {
     transform.SetGlobalTransform(modelMatrix);
   });
 
-  DrawComponentProp<DirectionLightComponent>("directional light", world, m_entity, [&](DirectionLightComponent& node) {
+  DrawComponentProp<DirectionLightComponent>("directional light", world, m_entity, [&](auto& node) {
     auto& light = node.m_light;
     auto color = light.GetColor();
+    auto energy = light.GetEnergy();
     auto dir = light.GetDirection();
-    bool isChangeColor = ImGui::InputFloat3("light", glm::value_ptr(color));
+    bool isChangeColor = ImGui::ColorEdit3("light", glm::value_ptr(color));
     bool isChangeDir = ImGui::InputFloat3("directional", glm::value_ptr(dir));
+    bool isChangeEnergy = ImGui::InputFloat("energy", &energy);
 
-    if (isChangeColor || isChangeDir) {
-      world.patch<DirectionLightComponent>(m_entity, [&color, &dir](auto& node) {
+    if (isChangeColor || isChangeDir || isChangeEnergy) {
+      world.patch<DirectionLightComponent>(m_entity, [&color, &dir, &energy](auto& node) {
         dir = glm::normalize(dir);
         node.m_light.SetColor(color);
         node.m_light.SetDirection(dir);
+        node.m_light.SetEnergy(energy);
       });
     }
 
     auto regionSize = ImGui::GetContentRegionAvail();
-    DirectionArrowControl({regionSize.x, regionSize.x}, dir);
+    // DirectionArrowControl({regionSize.x, regionSize.x}, dir);
 
     bool isSun = world.any_of<SunLightTag>(m_entity);
     ImGui::Checkbox("Set as Sun", &isSun);
@@ -310,13 +313,12 @@ InformationWidget::Draw() {
     }
   });
 
-  DrawComponentProp<DirectionShadowComponent>("directional light shadow", world, m_entity,
-                                              [&](DirectionShadowComponent& node) {
-                                                for (int i = 0; i < node.m_split.size(); i++) {
-                                                  std::string name = "split" + std::to_string(i);
-                                                  ImGui::SliderFloat(name.c_str(), &node.m_split[i], 0, 1);
-                                                }
-                                              });
+  DrawComponentProp<DirectionShadowComponent>("directional light shadow", world, m_entity, [&](auto& node) {
+    for (int i = 0; i < node.m_split.size(); i++) {
+      std::string name = "split" + std::to_string(i);
+      ImGui::SliderFloat(name.c_str(), &node.m_split[i], 0, 1);
+    }
+  });
 }
 
 InformationWidget::InformationWidget(RHIFactory* rhiFactory, Scene* scene)

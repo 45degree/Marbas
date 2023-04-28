@@ -24,13 +24,13 @@ rule('glslc2spv', function()
     import('lib.detect.find_tool')
 
     -- get glslc
-    local glslc = find_tool('glslc')
+    local glslc = find_tool('glslc', { force = true })
     assert(glslc, 'glslc not found!')
 
     -- glsl to spv
     local targetenv = target:extraconf('rules', 'glslc2spv', 'targetenv') or 'vulkan1.0'
     local outputdir = target:extraconf('rules', 'glslc2spv', 'outputdir')
-        or path.join(target:autogendir(), 'rules', 'glslc2spv')
+      or path.join(target:autogendir(), 'rules', 'glslc2spv')
     local includeDirs = target:get('includedirs')
 
     local spvfilepath = path.join(outputdir, path.filename(sourcefile) .. '.spv')

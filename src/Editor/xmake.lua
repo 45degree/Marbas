@@ -22,10 +22,8 @@ target('Marbas.Editor', function()
   add_deps('Marbas.Core', 'ImGuizmo', 'Marbas.Common', 'Marbas.AssetManager')
   add_packages('glfw', 'fmt', 'assimp', 'glm', 'entt', 'glog', 'nativefiledialog', 'cereal', 'stb')
 
+  add_packages('icu4c')
   if is_plat('windows') then
-    add_packages('icu4c')
     add_defines('NOMINMAX')
-  elseif is_plat('linux') then
-    add_packages('pkgconfig::icu-uc', 'pkgconfig::icu-io', 'pkgconfig::icu-i18n')
   end
 end)

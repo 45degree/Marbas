@@ -27,9 +27,6 @@ target('Marbas.Core', function()
   add_rules('glslc2spv', {
     outputdir = path.join('$(buildir)', '$(os)', '$(arch)', '$(mode)', 'Shader'),
   })
-  -- add_rules('utils.glsl2spv', {
-  --   outputdir = path.join('$(buildir)', '$(os)', '$(arch)', '$(mode)', 'Shader'),
-  -- })
 
   add_includedirs('$(projectdir)/src')
   add_files('$(projectdir)/src/Core/Scene/**.cc')

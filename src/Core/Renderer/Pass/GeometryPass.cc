@@ -11,8 +11,8 @@
 namespace Marbas {
 
 GeometryPass::GeometryPass(const GeometryPassCreateInfo& createInfo)
-    : m_normal_metallic_roughnessTexture(createInfo.normal_metallic_roughnessTexture),
-      m_positionTexture(createInfo.positionTexture),
+    : m_normalMetallicTexture(createInfo.normalMetallicTexture),
+      m_positionRoughnessTexture(createInfo.positionRoughnessTexture),
       m_depthTexture(createInfo.depthTexture),
       m_colorTexture(createInfo.colorTexture),
       m_rhiFactory(createInfo.rhiFactory),
@@ -66,8 +66,8 @@ GeometryPass::GeometryPass(const GeometryPassCreateInfo& createInfo)
 void
 GeometryPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.WriteTexture(m_colorTexture);
-  builder.WriteTexture(m_positionTexture);
-  builder.WriteTexture(m_normal_metallic_roughnessTexture);  // 法线信息纯两个值就行了
+  builder.WriteTexture(m_positionRoughnessTexture);
+  builder.WriteTexture(m_normalMetallicTexture);  // 法线信息纯两个值就行了
   builder.WriteTexture(m_depthTexture, TextureAttachmentType::DEPTH);
 
   builder.BeginPipeline();

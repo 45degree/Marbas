@@ -128,7 +128,8 @@ AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& co
   auto& directionLight = world.get<DirectionLightComponent>(sun).m_light;
 
   m_atmosphereInfo.lightDir = directionLight.GetDirection();
-  m_atmosphereInfo.sunLuminace = directionLight.GetColor();
+  m_atmosphereInfo.lightColor = directionLight.GetColor();
+  m_atmosphereInfo.sunLuminace = directionLight.GetEnergy();
   m_atmosphereInfo.atmosphereHeight = physicalSky.atmosphereHeight;
   m_atmosphereInfo.rayleighScalarHeight = physicalSky.rayleighScalarHeight;
   m_atmosphereInfo.mieScalarHeight = physicalSky.mieScalarHeight;

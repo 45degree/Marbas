@@ -11,9 +11,9 @@ namespace Marbas {
 struct GeometryPassCreateInfo {
   uint32_t width;
   uint32_t height;
-  RenderGraphTextureHandler normal_metallic_roughnessTexture;
+  RenderGraphTextureHandler normalMetallicTexture;
   RenderGraphTextureHandler colorTexture;
-  RenderGraphTextureHandler positionTexture;
+  RenderGraphTextureHandler positionRoughnessTexture;
   RenderGraphTextureHandler depthTexture;
   RHIFactory* rhiFactory;
   Scene* scene;  // TODO: or passed when execute?
@@ -39,9 +39,9 @@ class GeometryPass {
   Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
  private:
-  RenderGraphTextureHandler m_normal_metallic_roughnessTexture;
+  RenderGraphTextureHandler m_normalMetallicTexture;
   RenderGraphTextureHandler m_colorTexture;
-  RenderGraphTextureHandler m_positionTexture;
+  RenderGraphTextureHandler m_positionRoughnessTexture;
   RenderGraphTextureHandler m_depthTexture;
   Scene* m_scene = nullptr;
   RHIFactory* m_rhiFactory = nullptr;

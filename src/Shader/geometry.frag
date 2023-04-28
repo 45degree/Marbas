@@ -6,11 +6,11 @@ layout(location = 2) in vec3 aPosition;
 layout(location = 3) in mat3 TBN;
 
 layout(location = 0) out vec4 FragColor;
-layout(location = 1) out vec4 Position;
-layout(location = 2) out vec4 Normal;
+layout(location = 1) out vec4 PositionRoughness;
+layout(location = 2) out vec4 NormalMetallic;
 
 layout(std140, binding = 0, set = 0) uniform Matrices {
-  uvec4 texInfo; // [diffuse, normal, roughness, metallic]
+  uvec4 texInfo; // [diffuse, normal, metallic, roughness]
   vec4 diffuseColor;
   float metallicValue;
   float roughnessValue;
@@ -35,23 +35,32 @@ void main() {
     FragColor = diffuseColor;
   }
 
-  Normal = vec4(0);
+  // normal
   if(texInfo.y == 1) {
     vec3 normal = texture(normalTexture, ourTex).rgb;
-    normal = normalize(normal * 2.0 - 1.0);
-    Normal.xy = normalize(TBN * normal).xy;
+    NormalMetallic.xyz = normalize(TBN * normal);
   }
   else {
-    Normal.xy = normalize(aNormal).xy;
+    NormalMetallic.xyz = normalize(aNormal);
   }
 
+  // metallic
   if(texInfo.z == 1) {
-    Normal.w = texture(roughnessTexture, ourTex).r;
+    NormalMetallic.w = texture(metallicTexture, ourTex).r;
+  }
+  else {
+    NormalMetallic.w = metallicValue;
   }
 
-  if(texInfo.w == 1) {
-    Normal.z = texture(metallicTexture, ourTex).r;
-  } 
+  // position
+  PositionRoughness.xyz = aPosition;
 
-  Position = vec4(aPosition, 1.0);
+  // roughness
+  if(texInfo.w == 1) {
+    PositionRoughness.w = texture(roughnessTexture, ourTex).r;
+  }
+  else {
+    PositionRoughness.w = roughnessValue;
+  }
+
 }

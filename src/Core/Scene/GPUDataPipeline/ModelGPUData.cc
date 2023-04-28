@@ -182,8 +182,8 @@ void
 MeshGPUData::UpdateMaterialInfo(const Mesh& mesh) {
   m_materialInfo.texInfo.x = mesh.m_material.m_useDiffuseTexture;
   m_materialInfo.texInfo.y = mesh.m_material.m_useNormalTexture;
-  m_materialInfo.texInfo.z = mesh.m_material.m_useRoughnessTexture;
-  m_materialInfo.texInfo.w = mesh.m_material.m_useMetalnessTexture;
+  m_materialInfo.texInfo.z = mesh.m_material.m_useMetalnessTexture;
+  m_materialInfo.texInfo.w = mesh.m_material.m_useRoughnessTexture;
 
   const auto& color = mesh.m_material.m_diffuseColor;
   m_materialInfo.diffuseColor = glm::vec4(color[0], color[1], color[2], color[3]);

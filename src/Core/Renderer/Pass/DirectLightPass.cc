@@ -109,6 +109,7 @@ DirectLightPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& c
 
   auto bufCtx = m_rhiFactory->GetBufferContext();
   auto& camera = m_scene->GetEditorCamera();
+  m_cameraInfo.cameraPos = camera->GetPosition();
   m_cameraInfo.cameraView = camera->GetViewMatrix();
   bufCtx->UpdateBuffer(m_cameraInfoBuffer, &m_cameraInfo, sizeof(CameraInfo), 0);
 

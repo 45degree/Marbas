@@ -86,7 +86,7 @@ Application::Initialize() {
   ImFontConfig icons_config;
   icons_config.MergeMode = true;
   icons_config.PixelSnapH = true;
-  io.Fonts->AddFontFromFileTTF("assert/font/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges);
+  io.Fonts->AddFontFromFileTTF("assert/font/fa-solid-900.ttf", 12.0f, &icons_config, icons_ranges);
 
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
@@ -114,11 +114,9 @@ Application::Initialize() {
   m_scene = std::make_unique<Scene>();
 
   // create render engine
-  // m_renderEngine = std::make_unique<RenderEngine>(m_rhiFactory.get());
   GPUDataManager::SetUp(m_rhiFactory.get());
   RenderSystem::Initialize(m_rhiFactory.get());
   RenderSystem::CreateRenderGraph(m_scene.get(), m_rhiFactory.get());
-  // m_renderEngine->CreateGraph(m_scene.get());
 }
 
 void

@@ -36,9 +36,20 @@ class MARBAS_EXPORT Light {
     return m_color;
   }
 
+  float
+  GetEnergy() const {
+    return m_energy;
+  }
+
+  void
+  SetEnergy(float energy) {
+    m_energy = energy;
+  }
+
  protected:
   glm::vec3 m_pos;
   glm::vec3 m_color = glm::vec3(1, 1, 1);
+  float m_energy = 1;
 };
 
 class MARBAS_EXPORT ParallelLight final : public Light {

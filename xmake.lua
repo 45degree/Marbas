@@ -16,14 +16,7 @@ add_requires('entt master')
 add_requires('nativefiledialog 1.1.6')
 add_requires('cereal 1.3.2')
 add_requires('shaderc') -- provide glslc
-
-if is_plat('windows') then
-  add_requires('icu4c 72.1')
-elseif is_plat('linux') then
-  add_requires('pkgconfig::icu-uc')
-  add_requires('pkgconfig::icu-io')
-  add_requires('pkgconfig::icu-i18n')
-end
+add_requires('icu4c 72.1')
 
 includes('src/Common/')
 includes('src/Editor/')

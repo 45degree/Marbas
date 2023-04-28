@@ -74,7 +74,6 @@ ReadMeshFromNode(const aiMesh* aMesh, const aiScene* aScene, const Path& current
   if (aMesh->mMaterialIndex >= 0) {
     auto* material = aScene->mMaterials[aMesh->mMaterialIndex];
     auto diffuseTexture = LoadTexturesFromMaterial(material, aiTextureType_DIFFUSE, current);
-    auto ambientTexture = LoadTexturesFromMaterial(material, aiTextureType_AMBIENT_OCCLUSION, current);
     auto normalTexture = LoadTexturesFromMaterial(material, aiTextureType_NORMALS, current);
     auto roughnessTexture = LoadTexturesFromMaterial(material, aiTextureType_DIFFUSE_ROUGHNESS, current);
     auto metalnessTexture = LoadTexturesFromMaterial(material, aiTextureType_METALNESS, current);

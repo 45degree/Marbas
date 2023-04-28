@@ -7,9 +7,8 @@
 namespace Marbas {
 
 struct DirectionLightInfo {
-  alignas(4) glm::vec2 direction = glm::vec2(0, 1);
-  alignas(16) glm::ivec3 color = glm::ivec3(255, 255, 255);
-  alignas(4) glm::vec1 energy = glm::vec1(30);
+  alignas(4) glm::vec3 direction = glm::vec3(0, 1, 0);
+  alignas(16) glm::vec4 colorEnergy = glm::vec4(1, 1, 1, 1);
   alignas(4) glm::vec4 atlasViewport = glm::vec4(0, 0, 1, 1);
   alignas(4) glm::vec4 cascadePlaneDistances[DirectionShadowComponent::shadowMapArraySize] = {glm::vec4(1)};
   alignas(4) glm::mat4 lightMatrix[DirectionShadowComponent::shadowMapArraySize] = {glm::mat4(1)};

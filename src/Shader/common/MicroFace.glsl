@@ -1,13 +1,13 @@
-#ifndef MICRO_FACE_GLSL
-#define MiCRO_FACE_GLSL
+#ifndef MARBAS_COMMON_MICRO_FACE_GLSL
+#define MARBAS_COMMON_MICRO_FACE_GLSL
 
-#include "constValue.glsl"
+#include "ConstValue.glsl"
 
-vec3 fresnelSchlick(float cosTheta, vec3 FO) {
+vec3 FresnelSchlick(float cosTheta, vec3 FO) {
   return FO + (1.0 - FO) * pow(1.0 - cosTheta, 5.0);
 }
 
-vec3 fresnelSchlickRoughness(float cosTheta, vec3 FO, float roughness) {
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 FO, float roughness) {
   return FO + (max(vec3(1.0 - roughness), FO) - FO) * pow(1.0 - cosTheta, 5.0);
 }
 

@@ -44,7 +44,8 @@ class AtmospherePass final {
   struct AtmosphereInfo {
     // the start point is the sun, and it has beed normalized
     glm::vec3 lightDir = -glm::normalize(glm::vec3(0, 0.1, -1));
-    alignas(16) glm::vec3 sunLuminace = glm::vec3(100, 100, 100);
+    alignas(16) glm::vec3 lightColor = glm::vec3(1, 1, 1);
+    float sunLuminace = 30;
 
     // Atmosphere Parap
     float atmosphereHeight = 60000;
