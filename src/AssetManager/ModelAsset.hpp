@@ -41,7 +41,7 @@ class ModelAsset final : public AssetBase {
   }
 
   static std::shared_ptr<ModelAsset>
-  Load(const Path& path);
+  Load(const AssetPath& path);
 };
 
 }  // namespace Marbas

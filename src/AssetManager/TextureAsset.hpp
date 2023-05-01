@@ -22,7 +22,7 @@ struct TextureAsset final : public AssetBase {
   }
 
   static std::shared_ptr<TextureAsset>
-  Load(const Path& m_path, bool flipV = false);
+  Load(const AssetPath& m_path, bool flipV = false);
 };
 
 }  // namespace Marbas

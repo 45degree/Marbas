@@ -39,7 +39,7 @@ struct AssetBase {
 };
 
 template <typename T>
-concept AssetType = requires() { requires std::derived_from<T, AssetBase>; };
+concept AssetType = requires() { requires std::derived_from<std::remove_cvref_t<T>, AssetBase>; };
 
 /**
  * @brief Assert Manager
@@ -140,7 +140,7 @@ class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
       throw AssetException("the assert existed in the disk", path);
     }
 
-    auto assert = Asset::Load(path.GetAbsolutePath(), std::forward<Args>(args)...);
+    auto assert = Asset::Load(path, std::forward<Args>(args)...);
     assert->SetUid(uid);
 
     std::ofstream file(assertPath, std::ios::binary | std::ios::out);

@@ -12,8 +12,8 @@
 namespace Marbas {
 
 std::shared_ptr<TextureAsset>
-TextureAsset::Load(const Path& path, bool flipV) {
-  auto filename = path.string();
+TextureAsset::Load(const AssetPath& path, bool flipV) {
+  auto filename = path.GetAbsolutePath().string();
 
 #ifdef _WIN32
   std::replace(filename.begin(), filename.end(), '/', '\\');
@@ -39,7 +39,7 @@ TextureAsset::Load(const Path& path, bool flipV) {
 
   if (data == nullptr) {
     LOG(WARNING) << FORMAT("can't load texture: {}", filename);
-    throw AssetException("can't load texture", filename);
+    throw AssetException("can't load texture", path);
   }
 
   // copy image data

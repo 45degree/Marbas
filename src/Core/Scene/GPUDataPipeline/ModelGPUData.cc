@@ -1,6 +1,7 @@
 #include "ModelGPUData.hpp"
 
-// #include "AssetManager/AssetManager.hpp"
+#include <glog/logging.h>
+
 #include "AssetManager/ModelAsset.hpp"
 #include "Core/Scene/GPUDataPipeline/TextureGPUData.hpp"
 
@@ -10,7 +11,7 @@ Image* MeshGPUData::m_emptyImage;
 ImageView* MeshGPUData::m_emptyImageView;
 static std::once_flag s_onceFlags;
 
-MeshGPUData::MeshGPUData(const Mesh& mesh, RHIFactory* rhiFactory)
+MeshGPUData::MeshGPUData(Mesh& mesh, RHIFactory* rhiFactory)
     : m_rhiFactory(rhiFactory), m_indexCount(mesh.m_indices.size()) {
   auto bufCtx = rhiFactory->GetBufferContext();
   auto pipelineCtx = rhiFactory->GetPipelineContext();
@@ -112,7 +113,7 @@ MeshGPUData::CreateAndBindDescriptorSet() {
 }
 
 void
-MeshGPUData::UpdateMaterial(const Mesh& mesh) {
+MeshGPUData::UpdateMaterial(Mesh& mesh) {
   auto bufCtx = m_rhiFactory->GetBufferContext();
   auto pipelineCtx = m_rhiFactory->GetPipelineContext();
   auto textureManager = AssetManager<TextureAsset>::GetInstance();
@@ -150,29 +151,65 @@ MeshGPUData::UpdateMaterial(const Mesh& mesh) {
 
   // update descriptor set binding
   if (auto bindingPoint = 2; mesh.m_material.m_diffuseTexturePath.has_value()) {
-    m_diffuseTexture = SetTexture(*mesh.m_material.m_diffuseTexturePath);
-    bindImage(m_diffuseTexture, bindingPoint);
+    try {
+      m_diffuseTexture = SetTexture(*mesh.m_material.m_diffuseTexturePath);
+      bindImage(m_diffuseTexture, bindingPoint);
+    } catch (AssetException& e) {
+      LOG(ERROR) << "cause an exception when load diffuse texture for model asset";
+      LOG(ERROR) << "try to bind the empty image";
+      LOG(ERROR) << e.what();
+      bindEmptyImage(bindingPoint);
+      mesh.m_material.m_diffuseTexturePath = std::nullopt;
+      mesh.m_material.m_useDiffuseTexture = false;
+    }
   } else {
     bindEmptyImage(bindingPoint);
   }
 
   if (auto bindingPoint = 3; mesh.m_material.m_normalTexturePath.has_value()) {
-    m_normalTexture = SetTexture(*mesh.m_material.m_normalTexturePath);
-    bindImage(m_normalTexture, bindingPoint);
+    try {
+      m_normalTexture = SetTexture(*mesh.m_material.m_normalTexturePath);
+      bindImage(m_normalTexture, bindingPoint);
+    } catch (AssetException& e) {
+      LOG(ERROR) << "cause an exception when load normal texture for model asset";
+      LOG(ERROR) << "try to bind the empty image";
+      LOG(ERROR) << e.what();
+      bindEmptyImage(bindingPoint);
+      mesh.m_material.m_normalTexturePath = std::nullopt;
+      mesh.m_material.m_useNormalTexture = false;
+    }
   } else {
     bindEmptyImage(bindingPoint);
   }
 
   if (auto bindingPoint = 4; mesh.m_material.m_roughnessTexturePath.has_value()) {
-    m_roughnessTexture = SetTexture(*mesh.m_material.m_roughnessTexturePath);
-    bindImage(m_roughnessTexture, bindingPoint);
+    try {
+      m_roughnessTexture = SetTexture(*mesh.m_material.m_roughnessTexturePath);
+      bindImage(m_roughnessTexture, bindingPoint);
+    } catch (AssetException& e) {
+      LOG(ERROR) << "cause an exception when load roughness texture for model asset";
+      LOG(ERROR) << "try to bind the empty image";
+      LOG(ERROR) << e.what();
+      bindEmptyImage(bindingPoint);
+      mesh.m_material.m_roughnessTexturePath = std::nullopt;
+      mesh.m_material.m_useRoughnessTexture = false;
+    }
   } else {
     bindEmptyImage(bindingPoint);
   }
 
   if (auto bindingPoint = 5; mesh.m_material.m_metalnessTexturePath.has_value()) {
-    m_metallicTexture = SetTexture(*mesh.m_material.m_metalnessTexturePath);
-    bindImage(m_metallicTexture, bindingPoint);
+    try {
+      m_metallicTexture = SetTexture(*mesh.m_material.m_metalnessTexturePath);
+      bindImage(m_metallicTexture, bindingPoint);
+    } catch (AssetException& e) {
+      LOG(ERROR) << "cause an exception when load metallic texture for model asset";
+      LOG(ERROR) << "try to bind the empty image";
+      LOG(ERROR) << e.what();
+      bindEmptyImage(bindingPoint);
+      mesh.m_material.m_metalnessTexturePath = std::nullopt;
+      mesh.m_material.m_useMetalnessTexture = false;
+    }
   } else {
     bindEmptyImage(bindingPoint);
   }
@@ -192,23 +229,21 @@ MeshGPUData::UpdateMaterialInfo(const Mesh& mesh) {
 }
 
 void
-MeshGPUData::Update(const Mesh& mesh) {
+MeshGPUData::Update(Mesh& mesh) {
   auto bufCtx = m_rhiFactory->GetBufferContext();
-
-  if (mesh.m_materialValueChanged) {
-    UpdateMaterialInfo(mesh);
-    bufCtx->UpdateBuffer(m_materialInfoBuffer, &m_materialInfo, sizeof(MaterialInfo), false);
-  }
 
   if (mesh.m_materialTexChanged) {
     UpdateMaterial(mesh);
+    UpdateMaterialInfo(mesh);
+    bufCtx->UpdateBuffer(m_materialInfoBuffer, &m_materialInfo, sizeof(MaterialInfo), false);
+  } else if (mesh.m_materialValueChanged) {
     UpdateMaterialInfo(mesh);
     bufCtx->UpdateBuffer(m_materialInfoBuffer, &m_materialInfo, sizeof(MaterialInfo), false);
   }
 }
 
 Task<>
-ModelGPUData::Load(const Asset& asset) {
+ModelGPUData::Load(Asset& asset) {
   auto meshCount = asset.GetMeshCount();
 
   for (int i = 0; i < meshCount; i++) {
@@ -220,7 +255,7 @@ ModelGPUData::Load(const Asset& asset) {
 }
 
 Task<>
-ModelGPUData::Update(const Asset& asset) {
+ModelGPUData::Update(Asset& asset) {
   auto meshCount = asset.GetMeshCount();
   for (int i = 0; i < meshCount; i++) {
     auto& mesh = asset.GetMesh(i);

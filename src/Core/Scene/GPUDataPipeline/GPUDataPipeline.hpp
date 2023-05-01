@@ -79,27 +79,27 @@ class GPUDataPipelineFromAssetBase final : public GPUDataPipelineBase<Uid, T> {
  public:
   template <AssetType Asset>
   void
-  Create(const Asset& asset) {
-    Base::Create(asset.GetUid(), asset);
+  Create(Asset&& asset) {
+    Base::Create(asset.GetUid(), std::forward<Asset>(asset));
   }
 
   template <AssetType Asset>
   std::shared_ptr<T>
-  TryGet(const Asset& asset) {
+  TryGet(Asset&& asset) {
     return Base::TryGet(asset.GetUid());
   }
 
   template <AssetType Asset>
   void
-  Update(const Asset& asset) {
+  Update(Asset&& asset) {
     auto data = TryGet(asset);
     if (data == nullptr) return;
-    data->Update(asset).start([](auto&&) {});
+    data->Update(std::forward<Asset>(asset)).start([](auto&&) {});
   }
 
   template <AssetType Asset>
   bool
-  Existed(const Asset& asset) {
+  Existed(Asset&& asset) {
     return Base::Existed(asset.GetUid());
   }
 };

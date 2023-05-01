@@ -263,7 +263,6 @@ RenderSystem::CreateRenderGraph(RHIFactory* rhiFactory) {
   SkyImagePassCreateInfo skyImagePassCreateInfo;
   skyImagePassCreateInfo.width = 1920;
   skyImagePassCreateInfo.height = 1080;
-  // skyImagePassCreateInfo.scene = scene;
   skyImagePassCreateInfo.rhiFactory = rhiFactory;
   skyImagePassCreateInfo.finalDepthTexture = geometryPassCreateInfo.depthTexture;
   skyImagePassCreateInfo.finalColorTexture = directLightPassCreateInfo.finalColorTexture;
@@ -274,7 +273,6 @@ RenderSystem::CreateRenderGraph(RHIFactory* rhiFactory) {
   GridRenderPassCreateInfo gridRenderPassCreateInfo;
   gridRenderPassCreateInfo.finalDepthTexture = geometryPassCreateInfo.depthTexture;
   gridRenderPassCreateInfo.finalColorTexture = directLightPassCreateInfo.finalColorTexture;
-  // gridRenderPassCreateInfo.scene = scene;
   gridRenderPassCreateInfo.rhiFactory = rhiFactory;
   gridRenderPassCreateInfo.width = 1920;
   gridRenderPassCreateInfo.height = 1080;

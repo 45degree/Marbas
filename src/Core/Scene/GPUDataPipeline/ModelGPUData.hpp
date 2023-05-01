@@ -36,7 +36,7 @@ class MeshGPUData {
   static ImageView* m_emptyImageView;
 
  public:
-  MeshGPUData(const Mesh& mesh, RHIFactory* rhiFactory);
+  MeshGPUData(Mesh& mesh, RHIFactory* rhiFactory);
   ~MeshGPUData();
 
   static const DescriptorSetArgument&
@@ -44,10 +44,10 @@ class MeshGPUData {
 
  private:
   void
-  Update(const Mesh& mesh);
+  Update(Mesh& mesh);
 
   void
-  UpdateMaterial(const Mesh& mesh);
+  UpdateMaterial(Mesh& mesh);
 
   void
   UpdateMaterialInfo(const Mesh& mesh);
@@ -64,10 +64,10 @@ class ModelGPUData final : public GPUDataPipelineDataBase {
 
  public:
   Task<>
-  Load(const Asset& asset);
+  Load(Asset& asset);
 
   Task<>
-  Update(const Asset& asset);
+  Update(Asset& asset);
 
  public:
   MeshGPUData*

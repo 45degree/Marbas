@@ -9,16 +9,19 @@
 
 namespace Marbas {
 
-class AssetException : public std::exception {
+struct AssetException final : public std::exception {
  public:
   AssetException(StringView errMsg, const AssetPath& assertPath)
       : m_errMsg(FORMAT("an assert exception occur: {}, assert path is {}", errMsg, assertPath)) {}
   AssetException(StringView errMsg, Uid uid)
       : m_errMsg(FORMAT("an assert exception occur: {}, assert uid is {}", errMsg, uid)) {}
 
+  ~AssetException() throw() {}
+
  public:
   const char*
-  what() const noexcept override {
+  what() const throw() override {
+    std::bad_alloc();
     return m_errMsg.data();
   }
 

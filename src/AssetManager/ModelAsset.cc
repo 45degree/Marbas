@@ -108,7 +108,9 @@ ProcessSubNode(const aiScene* aScene, const aiNode* aNode, const Path& currentDi
 }
 
 std::shared_ptr<ModelAsset>
-ModelAsset::Load(const Path& path) {
+ModelAsset::Load(const AssetPath& assetPath) {
+  auto path = assetPath.GetAbsolutePath();
+
   Assimp::Importer importer;
   auto filename = path.filename().string();
 
