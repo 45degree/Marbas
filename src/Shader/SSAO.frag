@@ -59,8 +59,7 @@ UnpackDepthToView(float depth, float near, float far) {
 void
 main() {
   vec3 pos = texture(posTexture, inTex).xyz;
-  vec2 _normal = texture(normalTexture, inTex).xy;
-  vec3 normal = vec3(_normal, sqrt(1 - dot(_normal, _normal)));
+  vec3 normal = texture(normalTexture, inTex).xyz;
 
   GenerateSamplePoint(pos);
   vec3 randomRotate = vec3(0, 0, 0);
