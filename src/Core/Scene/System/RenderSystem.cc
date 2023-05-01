@@ -15,10 +15,9 @@
 #include "Core/Renderer/Pass/SSAOPass.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraph.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphResourceManager.hpp"
-#include "Core/Scene/Component/AABBComponent.hpp"
-#include "Core/Scene/Component/EnvironmentComponent.hpp"
-#include "Core/Scene/Component/LightComponent.hpp"
-#include "Core/Scene/Component/RenderMeshComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
+#include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
+#include "Core/Scene/GPUDataPipeline/ModelGPUData.hpp"
 
 namespace Marbas {
 
@@ -207,13 +206,16 @@ RenderSystem::Update(const RenderInfo& renderInfo) {
     }
   }
 
-  UpdateShadowMapAtlasPosition(renderInfo.scene);
+  UpdateDirectionShadowInfo(scene);
+  UpdateMeshGPUAsset(scene);
+  UpdateShadowMapAtlasPosition(scene);
+  UpdateLightGPUData(scene);
 
   s_renderGraph->Execute(scene, renderInfo.waitSemaphore, renderInfo.signalSemaphore, renderInfo.fence);
 }
 
 void
-RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
+RenderSystem::CreateRenderGraph(RHIFactory* rhiFactory) {
   /**
    * clear all old pass
    */
@@ -236,9 +238,9 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
   /**
    * precompute pass
    */
-  auto& world = scene->GetWorld();
-  auto envView = world.view<EnvironmentComponent>();
-  LOG_IF(WARNING, envView.size() != 1) << "find multi environment component, use the first one";
+  // auto& world = scene->GetWorld();
+  // auto envView = world.view<EnvironmentComponent>();
+  // LOG_IF(WARNING, envView.size() != 1) << "find multi environment component, use the first one";
 
   s_precomputeRenderGraph->AddPass<TransmittanceLUTPass>("TransmittanceLUTPass", transmittanceLUTCreateInfo);
   s_precomputeRenderGraph->AddPass<MultiScatterLUT>("MultiScatterLUTPass", multiScatterLUTCreateInfo);
@@ -261,7 +263,7 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
   SkyImagePassCreateInfo skyImagePassCreateInfo;
   skyImagePassCreateInfo.width = 1920;
   skyImagePassCreateInfo.height = 1080;
-  skyImagePassCreateInfo.scene = scene;
+  // skyImagePassCreateInfo.scene = scene;
   skyImagePassCreateInfo.rhiFactory = rhiFactory;
   skyImagePassCreateInfo.finalDepthTexture = geometryPassCreateInfo.depthTexture;
   skyImagePassCreateInfo.finalColorTexture = directLightPassCreateInfo.finalColorTexture;
@@ -272,7 +274,7 @@ RenderSystem::CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory) {
   GridRenderPassCreateInfo gridRenderPassCreateInfo;
   gridRenderPassCreateInfo.finalDepthTexture = geometryPassCreateInfo.depthTexture;
   gridRenderPassCreateInfo.finalColorTexture = directLightPassCreateInfo.finalColorTexture;
-  gridRenderPassCreateInfo.scene = scene;
+  // gridRenderPassCreateInfo.scene = scene;
   gridRenderPassCreateInfo.rhiFactory = rhiFactory;
   gridRenderPassCreateInfo.width = 1920;
   gridRenderPassCreateInfo.height = 1080;
@@ -338,6 +340,120 @@ RenderSystem::UpdateShadowMapAtlasPosition(Scene* scene) {
     comp.m_viewport.y = YOffset;
     comp.m_viewport.z = 1.0 / gridCount;
     comp.m_viewport.w = 1.0 / gridCount;
+  }
+}
+
+void
+RenderSystem::UpdateLightGPUData(Scene* scene) {
+  auto& world = scene->GetWorld();
+  auto lightGPUDataMgr = LightGPUDataManager::GetInstance();
+
+  /**
+   * add all new ligth
+   */
+  auto newView = world.view<NewLightTag>();
+  for (auto entity : newView) {
+    // handle all directional light
+    if (world.any_of<DirectionLightComponent>(entity)) {
+      auto& light = world.get<DirectionLightComponent>(entity);
+      if (world.any_of<DirectionShadowComponent>(entity)) {
+        auto& shadow = world.get<DirectionShadowComponent>(entity);
+        lightGPUDataMgr->Create(entity, light, shadow);
+      } else {
+        lightGPUDataMgr->Create(entity, light);
+      }
+    }
+
+    // TODO: handle point light and spot light
+  }
+
+  for (auto entity : newView) {
+    world.remove<NewLightTag>(entity);
+  }
+
+  /**
+   * update light
+   */
+  auto updateView = world.view<UpdateLightTag>();
+  for (auto entity : updateView) {
+    if (world.any_of<DirectionShadowComponent>(entity)) {
+      const auto& light = world.get<DirectionLightComponent>(entity);
+      if (world.any_of<DirectionShadowComponent>(entity)) {
+        const auto& shadow = world.get<DirectionShadowComponent>(entity);
+        lightGPUDataMgr->Update(entity, light, shadow);
+      } else {
+        lightGPUDataMgr->Update(entity, light);
+      }
+    }
+
+    // TODO: handle point light and spot light
+  }
+  for (auto entity : updateView) {
+    world.remove<UpdateLightTag>(entity);
+  }
+
+  /**
+   * remove light
+   */
+  auto deleteView = world.view<DeleteLightTag>();
+  for (auto entity : deleteView) {
+    if (world.any_of<DirectionShadowComponent>(entity)) {
+      auto& light = world.get<DirectionShadowComponent>(entity);
+      if (world.any_of<DirectionShadowComponent>(entity)) {
+        auto& shadow = world.get<DirectionShadowComponent>(entity);
+        // TODO: delete entity gpu data with light and shadow and delete the two component
+      } else {
+        // TODO: delete entity gpu data with light and delete the two component
+      }
+    }
+
+    // TODO: handle point light and spot light
+  }
+  for (auto entity : deleteView) {
+    world.remove<DeleteLightTag>(entity);
+  }
+}
+
+void
+RenderSystem::UpdateMeshGPUAsset(Scene* scene) {
+  auto& world = scene->GetWorld();
+  auto modelNodeView = world.view<ModelSceneNode>();
+  auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
+  auto modelGPUAssetMgr = ModelGPUDataManager::GetInstance();
+
+  for (auto [entity, node] : modelNodeView.each()) {
+    if (node.modelPath == "res://") continue;
+    if (!modelAssetMgr->Existed(node.modelPath)) continue;
+
+    /**
+     * sync the gpu data
+     */
+    auto modelAsset = modelAssetMgr->Get(node.modelPath);
+    if (!modelGPUAssetMgr->Existed(*modelAsset)) continue;
+    modelGPUAssetMgr->Update(*modelAsset);
+
+    /**
+     * clear flags
+     */
+    int meshCount = modelAsset->GetMeshCount();
+    for (int i = 0; i < meshCount; i++) {
+      modelAsset->GetMesh(i).m_materialTexChanged = false;
+      modelAsset->GetMesh(i).m_materialValueChanged = false;
+    }
+  }
+}
+
+void
+RenderSystem::UpdateDirectionShadowInfo(Scene* scene) {
+  auto& world = scene->GetWorld();
+  auto camera = scene->GetEditorCamrea();
+  auto view = world.view<DirectionShadowComponent, DirectionLightComponent>();
+  for (auto&& [entity, shadow, light] : view.each()) {
+    const auto& dir = light.m_direction;
+    world.patch<DirectionShadowComponent>(entity, [&dir, &camera](auto& node) {
+      node.UpdateShadowInfo(dir, *camera);
+      return;
+    });
   }
 }
 

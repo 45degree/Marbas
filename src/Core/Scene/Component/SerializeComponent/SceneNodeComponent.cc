@@ -1,10 +1,10 @@
 #include "SceneNodeComponent.hpp"
 
+#include "../TagComponent.hpp"
 #include "Core/Scene/Component/AABBComponent.hpp"
-#include "Core/Scene/Component/LightComponent.hpp"
-#include "Core/Scene/Component/ShadowComponent.hpp"
-#include "Core/Scene/Component/TagComponent.hpp"
-#include "Core/Scene/Component/TransformComp.hpp"
+#include "LightComponent.hpp"
+#include "ShadowComponent.hpp"
+#include "TransformComp.hpp"
 
 namespace Marbas {
 
@@ -15,9 +15,17 @@ EmptySceneNode::RegistryNode(entt::registry& world, entt::entity node) {
 
 void
 DirectionalLightSceneNode::OnCreate(entt::registry& world, entt::entity node) {
-  world.emplace<TransformComp>(node);
-  world.emplace<DirectionLightComponent>(node);
-  world.emplace<DirectionShadowComponent>(node);
+  if (!world.any_of<TransformComp>(node)) {
+    world.emplace<TransformComp>(node);
+  }
+
+  if (!world.any_of<DirectionLightComponent>(node)) {
+    world.emplace<DirectionLightComponent>(node);
+  }
+
+  if (!world.any_of<DirectionShadowComponent>(node)) {
+    world.emplace<DirectionShadowComponent>(node);
+  }
 
   if (!world.any_of<NewLightTag>(node)) {
     world.emplace<NewLightTag>(node);

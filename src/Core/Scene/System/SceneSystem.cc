@@ -3,12 +3,7 @@
 #include <glog/logging.h>
 
 #include "AssetManager/ModelAsset.hpp"
-#include "Core/Scene/Component/AABBComponent.hpp"
-#include "Core/Scene/Component/HierarchyComponent.hpp"
-#include "Core/Scene/Component/LightComponent.hpp"
-#include "Core/Scene/Component/RenderMeshComponent.hpp"
-#include "Core/Scene/Component/TagComponent.hpp"
-#include "Core/Scene/Component/TransformComp.hpp"
+#include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
 #include "Core/Scene/GPUDataPipeline/ModelGPUData.hpp"
 #include "Core/Scene/Scene.hpp"
@@ -62,7 +57,7 @@ SceneSystem::UpdateTransformComp(Scene* scene) {
 }
 
 void
-SceneSystem::UploadGPUAsset(Scene* scene) {
+SceneSystem::ClearUnuseAsset(Scene* scene) {
   AssetManager<TextureAsset>::GetInstance()->Tick();
   AssetManager<ModelAsset>::GetInstance()->Tick();
 }
@@ -73,8 +68,6 @@ SceneSystem::UpdateAABBComponent(Scene* scene) {
   auto aabbView = world.view<ModelSceneNode>();
   for (auto&& [entity, modelSceneNode] : aabbView.each()) {
     auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
-
-    // TODO: change AABBComponent if model changed
     if (world.any_of<AABBComponent>(entity)) continue;
     if (modelSceneNode.modelPath == "res://") continue;
 
@@ -96,120 +89,6 @@ SceneSystem::CreateAsset(Scene* scene) {
       auto asset = modelAssetMgr->Create(node.modelPath);
       LOG(INFO) << FORMAT("Create a model asset, path: {}, uid: {}", node.modelPath, asset->GetUid());
     }
-  }
-}
-
-void
-SceneSystem::UpdateDirectionShadowInfo(Scene* scene) {
-  auto& world = scene->GetWorld();
-  auto camera = scene->GetEditorCamrea();
-  auto view = world.view<DirectionShadowComponent, DirectionLightComponent>();
-  for (auto&& [entity, shadow, light] : view.each()) {
-    auto dir = light.m_light.GetDirection();
-    world.patch<DirectionShadowComponent>(entity, [&dir, &camera](auto& node) {
-      node.UpdateShadowInfo(dir, *camera);
-      return;
-    });
-  }
-}
-
-void
-SceneSystem::UpdateMeshGPUAsset(Scene* scene, RHIFactory* rhiFactory) {
-  auto& world = scene->GetWorld();
-  auto modelNodeView = world.view<ModelSceneNode>();
-  auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
-  auto modelGPUAssetMgr = ModelGPUDataManager::GetInstance();
-
-  for (auto [entity, node] : modelNodeView.each()) {
-    if (node.modelPath == "res://") continue;
-    if (!modelAssetMgr->Existed(node.modelPath)) continue;
-
-    /**
-     * sync the gpu data
-     */
-    auto modelAsset = modelAssetMgr->Get(node.modelPath);
-    if (!modelGPUAssetMgr->Existed(*modelAsset)) continue;
-    modelGPUAssetMgr->Update(*modelAsset);
-
-    /**
-     * clear flags
-     */
-    int meshCount = modelAsset->GetMeshCount();
-    for (int i = 0; i < meshCount; i++) {
-      modelAsset->GetMesh(i).m_materialTexChanged = false;
-      modelAsset->GetMesh(i).m_materialValueChanged = false;
-    }
-  }
-}
-
-void
-SceneSystem::UpdateLightGPUData(Scene* scene) {
-  auto& world = scene->GetWorld();
-  auto lightGPUDataMgr = LightGPUDataManager::GetInstance();
-
-  /**
-   * add all new ligth
-   */
-  auto newView = world.view<NewLightTag>();
-  for (auto entity : newView) {
-    // handle all directional light
-    if (world.any_of<DirectionLightComponent>(entity)) {
-      auto& light = world.get<DirectionLightComponent>(entity);
-      if (world.any_of<DirectionShadowComponent>(entity)) {
-        auto& shadow = world.get<DirectionShadowComponent>(entity);
-        lightGPUDataMgr->Create(entity, light, shadow);
-      } else {
-        lightGPUDataMgr->Create(entity, light);
-      }
-    }
-
-    // TODO: handle point light and spot light
-  }
-
-  for (auto entity : newView) {
-    world.remove<NewLightTag>(entity);
-  }
-
-  /**
-   * update light
-   */
-  auto updateView = world.view<UpdateLightTag>();
-  for (auto entity : updateView) {
-    if (world.any_of<DirectionShadowComponent>(entity)) {
-      const auto& light = world.get<DirectionLightComponent>(entity);
-      if (world.any_of<DirectionShadowComponent>(entity)) {
-        const auto& shadow = world.get<DirectionShadowComponent>(entity);
-        lightGPUDataMgr->Update(entity, light, shadow);
-      } else {
-        lightGPUDataMgr->Update(entity, light);
-      }
-    }
-
-    // TODO: handle point light and spot light
-  }
-  for (auto entity : updateView) {
-    world.remove<UpdateLightTag>(entity);
-  }
-
-  /**
-   * remove light
-   */
-  auto deleteView = world.view<DeleteLightTag>();
-  for (auto entity : deleteView) {
-    if (world.any_of<DirectionShadowComponent>(entity)) {
-      auto& light = world.get<DirectionShadowComponent>(entity);
-      if (world.any_of<DirectionShadowComponent>(entity)) {
-        auto& shadow = world.get<DirectionShadowComponent>(entity);
-        // TODO: delete entity gpu data with light and shadow and delete the two component
-      } else {
-        // TODO: delete entity gpu data with light and delete the two component
-      }
-    }
-
-    // TODO: handle point light and spot light
-  }
-  for (auto entity : deleteView) {
-    world.remove<DeleteLightTag>(entity);
   }
 }
 

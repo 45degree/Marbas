@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Core/Scene/Component/LightComponent.hpp"
-#include "Core/Scene/Component/ShadowComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
 #include "GPUDataPipeline.hpp"
 
 namespace Marbas {

@@ -5,7 +5,7 @@
 #include "AssetManager/ModelAsset.hpp"
 #include "Core/Common.hpp"
 #include "Core/Renderer/GBuffer.hpp"
-#include "Core/Scene/Component/RenderMeshComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/GPUDataPipeline/ModelGPUData.hpp"
 
 namespace Marbas {
@@ -16,7 +16,6 @@ GeometryPass::GeometryPass(const GeometryPassCreateInfo& createInfo)
       m_depthTexture(createInfo.depthTexture),
       m_colorTexture(createInfo.colorTexture),
       m_rhiFactory(createInfo.rhiFactory),
-      // m_scene(createInfo.scene),
       m_width(createInfo.width),
       m_height(createInfo.height) {
   auto pipelineContext = m_rhiFactory->GetPipelineContext();

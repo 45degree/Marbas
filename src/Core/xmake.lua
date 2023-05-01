@@ -76,7 +76,7 @@ target('Marbas.Core', function()
 
   add_deps('Marbas.RHI', 'Marbas.Common', 'IconFontCppHeaders', 'ImGuizmo', 'nameof', 'async_simple')
 
-  add_packages('glfw', 'glm', 'glog', 'assimp', 'entt', 'fmt', 'cereal', 'shaderc')
+  add_packages('glfw', 'glm', 'glog', 'assimp', 'entt', 'fmt', 'cereal', 'shaderc', 'abseil')
 
   if is_plat('windows') then
     add_defines('NOMINMAX')

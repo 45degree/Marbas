@@ -3,7 +3,7 @@
 #include "Common/MathCommon.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
-#include "Core/Scene/Component/ShadowComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/Scene.hpp"
 
 #ifndef MAX_DIRECTION_LIGHT_COUNT

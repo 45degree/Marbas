@@ -8,15 +8,15 @@
 #include <iostream>
 
 #include "Common/Common.hpp"
-#include "Core/Scene/Component/HierarchyComponent.hpp"
-#include "Core/Scene/Component/LightComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
+#include "Core/Scene/SceneManager.hpp"
 #include "Editor/Application.hpp"
 #include "RHIFactory.hpp"
 
 namespace Marbas {
 
 void
-RenderImage::ShowToolBar() {
+RenderImage::ShowToolBar(Scene* scene) {
   ImGui::PushID(0);
   ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(1 / 7.0f, 0.6f, 0.6f, 0.));
 
@@ -54,12 +54,12 @@ RenderImage::ShowToolBar() {
   ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
 
   ImGui::SameLine();
-  auto& world = m_scene->GetWorld();
+  auto& world = scene->GetWorld();
   if (ImGui::Button(ICON_FA_ARROWS_TO_DOT)) {
     if (m_entity != entt::null) {
       if (world.any_of<ModelSceneNode>(m_entity)) {
         auto entity = m_entity;
-        auto camera = m_scene->GetEditorCamrea();
+        auto camera = scene->GetEditorCamrea();
         auto perspectiveMatrix = camera->GetProjectionMatrix();
         auto modelMatrix = world.get<TransformComp>(entity).GetGlobalTransform();
 
@@ -84,7 +84,7 @@ RenderImage::ShowToolBar() {
 }
 
 void
-RenderImage::Manipulate() {
+RenderImage::Manipulate(Scene* scene) {
   if (!ImGui::IsWindowFocused()) return;
 
   auto& io = ImGui::GetIO();
@@ -96,7 +96,7 @@ RenderImage::Manipulate() {
   auto xOffset = x - m_mouseLastX;
   auto yOffset = y - m_mouseLastY;
 
-  auto editorCamera = m_scene->GetEditorCamrea();
+  auto editorCamera = scene->GetEditorCamrea();
   if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
     if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
       auto right = editorCamera->GetRightVector();  // x-axis in camera coordinate
@@ -124,8 +124,11 @@ RenderImage::Manipulate() {
 
 void
 RenderImage::Draw() {
-  Manipulate();
-  ShowToolBar();
+  auto sceneManager = SceneManager::GetInstance();
+  auto activeScene = sceneManager->GetActiveScene();
+
+  Manipulate(activeScene);
+  ShowToolBar(activeScene);
 
   /**
    * push the render result into the image
@@ -140,7 +143,7 @@ RenderImage::Draw() {
 
   // set imguizmo draw array
   auto winPos = ImGui::GetWindowPos();
-  auto camera = m_scene->GetEditorCamrea();
+  auto camera = activeScene->GetEditorCamrea();
 
   // ImVec2 vMax = ImGui::GetWindowContentRegionMax();
 
@@ -157,12 +160,12 @@ RenderImage::Draw() {
 
   // draw
   // TODO: handle all entity type
-  auto& world = m_scene->GetWorld();
+  auto& world = activeScene->GetWorld();
   if (m_entity != entt::null) {
     if (world.any_of<ModelSceneNode>(m_entity) || world.any_of<EmptySceneNode>(m_entity)) {
-      DrawModelManipulate();
+      DrawModelManipulate(activeScene);
     } else if (world.any_of<DirectionalLightSceneNode>(m_entity)) {
-      DrawLightManipulate();
+      DrawLightManipulate(activeScene);
     }
   }
 
@@ -174,12 +177,15 @@ RenderImage::Draw() {
 }
 
 void
-RenderImage::DrawModelManipulate() {
-  const auto camera = m_scene->GetEditorCamrea();
+RenderImage::DrawModelManipulate(Scene* scene) {
+  const auto camera = scene->GetEditorCamrea();
   const auto viewMatrix = camera->GetViewMatrix();
   const auto perspectiveMatrix = camera->GetProjectionMatrix();
 
-  auto modelMatrix = m_scene->GetWorld().get<TransformComp>(m_entity).GetGlobalTransform();
+  // TODO: check component is existed?
+  auto& world = scene->GetWorld();
+  if (!world.any_of<TransformComp>(m_entity)) return;
+  auto modelMatrix = scene->GetWorld().get<TransformComp>(m_entity).GetGlobalTransform();
 
   if (m_showMove && m_showRotate && m_showScale) {
     ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix), ImGuizmo::OPERATION::UNIVERSAL,
@@ -195,41 +201,21 @@ RenderImage::DrawModelManipulate() {
                          ImGuizmo::LOCAL, glm::value_ptr(modelMatrix));
   }
 
-  m_scene->GetWorld().get<TransformComp>(m_entity).SetGlobalTransform(modelMatrix);
+  scene->GetWorld().get<TransformComp>(m_entity).SetGlobalTransform(modelMatrix);
 }
 
 void
-RenderImage::DrawLightManipulate() {
-  const auto camera = m_scene->GetEditorCamrea();
+RenderImage::DrawLightManipulate(Scene* scene) {
+  const auto camera = scene->GetEditorCamrea();
   const auto viewMatrix = camera->GetViewMatrix();
   const auto perspectiveMatrix = camera->GetProjectionMatrix();
 
-  // auto& modelMatrix = Entity::GetComponent<HierarchyComponent>(m_scene, m_entity).globalTransformMatrix;
-  auto modelMatrix = m_scene->GetWorld().get<TransformComp>(m_entity).GetGlobalTransform();
+  auto modelMatrix = scene->GetWorld().get<TransformComp>(m_entity).GetGlobalTransform();
 
   ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix), ImGuizmo::OPERATION::TRANSLATE,
                        ImGuizmo::LOCAL, glm::value_ptr(modelMatrix));
 
-  m_scene->GetWorld().get<TransformComp>(m_entity).SetGlobalTransform(modelMatrix);
-  // HierarchyComponent::ResetGlobalTransformMatrix(m_scene->GetWorld(), m_entity, modelMatrix);
-
-  // if (Entity::HasComponent<PointLightComponent>(m_scene, m_entity)) {
-  //   auto& light = Entity::GetComponent<PointLightComponent>(m_scene, m_entity).m_light;
-  //   glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0), light.GetPos());
-  //   ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
-  //   ImGuizmo::OPERATION::TRANSLATE,
-  //                        ImGuizmo::LOCAL, glm::value_ptr(modelMatrix));
-  //   auto newPos = glm::vec3(glm::column(modelMatrix, 3));
-  //   light.SetPos(newPos);
-  // } else if (Entity::HasComponent<ParallelLightComponent>(m_scene, m_entity)) {
-  //   auto& light = Entity::GetComponent<ParallelLightComponent>(m_scene, m_entity).m_light;
-  //   glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0), light.GetPos());
-  //   ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(perspectiveMatrix),
-  //   ImGuizmo::OPERATION::TRANSLATE,
-  //                        ImGuizmo::LOCAL, glm::value_ptr(modelMatrix));
-  //   auto newPos = glm::vec3(glm::column(modelMatrix, 3));
-  //   light.SetPos(newPos);
-  // }
+  scene->GetWorld().get<TransformComp>(m_entity).SetGlobalTransform(modelMatrix);
 }
 
 }  // namespace Marbas

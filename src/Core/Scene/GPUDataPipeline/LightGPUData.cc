@@ -14,12 +14,11 @@ DirectionLightInfoList LightGPUData::s_directionalLightInfos;
 
 static void
 SetDirectionLightInfo(DirectionLightInfo& info, const DirectionLightComponent& light) {
-  const auto& color = light.m_light.GetColor();
-  info.colorEnergy.x = color.x;
-  info.colorEnergy.y = color.y;
-  info.colorEnergy.z = color.z;
-  info.colorEnergy.w = light.m_light.GetEnergy();
-  info.direction = light.m_light.GetDirection();
+  info.colorEnergy.x = light.m_color.x;
+  info.colorEnergy.y = light.m_color.y;
+  info.colorEnergy.z = light.m_color.z;
+  info.colorEnergy.w = light.m_energy;
+  info.direction = light.m_direction;
 }
 
 static void

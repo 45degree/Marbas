@@ -4,9 +4,7 @@
 
 #include "Common/Common.hpp"
 #include "Common/EditorCamera.hpp"
-#include "Core/Scene/Component/SceneNodeComponent.hpp"
-#include "Core/Scene/Component/ShadowComponent.hpp"
-#include "Core/Scene/Component/TransformComp.hpp"
+#include "Component/Component.hpp"
 #include "System/SceneSystem.hpp"
 
 namespace Marbas {
@@ -17,7 +15,7 @@ class Scene {
   explicit Scene(entt::registry&& registry);
 
  public:
-  static std::shared_ptr<Scene>
+  static std::unique_ptr<Scene>
   LoadFromFile(const Path& scenePath);
 
   void
@@ -68,7 +66,7 @@ class Scene {
  private:
   String m_name = "default scene";
   entt::registry m_world;
-  entt::entity m_rootEntity;
+  entt::entity m_rootEntity = entt::null;
   std::shared_ptr<EditorCamera> m_editorCamera = nullptr;
 };
 

@@ -10,11 +10,9 @@
 // clang-format on
 
 #include "AssetManager/AssetRegistry.hpp"
-// #include "AssetManager/GPUAssetUpLoader.hpp"
-// #include "AssetManager/ModelAsset.hpp"
-// #include "AssetManager/TextureAsset.hpp"
 #include "Common/Common.hpp"
 #include "Core/Scene/GPUDataPipeline/GPUDataManager.hpp"
+#include "Core/Scene/SceneManager.hpp"
 #include "Core/Scene/System/RenderSystem.hpp"
 #include "Editor/Widget/ContentBrowser.hpp"
 #include "GLFW/glfw3.h"
@@ -111,12 +109,15 @@ Application::Initialize() {
   m_imguiContext->SetUpImguiBackend(m_glfwWindow);
 
   // create resource manager
-  m_scene = std::make_unique<Scene>();
+  // m_scene = std::make_unique<Scene>();
+  auto sceneManager = SceneManager::GetInstance();
+  auto scene = sceneManager->CreateEmptyScene();
+  sceneManager->SetActiveScene(scene);
 
   // create render engine
   GPUDataManager::SetUp(m_rhiFactory.get());
   RenderSystem::Initialize(m_rhiFactory.get());
-  RenderSystem::CreateRenderGraph(m_scene.get(), m_rhiFactory.get());
+  RenderSystem::CreateRenderGraph(m_rhiFactory.get());
 }
 
 void
@@ -124,9 +125,9 @@ Application::Run() {
   int currentFrame = 0;
   bool needResize = false;
 
-  SceneTreeWidget sceneTree(m_rhiFactory.get(), m_scene.get());
-  RenderImage renderImage(m_rhiFactory.get(), m_scene.get());
-  InformationWidget infoWidget(m_rhiFactory.get(), m_scene.get());
+  SceneTreeWidget sceneTree(m_rhiFactory.get());
+  RenderImage renderImage(m_rhiFactory.get());
+  InformationWidget infoWidget(m_rhiFactory.get());
   ContentBrowser ContentBrowser(m_rhiFactory.get());
   sceneTree.m_selectEntity.Connect<&RenderImage::SetSelectedEntity>(renderImage);
   sceneTree.m_selectEntity.Connect<&InformationWidget::SelectEntity>(infoWidget);
@@ -166,15 +167,18 @@ Application::Run() {
     }
 
     if (renderImage.needBakeScene) {
-      // m_renderEngine->Bake(m_scene.get());
       renderImage.needBakeScene = false;
     }
 
+    auto sceneManager = SceneManager::GetInstance();
+    auto scene = sceneManager->GetActiveScene();
+
+    // render scene
     {
-      SceneSystem::UpdateEveryFrame(m_scene.get(), m_rhiFactory.get());
+      SceneSystem::UpdateEveryFrame(scene, m_rhiFactory.get());
 
       RenderSystem::Update(RenderInfo{
-          .scene = m_scene.get(),
+          .scene = scene,
           .imageIndex = currentFrame,
           .waitSemaphore = m_aviableSemaphores[currentFrame],
           .signalSemaphore = m_renderFinishSemaphore,
@@ -182,32 +186,46 @@ Application::Run() {
       });
     }
 
-    BeginImgui();
+    // draw imgui
+    {
+      BeginImgui();
 
-    // TODO: Draw ImGui
-    ImGui::Begin("tree");
-    sceneTree.Draw();
-    ImGui::End();
-    ImGui::Begin("image");
-    renderImage.Draw();
-    ImGui::End();
-    ImGui::Begin("Info");
-    infoWidget.Draw();
-    ImGui::End();
-    ImGui::Begin("ContentBrowser");
-    ContentBrowser.Draw();
-    ImGui::End();
+      // TODO: Draw ImGui
+      ImGui::Begin("tree");
+      sceneTree.Draw();
+      ImGui::End();
+      ImGui::Begin("image");
+      renderImage.Draw();
+      ImGui::End();
+      ImGui::Begin("Info");
+      infoWidget.Draw();
+      ImGui::End();
+      ImGui::Begin("ContentBrowser");
+      ContentBrowser.Draw();
+      ImGui::End();
 
-    EndImgui(imageIndex, m_renderFinishSemaphore, m_finishSemaphores[currentFrame]);
+      // use ctrl + s to store the scene
+      if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
+        if (ImGui::IsKeyDown(ImGuiKey_S)) {
+          if (sceneManager->IsUnNamedScene(scene)) {
+            sceneManager->SaveScene("res://scene.scene", scene);
+          }
+        }
+      }
+
+      EndImgui(imageIndex, m_renderFinishSemaphore, m_finishSemaphores[currentFrame]);
+    }
 
     // present result
-    auto presentResult = m_rhiFactory->Present(m_swapChain, {&m_finishSemaphores[currentFrame], 1}, imageIndex);
-    m_rhiFactory->WaitForFence(m_frameFence);
-    if (-1 == presentResult) {
-      needResize = true;
-      continue;
+    {
+      auto presentResult = m_rhiFactory->Present(m_swapChain, {&m_finishSemaphores[currentFrame], 1}, imageIndex);
+      m_rhiFactory->WaitForFence(m_frameFence);
+      if (-1 == presentResult) {
+        needResize = true;
+        continue;
+      }
+      currentFrame = (currentFrame + 1) % m_swapChain->imageViews.size();
     }
-    currentFrame = (currentFrame + 1) % m_swapChain->imageViews.size();
   }
 }
 
@@ -216,8 +234,6 @@ Application::Quit() {
   m_rhiFactory->WaitIdle();
 
   // Clear AssetManager
-  // GPUAssetManager<TextureGPUAsset>::Destroy();
-  // GPUAssetManager<ModelGPUAsset>::Destroy();
   GPUDataManager::TearDown();
 
   // clear context

@@ -3,14 +3,17 @@
 #include <entt/entt.hpp>
 #include <optional>
 
-#include "Common/Light.hpp"
-#include "TagComponent.hpp"
+#include "../TagComponent.hpp"
+#include "Common/MathCommon.hpp"
 
 namespace Marbas {
 
 struct DirectionLightComponent {
   std::optional<uint32_t> lightIndex;
-  ParallelLight m_light;
+
+  glm::vec3 m_color = glm::vec3(1, 1, 1);
+  glm::vec3 m_direction = glm::vec3(0, 0, -1);
+  float m_energy = 1;
 
   static void
   OnCreate(entt::registry& world, entt::entity node) {
@@ -28,12 +31,16 @@ struct DirectionLightComponent {
 
   static void
   OnDestroy(entt::registry& world, entt::entity node) {}
+
+  template <typename Archive>
+  void
+  serialize(Archive&& archive) {
+    archive(m_color, m_direction, m_energy);
+  }
 };
 
 struct PointLightComponent {
-  PointLight m_light;
+  // details::PointLight m_light;
 };
-
-struct SunLightTag {};
 
 }  // namespace Marbas

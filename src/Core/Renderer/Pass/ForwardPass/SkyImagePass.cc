@@ -6,7 +6,7 @@
 
 #include "AssetManager/TextureAsset.hpp"
 #include "Core/Common.hpp"
-#include "Core/Scene/Component/EnvironmentComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/GPUDataPipeline/TextureGPUData.hpp"
 
 namespace Marbas {
@@ -49,7 +49,7 @@ SkyImagePass::SkyImagePass(const SkyImagePassCreateInfo& createInfo)
     : m_atmosphereTexture(createInfo.atmosphereTexture),
       m_finalColorTexture(createInfo.finalColorTexture),
       m_finalDepthTexture(createInfo.finalDepthTexture),
-      m_scene(createInfo.scene),
+      // m_scene(createInfo.scene),
       m_rhiFactory(createInfo.rhiFactory),
       m_width(createInfo.width),
       m_height(createInfo.height) {
@@ -148,7 +148,8 @@ SkyImagePass::SetUp(RenderGraphGraphicsBuilder& builder) {
 
 void
 SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
-  auto& world = m_scene->GetWorld();
+  auto* scene = registry.GetCurrentActiveScene();
+  auto& world = scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();
   if (view.size() == 0) return;
 
@@ -161,7 +162,7 @@ SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
   auto atmosphereSet = registry.GetInputDescriptorSet();
 
   // set camera info
-  auto camera = m_scene->GetEditorCamera();
+  auto camera = scene->GetEditorCamera();
   auto* bufCtx = m_rhiFactory->GetBufferContext();
   m_cameraInfo.view = camera->GetViewMatrix();
   m_cameraInfo.projection = camera->GetProjectionMatrix();
@@ -231,8 +232,9 @@ SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
 }
 
 bool
-SkyImagePass::IsEnable() {
-  auto& world = m_scene->GetWorld();
+SkyImagePass::IsEnable(RenderGraphRegistry& registry) {
+  auto* scene = registry.GetCurrentActiveScene();
+  auto& world = scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();
   if (view.size() == 0) return false;
 

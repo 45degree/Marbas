@@ -10,9 +10,9 @@
 
 #include "AssetManager/ModelAsset.hpp"
 #include "CommonName.hpp"
-#include "Core/Scene/Component/EnvironmentComponent.hpp"
-#include "Core/Scene/Component/LightComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/GPUDataPipeline/TextureGPUData.hpp"
+#include "Core/Scene/SceneManager.hpp"
 #include "Core/Scene/System/RenderSystem.hpp"
 #include "DirectionArrowControl.hpp"
 #include "ImGuizmo.h"
@@ -179,7 +179,9 @@ DrawComponentProp(const std::string_view name, entt::registry& world, entt::enti
 
 void
 InformationWidget::Draw() {
-  auto& world = m_scene->GetWorld();
+  auto sceneManager = SceneManager::GetInstance();
+  auto activeScene = sceneManager->GetActiveScene();
+  auto& world = activeScene->GetWorld();
   if (m_entity == entt::null) return;
   DrawComponentProp<ModelSceneNode>("model", world, m_entity, [&](ModelSceneNode& node) {
     std::string modelpath = node.modelPath.to_string();
@@ -279,10 +281,9 @@ InformationWidget::Draw() {
   });
 
   DrawComponentProp<DirectionLightComponent>("directional light", world, m_entity, [&](auto& node) {
-    auto& light = node.m_light;
-    auto color = light.GetColor();
-    auto energy = light.GetEnergy();
-    auto dir = light.GetDirection();
+    auto color = node.m_color;
+    auto energy = node.m_energy;
+    auto dir = node.m_direction;
     bool isChangeColor = ImGui::ColorEdit3("light", glm::value_ptr(color));
     bool isChangeDir = ImGui::InputFloat3("directional", glm::value_ptr(dir));
     bool isChangeEnergy = ImGui::InputFloat("energy", &energy);
@@ -290,9 +291,9 @@ InformationWidget::Draw() {
     if (isChangeColor || isChangeDir || isChangeEnergy) {
       world.patch<DirectionLightComponent>(m_entity, [&color, &dir, &energy](auto& node) {
         dir = glm::normalize(dir);
-        node.m_light.SetColor(color);
-        node.m_light.SetDirection(dir);
-        node.m_light.SetEnergy(energy);
+        node.m_color = color;
+        node.m_energy = energy;
+        node.m_direction = dir;
       });
     }
 
@@ -321,7 +322,6 @@ InformationWidget::Draw() {
   });
 }
 
-InformationWidget::InformationWidget(RHIFactory* rhiFactory, Scene* scene)
-    : Widget("Infomation", rhiFactory), m_scene(scene) {}
+InformationWidget::InformationWidget(RHIFactory* rhiFactory) : Widget("Infomation", rhiFactory) {}
 
 }  // namespace Marbas

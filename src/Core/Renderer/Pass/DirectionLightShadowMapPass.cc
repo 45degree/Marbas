@@ -3,9 +3,7 @@
 #include "AssetManager/ModelAsset.hpp"
 #include "Common/MathCommon.hpp"
 #include "Core/Common.hpp"
-#include "Core/Scene/Component/LightComponent.hpp"
-#include "Core/Scene/Component/RenderMeshComponent.hpp"
-#include "Core/Scene/Component/ShadowComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
 #include "Core/Scene/GPUDataPipeline/ModelGPUData.hpp"
 

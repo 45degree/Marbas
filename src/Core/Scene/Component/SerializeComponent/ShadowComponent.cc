@@ -4,8 +4,8 @@
 
 #include <Common/MathCommon.hpp>
 
-#include "Core/Scene/Component/LightComponent.hpp"
-#include "Core/Scene/Component/TagComponent.hpp"
+#include "LightComponent.hpp"
+#include "TagComponent.hpp"
 
 namespace Marbas {
 

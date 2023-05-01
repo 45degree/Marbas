@@ -1,4 +1,4 @@
-#include "Core/Scene/Component/HierarchyComponent.hpp"
+#include "HierarchyComponent.hpp"
 
 #include "Core/Scene/Scene.hpp"
 

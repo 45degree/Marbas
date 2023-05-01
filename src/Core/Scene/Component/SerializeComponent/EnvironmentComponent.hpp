@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include "AssetManager/AssetPath.hpp"
 #include "Common/Common.hpp"
 

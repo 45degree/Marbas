@@ -9,7 +9,6 @@ namespace Marbas {
 struct SkyImagePassCreateInfo {
   uint32_t width;
   uint32_t height;
-  Scene* scene = nullptr;
   RHIFactory* rhiFactory = nullptr;
   RenderGraphTextureHandler finalColorTexture;
   RenderGraphTextureHandler finalDepthTexture;
@@ -28,7 +27,7 @@ class SkyImagePass final {
   Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
-  IsEnable();
+  IsEnable(RenderGraphRegistry& registry);
 
  private:
   struct CameraInfo {
@@ -51,7 +50,6 @@ class SkyImagePass final {
   Buffer* m_indexBuffer = nullptr;
   uintptr_t m_sampler;
 
-  Scene* m_scene = nullptr;
   RHIFactory* m_rhiFactory = nullptr;
   uint32_t m_width;
   uint32_t m_height;

@@ -7,17 +7,14 @@
 #include <algorithm>
 #include <assimp/Importer.hpp>
 #include <cereal/archives/binary.hpp>
+#include <cereal/archives/xml.hpp>
 #include <cereal/cereal.hpp>
 #include <fstream>
 #include <strstream>
 
 #include "Common/Common.hpp"
 #include "Common/EditorCamera.hpp"
-#include "Core/Scene/Component/EnvironmentComponent.hpp"
-#include "Core/Scene/Component/HierarchyComponent.hpp"
-#include "Core/Scene/Component/LightComponent.hpp"
-#include "Core/Scene/Component/SceneNodeComponent.hpp"
-#include "Core/Scene/Component/TransformComp.hpp"
+#include "Component/Component.hpp"
 #include "entt/entity/fwd.hpp"
 
 namespace Marbas {
@@ -54,6 +51,8 @@ Scene::Scene() {
 }
 
 Scene::Scene(entt::registry&& registry) : m_world(std::move(registry)) {
+  RegistryNodes(m_world);
+
   // find root entity
   auto view = m_world.view<HierarchyComponent>();
   for (auto [entity, hierarchyComponent] : view.each()) {
@@ -63,25 +62,38 @@ Scene::Scene(entt::registry&& registry) : m_world(std::move(registry)) {
     }
   }
   m_editorCamera = std::make_shared<EditorCamera>();
+
+  if (m_rootEntity == entt::null) {
+    LOG(ERROR) << "can't find root entity from world";
+  }
 }
 
-std::shared_ptr<Scene>
+std::unique_ptr<Scene>
 Scene::LoadFromFile(const Path& scenePath) {
   std::ifstream file(scenePath, std::ios::in | std::ios::binary);
   cereal::BinaryInputArchive archive(file);
 
   entt::registry world;
 
-  entt::snapshot_loader{world}
-      .entities(archive)
-      .component<EmptySceneNode>(archive)
-      .component<DirectionalLightSceneNode>(archive)
-      .component<PointLightSceneNode>(archive)
-      .component<ModelSceneNode>(archive)
-      .component<HierarchyComponent>(archive)
-      .orphans();
+  entt::snapshot_loader loader{world};
+  SerializeComponent(loader, archive);
+  loader.orphans();
 
-  auto scene = std::make_shared<Scene>(std::move(world));
+  auto scene = std::make_unique<Scene>(std::move(world));
+
+  // FIX: 序列化之后, 没有触发on_construct方法, 导致有些Tag没有加上
+  auto ExecuteCreateFunc = [&scene]<typename T>(T t) {
+    auto& world = scene->GetWorld();
+    auto view = world.view<T>();
+    for (auto entity : view) {
+      T::OnCreate(world, entity);
+    }
+    return;
+  };
+  ExecuteCreateFunc(DirectionalLightSceneNode());
+  ExecuteCreateFunc(DirectionLightComponent());
+  ExecuteCreateFunc(DirectionShadowComponent());
+
   return scene;
 }
 
@@ -90,13 +102,8 @@ Scene::SaveToFile(const Path& scenePath) {
   std::ofstream file(scenePath, std::ios::out | std::ios::binary);
   cereal::BinaryOutputArchive archive(file);
 
-  entt::snapshot{m_world}
-      .entities(archive)
-      .component<EmptySceneNode>(archive)
-      .component<DirectionalLightSceneNode>(archive)
-      .component<PointLightSceneNode>(archive)
-      .component<ModelSceneNode>(archive)
-      .component<HierarchyComponent>(archive);
+  entt::snapshot saver{m_world};
+  SerializeComponent(saver, archive);
 }
 
 entt::entity

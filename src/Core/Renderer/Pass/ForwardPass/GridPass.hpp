@@ -9,7 +9,7 @@ namespace Marbas {
 struct GridRenderPassCreateInfo {
   uint32_t width;
   uint32_t height;
-  Scene* scene;
+  // Scene* scene;
   RHIFactory* rhiFactory;
   RenderGraphTextureHandler finalColorTexture;
   RenderGraphTextureHandler finalDepthTexture;
@@ -25,6 +25,11 @@ class GridRenderPass final {
 
   void
   Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
+
+  bool
+  IsEnable(RenderGraphRegistry& registry) {
+    return registry.GetCurrentActiveScene() != nullptr;
+  }
 
  private:
   struct CameraInfo {
@@ -43,7 +48,7 @@ class GridRenderPass final {
 
   uint32_t m_width;
   uint32_t m_height;
-  Scene* m_scene;
+  // Scene* m_scene;
   RHIFactory* m_rhiFactory;
 
   RenderGraphTextureHandler m_finalColorTexture;

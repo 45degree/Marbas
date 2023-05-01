@@ -1,11 +1,10 @@
 #pragma once
 
+#include <cereal/types/array.hpp>
 #include <entt/entt.hpp>
 
 #include "Common/Camera.hpp"
-#include "Common/Light.hpp"
 #include "Common/MathCommon.hpp"
-#include "Core/Renderer/RenderGraph/RenderGraphResource.hpp"
 #include "RHIFactory.hpp"
 
 #ifndef CASCATE_COUNT
@@ -33,6 +32,12 @@ struct DirectionShadowComponent {
 
   void
   UpdateShadowInfo(const glm::vec3& lightDir, const Camera& camera);
+
+  template <typename Archive>
+  void
+  serialize(Archive&& archive) {
+    archive(m_split);
+  }
 
  public:
   static void

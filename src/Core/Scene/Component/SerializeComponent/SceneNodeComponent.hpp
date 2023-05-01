@@ -30,9 +30,6 @@ struct DirectionalLightSceneNode {
     ar(nodeName);
   }
 
-  // static void
-  // RegistryNode(entt::registry& world);
-
   static void
   OnCreate(entt::registry& world, entt::entity node);
 

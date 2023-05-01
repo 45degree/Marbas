@@ -10,17 +10,18 @@
 
 #include <iostream>
 
-#include "Core/Scene/Component/HierarchyComponent.hpp"
-#include "Core/Scene/Component/LightComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
+#include "Core/Scene/SceneManager.hpp"
 #include "Editor/Widget/AssetSelectDialog.hpp"
+#include "Editor/Widget/CommonName.hpp"
 
 namespace Marbas {
 
 void
-SceneTreeWidget::DrawNode(const entt::entity& entity, uint32_t indent) {
+SceneTreeWidget::DrawNode(Scene* scene, entt::entity& entity, uint32_t indent) {
   if (entity == entt::null) return;
 
-  auto& world = m_scene->GetWorld();
+  auto& world = scene->GetWorld();
   if (!world.any_of<HierarchyComponent>(entity)) {
     return;
   }
@@ -34,7 +35,7 @@ SceneTreeWidget::DrawNode(const entt::entity& entity, uint32_t indent) {
     auto& modelNode = world.get<ModelSceneNode>(entity);
     name = "Model##" + std::to_string((uint32_t)entity);
   } else if (world.any_of<DirectionalLightSceneNode>(entity)) {
-    auto& lightNode = m_scene->GetWorld().get<DirectionalLightSceneNode>(entity);
+    auto& lightNode = scene->GetWorld().get<DirectionalLightSceneNode>(entity);
     name = lightNode.nodeName + "##" + std::to_string((uint32_t)entity);
   }
 
@@ -49,8 +50,8 @@ SceneTreeWidget::DrawNode(const entt::entity& entity, uint32_t indent) {
     }
 
     auto children = hierarchyComponent.children;
-    for (const auto& subEntity : children) {
-      DrawNode(subEntity);
+    for (auto& subEntity : children) {
+      DrawNode(scene, subEntity);
     }
 
     ImGui::TreePop();
@@ -61,7 +62,9 @@ void
 SceneTreeWidget::DrawPopup() {
   if (m_PopupEntity == entt::null) return;
 
-  auto& world = m_scene->GetWorld();
+  auto sceneManager = SceneManager::GetInstance();
+  auto activeScene = sceneManager->GetActiveScene();
+  auto& world = activeScene->GetWorld();
   if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && ImGui::IsWindowHovered()) {
     ImGui::OpenPopup("scenePopup");
   }
@@ -69,12 +72,12 @@ SceneTreeWidget::DrawPopup() {
   // change style
   if (ImGui::BeginPopup("scenePopup")) {
     if (ImGui::MenuItem("empty node")) {
-      auto node = m_scene->AddChild(m_PopupEntity);
+      auto node = activeScene->AddChild(m_PopupEntity);
       world.emplace<EmptySceneNode>(node);
     }
 
     if (ImGui::MenuItem(ICON_FA_CIRCLE_NODES " Add Model")) {
-      auto node = m_scene->AddChild(m_PopupEntity);
+      auto node = activeScene->AddChild(m_PopupEntity);
       world.emplace<ModelSceneNode>(node);
     }
 
@@ -83,7 +86,7 @@ SceneTreeWidget::DrawPopup() {
 
     if (ImGui::BeginMenu(ICON_FA_LIGHTBULB " Add Light")) {
       if (ImGui::MenuItem(ICON_FA_LIGHTBULB " Add direction Light")) {
-        auto node = m_scene->AddChild(m_PopupEntity);
+        auto node = activeScene->AddChild(m_PopupEntity);
         world.emplace<DirectionalLightSceneNode>(node);
       }
       ImGui::EndMenu();
@@ -95,14 +98,28 @@ SceneTreeWidget::DrawPopup() {
 
 void
 SceneTreeWidget::Draw() {
-  if (m_scene == nullptr) return;
+  auto sceneManager = SceneManager::GetInstance();
+  auto activeScene = sceneManager->GetActiveScene();
 
-  auto rootEntity = m_scene->GetRootNode();
-  DrawNode(rootEntity);
+  auto rootEntity = activeScene->GetRootNode();
+  DrawNode(activeScene, rootEntity);
   DrawPopup();
+
+  if (ImGui::BeginDragDropTarget()) {
+    if (auto* payload = ImGui::AcceptDragDropPayload(CONTENT_BROWSER_DRAGDROG); payload != nullptr) {
+      const auto& path = *reinterpret_cast<AssetPath*>(payload->Data);
+      // TODO: check if the path is a scene path
+      auto sceneManager = SceneManager::GetInstance();
+      sceneManager->LoadScene(path);
+
+      auto scene = sceneManager->GetScene(path);
+      sceneManager->SetActiveScene(scene);
+      m_selectEntity.Publish(entt::null);
+    }
+    ImGui::EndDragDropTarget();
+  }
 }
 
-SceneTreeWidget::SceneTreeWidget(RHIFactory* rhiFactory, Scene* scene)
-    : Widget("SceneTree", rhiFactory), m_scene(scene) {}
+SceneTreeWidget::SceneTreeWidget(RHIFactory* rhiFactory) : Widget("SceneTree", rhiFactory) {}
 
 }  // namespace Marbas

@@ -16,24 +16,25 @@ struct SceneSystem {
  public:
   static void
   UpdateEveryFrame(Scene* scene, RHIFactory* rhiFactory) {
-    // update scene aabb
     CreateAsset(scene);
+    ClearUnuseAsset(scene);
 
+    // update scene aabb
     UpdateAABBComponent(scene);
     UpdateTransformComp(scene);
-    UpdateDirectionShadowInfo(scene);
-    UploadGPUAsset(scene);
-
-    UpdateMeshGPUAsset(scene, rhiFactory);
-    UpdateLightGPUData(scene);
   }
 
  private:
+  /**
+   * @brief create the asset that don't have a uid(don't have a cache in disk);
+   *
+   * @param scene scene
+   */
   static void
   CreateAsset(Scene* scene);
 
   static void
-  UploadGPUAsset(Scene* scene);
+  ClearUnuseAsset(Scene* scene);
 
   static void
   UpdateTransformComp(Scene* scene);
@@ -43,21 +44,6 @@ struct SceneSystem {
 
   static void
   UpdateAABBComponent(Scene* scene);
-
-  static void
-  UpdateDirectionShadowInfo(Scene* scene);
-
-  /**
-   * @brief update mesh gpu asset, such as material and so on;
-   *
-   * @param scene scene
-   * @param rhiFactory rhi factory
-   */
-  static void
-  UpdateMeshGPUAsset(Scene* scene, RHIFactory* rhiFactory);
-
-  static void
-  UpdateLightGPUData(Scene* scene);
 };
 
 }  // namespace Marbas

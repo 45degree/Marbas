@@ -21,7 +21,7 @@ struct RenderSystem final {
   Initialize(RHIFactory* rhiFactory);
 
   static void
-  CreateRenderGraph(Scene* scene, RHIFactory* rhiFactory);
+  CreateRenderGraph(RHIFactory* rhiFactory);
 
   static void
   Update(const RenderInfo& renderInfo);
@@ -49,6 +49,21 @@ struct RenderSystem final {
    */
   static void
   UpdateShadowMapAtlasPosition(Scene* scene);
+
+  static void
+  UpdateDirectionShadowInfo(Scene* scene);
+
+  static void
+  UpdateLightGPUData(Scene* scene);
+
+  /**
+   * @brief update mesh gpu asset, such as material and so on;
+   *
+   * @param scene scene
+   * @param rhiFactory rhi factory
+   */
+  static void
+  UpdateMeshGPUAsset(Scene* scene);
 
  private:
   static std::shared_ptr<RenderGraphResourceManager> s_resourceManager;

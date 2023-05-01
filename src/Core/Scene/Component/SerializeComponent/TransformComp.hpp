@@ -1,8 +1,11 @@
 #pragma once
 
+#include <array>
+#include <cereal/types/array.hpp>
 #include <optional>
 
 #include "Common/MathCommon.hpp"
+#include "GLMSerialize.hpp"
 
 namespace Marbas {
 
@@ -44,6 +47,12 @@ class TransformComp final {
   void
   SetGlobalTransform(const glm::mat4& transformComp) {
     m_updatedGlobalTransform = transformComp;
+  }
+
+  template <typename Archive>
+  void
+  serialize(Archive&& archive) {
+    archive(m_globalTransform);
   }
 };
 

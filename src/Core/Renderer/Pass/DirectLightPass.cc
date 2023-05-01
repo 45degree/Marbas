@@ -1,6 +1,6 @@
 #include "DirectLightPass.hpp"
 
-#include "Core/Scene/Component/ShadowComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
 
 namespace Marbas {

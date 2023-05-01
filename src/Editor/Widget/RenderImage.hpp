@@ -8,8 +8,7 @@ namespace Marbas {
 
 class RenderImage : public Widget {
  public:
-  explicit RenderImage(RHIFactory* rhiFactory, Scene* scene, const String& title = "Image")
-      : Widget(title, rhiFactory), m_scene(scene) {}
+  explicit RenderImage(RHIFactory* rhiFactory, const String& title = "Image") : Widget(title, rhiFactory) {}
 
   ~RenderImage() override = default;
 
@@ -22,20 +21,12 @@ class RenderImage : public Widget {
   }
 
   void
-  SetScene(Scene* scene) {
-    m_scene = scene;
-  }
-
-  void
   SetSelectedEntity(entt::entity entity) {
     m_entity = entity;
   }
 
   void
   SetRenderImage(ImageView* imageView) {
-    // if (m_renderImage != nullptr) {
-    //   m_rhiFactory->GetImguiContext()->DestroyImGuiImage(m_renderImage);
-    // }
     m_renderImage = m_rhiFactory->GetImguiContext()->CreateImGuiImage(imageView);
   }
 
@@ -43,20 +34,19 @@ class RenderImage : public Widget {
 
  private:
   void
-  ShowToolBar();
+  ShowToolBar(Scene* scene);
 
   void
-  DrawModelManipulate();
+  DrawModelManipulate(Scene* scene);
 
   void
-  DrawLightManipulate();
+  DrawLightManipulate(Scene* scene);
 
   void
-  Manipulate();
+  Manipulate(Scene* scene);
 
  private:
   ImTextureID m_renderImage = nullptr;
-  Scene* m_scene;
 
   ImVec2 imageSize;
   bool m_showMove = true;

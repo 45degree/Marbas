@@ -2,8 +2,7 @@
 
 #include <glog/logging.h>
 
-#include "Core/Scene/Component/EnvironmentComponent.hpp"
-#include "Core/Scene/Component/LightComponent.hpp"
+#include "Core/Scene/Component/Component.hpp"
 
 namespace Marbas {
 
@@ -125,11 +124,11 @@ AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& co
   LOG_IF(WARNING, sunView.size_hint() > 1) << "find multi sun, use the first sun";
 
   auto sun = *sunView.begin();
-  auto& directionLight = world.get<DirectionLightComponent>(sun).m_light;
+  const auto& directionLight = world.get<DirectionLightComponent>(sun);
 
-  m_atmosphereInfo.lightDir = directionLight.GetDirection();
-  m_atmosphereInfo.lightColor = directionLight.GetColor();
-  m_atmosphereInfo.sunLuminace = directionLight.GetEnergy();
+  m_atmosphereInfo.lightDir = directionLight.m_direction;
+  m_atmosphereInfo.lightColor = directionLight.m_color;
+  m_atmosphereInfo.sunLuminace = directionLight.m_energy;
   m_atmosphereInfo.atmosphereHeight = physicalSky.atmosphereHeight;
   m_atmosphereInfo.rayleighScalarHeight = physicalSky.rayleighScalarHeight;
   m_atmosphereInfo.mieScalarHeight = physicalSky.mieScalarHeight;

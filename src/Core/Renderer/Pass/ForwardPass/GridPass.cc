@@ -8,7 +8,7 @@ GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)
     : m_width(createInfo.width),
       m_height(createInfo.height),
       m_rhiFactory(createInfo.rhiFactory),
-      m_scene(createInfo.scene),
+      // m_scene(createInfo.scene),
       m_finalColorTexture(createInfo.finalColorTexture),
       m_finalDepthTexture(createInfo.finalDepthTexture) {
   auto* bufCtx = m_rhiFactory->GetBufferContext();
@@ -74,8 +74,10 @@ GridRenderPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& co
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
 
+  auto scene = registry.GetCurrentActiveScene();
+
   // set camera info
-  auto camera = m_scene->GetEditorCamera();
+  auto camera = scene->GetEditorCamera();
   auto* bufCtx = m_rhiFactory->GetBufferContext();
   m_cameraInfo.up = camera->GetUpVector();
   m_cameraInfo.m_far = camera->GetFar();
