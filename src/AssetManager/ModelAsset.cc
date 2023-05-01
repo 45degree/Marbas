@@ -102,7 +102,6 @@ ProcessSubNode(const aiScene* aScene, const aiNode* aNode, const Path& currentDi
       meshes.push_back(ReadMeshFromNode(aMesh, aScene, currentDir));
     }
   }
-
   for (int i = 0; i < aNode->mNumChildren; i++) {
     ProcessSubNode(aScene, aNode->mChildren[i], currentDir, meshes);
   }

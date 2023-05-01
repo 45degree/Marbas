@@ -29,12 +29,12 @@ RegistryNode(entt::registry& world) {
 
 static void
 RegistryNodes(entt::registry& world) {
-  world.on_construct<EmptySceneNode>().connect<&EmptySceneNode::RegistryNode>();
+  RegistryNode<EmptySceneNode>(world);
   RegistryNode<DirectionalLightSceneNode>(world);
   RegistryNode<DirectionShadowComponent>(world);
   RegistryNode<DirectionLightComponent>(world);
-  world.on_construct<PointLightSceneNode>().connect<&PointLightSceneNode::RegistryNode>();
-  world.on_construct<ModelSceneNode>().connect<&ModelSceneNode::RegistryNode>();
+  RegistryNode<PointLightSceneNode>(world);
+  RegistryNode<ModelSceneNode>(world);
 }
 
 Scene::Scene() {
@@ -81,7 +81,6 @@ Scene::LoadFromFile(const Path& scenePath) {
 
   auto scene = std::make_unique<Scene>(std::move(world));
 
-  // FIX: 序列化之后, 没有触发on_construct方法, 导致有些Tag没有加上
   auto ExecuteCreateFunc = [&scene]<typename T>(T t) {
     auto& world = scene->GetWorld();
     auto view = world.view<T>();
@@ -99,11 +98,15 @@ Scene::LoadFromFile(const Path& scenePath) {
 
 void
 Scene::SaveToFile(const Path& scenePath) {
+  if (std::filesystem::exists(scenePath)) {
+    std::filesystem::remove(scenePath);
+  }
   std::ofstream file(scenePath, std::ios::out | std::ios::binary);
   cereal::BinaryOutputArchive archive(file);
 
   entt::snapshot saver{m_world};
   SerializeComponent(saver, archive);
+  ExecuteAfterLoad();
 }
 
 entt::entity

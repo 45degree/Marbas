@@ -4,6 +4,7 @@
 #include <entt/entt.hpp>
 
 #include "AssetManager/AssetPath.hpp"
+#include "AssetManager/ModelAsset.hpp"
 #include "Common/Common.hpp"
 
 namespace Marbas {
@@ -18,7 +19,13 @@ struct EmptySceneNode {
   }
 
   static void
-  RegistryNode(entt::registry& world, entt::entity node);
+  OnCreate(entt::registry& world, entt::entity node);
+
+  static void
+  OnUpdate(entt::registry& world, entt::entity node) {}
+
+  static void
+  OnDestroy(entt::registry& world, entt::entity node) {}
 };
 
 struct DirectionalLightSceneNode {
@@ -50,7 +57,13 @@ struct PointLightSceneNode {
   }
 
   static void
-  RegistryNode(entt::registry& world, entt::entity node);
+  OnCreate(entt::registry& world, entt::entity node);
+
+  static void
+  OnUpdate(entt::registry& world, entt::entity node) {}
+
+  static void
+  OnDestroy(entt::registry& world, entt::entity node) {}
 };
 
 struct ModelSceneNode {
@@ -64,7 +77,19 @@ struct ModelSceneNode {
   }
 
   static void
-  RegistryNode(entt::registry& world, entt::entity node);
+  OnCreate(entt::registry& world, entt::entity node);
+
+  static void
+  OnUpdate(entt::registry& world, entt::entity node) {}
+
+  static void
+  OnDestroy(entt::registry& world, entt::entity node) {}
+
+  static void
+  AfterLoad() {
+    auto modelManager = AssetManager<ModelAsset>::GetInstance();
+    modelManager->Save();
+  }
 };
 
 }  // namespace Marbas

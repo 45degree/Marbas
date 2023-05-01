@@ -207,9 +207,9 @@ Application::Run() {
       // use ctrl + s to store the scene
       if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
         if (ImGui::IsKeyDown(ImGuiKey_S)) {
-          if (sceneManager->IsUnNamedScene(scene)) {
-            sceneManager->SaveScene("res://scene.scene", scene);
-          }
+          // if (sceneManager->IsUnNamedScene(scene)) {
+          sceneManager->SaveScene("res://scene.scene", scene);
+          // }
         }
       }
 

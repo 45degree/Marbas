@@ -9,7 +9,7 @@
 namespace Marbas {
 
 void
-EmptySceneNode::RegistryNode(entt::registry& world, entt::entity node) {
+EmptySceneNode::OnCreate(entt::registry& world, entt::entity node) {
   world.emplace<TransformComp>(node);
 }
 
@@ -45,13 +45,17 @@ DirectionalLightSceneNode::OnDestroy(entt::registry& world, entt::entity node) {
 }
 
 void
-PointLightSceneNode::RegistryNode(entt::registry& world, entt::entity node) {
-  world.emplace<TransformComp>(node);
+PointLightSceneNode::OnCreate(entt::registry& world, entt::entity node) {
+  if (!world.any_of<TransformComp>(node)) {
+    world.emplace<TransformComp>(node);
+  }
 }
 
 void
-ModelSceneNode::RegistryNode(entt::registry& world, entt::entity node) {
-  world.emplace<TransformComp>(node);
+ModelSceneNode::OnCreate(entt::registry& world, entt::entity node) {
+  if (!world.any_of<TransformComp>(node)) {
+    world.emplace<TransformComp>(node);
+  }
 }
 
 }  // namespace Marbas
