@@ -104,20 +104,6 @@ SceneTreeWidget::Draw() {
   auto rootEntity = activeScene->GetRootNode();
   DrawNode(activeScene, rootEntity);
   DrawPopup();
-
-  if (ImGui::BeginDragDropTarget()) {
-    if (auto* payload = ImGui::AcceptDragDropPayload(CONTENT_BROWSER_DRAGDROG); payload != nullptr) {
-      const auto& path = *reinterpret_cast<AssetPath*>(payload->Data);
-      // TODO: check if the path is a scene path
-      auto sceneManager = SceneManager::GetInstance();
-      sceneManager->LoadScene(path);
-
-      auto scene = sceneManager->GetScene(path);
-      sceneManager->SetActiveScene(scene);
-      m_selectEntity.Publish(entt::null);
-    }
-    ImGui::EndDragDropTarget();
-  }
 }
 
 SceneTreeWidget::SceneTreeWidget(RHIFactory* rhiFactory) : Widget("SceneTree", rhiFactory) {}

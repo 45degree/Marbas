@@ -70,6 +70,7 @@ class RenderGraph final {
   friend class RenderGraphRegistry;
   friend class RenderGraphGraphicsBuilder;
   friend class details::RenderGraphGraphicsPass;
+  friend class details::ImageDesc;
 
   RHIFactory* m_rhiFactory;
 

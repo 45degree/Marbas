@@ -16,7 +16,7 @@ struct CustomAsset : public AssetBase {
   }
 
   static std::shared_ptr<CustomAsset>
-  Load(const Path& path) {
+  Load(const AssetPath& path) {
     // path的内容如下: res://icon.png
     auto assert = std::make_shared<CustomAsset>();
     assert->i = 1;

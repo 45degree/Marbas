@@ -37,17 +37,46 @@ class RenderGraphPass : public RenderGraphNode {
   RHIFactory* m_rhiFactory;
 };
 
+struct InputDesc {
+  virtual ~InputDesc() = default;
+  virtual void
+  Bind(RenderGraph* graph, PipelineContext* ctx, uintptr_t set, uint16_t bindingPoint) const = 0;
+};
+
+struct ImageDesc {
+  virtual ~ImageDesc() = default;
+
+  RenderGraphTextureHandler m_handler;
+  uint32_t m_baseLayer;
+  uint32_t m_layerCount;
+  uint32_t m_baseLevel;
+  uint32_t m_levelCount;
+
+  ImageView*
+  GetImageView(RenderGraph* graph) const;
+};
+
+struct CombineImageDesc final : public InputDesc, ImageDesc {
+  uintptr_t m_sampler;
+
+ public:
+  ~CombineImageDesc() override = default;
+
+  void
+  Bind(RenderGraph* graph, PipelineContext* ctx, uintptr_t set, uint16_t bindingPoint) const override;
+};
+
+struct StorageImageDesc final : public InputDesc, ImageDesc {
+ public:
+  ~StorageImageDesc() override = default;
+
+  void
+  Bind(RenderGraph* graph, PipelineContext* ctx, uintptr_t set, uint16_t bindingPoint) const override;
+};
+
 class RenderGraphGraphicsPass : public RenderGraphPass {
   friend class Marbas::RenderGraphGraphicsBuilder;
   friend class Marbas::RenderGraphRegistry;
-
-  struct SubResourceDesc {
-    std::optional<RenderGraphTextureHandler> handler;
-    uint32_t baseLayer;
-    uint32_t layerCount;
-    uint32_t baseLevel;
-    uint32_t levelCount;
-  };
 
  public:
   RenderGraphGraphicsPass(StringView name, RHIFactory* rhiFactory);
@@ -60,9 +89,14 @@ class RenderGraphGraphicsPass : public RenderGraphPass {
   AddSubResDesc(TextureAttachmentType type, const RenderGraphTextureHandler& handler, uint32_t baseLayer,
                 uint32_t layerCount, uint32_t baseLevel, uint32_t levelCount);
 
-  void
-  AddInputAttachment(RenderGraphTextureHandler handler, uintptr_t sampler, uint32_t baseLayer, uint32_t layerCount,
-                     uint32_t baseLevel, uint32_t levelCount);
+  template <typename Desc, typename... Args>
+  Desc*
+  AddInputAttachment(Args&&... args) {
+    auto desc = std::make_unique<Desc>(std::forward<Args>(args)...);
+    auto* descPointer = desc.get();
+    m_inputAttachment.push_back(std::move(desc));
+    return descPointer;
+  }
 
   virtual void
   Submit(Semaphore* waitSemaphore, Semaphore* signedSemaphore, Fence* fence) override final {
@@ -79,13 +113,12 @@ class RenderGraphGraphicsPass : public RenderGraphPass {
   uint32_t m_framebufferHeight;
   uint32_t m_framebufferLayer;
 
-  Vector<SubResourceDesc> m_inputAttachment;  // the input from the last pass
-  Vector<uintptr_t> m_inputAttachmentSampler;
-  uintptr_t m_descriptorSet;  // the descriptor set for input attachment
+  Vector<std::unique_ptr<InputDesc>> m_inputAttachment;  // the input from the last pass
+  uintptr_t m_descriptorSet;                             // the descriptor set for input attachment
 
-  Vector<SubResourceDesc> m_colorAttachment;
-  SubResourceDesc m_depthAttachment;
-  Vector<SubResourceDesc> m_resolveAttachment;
+  Vector<std::unique_ptr<ImageDesc>> m_colorAttachment;
+  std::unique_ptr<ImageDesc> m_depthAttachment;
+  Vector<std::unique_ptr<ImageDesc>> m_resolveAttachment;
 };
 
 // clang-format off

@@ -24,7 +24,28 @@ RenderGraphGraphicsBuilder::ReadTexture(const RenderGraphTextureHandler& handler
   auto& res = m_graph->m_resourceManager->m_graphTexture[handler.index];
   res.outputs.push_back(m_pass);
   m_pass->inputs.push_back(&res);
-  m_pass->AddInputAttachment(handler, sampler, baseLayer, LayerCount, baseLevel, levelCount);
+  auto* desc = m_pass->AddInputAttachment<details::CombineImageDesc>();
+  desc->m_sampler = sampler;
+  desc->m_handler = handler;
+  desc->m_baseLayer = baseLayer;
+  desc->m_baseLevel = baseLevel;
+  desc->m_layerCount = LayerCount;
+  desc->m_levelCount = levelCount;
+}
+
+void
+RenderGraphGraphicsBuilder::ReadStorageImage(const RenderGraphTextureHandler& handler, int baseLayer, int layerCount,
+                                             int baseLevel, int levelCount) {
+  auto& res = m_graph->m_resourceManager->m_graphTexture[handler.index];
+  res.outputs.push_back(m_pass);
+  m_pass->inputs.push_back(&res);
+
+  auto* desc = m_pass->AddInputAttachment<details::StorageImageDesc>();
+  desc->m_handler = handler;
+  desc->m_baseLayer = baseLayer;
+  desc->m_layerCount = layerCount;
+  desc->m_baseLevel = baseLevel;
+  desc->m_levelCount = levelCount;
 }
 
 void

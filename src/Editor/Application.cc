@@ -16,6 +16,7 @@
 #include "Core/Scene/System/RenderSystem.hpp"
 #include "Editor/Widget/ContentBrowser.hpp"
 #include "GLFW/glfw3.h"
+#include "Widget/CommonName.hpp"
 #include "Widget/InformationWidget.hpp"
 #include "Widget/RenderImage.hpp"
 #include "Widget/SceneTree.hpp"
@@ -194,6 +195,21 @@ Application::Run() {
       ImGui::Begin("tree");
       sceneTree.Draw();
       ImGui::End();
+
+      if (ImGui::BeginDragDropTarget()) {
+        if (auto* payload = ImGui::AcceptDragDropPayload(CONTENT_BROWSER_DRAGDROG); payload != nullptr) {
+          const auto& path = *reinterpret_cast<AssetPath*>(payload->Data);
+          // TODO: check if the path is a scene path
+          auto sceneManager = SceneManager::GetInstance();
+          sceneManager->LoadScene(path);
+
+          auto scene = sceneManager->GetScene(path);
+          sceneManager->SetActiveScene(scene);
+          sceneTree.m_selectEntity.Publish(entt::null);
+        }
+        ImGui::EndDragDropTarget();
+      }
+
       ImGui::Begin("image");
       renderImage.Draw();
       ImGui::End();

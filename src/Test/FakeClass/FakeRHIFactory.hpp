@@ -41,6 +41,7 @@ class MockPipelineContext final : public PipelineContext {
   MOCK_METHOD(uintptr_t, CreateDescriptorSet, (const DescriptorSetArgument&));
   MOCK_METHOD(void, DestroyDescriptorSet, (uintptr_t));
   MOCK_METHOD(void, BindImage, (const BindImageInfo&));
+  MOCK_METHOD(void, BindStorageImage, (const BindStorageImageInfo&));
   MOCK_METHOD(void, BindBuffer, (const BindBufferInfo&));
   MOCK_METHOD(FrameBuffer*, CreateFrameBuffer, (const FrameBufferCreateInfo&));
   MOCK_METHOD(void, DestroyFrameBuffer, (FrameBuffer*));

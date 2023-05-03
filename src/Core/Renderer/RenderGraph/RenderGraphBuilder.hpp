@@ -30,8 +30,12 @@ class RenderGraphGraphicsBuilder final {
                int baseLayer = 0, int LayerCount = 1, int baseLevel = 0, int levelCount = 1);
 
   void
-  ReadTexture(const RenderGraphTextureHandler& handler, uintptr_t sampler, int baseLayer = 0, int LayerCount = 1,
+  ReadTexture(const RenderGraphTextureHandler& handler, uintptr_t sampler, int baseLayer = 0, int layerCount = 1,
               int baseLevel = 0, int levelCount = 1);
+
+  void
+  ReadStorageImage(const RenderGraphTextureHandler& handler, int baseLayer = 0, int layerCount = 1, int baseLevel = 0,
+                   int levelCount = 1);
 
   void
   BeginPipeline() {

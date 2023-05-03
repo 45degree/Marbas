@@ -86,7 +86,7 @@ LightGPUData::UpdateDirectionalLightGPUBuffer(uint32_t index) {
 
   // update details info
   auto& lightInfo = s_directionalLightInfos.directionalLightInfo[index];
-  uintptr_t offset = offsetof(DirectionLightInfoList, directionalLightInfo[index]);
+  uintptr_t offset = offsetof(DirectionLightInfoList, directionalLightInfo[0]) + index * size;
   size = sizeof(DirectionLightInfo);
   bufferContext->UpdateBuffer(s_directionalLightBuffer, &lightInfo, size, offset);
 }

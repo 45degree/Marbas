@@ -6,6 +6,41 @@
 
 namespace Marbas::details {
 
+/**
+ * input and output desc
+ */
+
+ImageView*
+ImageDesc::GetImageView(RenderGraph* graph) const {
+  auto& res = graph->m_resourceManager->m_graphTexture[m_handler.index];
+  return res.GetImageView(m_baseLayer, m_layerCount, m_baseLevel, m_levelCount);
+}
+
+void
+CombineImageDesc::Bind(RenderGraph* graph, PipelineContext* ctx, uintptr_t set, uint16_t bindingPoint) const {
+  BindImageInfo bindInfo;
+  auto* imageView = GetImageView(graph);
+  bindInfo.imageView = imageView;
+  bindInfo.sampler = m_sampler;
+  bindInfo.bindingPoint = bindingPoint;
+  bindInfo.descriptorSet = set;
+  ctx->BindImage(bindInfo);
+}
+
+void
+StorageImageDesc::Bind(RenderGraph* graph, PipelineContext* ctx, uintptr_t set, uint16_t bindingPoint) const {
+  BindStorageImageInfo bindInfo;
+  bindInfo.descriptorSet = set;
+  bindInfo.bindingPoint = bindingPoint;
+  bindInfo.imageView = GetImageView(graph);
+  ctx->BindStorageImage(bindInfo);
+  return;
+}
+
+/**
+ * pass
+ */
+
 RenderGraphPass::RenderGraphPass(StringView name, RHIFactory* rhiFactory)
     : RenderGraphNode(name, RenderGraphNodeType::Pass), m_rhiFactory(rhiFactory) {}
 
@@ -29,39 +64,30 @@ void
 RenderGraphGraphicsPass::AddSubResDesc(TextureAttachmentType type, const RenderGraphTextureHandler& handler,
                                        uint32_t baseLayer, uint32_t layerCount, uint32_t baseLevel,
                                        uint32_t levelCount) {
+  auto desc = std::make_unique<CombineImageDesc>();
+  desc->m_handler = handler;
+  desc->m_baseLayer = baseLayer;
+  desc->m_baseLevel = baseLevel;
+  desc->m_layerCount = layerCount;
+  desc->m_levelCount = levelCount;
+
   switch (type) {
     case TextureAttachmentType::COLOR:
-      m_colorAttachment.push_back({handler, baseLayer, layerCount, baseLevel, levelCount});
+      m_colorAttachment.push_back(std::move(desc));
       break;
     case TextureAttachmentType::DEPTH:
-      m_depthAttachment = {handler, baseLayer, layerCount, baseLevel, levelCount};
+      m_depthAttachment = std::move(desc);
       break;
     case TextureAttachmentType::RESOLVE:
-      m_resolveAttachment.push_back({handler, baseLayer, layerCount, baseLevel, levelCount});
+      m_resolveAttachment.push_back(std::move(desc));
       break;
   }
-}
-
-void
-RenderGraphGraphicsPass::AddInputAttachment(RenderGraphTextureHandler handler, uintptr_t sampler, uint32_t baseLayer,
-                                            uint32_t layerCount, uint32_t baseLevel, uint32_t levelCount) {
-  m_inputAttachmentSampler.push_back(sampler);
-  m_inputAttachment.push_back({handler, baseLayer, layerCount, baseLevel, levelCount});
 }
 
 void
 RenderGraphGraphicsPass::Initialize(RenderGraph* graph) {
   auto pipelineCtx = m_rhiFactory->GetPipelineContext();
   auto bufCtx = m_rhiFactory->GetBufferContext();
-
-  auto GetImageViewFromDesc = [&graph](const SubResourceDesc& desc) -> ImageView* {
-    if (desc.handler == std::nullopt) return nullptr;
-    DLOG_ASSERT((*desc.handler).index < graph->m_resourceManager->m_graphTexture.size())
-        << FORMAT("resource {} is not create", (*desc.handler).index);
-
-    auto& res = graph->m_resourceManager->m_graphTexture[(*desc.handler).index];
-    return res.GetImageView(desc.baseLayer, desc.layerCount, desc.baseLevel, desc.levelCount);
-  };
 
   m_commandBuffer = bufCtx->CreateGraphicsCommandBuffer();
 
@@ -83,13 +109,7 @@ RenderGraphGraphicsPass::Initialize(RenderGraph* graph) {
     }
     m_descriptorSet = pipelineCtx->CreateDescriptorSet(argument);
     for (uint16_t i = 0; i < m_inputAttachment.size(); i++) {
-      BindImageInfo bindInfo{
-          .descriptorSet = m_descriptorSet,
-          .bindingPoint = i,
-          .imageView = GetImageViewFromDesc(m_inputAttachment[i]),
-          .sampler = m_inputAttachmentSampler[i],
-      };
-      pipelineCtx->BindImage(bindInfo);
+      m_inputAttachment[i]->Bind(graph, pipelineCtx, m_descriptorSet, i);
     }
   }
 
@@ -103,15 +123,15 @@ RenderGraphGraphicsPass::Initialize(RenderGraph* graph) {
   ImageView* depthAttachment = nullptr;
 
   for (auto& attachment : m_colorAttachment) {
-    colorAttachment.push_back(GetImageViewFromDesc(attachment));
+    colorAttachment.push_back(attachment->GetImageView(graph));
   }
 
-  if (m_depthAttachment.handler != std::nullopt) {
-    depthAttachment = GetImageViewFromDesc(m_depthAttachment);
+  if (m_depthAttachment != nullptr) {
+    depthAttachment = m_depthAttachment->GetImageView(graph);
   }
 
   for (auto& attachment : m_resolveAttachment) {
-    resolveAttachment.push_back(GetImageViewFromDesc(attachment));
+    resolveAttachment.push_back(attachment->GetImageView(graph));
   }
 
   // create framebuffer
