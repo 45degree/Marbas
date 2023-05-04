@@ -95,7 +95,7 @@ void main() {
     color += (1 - shadow) * Lo;
   }
 
-  color += vec3(0.03) * albedo * ao;
+  color += vec3(0.03) * albedo; // * ao;
   color = color / (color + vec3(1.0));
   color = pow(color, vec3(1.0/2.2));
 

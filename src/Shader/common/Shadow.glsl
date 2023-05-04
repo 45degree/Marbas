@@ -22,17 +22,17 @@ float DirectionLightShadow(vec4 fragPos, int layer, sampler2DArray shadowAtlas, 
   float depth = texture(shadowAtlas, vec3(uv, layer)).r;
   float currentDepth = projCoords.z;
 
-  // vec2 texelSize = shadowMap.atlasViewport.zw;
-  // for(int x = -1; x <= 1; ++x) {
-  //   for(int y = -1; y <= 1; ++y) {
-  //     vec2 samplePos = uv + vec2(x, y) * texelSize;
-  //     float pcfDepth = texture(gDirectionLightShadow, vec3(samplePos, lightIndex)).r; 
-  //     shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
-  //   }
-  // }
-  // shadow /= 9.0;
+  float shadow = 0.0;
+  vec2 texelSize = 1.0 / (viewport.zw * textureSize(shadowAtlas, 0).x);
+  for(int x = -1; x <= 1; ++x) {
+    for(int y = -1; y <= 1; ++y) {
+      vec2 samplePos = uv + vec2(x, y) * texelSize;
+      float pcfDepth = texture(shadowAtlas, vec3(samplePos, layer)).r; 
+      shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+    }
+  }
+  shadow /= 9.0;
 
-  float shadow = currentDepth - bias > depth ? 1.0 : 0.0;
   return shadow;
 }
 

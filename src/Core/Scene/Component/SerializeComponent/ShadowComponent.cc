@@ -59,7 +59,7 @@ GetLightSpaceMatrix(const Camera* camera, const glm::vec3 lightDir, const glm::v
   }
 
   // Tune this parameter according to the scene
-  constexpr float zMult = 2.f;
+  constexpr float zMult = 10.f;
   if (minZ < 0) {
     minZ *= zMult;
   } else {

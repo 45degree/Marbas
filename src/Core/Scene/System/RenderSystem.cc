@@ -162,6 +162,15 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   directLightPassCreateInfo.diffuseTexture = geometryPassCreateInfo.colorTexture;
   directLightPassCreateInfo.normalTeture = geometryPassCreateInfo.normalMetallicTexture;
   directLightPassCreateInfo.positionTeture = geometryPassCreateInfo.positionRoughnessTexture;
+
+  // vsgi voxelization pass
+  createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::STORAGE;
+  createInfo.format = ImageFormat::RGBA32F;
+  createInfo.mipMapLevel = 1;
+  createInfo.imageDesc = Image3DDesc{.depth = 512};
+  createInfo.width = 512;
+  createInfo.height = 512;
+  auto voxelSceneTexture = s_resourceManager->CreateTexture("voxelSceneTexture", createInfo);
 }
 
 void

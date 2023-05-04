@@ -52,7 +52,7 @@ class DirectLightPass {
 
   struct CameraInfo {
     glm::vec3 cameraPos;
-    glm::mat4 cameraView;
+    alignas(16) glm::mat4 cameraView;
   } m_cameraInfo;
   Buffer* m_cameraInfoBuffer = nullptr;
 
