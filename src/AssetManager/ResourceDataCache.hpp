@@ -63,7 +63,7 @@ class ResourceDataCache {
   void
   ClearAll() {
     ClearCache();
-    m_cache.clear();
+    m_usingData.clear();
   }
 
   bool

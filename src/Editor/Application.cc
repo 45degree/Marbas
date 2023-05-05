@@ -176,7 +176,7 @@ Application::Run() {
 
     // render scene
     {
-      SceneSystem::UpdateEveryFrame(scene, m_rhiFactory.get());
+      SceneSystem::Update(scene).start([](auto&&) {});
 
       RenderSystem::Update(RenderInfo{
           .scene = scene,
@@ -194,7 +194,6 @@ Application::Run() {
       // TODO: Draw ImGui
       ImGui::Begin("tree");
       sceneTree.Draw();
-      ImGui::End();
 
       if (ImGui::BeginDragDropTarget()) {
         if (auto* payload = ImGui::AcceptDragDropPayload(CONTENT_BROWSER_DRAGDROG); payload != nullptr) {
@@ -209,6 +208,7 @@ Application::Run() {
         }
         ImGui::EndDragDropTarget();
       }
+      ImGui::End();
 
       ImGui::Begin("image");
       renderImage.Draw();

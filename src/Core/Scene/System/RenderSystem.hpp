@@ -53,7 +53,7 @@ struct RenderSystem final {
   static void
   UpdateDirectionShadowInfo(Scene* scene);
 
-  static void
+  static Task<>
   UpdateLightGPUData(Scene* scene);
 
   /**
@@ -62,7 +62,7 @@ struct RenderSystem final {
    * @param scene scene
    * @param rhiFactory rhi factory
    */
-  static void
+  static Task<>
   UpdateMeshGPUAsset(Scene* scene);
 
  private:

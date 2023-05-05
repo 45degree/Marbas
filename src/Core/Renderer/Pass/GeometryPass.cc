@@ -1,12 +1,14 @@
 #include "GeometryPass.hpp"
 
+#include <glog/logging.h>
+
 #include <nameof.hpp>
 
 #include "AssetManager/ModelAsset.hpp"
 #include "Core/Common.hpp"
 #include "Core/Renderer/GBuffer.hpp"
 #include "Core/Scene/Component/Component.hpp"
-#include "Core/Scene/GPUDataPipeline/ModelGPUData.hpp"
+#include "Core/Scene/GPUDataPipeline/MeshGPUData.hpp"
 
 namespace Marbas {
 
@@ -66,7 +68,7 @@ void
 GeometryPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.WriteTexture(m_colorTexture);
   builder.WriteTexture(m_positionRoughnessTexture);
-  builder.WriteTexture(m_normalMetallicTexture);  // 法线信息纯两个值就行了
+  builder.WriteTexture(m_normalMetallicTexture);
   builder.WriteTexture(m_depthTexture, TextureAttachmentType::DEPTH);
 
   builder.BeginPipeline();
@@ -119,13 +121,11 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
   auto& world = scene->GetWorld();
   auto camera = scene->GetEditorCamera();
 
-  auto view = world.view<ModelSceneNode, RenderComponent>();
-
   auto* bufferContext = m_rhiFactory->GetBufferContext();
   auto* pipelineContext = m_rhiFactory->GetPipelineContext();
 
   auto modelManager = AssetManager<ModelAsset>::GetInstance();
-  auto modelGPUManager = ModelGPUDataManager::GetInstance();
+  auto meshGPUDataManager = MeshGPUDataManager::GetInstance();
 
   /**
    * load all model and calculate the sum of mesh
@@ -170,35 +170,29 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
   commandList.SetViewports(viewport);
   commandList.SetScissors(scissor);
 
+  auto view = world.view<ModelSceneNode, RenderableTag>();
+  // auto view = world.view<RenderableTag, RenderableMeshTag, MeshComponent>();
   for (auto&& [entity, modelSceneNode] : view.each()) {
-    if (modelSceneNode.modelPath == "res://") {
-      continue;
-    }
-
     glm::mat4 model = glm::mat4(1.0);
     if (world.any_of<TransformComp>(entity)) {
       const auto& transformComp = world.get<TransformComp>(entity);
       model = transformComp.GetGlobalTransform();
     }
 
-    auto modelAsset = modelManager->Get(modelSceneNode.modelPath);
-    // Create GPU Asset
-    // TODO: move this to scene update
-    if (!modelGPUManager->Existed(*modelAsset)) {
-      modelGPUManager->Create(*modelAsset);
-    }
-    auto modelGPUAsset = modelGPUManager->TryGet(*modelAsset);
-    auto meshCount = modelGPUAsset->MeshCount();
-    for (size_t i = 0; i < meshCount; i++) {
-      auto meshGPUData = modelGPUAsset->GetMeshGPU(i);
-      auto& indexCount = meshGPUData->m_indexCount;
+    for (auto mesh : modelSceneNode.m_meshEntities) {
+      if (!world.any_of<RenderableMeshTag>(mesh)) continue;
+
+      auto data = meshGPUDataManager->Get(mesh);
+      if (data == nullptr) continue;
+
+      auto& indexCount = data->m_indexCount;
 
       // update transform matrix
-      bufferContext->UpdateBuffer(meshGPUData->m_transformBuffer, &model, sizeof(model), 0);
+      bufferContext->UpdateBuffer(data->m_transformBuffer, &model, sizeof(model), 0);
 
-      commandList.BindDescriptorSet(pipeline, {meshGPUData->m_descriptorSet, m_descriptorSet});
-      commandList.BindVertexBuffer(meshGPUData->m_vertexBuffer);
-      commandList.BindIndexBuffer(meshGPUData->m_indexBuffer);
+      commandList.BindDescriptorSet(pipeline, {data->m_descriptorSet, m_descriptorSet});
+      commandList.BindVertexBuffer(data->m_vertexBuffer);
+      commandList.BindIndexBuffer(data->m_indexBuffer);
       commandList.DrawIndexed(indexCount, 1, 0, 0, 0);
     }
   }

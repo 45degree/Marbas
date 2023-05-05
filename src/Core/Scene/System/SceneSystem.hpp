@@ -1,6 +1,7 @@
 #pragma once
 #include <entt/entt.hpp>
 
+#include "AssetManager/AssetManager.hpp"
 #include "RHIFactory.hpp"
 
 namespace Marbas {
@@ -14,14 +15,17 @@ class Scene;
  */
 struct SceneSystem {
  public:
-  static void
-  UpdateEveryFrame(Scene* scene, RHIFactory* rhiFactory) {
-    CreateAsset(scene);
+  static Task<void>
+  Update(Scene* scene) {
+    co_await CreateAssetCache(scene);
+    co_await LoadMesh(scene);
     ClearUnuseAsset(scene);
 
     // update scene aabb
     UpdateAABBComponent(scene);
     UpdateTransformComp(scene);
+
+    co_return;
   }
 
  private:
@@ -30,8 +34,11 @@ struct SceneSystem {
    *
    * @param scene scene
    */
-  static void
-  CreateAsset(Scene* scene);
+  static Task<void>
+  CreateAssetCache(Scene* scene);
+
+  static Task<void>
+  LoadMesh(Scene* scene);
 
   static void
   ClearUnuseAsset(Scene* scene);

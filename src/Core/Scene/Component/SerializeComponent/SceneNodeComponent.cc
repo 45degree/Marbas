@@ -56,6 +56,10 @@ ModelSceneNode::OnCreate(entt::registry& world, entt::entity node) {
   if (!world.any_of<TransformComp>(node)) {
     world.emplace<TransformComp>(node);
   }
+
+  if (!world.any_of<NewModelTag>(node)) {
+    world.emplace<NewModelTag>(node);
+  }
 }
 
 }  // namespace Marbas

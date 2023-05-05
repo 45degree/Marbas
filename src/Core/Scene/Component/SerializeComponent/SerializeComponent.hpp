@@ -1,8 +1,12 @@
 #pragma once
 
+#include <glog/logging.h>
+
+#include <cereal/cereal.hpp>
 #include <entt/entity/registry.hpp>
 #include <entt/entity/snapshot.hpp>
 
+#include "Core/Scene/Component/TagComponent.hpp"
 #include "EnvironmentComponent.hpp"
 #include "HierarchyComponent.hpp"
 #include "LightComponent.hpp"
@@ -25,7 +29,7 @@ struct ExecuteAfterLoad;
 template <>
 struct ExecuteAfterLoad<> {
   void
-  operator()(){};
+  operator()(entt::registry& world, entt::entity node){};
 };
 
 template <typename Component, typename... Components>
@@ -33,33 +37,41 @@ struct ExecuteAfterLoad<Component, Components...> {
   define_has_member(AfterLoad);
 
   void
-  operator()() {
+  operator()(entt::registry& world, entt::entity node) {
     if constexpr (has_member(Component, AfterLoad)) {
-      Component::AfterLoad();
+      if (world.any_of<Component>(node)) {
+        Component::AfterLoad(world, node);
+      }
     }
-    ExecuteAfterLoad<Components...>()();
+    ExecuteAfterLoad<Components...>()(world, node);
   }
 };
 
 /**
- * serialize component
+ * execute after save
  */
 
-template <typename Snapshot, typename Archive, typename... Components>
-struct SerializeComponent;
+template <typename... Components>
+struct ExecuteAfterSave;
 
-template <typename Snapshot, typename Archive>
-struct SerializeComponent<Snapshot, Archive> {
+template <>
+struct ExecuteAfterSave<> {
   void
-  operator()(Snapshot& snapshot, Archive& archive) {}
+  operator()(entt::registry& world, entt::entity node) {}
 };
 
-template <typename Snapshot, typename Archive, typename Component, typename... Components>
-struct SerializeComponent<Snapshot, Archive, Component, Components...> {
+template <typename Component, typename... Components>
+struct ExecuteAfterSave<Component, Components...> {
+  define_has_member(AfterSave);
+
   void
-  operator()(Snapshot& snapshot, Archive& archive) {
-    snapshot.template component<Component>(archive);
-    SerializeComponent<Snapshot, Archive, Components...>()(snapshot, archive);
+  operator()(entt::registry& world, entt::entity node) {
+    if constexpr (has_member(Component, AfterSave)) {
+      if (world.any_of<Component>(node)) {
+        Component::AfterSave(world, node);
+      }
+    }
+    ExecuteAfterSave<Components...>()(world, node);
   }
 };
 
@@ -69,16 +81,41 @@ struct SerializeComponent<Snapshot, Archive, Component, Components...> {
   EmptySceneNode, DirectionalLightSceneNode, PointLightSceneNode, ModelSceneNode, HierarchyComponent, TransformComp, \
       DirectionLightComponent, DirectionShadowComponent, EnvironmentComponent, SunLightTag
 
-inline void
-ExecuteAfterLoad() {
-  details::ExecuteAfterLoad<SerializeComponents>()();
+template <typename ArchiveType, uint32_t flags = 0>
+void
+SerializeComponent(entt::registry& world, cereal::InputArchive<ArchiveType, flags>& archive) {
+  entt::snapshot_loader loader{world};
+  loader.entities(archive);
+  loader.component<SerializeComponents>(archive);
+  loader.orphans();
+
+  auto view = world.view<entt::entity>();
+  for (auto entity : view) {
+    if (world.any_of<SerializeComponents>(entity)) {
+      details::ExecuteAfterLoad<SerializeComponents>()(world, entity);
+    }
+  }
 }
 
-template <typename Snapshot, typename Archive>
+template <typename ArchiveType, uint32_t flags = 0>
 void
-SerializeComponent(Snapshot& snapshot, Archive& archive) {
+SerializeComponent(entt::registry& world, cereal::OutputArchive<ArchiveType, flags>& archive) {
+  std::vector<entt::entity> view;
+  for (auto entity : world.view<entt::entity>()) {
+    if (world.any_of<SerializeComponents>(entity)) {
+      view.push_back(entity);
+    }
+  }
+
+  entt::snapshot snapshot{world};
   snapshot.entities(archive);
-  details::SerializeComponent<Snapshot, Archive, SerializeComponents>()(snapshot, archive);
+  snapshot.component<SerializeComponents>(archive);
+
+  for (auto entity : view) {
+    if (world.any_of<SerializeComponents>(entity)) {
+      details::ExecuteAfterSave<SerializeComponents>()(world, entity);
+    }
+  }
 }
 
 }  // namespace Marbas

@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <assimp/Importer.hpp>
 #include <cereal/archives/binary.hpp>
-#include <cereal/archives/xml.hpp>
 #include <cereal/cereal.hpp>
 #include <fstream>
 #include <strstream>
@@ -15,6 +14,7 @@
 #include "Common/Common.hpp"
 #include "Common/EditorCamera.hpp"
 #include "Component/Component.hpp"
+#include "Core/Scene/Component/SerializeComponent/SerializeComponent.hpp"
 #include "entt/entity/fwd.hpp"
 
 namespace Marbas {
@@ -74,10 +74,7 @@ Scene::LoadFromFile(const Path& scenePath) {
   cereal::BinaryInputArchive archive(file);
 
   entt::registry world;
-
-  entt::snapshot_loader loader{world};
-  SerializeComponent(loader, archive);
-  loader.orphans();
+  SerializeComponent(world, archive);
 
   auto scene = std::make_unique<Scene>(std::move(world));
 
@@ -103,10 +100,7 @@ Scene::SaveToFile(const Path& scenePath) {
   }
   std::ofstream file(scenePath, std::ios::out | std::ios::binary);
   cereal::BinaryOutputArchive archive(file);
-
-  entt::snapshot saver{m_world};
-  SerializeComponent(saver, archive);
-  ExecuteAfterLoad();
+  SerializeComponent(m_world, archive);
 }
 
 entt::entity

@@ -38,6 +38,7 @@ void main() {
   // normal
   if(texInfo.y == 1) {
     vec3 normal = texture(normalTexture, ourTex).rgb;
+    normal = normalize(normal * 2.0 - 1.0);   
     NormalMetallic.xyz = normalize(TBN * normal);
   }
   else {

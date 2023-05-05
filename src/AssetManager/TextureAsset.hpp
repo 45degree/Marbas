@@ -21,7 +21,7 @@ struct TextureAsset final : public AssetBase {
     ar(m_uid, m_width, m_height, m_data, m_format);
   }
 
-  static std::shared_ptr<TextureAsset>
+  static Task<std::shared_ptr<TextureAsset>>
   Load(const AssetPath& m_path, bool flipV = false);
 };
 

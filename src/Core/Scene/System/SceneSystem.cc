@@ -4,8 +4,8 @@
 
 #include "AssetManager/ModelAsset.hpp"
 #include "Core/Scene/Component/Component.hpp"
+#include "Core/Scene/Component/MeshComponent.hpp"
 #include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
-#include "Core/Scene/GPUDataPipeline/ModelGPUData.hpp"
 #include "Core/Scene/Scene.hpp"
 
 namespace Marbas {
@@ -78,18 +78,45 @@ SceneSystem::UpdateAABBComponent(Scene* scene) {
   }
 }
 
-void
-SceneSystem::CreateAsset(Scene* scene) {
+Task<void>
+SceneSystem::CreateAssetCache(Scene* scene) {
   auto& world = scene->GetWorld();
   auto modelNodeView = world.view<ModelSceneNode>();
   auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
-  for (auto [entity, node] : modelNodeView.each()) {
+  for (auto&& [entity, node] : modelNodeView.each()) {
     if (node.modelPath == "res://") continue;
     if (!modelAssetMgr->Existed(node.modelPath)) {
-      auto asset = modelAssetMgr->Create(node.modelPath);
+      auto asset = co_await modelAssetMgr->CreateAsync(node.modelPath);
       LOG(INFO) << FORMAT("Create a model asset, path: {}, uid: {}", node.modelPath, asset->GetUid());
     }
   }
+  co_return;
+}
+
+Task<void>
+SceneSystem::LoadMesh(Scene* scene) {
+  auto& world = scene->GetWorld();
+  auto modelNodeView = world.view<ModelSceneNode, NewModelTag>();
+  auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
+
+  for (auto&& [entity, node] : modelNodeView.each()) {
+    if (node.modelPath == "res://") continue;
+    auto asset = co_await modelAssetMgr->GetAsync(node.modelPath);
+    node.m_meshEntities.clear();
+
+    auto meshCount = asset->GetMeshCount();
+    for (int i = 0; i < meshCount; i++) {
+      auto meshEntity = world.create();
+      auto& component = world.emplace<MeshComponent>(meshEntity);
+      component.index = i;
+      component.m_modelAsset = asset;
+      node.m_meshEntities.push_back(meshEntity);
+    }
+
+    world.remove<NewModelTag>(entity);
+  }
+
+  co_return;
 }
 
 }  // namespace Marbas

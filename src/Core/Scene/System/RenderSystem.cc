@@ -16,8 +16,9 @@
 #include "Core/Renderer/RenderGraph/RenderGraph.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphResourceManager.hpp"
 #include "Core/Scene/Component/Component.hpp"
+#include "Core/Scene/Component/MeshComponent.hpp"
 #include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
-#include "Core/Scene/GPUDataPipeline/ModelGPUData.hpp"
+#include "Core/Scene/GPUDataPipeline/MeshGPUData.hpp"
 
 namespace Marbas {
 
@@ -205,20 +206,20 @@ RenderSystem::Update(const RenderInfo& renderInfo) {
 
   for (auto&& [entity, node, aabb, tran] : modelView.each()) {
     if (!aabb.IsOnFrustum(frustum, tran.GetGlobalTransform())) {
-      if (world.any_of<RenderComponent>(entity)) {
-        world.remove<RenderComponent>(entity);
+      if (world.any_of<RenderableTag>(entity)) {
+        world.remove<RenderableTag>(entity);
       }
     } else {
-      if (!world.any_of<RenderComponent>(entity)) {
-        world.emplace<RenderComponent>(entity);
+      if (!world.any_of<RenderableTag>(entity)) {
+        world.emplace<RenderableTag>(entity);
       }
     }
   }
 
   UpdateDirectionShadowInfo(scene);
-  UpdateMeshGPUAsset(scene);
+  UpdateMeshGPUAsset(scene).start([](auto&&) {});
   UpdateShadowMapAtlasPosition(scene);
-  UpdateLightGPUData(scene);
+  UpdateLightGPUData(scene).start([](auto&&) {});
 
   s_renderGraph->Execute(scene, renderInfo.waitSemaphore, renderInfo.signalSemaphore, renderInfo.fence);
 }
@@ -350,7 +351,7 @@ RenderSystem::UpdateShadowMapAtlasPosition(Scene* scene) {
   }
 }
 
-void
+Task<>
 RenderSystem::UpdateLightGPUData(Scene* scene) {
   auto& world = scene->GetWorld();
   auto lightGPUDataMgr = LightGPUDataManager::GetInstance();
@@ -365,9 +366,9 @@ RenderSystem::UpdateLightGPUData(Scene* scene) {
       auto& light = world.get<DirectionLightComponent>(entity);
       if (world.any_of<DirectionShadowComponent>(entity)) {
         auto& shadow = world.get<DirectionShadowComponent>(entity);
-        lightGPUDataMgr->Create(entity, light, shadow);
+        co_await lightGPUDataMgr->CreateAsync(entity, light, shadow);
       } else {
-        lightGPUDataMgr->Create(entity, light);
+        co_await lightGPUDataMgr->CreateAsync(entity, light);
       }
     }
 
@@ -387,9 +388,9 @@ RenderSystem::UpdateLightGPUData(Scene* scene) {
       const auto& light = world.get<DirectionLightComponent>(entity);
       if (world.any_of<DirectionShadowComponent>(entity)) {
         const auto& shadow = world.get<DirectionShadowComponent>(entity);
-        lightGPUDataMgr->Update(entity, light, shadow);
+        co_await lightGPUDataMgr->UpdateAsync(entity, light, shadow);
       } else {
-        lightGPUDataMgr->Update(entity, light);
+        co_await lightGPUDataMgr->UpdateAsync(entity, light);
       }
     }
 
@@ -421,31 +422,37 @@ RenderSystem::UpdateLightGPUData(Scene* scene) {
   }
 }
 
-void
+Task<void>
 RenderSystem::UpdateMeshGPUAsset(Scene* scene) {
   auto& world = scene->GetWorld();
-  auto modelNodeView = world.view<ModelSceneNode>();
   auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
-  auto modelGPUAssetMgr = ModelGPUDataManager::GetInstance();
+  auto meshGPUDataManager = MeshGPUDataManager::GetInstance();
 
-  for (auto [entity, node] : modelNodeView.each()) {
-    if (node.modelPath == "res://") continue;
-    if (!modelAssetMgr->Existed(node.modelPath)) continue;
+  // find all renderable model, and update the gpu mesh data
+  auto modelNodeView = world.view<ModelSceneNode, RenderableTag>();
+  for (auto&& [model, node] : modelNodeView.each()) {
+    for (auto meshEntity : node.m_meshEntities) {
+      if (!world.any_of<MeshComponent>(meshEntity)) continue;
 
-    /**
-     * sync the gpu data
-     */
-    auto modelAsset = modelAssetMgr->Get(node.modelPath);
-    if (!modelGPUAssetMgr->Existed(*modelAsset)) continue;
-    modelGPUAssetMgr->Update(*modelAsset);
+      auto& meshComponent = world.get<MeshComponent>(meshEntity);
+      auto& index = meshComponent.index;
+      auto& mesh = meshComponent.m_modelAsset->GetMesh(index);
 
-    /**
-     * clear flags
-     */
-    int meshCount = modelAsset->GetMeshCount();
-    for (int i = 0; i < meshCount; i++) {
-      modelAsset->GetMesh(i).m_materialTexChanged = false;
-      modelAsset->GetMesh(i).m_materialValueChanged = false;
+      if (!meshGPUDataManager->Existed(meshEntity)) {
+        co_await meshGPUDataManager->CreateAsync(meshEntity, mesh);
+      } else {
+        co_await meshGPUDataManager->UpdateAsync(meshEntity, mesh);
+      }
+
+      /**
+       * clear flags
+       */
+      mesh.m_materialTexChanged = false;
+      mesh.m_materialValueChanged = false;
+
+      if (!world.any_of<RenderableMeshTag>(meshEntity)) {
+        world.emplace<RenderableMeshTag>(meshEntity);
+      }
     }
   }
 }

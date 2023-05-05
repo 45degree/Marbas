@@ -1,5 +1,8 @@
 #pragma once
 
+#include <async_simple/coro/Lazy.h>
+#include <async_simple/coro/SyncAwait.h>
+
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/memory.hpp>
 #include <concepts>
@@ -15,6 +18,12 @@
 #include "Uid.hpp"
 
 namespace Marbas {
+
+template <typename T = void>
+using Task = async_simple::coro::Lazy<T>;
+
+template <typename T = void>
+using Try = async_simple::Try<T>;
 
 struct AssetBase {
  public:
@@ -107,6 +116,37 @@ class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
     return asset;
   }
 
+  Task<std::shared_ptr<Asset>>
+  GetAsync(const AssetPath& path) {
+    auto* registry = AssetRegistry::GetInstance();
+    auto uid = registry->CreateOrFindAssertUid(path);
+    try {
+      auto asset = co_await GetAsync(uid);
+      co_return asset;
+    } catch (AssetException& exception) {
+      throw AssetException("can't find resource in the .import dir, maybe you not create it", path);
+    }
+  }
+
+  Task<std::shared_ptr<Asset>>
+  GetAsync(const Uid& uid) {
+    auto asset = Base::Get(uid);
+    if (asset != nullptr) co_return asset;
+
+    auto* registry = AssetRegistry::GetInstance();
+    auto assertPath = registry->GetAssertAbsolutePath(uid);
+    if (!std::filesystem::exists(assertPath)) {
+      throw AssetException("can't find resource in the .import dir, maybe you not create it", uid);
+    }
+
+    std::ifstream file(assertPath, std::ios::binary | std::ios::in);
+    cereal::BinaryInputArchive ar(file);
+
+    ar(asset);
+    Base::Insert(uid, asset);
+    co_return asset;
+  }
+
   /**
    * @brief check if a asset is exists in the disk(.import dir of the project dir)
    *
@@ -130,7 +170,7 @@ class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
    * @param path asset path
    */
   template <typename... Args>
-  std::shared_ptr<Asset>
+  Uid
   Create(const AssetPath& path, Args&&... args) {
     auto* registry = AssetRegistry::GetInstance();
     auto uid = registry->CreateOrFindAssertUid(path);
@@ -140,16 +180,43 @@ class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
       throw AssetException("the assert existed in the disk", path);
     }
 
-    auto assert = Asset::Load(path, std::forward<Args>(args)...);
-    assert->SetUid(uid);
+    Asset::Load(path, std::forward<Args>(args)...).start([&](Try<std::shared_ptr<Asset>> result) {
+      if (result.hasError()) {
+        return;
+      }
+      auto asset = result.value();
+      asset->SetUid(uid);
+
+      std::ofstream file(assertPath, std::ios::binary | std::ios::out);
+      cereal::BinaryOutputArchive ar(file);
+      ar(asset);
+
+      Base::Insert(uid, asset);
+    });
+
+    return uid;
+  }
+
+  template <typename... Args>
+  Task<std::shared_ptr<Asset>>
+  CreateAsync(const AssetPath& path, Args&&... args) {
+    auto* registry = AssetRegistry::GetInstance();
+    auto uid = registry->CreateOrFindAssertUid(path);
+    auto assertPath = registry->GetAssertAbsolutePath(uid);
+
+    if (std::filesystem::exists(assertPath)) {
+      throw AssetException("the assert existed in the disk", path);
+    }
+
+    auto asset = co_await Asset::Load(path, std::forward<Args>(args)...);
+    asset->SetUid(uid);
 
     std::ofstream file(assertPath, std::ios::binary | std::ios::out);
     cereal::BinaryOutputArchive ar(file);
-    ar(assert);
+    ar(asset);
 
-    Base::Insert(uid, assert);
-
-    return assert;
+    Base::Insert(uid, asset);
+    co_return asset;
   }
 
   /**

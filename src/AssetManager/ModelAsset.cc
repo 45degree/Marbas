@@ -107,7 +107,7 @@ ProcessSubNode(const aiScene* aScene, const aiNode* aNode, const Path& currentDi
   }
 }
 
-std::shared_ptr<ModelAsset>
+Task<std::shared_ptr<ModelAsset>>
 ModelAsset::Load(const AssetPath& assetPath) {
   auto path = assetPath.GetAbsolutePath();
 
@@ -132,7 +132,7 @@ ModelAsset::Load(const AssetPath& assetPath) {
   ProcessSubNode(assimpScene, aRootNode, path.parent_path(), model);
 
   modelAsset->SetModelName(modelName);
-  return modelAsset;
+  co_return modelAsset;
 }
 
 }  // namespace Marbas

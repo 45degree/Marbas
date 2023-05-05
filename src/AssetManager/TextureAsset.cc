@@ -11,7 +11,7 @@
 
 namespace Marbas {
 
-std::shared_ptr<TextureAsset>
+Task<std::shared_ptr<TextureAsset>>
 TextureAsset::Load(const AssetPath& path, bool flipV) {
   auto filename = path.GetAbsolutePath().string();
 
@@ -51,7 +51,7 @@ TextureAsset::Load(const AssetPath& path, bool flipV) {
   asset->m_format = format;
 
   stbi_image_free(data);
-  return asset;
+  co_return asset;
 }
 
 }  // namespace Marbas

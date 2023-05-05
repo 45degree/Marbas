@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AABBComponent.hpp"
+#include "MeshComponent.hpp"
 #include "TagComponent.hpp"
 
 // serialized component

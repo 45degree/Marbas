@@ -11,7 +11,7 @@ target('Marbas.AssetManager', function()
     add_defines('DEBUG')
   end
 
-  add_deps('Marbas.RHI', 'Marbas.Common')
+  add_deps('Marbas.RHI', 'Marbas.Common', 'async_simple')
   add_packages('glog', 'glfw', 'glm', 'assimp', 'fmt', 'stb', 'cereal')
 
   if is_plat('windows') then

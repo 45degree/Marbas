@@ -1,8 +1,5 @@
 #pragma once
 
-#include <async_simple/coro/Lazy.h>
-#include <async_simple/coro/SyncAwait.h>
-
 #include <concepts>
 #include <entt/entt.hpp>
 #include <future>
@@ -16,9 +13,6 @@
 #include "RHIFactory.hpp"
 
 namespace Marbas {
-
-template <typename T = void>
-using Task = async_simple::coro::Lazy<T>;
 
 class GPUDataPipelineDataBase {
  public:
@@ -50,6 +44,15 @@ class GPUDataPipelineBase : public ResourceDataCache<Key, T> {
     data->Load(std::forward<Args>(args)...).start([=, this](auto&&) { this->Insert(key, data); });
   }
 
+  template <typename... Args>
+  Task<>
+  CreateAsync(Key key, Args&&... args) {
+    auto data = std::make_shared<T>();
+    data->SetRHI(this->m_rhiFactory);
+    co_await data->Load(std::forward<Args>(args)...);
+    this->Insert(key, data);
+  }
+
   std::shared_ptr<T>
   TryGet(Key entity) {
     return this->Get(entity);
@@ -61,6 +64,14 @@ class GPUDataPipelineBase : public ResourceDataCache<Key, T> {
     auto data = TryGet(key);
     if (data == nullptr) return;
     data->Update(std::forward<Args>(args)...).start([](auto&&) {});
+  }
+
+  template <typename... Args>
+  Task<void>
+  UpdateAsync(Key key, Args&&... args) {
+    auto data = TryGet(key);
+    if (data == nullptr) co_return;
+    co_await data->Update(std::forward<Args>(args)...);
   }
 
   bool

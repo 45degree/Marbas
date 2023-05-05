@@ -5,7 +5,7 @@
 #include "Core/Common.hpp"
 #include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
-#include "Core/Scene/GPUDataPipeline/ModelGPUData.hpp"
+#include "Core/Scene/GPUDataPipeline/MeshGPUData.hpp"
 
 namespace Marbas {
 
@@ -53,11 +53,11 @@ DirectionShadowMapPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBu
   /**
    * render the scene
    */
-  auto modelView = world.view<ModelSceneNode, RenderComponent>();
+  auto modelView = world.view<ModelSceneNode, RenderableTag>();
 
   // load all model and calculate the sum of mesh
   auto modelManager = AssetManager<ModelAsset>::GetInstance();
-  auto modelGPUManager = ModelGPUDataManager::GetInstance();
+  auto meshGPUManager = MeshGPUDataManager::GetInstance();
   auto bufferContext = m_rhiFactory->GetBufferContext();
 
   /**
@@ -94,19 +94,16 @@ DirectionShadowMapPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBu
     commandList.SetScissors({&scissorInfo, 1});
 
     for (auto&& [entity, modelSceneNode] : modelView.each()) {
-      if (modelSceneNode.modelPath == "res://") continue;
+      for (auto mesh : modelSceneNode.m_meshEntities) {
+        if (!world.any_of<RenderableMeshTag>(mesh)) continue;
 
-      auto modelAsset = modelManager->Get(modelSceneNode.modelPath);
-      auto modelGPUAsset = modelGPUManager->TryGet(*modelAsset);
-      auto meshCount = modelGPUAsset->MeshCount();
-      for (size_t i = 0; i < meshCount; i++) {
-        auto meshGPUData = modelGPUAsset->GetMeshGPU(i);
-        auto& indexCount = meshGPUData->m_indexCount;
+        auto data = meshGPUManager->Get(mesh);
+        auto& indexCount = data->m_indexCount;
 
-        std::vector<uintptr_t> sets = {meshGPUData->m_descriptorSet, LightGPUData::GetLightSet()};
+        std::vector<uintptr_t> sets = {data->m_descriptorSet, LightGPUData::GetLightSet()};
         commandList.BindDescriptorSet(pipeline, sets);
-        commandList.BindVertexBuffer(meshGPUData->m_vertexBuffer);
-        commandList.BindIndexBuffer(meshGPUData->m_indexBuffer);
+        commandList.BindVertexBuffer(data->m_vertexBuffer);
+        commandList.BindIndexBuffer(data->m_indexBuffer);
         commandList.DrawIndexed(indexCount, 1, 0, 0, 0);
       }
     }

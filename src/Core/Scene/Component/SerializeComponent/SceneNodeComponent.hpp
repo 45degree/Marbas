@@ -6,8 +6,11 @@
 #include "AssetManager/AssetPath.hpp"
 #include "AssetManager/ModelAsset.hpp"
 #include "Common/Common.hpp"
+#include "Core/Scene/Component/TagComponent.hpp"
 
 namespace Marbas {
+
+// TODO: add some global entity to save all the directional light gpu data
 
 struct EmptySceneNode {
   String nodeName = "empty Node";
@@ -70,6 +73,8 @@ struct ModelSceneNode {
   String modelName;
   AssetPath modelPath;
 
+  std::vector<entt::entity> m_meshEntities;
+
   template <typename Archive>
   void
   serialize(Archive&& ar) {
@@ -86,7 +91,14 @@ struct ModelSceneNode {
   OnDestroy(entt::registry& world, entt::entity node) {}
 
   static void
-  AfterLoad() {
+  AfterLoad(entt::registry& world, entt::entity node) {
+    if (!world.any_of<NewModelTag>(node)) {
+      world.emplace<NewModelTag>(node);
+    }
+  }
+
+  static void
+  AfterSave(entt::registry& world, entt::entity node) {
     auto modelManager = AssetManager<ModelAsset>::GetInstance();
     modelManager->Save();
   }

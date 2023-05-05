@@ -13,13 +13,26 @@ struct UpdateLightTag {};
 struct DeleteLightTag {};
 
 /**
+ * the tag for model
+ */
+struct NewModelTag {};
+
+/**
  * tag for renderable
  */
 
 /**
- * @class RenderComponent
- * @brief a tag means the node need to be rendered
+ * @class Renderable
+ * @brief a tag means the node can be rendered
  */
-struct RenderComponent {};
+struct RenderableTag {};
+
+/**
+ * @class RenderPreparedTag
+ * @brief the node has prepared all the data which is needed by renderer
+ *        the entity has this tag means it will be rendered in current frame
+ *
+ */
+struct RenderableMeshTag {};
 
 }  // namespace Marbas

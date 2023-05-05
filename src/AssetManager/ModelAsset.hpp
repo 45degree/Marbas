@@ -40,7 +40,7 @@ class ModelAsset final : public AssetBase {
     return m_model.size();
   }
 
-  static std::shared_ptr<ModelAsset>
+  static Task<std::shared_ptr<ModelAsset>>
   Load(const AssetPath& path);
 };
 

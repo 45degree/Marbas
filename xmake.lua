@@ -9,7 +9,11 @@ add_requires('glm 0.9.9+8')
 add_requires('glog v0.6.0')
 add_requires('abseil 20230125.2')
 add_requires('stb 2021.09.10')
-add_requires('assimp v5.2.3')
+if is_plat('linux') then
+  add_requires('pkgconfig::assimp', { alias = 'assimp' })
+else
+  add_requires('assimp')
+end
 add_requires('fmt 9.1.0')
 add_requires('gtest 1.11.0')
 add_requires('entt master')
