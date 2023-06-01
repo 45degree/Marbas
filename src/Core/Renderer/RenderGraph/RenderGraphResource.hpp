@@ -68,6 +68,7 @@ class RenderGraphTexture final : public RenderGraphResource {
   }
 
  private:
+  bool m_isCreate = false;
   Image* m_image = nullptr;
   ImageCreateInfo m_imageCreateInfo;
   HashMap<SubresourceDesc, ImageView*, SubresourceDesc_Hash> m_imageViews;

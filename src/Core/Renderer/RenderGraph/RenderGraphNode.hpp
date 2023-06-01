@@ -7,6 +7,7 @@
 namespace Marbas {
 
 class RenderGraphGraphicsBuilder;
+class RenderGraphComputeBuilder;
 class RenderGraph;
 
 namespace details {
@@ -38,6 +39,7 @@ class RenderGraphNode {
 
  protected:
   friend class Marbas::RenderGraphGraphicsBuilder;
+  friend class Marbas::RenderGraphComputeBuilder;
   friend class Marbas::RenderGraph;
 
   String name;

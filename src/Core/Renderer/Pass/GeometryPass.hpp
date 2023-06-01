@@ -34,10 +34,10 @@ class GeometryPass {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
+  Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
-  IsEnable(RenderGraphRegistry& registry) {
+  IsEnable(RenderGraphGraphicsRegistry& registry) {
     auto scene = registry.GetCurrentActiveScene();
     return scene != nullptr;
   }

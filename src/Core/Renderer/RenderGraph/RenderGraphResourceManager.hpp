@@ -26,6 +26,17 @@ class RenderGraphResourceManager final {
     return m_graphTexture[handler.index].GetImageView(baseLayer, layerCount, baseLevel, levelCount);
   }
 
+  ImageView*
+  GetImageView(std::string_view name, uint32_t baseLayer = 0, uint32_t layerCount = 1, uint32_t baseLevel = 0,
+               uint32_t levelCount = 1) {
+    auto iter = std::find_if(m_graphTexture.begin(), m_graphTexture.end(),
+                             [&](auto&& texture) { return texture.GetName() == name; });
+    if (iter != m_graphTexture.end()) {
+      return iter->GetImageView(baseLayer, layerCount, baseLevel, levelCount);
+    }
+    return nullptr;
+  }
+
   RenderGraphTextureHandler
   AddExternTexture(const char* name, Image* image);
 

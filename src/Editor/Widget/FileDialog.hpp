@@ -3,7 +3,6 @@
 #include <optional>
 
 #include "Common/Common.hpp"
-#include "Dialog.hpp"
 #include "RHIFactory.hpp"
 
 namespace Marbas {

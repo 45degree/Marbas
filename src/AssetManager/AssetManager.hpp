@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "AssetException.hpp"
+#include "AssetExecutor.hpp"
 #include "AssetPath.hpp"
 #include "AssetRegistry.hpp"
 #include "Common/Common.hpp"
@@ -55,9 +56,10 @@ concept AssetType = requires() { requires std::derived_from<std::remove_cvref_t<
  *
  * @tparam Assert Assert class
  */
-template <AssetType Asset>
-class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
-  using Base = ResourceDataCache<Uid, Asset>;
+template <AssetType AssetImpl>
+class AssetManagerBase final : public ResourceDataCache<Uid, AssetImpl> {
+  using Base = ResourceDataCache<Uid, AssetImpl>;
+  Asset::Details::AssetExecutor m_executor;
 
  public:
   void
@@ -85,7 +87,7 @@ class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
    * @param path
    * @return
    */
-  std::shared_ptr<Asset>
+  std::shared_ptr<AssetImpl>
   Get(const AssetPath& path) {
     auto* registry = AssetRegistry::GetInstance();
     auto uid = registry->CreateOrFindAssertUid(path);
@@ -97,7 +99,7 @@ class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
     }
   }
 
-  std::shared_ptr<Asset>
+  std::shared_ptr<AssetImpl>
   Get(Uid uid) {
     auto asset = Base::Get(uid);
     if (asset != nullptr) return asset;
@@ -116,19 +118,19 @@ class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
     return asset;
   }
 
-  Task<std::shared_ptr<Asset>>
+  Task<std::shared_ptr<AssetImpl>>
   GetAsync(const AssetPath& path) {
     auto* registry = AssetRegistry::GetInstance();
     auto uid = registry->CreateOrFindAssertUid(path);
     try {
-      auto asset = co_await GetAsync(uid);
+      auto asset = co_await GetAsync(uid).setEx(&m_executor);
       co_return asset;
     } catch (AssetException& exception) {
       throw AssetException("can't find resource in the .import dir, maybe you not create it", path);
     }
   }
 
-  Task<std::shared_ptr<Asset>>
+  Task<std::shared_ptr<AssetImpl>>
   GetAsync(const Uid& uid) {
     auto asset = Base::Get(uid);
     if (asset != nullptr) co_return asset;
@@ -180,7 +182,7 @@ class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
       throw AssetException("the assert existed in the disk", path);
     }
 
-    Asset::Load(path, std::forward<Args>(args)...).start([&](Try<std::shared_ptr<Asset>> result) {
+    AssetImpl::Load(path, std::forward<Args>(args)...).start([&](Try<std::shared_ptr<AssetImpl>> result) {
       if (result.hasError()) {
         return;
       }
@@ -198,7 +200,7 @@ class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
   }
 
   template <typename... Args>
-  Task<std::shared_ptr<Asset>>
+  Task<std::shared_ptr<AssetImpl>>
   CreateAsync(const AssetPath& path, Args&&... args) {
     auto* registry = AssetRegistry::GetInstance();
     auto uid = registry->CreateOrFindAssertUid(path);
@@ -208,7 +210,7 @@ class AssetManagerBase final : public ResourceDataCache<Uid, Asset> {
       throw AssetException("the assert existed in the disk", path);
     }
 
-    auto asset = co_await Asset::Load(path, std::forward<Args>(args)...);
+    auto asset = co_await AssetImpl::Load(path, std::forward<Args>(args)...).setEx(&m_executor);
     asset->SetUid(uid);
 
     std::ofstream file(assertPath, std::ios::binary | std::ios::out);

@@ -2,9 +2,12 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
-#include "InformationWidget.hpp"
+#define VGIZMO_USES_GLM
+
+#include "GuiInformationWindow.hpp"
 
 #include <glog/logging.h>
+#include <imGuIZMO.quat/imGuIZMOquat.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -14,10 +17,9 @@
 #include "Core/Scene/GPUDataPipeline/TextureGPUData.hpp"
 #include "Core/Scene/SceneManager.hpp"
 #include "Core/Scene/System/RenderSystem.hpp"
-#include "DirectionArrowControl.hpp"
 #include "ImGuizmo.h"
 
-namespace Marbas {
+namespace Marbas::Gui {
 
 static std::string
 _labelPrefix(const char* const label) {
@@ -178,7 +180,7 @@ DrawComponentProp(const std::string_view name, entt::registry& world, entt::enti
 }
 
 void
-InformationWidget::Draw() {
+GuiInformationWindow::OnDraw() {
   auto sceneManager = SceneManager::GetInstance();
   auto activeScene = sceneManager->GetActiveScene();
   auto& world = activeScene->GetWorld();
@@ -284,9 +286,14 @@ InformationWidget::Draw() {
     auto color = node.m_color;
     auto energy = node.m_energy;
     auto dir = node.m_direction;
-    bool isChangeColor = ImGui::ColorEdit3("light", glm::value_ptr(color));
-    bool isChangeDir = ImGui::InputFloat3("directional", glm::value_ptr(dir));
+
+    ImGui::SeparatorText("light");
+    bool isChangeColor = ImGui::ColorEdit3("color", glm::value_ptr(color));
     bool isChangeEnergy = ImGui::InputFloat("energy", &energy);
+
+    ImGui::SeparatorText("direction");
+    bool isChangeDir = ImGui::InputFloat3("directional", glm::value_ptr(dir));
+    isChangeDir |= ImGui::gizmo3D("##gizmo1", dir);
 
     if (isChangeColor || isChangeDir || isChangeEnergy) {
       world.patch<DirectionLightComponent>(m_entity, [&color, &dir, &energy](auto& node) {
@@ -298,7 +305,6 @@ InformationWidget::Draw() {
     }
 
     auto regionSize = ImGui::GetContentRegionAvail();
-    // DirectionArrowControl({regionSize.x, regionSize.x}, dir);
 
     bool isSun = world.any_of<SunLightTag>(m_entity);
     ImGui::Checkbox("Set as Sun", &isSun);
@@ -322,6 +328,7 @@ InformationWidget::Draw() {
   });
 }
 
-InformationWidget::InformationWidget(RHIFactory* rhiFactory) : Widget("Infomation", rhiFactory) {}
+GuiInformationWindow::GuiInformationWindow(RHIFactory* rhiFactory)
+    : GuiWindow("Infomation"), m_rhiFactory(rhiFactory) {}
 
-}  // namespace Marbas
+}  // namespace Marbas::Gui

@@ -15,15 +15,10 @@ layout(std140, binding = 0, set = 0) uniform Matrices {
   float metallicValue;
   float roughnessValue;
 };
-
-layout(std140, binding = 1, set = 0) uniform ModelMatrix {
-  mat4 model;
-};
-
-layout(binding = 2, set = 0) uniform sampler2D diffuseTexture;
-layout(binding = 3, set = 0) uniform sampler2D normalTexture;
-layout(binding = 4, set = 0) uniform sampler2D roughnessTexture;
-layout(binding = 5, set = 0) uniform sampler2D metallicTexture;
+layout(binding = 1, set = 0) uniform sampler2D diffuseTexture;
+layout(binding = 2, set = 0) uniform sampler2D normalTexture;
+layout(binding = 3, set = 0) uniform sampler2D roughnessTexture;
+layout(binding = 4, set = 0) uniform sampler2D metallicTexture;
 
 void main() {
 
@@ -38,7 +33,7 @@ void main() {
   // normal
   if(texInfo.y == 1) {
     vec3 normal = texture(normalTexture, ourTex).rgb;
-    normal = normalize(normal * 2.0 - 1.0);   
+    normal = normalize(normal * 2.0 - 1.0);
     NormalMetallic.xyz = normalize(TBN * normal);
   }
   else {

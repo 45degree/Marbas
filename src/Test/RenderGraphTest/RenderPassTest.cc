@@ -28,7 +28,8 @@ class RenderGraphPassTest : public ::testing::Test {
     m_pipelineContext = static_cast<MockPipelineContext*>(m_rhiFactory->GetPipelineContext());
     m_renderGraphResourceManager = std::make_shared<RenderGraphResourceManager>(m_rhiFactory);
 
-    ON_CALL(*m_bufferContext, CreateGraphicsCommandBuffer()).WillByDefault(Return(&m_mockCommandBuffer));
+    ON_CALL(*m_bufferContext, CreateGraphicsCommandBuffer()).WillByDefault(Return(&m_mockGraphicsCommandBuffer));
+    ON_CALL(*m_bufferContext, CreateComputeCommandBuffer()).WillByDefault(Return(&m_mockComputeCommandBuffer));
   }
 
   void
@@ -41,7 +42,8 @@ class RenderGraphPassTest : public ::testing::Test {
   FakeRHIFactory* m_rhiFactory;
   MockBufferContext* m_bufferContext;
   MockPipelineContext* m_pipelineContext;
-  MockGraphicsCommandBuffer m_mockCommandBuffer;
+  MockGraphicsCommandBuffer m_mockGraphicsCommandBuffer;
+  MockComputeCommandBuffer m_mockComputeCommandBuffer;
   std::shared_ptr<RenderGraphResourceManager> m_renderGraphResourceManager;
 
   ImageCreateInfo m_fakeImageCreateInfo;
@@ -57,9 +59,9 @@ TEST_F(RenderGraphPassTest, CreateDescriptorSetFromRead) {
   uintptr_t descriptorSet = 1;  // fake descriptor set
   uintptr_t fakeSampler = 1;    // fake sampler
 
-  EXPECT_CALL(*m_bufferContext, CreateImage(_)).Times(2).WillOnce(Return(&image));
-  EXPECT_CALL(*m_pipelineContext, CreateDescriptorSet(_)).Times(1).WillOnce(Return(descriptorSet));
-  EXPECT_CALL(*m_pipelineContext, CreateSampler(_)).Times(1).WillOnce(Return(fakeSampler));
+  EXPECT_CALL(*m_bufferContext, CreateImage(_)).Times(2).WillRepeatedly(Return(&image));
+  EXPECT_CALL(*m_pipelineContext, CreateDescriptorSet(_)).Times(2).WillRepeatedly(Return(descriptorSet));
+  EXPECT_CALL(*m_pipelineContext, CreateSampler(_)).Times(2).WillRepeatedly(Return(fakeSampler));
   RenderGraph renderGraph(m_rhiFactory, m_renderGraphResourceManager);
   auto outputTextureHandler1 = m_renderGraphResourceManager->CreateTexture("output1", m_fakeImageCreateInfo);
   auto outputTextureHandler2 = m_renderGraphResourceManager->CreateTexture("output2", m_fakeImageCreateInfo);
@@ -68,9 +70,9 @@ TEST_F(RenderGraphPassTest, CreateDescriptorSetFromRead) {
     builder.WriteTexture(outputTextureHandler1);
     builder.BeginPipeline();
     builder.EndPipeline();
-    return [](RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {};
+    return [](RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandBuffer) {};
   });
-  renderGraph.AddPass("pass1", [&](RenderGraphGraphicsBuilder& builder) {
+  renderGraph.AddPass("pass2", [&](RenderGraphGraphicsBuilder& builder) {
     auto pipelineCtx = m_rhiFactory->GetPipelineContext();
     auto sampler = pipelineCtx->CreateSampler(m_fakeSamplerCreateInfo);
 
@@ -80,8 +82,17 @@ TEST_F(RenderGraphPassTest, CreateDescriptorSetFromRead) {
     builder.WriteTexture(outputTextureHandler2);
     builder.BeginPipeline();
     builder.EndPipeline();
-    return [&](RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
+    return [&](RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
       auto* scene = registry.GetCurrentActiveScene();
+      auto set = registry.GetInputDescriptorSet();
+      ASSERT_EQ(set, descriptorSet);
+    };
+  });
+  renderGraph.AddPass("pass3", [&](RenderGraphComputeBuilder& builder) {
+    auto pipelineCtx = m_rhiFactory->GetPipelineContext();
+    auto sampler = pipelineCtx->CreateSampler(m_fakeSamplerCreateInfo);
+    builder.ReadTexture(outputTextureHandler2, sampler);
+    return [&](RenderGraphComputeRegistry& registry, ComputeCommandBuffer& buffer) {
       auto set = registry.GetInputDescriptorSet();
       ASSERT_EQ(set, descriptorSet);
     };
@@ -106,7 +117,7 @@ TEST_F(RenderGraphPassTest, AddRenderGraphResource) {
     builder.WriteTexture(outputTextureHandler);
     builder.BeginPipeline();
     builder.EndPipeline();
-    return [=, &image](RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {};
+    return [=, &image](RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandBuffer) {};
   });
 
   // create GPU resource on compiling
@@ -114,6 +125,62 @@ TEST_F(RenderGraphPassTest, AddRenderGraphResource) {
 
   graph.Compile();
   graph.Execute(nullptr, nullptr);
+}
+
+TEST_F(RenderGraphPassTest, AddComputePass) {
+  RenderGraph graph(m_rhiFactory, m_renderGraphResourceManager);
+  struct TestComputePass {
+    int& m_value;
+    TestComputePass(int& value) : m_value(value) {}
+
+    void
+    SetUp(RenderGraphComputeBuilder& builder) {}
+
+    void
+    Execute(RenderGraphComputeRegistry& registry, ComputeCommandBuffer& commandBuffer) {
+      m_value++;
+    }
+  };
+
+  int i = 0;
+  graph.AddPass<TestComputePass>("compute pass", i);
+
+  graph.Compile();
+  graph.Execute(nullptr);
+
+  ASSERT_EQ(i, 1);
+}
+
+TEST_F(RenderGraphPassTest, AddLambdaComputePass) {
+  RenderGraph graph(m_rhiFactory, m_renderGraphResourceManager);
+
+  int i = 0;
+  graph.AddPass("compute pass", [&](RenderGraphComputeBuilder& builder) {
+    return [&](RenderGraphComputeRegistry& registry, ComputeCommandBuffer& buffer) { i++; };
+  });
+
+  graph.Compile();
+  graph.Execute(nullptr);
+
+  ASSERT_EQ(i, 1);
+}
+
+TEST_F(RenderGraphPassTest, ComputeBuilderTest) {
+  RenderGraph graph(m_rhiFactory, m_renderGraphResourceManager);
+
+  int i = 0;
+  graph.AddPass("compute pass", [&](RenderGraphComputeBuilder& builder) {
+    DescriptorSetArgument argument;
+    builder.BeginPipeline();
+    builder.AddShaderArgument(argument);
+    builder.EndPipeline();
+    return [&](RenderGraphComputeRegistry& registry, ComputeCommandBuffer& buffer) {
+      // registry.
+      i++;
+    };
+  });
+
+  graph.Compile();
 }
 
 TEST_F(RenderGraphPassTest, CreatePipelinePass) {
@@ -159,7 +226,7 @@ TEST_F(RenderGraphPassTest, CreatePipelinePass) {
         .arrayElement = 0,
     });
 
-    return [=](RenderGraphRegistry& registry, GraphicsCommandBuffer& cmdList) {
+    return [=](RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& cmdList) {
       auto inputSet = registry.GetInputDescriptorSet();
       auto pipeline = registry.GetPipeline(0);
       auto framebuffer = registry.GetFrameBuffer();

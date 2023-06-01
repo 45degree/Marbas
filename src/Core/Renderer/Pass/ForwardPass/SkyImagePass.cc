@@ -147,7 +147,7 @@ SkyImagePass::SetUp(RenderGraphGraphicsBuilder& builder) {
 }
 
 void
-SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+SkyImagePass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
   auto* scene = registry.GetCurrentActiveScene();
   auto& world = scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();
@@ -232,7 +232,7 @@ SkyImagePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
 }
 
 bool
-SkyImagePass::IsEnable(RenderGraphRegistry& registry) {
+SkyImagePass::IsEnable(RenderGraphGraphicsRegistry& registry) {
   auto* scene = registry.GetCurrentActiveScene();
   auto& world = scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();

@@ -9,12 +9,15 @@ namespace Marbas {
 namespace details {
 class RenderGraphPass;
 class RenderGraphGraphicsPass;
+class RenderGraphComputePass;
 };  // namespace details
 
 class RenderGraph;
-class RenderGraphRegistry final {
+class RenderGraphGraphicsRegistry final {
+  using Pass = details::RenderGraphGraphicsPass;
+
  public:
-  RenderGraphRegistry(RenderGraph* graph, Scene* scene, details::RenderGraphGraphicsPass* pass);
+  RenderGraphGraphicsRegistry(RenderGraph* graph, Scene* scene, Pass* pass);
 
   uintptr_t
   GetInputDescriptorSet();
@@ -30,10 +33,39 @@ class RenderGraphRegistry final {
   FrameBuffer*
   GetFrameBuffer();
 
+  Image*
+  GetImage(RenderGraphTextureHandler handler);
+
  private:
   RenderGraph* m_graph;
   Scene* m_scene;
-  details::RenderGraphGraphicsPass* m_pass;
+  Pass* m_pass;
+};
+
+class RenderGraphComputeRegistry final {
+  using Pass = details::RenderGraphComputePass;
+
+ public:
+  RenderGraphComputeRegistry(RenderGraph* graph, Scene* scene, Pass* pass);
+
+  uintptr_t
+  GetInputDescriptorSet();
+
+  uintptr_t
+  GetPipeline(size_t index);
+
+  const Scene*
+  GetCurrentActiveScene() const {
+    return m_scene;
+  }
+
+  Image*
+  GetImage(RenderGraphTextureHandler handler);
+
+ private:
+  RenderGraph* m_graph;
+  Scene* m_scene;
+  Pass* m_pass;
 };
 
 }  // namespace Marbas

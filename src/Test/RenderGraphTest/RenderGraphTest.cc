@@ -21,7 +21,8 @@ class RenderGraphTest : public ::testing::Test {
     m_pipelineContext = static_cast<MockPipelineContext*>(m_rhiFactory->GetPipelineContext());
     m_renderGraphResourceManager = std::make_shared<RenderGraphResourceManager>(m_rhiFactory);
 
-    ON_CALL(*m_bufferContext, CreateGraphicsCommandBuffer()).WillByDefault(Return(&m_mockCommandBuffer));
+    ON_CALL(*m_bufferContext, CreateGraphicsCommandBuffer()).WillByDefault(Return(&m_mockGraphicsCommandBuffer));
+    ON_CALL(*m_bufferContext, CreateComputeCommandBuffer()).WillByDefault(Return(&m_mockComputeCommandBuffer));
   }
 
   void
@@ -34,7 +35,8 @@ class RenderGraphTest : public ::testing::Test {
   FakeRHIFactory* m_rhiFactory;
   MockBufferContext* m_bufferContext;
   MockPipelineContext* m_pipelineContext;
-  MockGraphicsCommandBuffer m_mockCommandBuffer;
+  MockGraphicsCommandBuffer m_mockGraphicsCommandBuffer;
+  MockComputeCommandBuffer m_mockComputeCommandBuffer;
   std::shared_ptr<RenderGraphResourceManager> m_renderGraphResourceManager;
 };
 
@@ -47,7 +49,7 @@ TEST_F(RenderGraphTest, CreatePass) {
   graph.AddPass("name", [&](RenderGraphGraphicsBuilder& builder) {
     builder.BeginPipeline();
     builder.EndPipeline();
-    return [&](RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) { init = 1; };
+    return [&](RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandBuffer) { init = 1; };
   });
   graph.Compile();
   graph.Execute(nullptr, nullptr);
@@ -64,7 +66,7 @@ TEST_F(RenderGraphTest, MultiPass) {
   graph.AddPass("pass1", [&](RenderGraphGraphicsBuilder& builder) {
     builder.BeginPipeline();
     builder.EndPipeline();
-    return [&](RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
+    return [&](RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
       ASSERT_EQ(init, 0);
       init = 1;
     };
@@ -73,7 +75,7 @@ TEST_F(RenderGraphTest, MultiPass) {
   graph.AddPass("pass2", [&](RenderGraphGraphicsBuilder& builder) {
     builder.BeginPipeline();
     builder.EndPipeline();
-    return [&](RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
+    return [&](RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
       ASSERT_EQ(init, 1);
       init = 2;
     };
@@ -99,7 +101,7 @@ TEST_F(RenderGraphTest, CreateStructPass) {
     }
 
     void
-    Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
+    Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
       m_init = 1;
     };
   };
@@ -128,12 +130,12 @@ TEST_F(RenderGraphTest, DisablePass) {
     }
 
     void
-    Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
+    Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
       m_init = 1;
     };
 
     bool
-    IsEnable(RenderGraphRegistry& registry) {
+    IsEnable(RenderGraphGraphicsRegistry& registry) {
       return false;
     }
   };
@@ -160,12 +162,12 @@ TEST_F(RenderGraphTest, ExecutePassAlone) {
     }
 
     void
-    Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
+    Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandBuffer) {
       m_init = 1;
     };
 
     bool
-    IsEnable(RenderGraphRegistry& registry) {
+    IsEnable(RenderGraphGraphicsRegistry& registry) {
       return true;
     }
   };

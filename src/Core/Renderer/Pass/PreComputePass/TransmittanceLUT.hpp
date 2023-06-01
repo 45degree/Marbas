@@ -22,7 +22,7 @@ class TransmittanceLUTPass final {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
+  Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList);
 
  private:
   RHIFactory* m_rhiFactory = nullptr;

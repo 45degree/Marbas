@@ -98,7 +98,7 @@ AtmospherePass::SetUp(RenderGraphGraphicsBuilder& builder) {
 }
 
 void
-AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+AtmospherePass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
   auto inputSet = registry.GetInputDescriptorSet();
@@ -166,7 +166,7 @@ AtmospherePass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& co
 }
 
 bool
-AtmospherePass::IsEnable(RenderGraphRegistry& registry) {
+AtmospherePass::IsEnable(RenderGraphGraphicsRegistry& registry) {
   auto scene = registry.GetCurrentActiveScene();
   if (scene == nullptr) return false;
 

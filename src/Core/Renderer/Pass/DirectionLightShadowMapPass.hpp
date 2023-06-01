@@ -18,10 +18,10 @@ class DirectionShadowMapPass final {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
+  Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
-  IsEnable(RenderGraphRegistry& registry);
+  IsEnable(RenderGraphGraphicsRegistry& registry);
 
  private:
   RHIFactory* m_rhiFactory = nullptr;
@@ -33,6 +33,11 @@ class DirectionShadowMapPass final {
   uintptr_t m_set;
 
   RenderGraphTextureHandler m_shadowMapTextureHandler;
+
+  struct Constant {
+    glm::mat4 model;
+    int lightIndex;
+  } m_constant;
 };
 
 }  // namespace Marbas

@@ -54,7 +54,7 @@ TransmittanceLUTPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 }
 
 void
-TransmittanceLUTPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+TransmittanceLUTPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
 

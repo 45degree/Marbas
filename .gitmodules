@@ -19,3 +19,9 @@
 [submodule "3rdPart/async_simple"]
 	path = 3rdPart/async_simple
 	url = git@github.com:45degree/async_simple.git
+[submodule "3rdPart/--progress"]
+	path = 3rdPart/--progress
+	url = https://github.com/BrutPitt/imGuIZMO.quat.git
+[submodule "3rdPart/imGuIZMO.quat"]
+	path = 3rdPart/imGuIZMO.quat
+	url = https://github.com/BrutPitt/imGuIZMO.quat.git

@@ -15,7 +15,6 @@ class MeshGPUData : public GPUDataPipelineDataBase {
   size_t m_indexCount = 0;
 
   Buffer* m_materialInfoBuffer = nullptr;
-  Buffer* m_transformBuffer = nullptr;
 
   uintptr_t m_descriptorSet;
   uintptr_t m_sampler;

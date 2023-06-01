@@ -15,7 +15,9 @@ class MARBAS_EXPORT Camera {
 
   glm::mat4
   GetProjectionMatrix() const {
-    return glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);
+    auto proj = glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);
+    proj[1][1] *= -1;
+    return proj;
   }
 
   glm::vec3
@@ -68,7 +70,7 @@ class MARBAS_EXPORT Camera {
 
  protected:
   float m_near = 0.1f;
-  float m_far = 1000.f;
+  float m_far = 10000.f;
   float m_fov = 45.0f;
   float m_aspect = 800.f / 600.f;
   glm::mat4 m_viewMatrix;

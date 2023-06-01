@@ -26,11 +26,11 @@ MeshGPUData::GetDescriptorSetArgument() {
   static std::once_flag flags;
   std::call_once(flags, [&]() {
     argument.Bind(0, DescriptorType::UNIFORM_BUFFER);
-    argument.Bind(1, DescriptorType::UNIFORM_BUFFER);
-    argument.Bind(2, DescriptorType::IMAGE);  // diffuse
-    argument.Bind(3, DescriptorType::IMAGE);  // normal
-    argument.Bind(4, DescriptorType::IMAGE);  // roughness
-    argument.Bind(5, DescriptorType::IMAGE);  // metallic
+    // argument.Bind(1, DescriptorType::UNIFORM_BUFFER);
+    argument.Bind(1, DescriptorType::IMAGE);  // diffuse
+    argument.Bind(2, DescriptorType::IMAGE);  // normal
+    argument.Bind(3, DescriptorType::IMAGE);  // roughness
+    argument.Bind(4, DescriptorType::IMAGE);  // metallic
   });
 
   return argument;
@@ -50,14 +50,14 @@ MeshGPUData::CreateAndBindDescriptorSet() {
       .offset = 0,
       .arrayElement = 0,
   });
-  pipelineCtx->BindBuffer(BindBufferInfo{
-      .descriptorSet = m_descriptorSet,
-      .descriptorType = DescriptorType::UNIFORM_BUFFER,
-      .bindingPoint = 1,
-      .buffer = m_transformBuffer,
-      .offset = 0,
-      .arrayElement = 0,
-  });
+  // pipelineCtx->BindBuffer(BindBufferInfo{
+  //     .descriptorSet = m_descriptorSet,
+  //     .descriptorType = DescriptorType::UNIFORM_BUFFER,
+  //     .bindingPoint = 1,
+  //     .buffer = m_transformBuffer,
+  //     .offset = 0,
+  //     .arrayElement = 0,
+  // });
 }
 
 void
@@ -98,7 +98,7 @@ MeshGPUData::UpdateMaterial(Mesh& mesh) {
   };
 
   // update descriptor set binding
-  if (auto bindingPoint = 2; mesh.m_material.m_diffuseTexturePath.has_value()) {
+  if (auto bindingPoint = 1; mesh.m_material.m_diffuseTexturePath.has_value()) {
     try {
       m_diffuseTexture = SetTexture(*mesh.m_material.m_diffuseTexturePath);
       bindImage(m_diffuseTexture, bindingPoint);
@@ -114,7 +114,7 @@ MeshGPUData::UpdateMaterial(Mesh& mesh) {
     bindEmptyImage(bindingPoint);
   }
 
-  if (auto bindingPoint = 3; mesh.m_material.m_normalTexturePath.has_value()) {
+  if (auto bindingPoint = 2; mesh.m_material.m_normalTexturePath.has_value()) {
     try {
       m_normalTexture = SetTexture(*mesh.m_material.m_normalTexturePath);
       bindImage(m_normalTexture, bindingPoint);
@@ -130,7 +130,7 @@ MeshGPUData::UpdateMaterial(Mesh& mesh) {
     bindEmptyImage(bindingPoint);
   }
 
-  if (auto bindingPoint = 4; mesh.m_material.m_roughnessTexturePath.has_value()) {
+  if (auto bindingPoint = 3; mesh.m_material.m_roughnessTexturePath.has_value()) {
     try {
       m_roughnessTexture = SetTexture(*mesh.m_material.m_roughnessTexturePath);
       bindImage(m_roughnessTexture, bindingPoint);
@@ -146,7 +146,7 @@ MeshGPUData::UpdateMaterial(Mesh& mesh) {
     bindEmptyImage(bindingPoint);
   }
 
-  if (auto bindingPoint = 5; mesh.m_material.m_metalnessTexturePath.has_value()) {
+  if (auto bindingPoint = 4; mesh.m_material.m_metalnessTexturePath.has_value()) {
     try {
       m_metallicTexture = SetTexture(*mesh.m_material.m_metalnessTexturePath);
       bindImage(m_metallicTexture, bindingPoint);
@@ -205,7 +205,7 @@ MeshGPUData::Load(Mesh& mesh) {
   m_indexBuffer = bufCtx->CreateBuffer(BufferType::INDEX_BUFFER, indexBufferData, indexBufferSize, false);
 
   m_materialInfoBuffer = bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, &m_materialInfo, sizeof(MaterialInfo), false);
-  m_transformBuffer = bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, nullptr, sizeof(glm::mat4), false);
+  // m_transformBuffer = bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, nullptr, sizeof(glm::mat4), false);
 
   SamplerCreateInfo samplerCreateInfo{
       .filter = Marbas::Filter::MIN_MAG_MIP_LINEAR,

@@ -14,12 +14,12 @@
 #include "Core/Scene/GPUDataPipeline/GPUDataManager.hpp"
 #include "Core/Scene/SceneManager.hpp"
 #include "Core/Scene/System/RenderSystem.hpp"
-#include "Editor/Widget/ContentBrowser.hpp"
+#include "Editor/Widget/GuiContentBrowserWindow.hpp"
+#include "Editor/Widget/GuiRenderImageWindow.hpp"
 #include "GLFW/glfw3.h"
 #include "Widget/CommonName.hpp"
-#include "Widget/InformationWidget.hpp"
-#include "Widget/RenderImage.hpp"
-#include "Widget/SceneTree.hpp"
+#include "Widget/GuiInformationWindow.hpp"
+#include "Widget/GuiSceneTree.hpp"
 
 namespace Marbas {
 
@@ -126,21 +126,29 @@ Application::Run() {
   int currentFrame = 0;
   bool needResize = false;
 
-  SceneTreeWidget sceneTree(m_rhiFactory.get());
-  RenderImage renderImage(m_rhiFactory.get());
-  InformationWidget infoWidget(m_rhiFactory.get());
-  ContentBrowser ContentBrowser(m_rhiFactory.get());
-  sceneTree.m_selectEntity.Connect<&RenderImage::SetSelectedEntity>(renderImage);
-  sceneTree.m_selectEntity.Connect<&InformationWidget::SelectEntity>(infoWidget);
+  // SceneTreeWidget sceneTree(m_rhiFactory.get());
+  Gui::GuiSceneTree sceneTree("mytree");
+  Gui::GuiInformationWindow infoWidget(m_rhiFactory.get());
+  Gui::GuiContentBrowserWindow ContentBrowser(m_rhiFactory.get());
 
-  auto outputImageView = RenderSystem::GetOutputView();
-  renderImage.SetRenderImage(outputImageView);
+  // auto outputImageView = RenderSystem::GetOutputView();
+  auto renderGraphResourceManager = RenderSystem::GetRenderGraphResourceManager();
+  auto outputImageView = renderGraphResourceManager->GetImageView("finalColorTexture");
+  auto voxelImageView = renderGraphResourceManager->GetImageView("voxelValizationTexture");
 
-  RenderSystem::RegistryListenerForResultImageChange<&RenderImage::SetRenderImage>(renderImage);
+  Gui::RenderImageWindow renderImageWindow("image");
+  Gui::RenderImageWindow voxelImageWindow("voxelImage");
+
+  sceneTree.SelectEntitySign.Connect<&Gui::GuiInformationWindow::SelectEntity>(infoWidget);
+  sceneTree.SelectEntitySign.Connect<&Gui::RenderImageWindow::OnSelectedEntity>(renderImageWindow);
+
+  renderImageWindow.SetRHIFactory(m_rhiFactory.get());
+  renderImageWindow.SetRenderImage(outputImageView);
+  voxelImageWindow.SetRHIFactory(m_rhiFactory.get());
+  voxelImageWindow.SetRenderImage(voxelImageView);
 
   while (!glfwWindowShouldClose(m_glfwWindow)) {
     glfwPollEvents();
-    m_rhiFactory->ResetFence(m_frameFence);
 
     if (needResize) {
       int width, height;
@@ -167,9 +175,9 @@ Application::Run() {
       continue;
     }
 
-    if (renderImage.needBakeScene) {
-      renderImage.needBakeScene = false;
-    }
+    // if (renderImage.needBakeScene) {
+    //   renderImage.needBakeScene = false;
+    // }
 
     auto sceneManager = SceneManager::GetInstance();
     auto scene = sceneManager->GetActiveScene();
@@ -183,7 +191,7 @@ Application::Run() {
           .imageIndex = currentFrame,
           .waitSemaphore = m_aviableSemaphores[currentFrame],
           .signalSemaphore = m_renderFinishSemaphore,
-          .fence = m_frameFence,
+          // .fence = m_frameFence,
       });
     }
 
@@ -191,34 +199,11 @@ Application::Run() {
     {
       BeginImgui();
 
-      // TODO: Draw ImGui
-      ImGui::Begin("tree");
       sceneTree.Draw();
-
-      if (ImGui::BeginDragDropTarget()) {
-        if (auto* payload = ImGui::AcceptDragDropPayload(CONTENT_BROWSER_DRAGDROG); payload != nullptr) {
-          const auto& path = *reinterpret_cast<AssetPath*>(payload->Data);
-          // TODO: check if the path is a scene path
-          auto sceneManager = SceneManager::GetInstance();
-          sceneManager->LoadScene(path);
-
-          auto scene = sceneManager->GetScene(path);
-          sceneManager->SetActiveScene(scene);
-          sceneTree.m_selectEntity.Publish(entt::null);
-        }
-        ImGui::EndDragDropTarget();
-      }
-      ImGui::End();
-
-      ImGui::Begin("image");
-      renderImage.Draw();
-      ImGui::End();
-      ImGui::Begin("Info");
+      renderImageWindow.Draw();
+      voxelImageWindow.Draw();
       infoWidget.Draw();
-      ImGui::End();
-      ImGui::Begin("ContentBrowser");
       ContentBrowser.Draw();
-      ImGui::End();
 
       // use ctrl + s to store the scene
       if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
@@ -235,7 +220,7 @@ Application::Run() {
     // present result
     {
       auto presentResult = m_rhiFactory->Present(m_swapChain, {&m_finishSemaphores[currentFrame], 1}, imageIndex);
-      m_rhiFactory->WaitForFence(m_frameFence);
+      // m_rhiFactory->WaitForFence(m_frameFence);
       if (-1 == presentResult) {
         needResize = true;
         continue;

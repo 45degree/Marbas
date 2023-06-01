@@ -11,9 +11,9 @@
 float DirectionLightShadow(vec4 fragPos, int layer, sampler2DArray shadowAtlas, vec4 viewport, float bias) {
   vec3 projCoords = fragPos.xyz / fragPos.w;
 
-  if(projCoords.x < -1 || projCoords.x > 1) return 0.0;
-  if(projCoords.y < -1 || projCoords.y > 1) return 0.0;
-  if(projCoords.z < 0 || projCoords.z > 1) return 0.0;
+  if(projCoords.x < -1 || projCoords.x > 1) return 1.0;
+  if(projCoords.y < -1 || projCoords.y > 1) return 1.0;
+  if(projCoords.z < 0 || projCoords.z > 1) return 1.0;
 
   // transform to the viewport range
   vec2 uv = projCoords.xy;
@@ -36,8 +36,8 @@ float DirectionLightShadow(vec4 fragPos, int layer, sampler2DArray shadowAtlas, 
   return shadow;
 }
 
-float DirectionLightShadow(vec3 worldPos, mat4 cameraView, sampler2DArray shadowAtlas,
-                           const in DirectionLightInfo lightInfo) {
+float DirectionLightShadow(vec3 worldPos, vec3 normal, mat4 cameraView,
+                           sampler2DArray shadowAtlas, const in DirectionLightInfo lightInfo) {
   vec4 cameraCoordPos = cameraView * vec4(worldPos, 1.0);
   float depthValue = abs(cameraCoordPos.z);
 
@@ -54,8 +54,10 @@ float DirectionLightShadow(vec3 worldPos, mat4 cameraView, sampler2DArray shadow
   }
   vec4 fragPosLightSpace = lightInfo.lightMatrix[layer] * vec4(worldPos, 1.0);
 
-  float bias = 0.005;
+  vec3 lightDir = -lightInfo.direction;
+  float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
   bias *= 1 / (lightInfo.cascadePlaneDistances[layer].x * 0.5f);
+
   return DirectionLightShadow(fragPosLightSpace, layer, shadowAtlas, lightInfo.atlasViewport, bias);
 }
 

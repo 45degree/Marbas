@@ -7,6 +7,7 @@ namespace Marbas {
 namespace details {
 class RenderGraphPass;
 class RenderGraphGraphicsPass;
+class RenderGraphComputePass;
 };  // namespace details
 
 class RenderGraph;
@@ -51,6 +52,11 @@ class RenderGraphGraphicsBuilder final {
   }
 
   void
+  EnableDepthWrite(bool isEnable) {
+    m_pipelineCreateInfo.depthStencilInfo.depthWriteEnable = isEnable;
+  }
+
+  void
   SetDepthCampareOp(DepthCompareOp depthOp) {
     m_pipelineCreateInfo.depthStencilInfo.depthCompareOp = depthOp;
   }
@@ -58,6 +64,11 @@ class RenderGraphGraphicsBuilder final {
   void
   SetPolygonMode(PolygonMode mode) {
     m_pipelineCreateInfo.rasterizationInfo.polygonMode = mode;
+  }
+
+  void
+  SetPrimitiveType(PrimitiveTopology type) {
+    m_pipelineCreateInfo.inputAssemblyState.topology = type;
   }
 
   void
@@ -124,6 +135,52 @@ class RenderGraphGraphicsBuilder final {
   GraphicsPipeLineCreateInfo m_pipelineCreateInfo;
   RenderGraph* m_graph;
   details::RenderGraphGraphicsPass* m_pass;
+};
+
+class RenderGraphComputeBuilder final {
+  using Pass = details::RenderGraphComputePass;
+  using TextureHandler = RenderGraphTextureHandler;
+
+ public:
+  RenderGraphComputeBuilder(Pass* pass, RenderGraph* graph);
+  ~RenderGraphComputeBuilder();
+
+ public:
+  void
+  ReadTexture(const TextureHandler& handler, uintptr_t sampler, int baseLayer = 0, int layerCount = 1,
+              int baseLevel = 0, int levelCount = 1);
+
+  void
+  ReadStorageImage(const TextureHandler& handler, int baseLayer = 0, int layerCount = 1, int baseLevel = 0,
+                   int levelCount = 1);
+
+  void
+  AddShaderArgument(const DescriptorSetArgument& argument) {
+    m_pipelineCreateInfo.layout.push_back(argument);
+  }
+
+  void
+  SetPushConstantSize(uint32_t size = 0) {
+    m_pipelineCreateInfo.pushConstantSize = size;
+  }
+
+  void
+  SetShader(const std::filesystem::path& spirvPath) {
+    m_pipelineCreateInfo.computeShaderStage = ShaderStageCreateInfo(spirvPath, ShaderType::COMPUTE_SHADER);
+  }
+
+  void
+  BeginPipeline() {
+    m_pipelineCreateInfo = {};
+  }
+
+  void
+  EndPipeline();
+
+ private:
+  ComputePipelineCreateInfo m_pipelineCreateInfo;
+  Pass* m_pass;
+  RenderGraph* m_graph;
 };
 
 }  // namespace Marbas

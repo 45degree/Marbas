@@ -24,10 +24,10 @@ class SkyImagePass final {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
+  Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
-  IsEnable(RenderGraphRegistry& registry);
+  IsEnable(RenderGraphGraphicsRegistry& registry);
 
  private:
   struct CameraInfo {

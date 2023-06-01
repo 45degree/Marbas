@@ -104,8 +104,9 @@ RenderGraphGraphicsPass::Initialize(RenderGraph* graph) {
    */
   if (!m_inputAttachment.empty()) {
     DescriptorSetArgument argument;
+
     for (int i = 0; i < m_inputAttachment.size(); i++) {
-      argument.Bind(i, DescriptorType::IMAGE);  // all input attachment is from an image
+      m_inputAttachment[i]->SetArgument(argument, i);
     }
     m_descriptorSet = pipelineCtx->CreateDescriptorSet(argument);
     for (uint16_t i = 0; i < m_inputAttachment.size(); i++) {
@@ -147,12 +148,63 @@ RenderGraphGraphicsPass::Initialize(RenderGraph* graph) {
   m_framebuffer = pipelineCtx->CreateFrameBuffer(framebufferCreateInfo);
 }
 
+RenderGraphComputePass::RenderGraphComputePass(std::string_view name, RHIFactory* rhiFactory)
+    : RenderGraphPass(name, rhiFactory) {}
+
+void
+RenderGraphComputePass::Initialize(RenderGraph* graph) {
+  auto pipelineCtx = m_rhiFactory->GetPipelineContext();
+  auto bufCtx = m_rhiFactory->GetBufferContext();
+
+  m_commandBuffer = bufCtx->CreateComputeCommandBuffer();
+
+  /**
+   * create pipeline
+   */
+  for (int i = 0; i < m_pipelineCreateInfos.size(); i++) {
+    auto pipeline = pipelineCtx->CreatePipeline(m_pipelineCreateInfos[i]);
+    m_pipelines.push_back(pipeline);
+  }
+
+  /**
+   * create descriptorSet and bind image view
+   */
+  if (!m_inputAttachment.empty()) {
+    DescriptorSetArgument argument;
+
+    for (int i = 0; i < m_inputAttachment.size(); i++) {
+      m_inputAttachment[i]->SetArgument(argument, i);
+    }
+    m_descriptorSet = pipelineCtx->CreateDescriptorSet(argument);
+    for (uint16_t i = 0; i < m_inputAttachment.size(); i++) {
+      m_inputAttachment[i]->Bind(graph, pipelineCtx, m_descriptorSet, i);
+    }
+  }
+}
+
+RenderGraphComputePass::~RenderGraphComputePass() {
+  auto pipelineCtx = m_rhiFactory->GetPipelineContext();
+
+  for (auto pipeline : m_pipelines) {
+    pipelineCtx->DestroyPipeline(pipeline);
+  }
+}
+
 LambdaGraphicsRenderGraphPass::LambdaGraphicsRenderGraphPass(StringView name, RHIFactory* rhiFactory)
     : RenderGraphGraphicsPass(name, rhiFactory) {}
 
 void
 LambdaGraphicsRenderGraphPass::Execute(RenderGraph* graph, Scene* scene) {
-  RenderGraphRegistry registry(graph, scene, this);
+  RenderGraphGraphicsRegistry registry(graph, scene, this);
+  m_command(registry, *m_commandBuffer);
+}
+
+LambdaComputeRenderGraphPass::LambdaComputeRenderGraphPass(StringView name, RHIFactory* rhiFactory)
+    : RenderGraphComputePass(name, rhiFactory) {}
+
+void
+LambdaComputeRenderGraphPass::Execute(RenderGraph* graph, Scene* scene) {
+  RenderGraphComputeRegistry registry(graph, scene, this);
   m_command(registry, *m_commandBuffer);
 }
 

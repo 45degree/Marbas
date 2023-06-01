@@ -75,7 +75,7 @@ MultiScatterLUT::SetUp(RenderGraphGraphicsBuilder& builder) {
 }
 
 void
-MultiScatterLUT::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+MultiScatterLUT::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
   auto inputSet = registry.GetInputDescriptorSet();

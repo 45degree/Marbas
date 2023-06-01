@@ -11,7 +11,7 @@ target('Marbas.Editor', function()
   end)
 
   add_includedirs('$(projectdir)/src')
-  add_deps('Marbas.Core', 'ImGuizmo', 'Marbas.Common', 'Marbas.AssetManager')
+  add_deps('Marbas.Core', 'ImGuizmo', 'Marbas.Common', 'Marbas.AssetManager', 'imGuiZMO.quat')
   add_packages('glfw', 'fmt', 'assimp', 'glm', 'entt', 'glog', 'nativefiledialog', 'cereal', 'stb')
 
   add_packages('icu4c')

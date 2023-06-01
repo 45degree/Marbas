@@ -13,28 +13,16 @@ layout(location = 1) out vec3 Normal;
 layout(location = 2) out vec3 Position;
 layout(location = 3) out mat3 TBN;
 
-layout(std140, binding = 0, set = 0) uniform Material {
-  bool hasAlbedoTex;
-  bool hasNormalTex;
-  bool hasAOTex;
-  bool hasRoughnessTex;
-  bool hasMetallicTex;
-
-  vec4 diffuseColor;
-  float metallicValue;
-  float roughnessValue;
-};
-
-layout(std140, binding = 1, set = 0) uniform ModelMatrix {
-  mat4 model;
-};
-
 layout(std140, binding = 0, set = 1) uniform CameraMatrix {
   mat4 view;
   mat4 projection;
   vec3 right;
   vec3 up;
   vec3 pos;
+};
+
+layout(push_constant) uniform ModelMatrix {
+  mat4 model;
 };
 
 void main() {

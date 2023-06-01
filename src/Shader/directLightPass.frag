@@ -91,7 +91,7 @@ void main() {
     vec3 radiance = lightInfo[index].colorEnergy.xyz * lightInfo[index].colorEnergy.w;
     vec3 Lo = CalculateDirectLightColor(normal, L, V, radiance, albedo, metallic, roughness);
 
-    float shadow = DirectionLightShadow(worldPos, cameraView, directionalShadowMap, lightInfo[index]);
+    float shadow = DirectionLightShadow(worldPos, normal, cameraView, directionalShadowMap, lightInfo[index]);
     color += (1 - shadow) * Lo;
   }
 

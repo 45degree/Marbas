@@ -100,7 +100,7 @@ DirectLightPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 }
 
 void
-DirectLightPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+DirectLightPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
   auto inputSet = registry.GetInputDescriptorSet();
   auto framebuffer = registry.GetFrameBuffer();
   auto pipeline = registry.GetPipeline(0);
@@ -137,7 +137,7 @@ DirectLightPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& c
 }
 
 bool
-DirectLightPass::IsEnable(RenderGraphRegistry& registry) {
+DirectLightPass::IsEnable(RenderGraphGraphicsRegistry& registry) {
   auto scene = registry.GetCurrentActiveScene();
   return scene != nullptr;
 }

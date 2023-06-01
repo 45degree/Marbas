@@ -70,7 +70,7 @@ GridRenderPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 }
 
 void
-GridRenderPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+GridRenderPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
 

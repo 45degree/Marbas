@@ -18,12 +18,12 @@ struct CustomAsset : public AssetBase {
     ar(i);
   }
 
-  static std::shared_ptr<CustomAsset>
+  static Task<std::shared_ptr<CustomAsset>>
   Load(const AssetPath& path) {
     // path的内容如下: res://icon.png
     auto assert = std::make_shared<CustomAsset>();
     assert->i = 1;
-    return assert;
+    co_return assert;
   }
 };
 
@@ -109,7 +109,8 @@ TEST_F(GPUDataPipelineTest, DataFromAsset) {
   };
 
   auto* assetManager = AssetManager<CustomAsset>::GetInstance();
-  auto asset = assetManager->Create("res://customRes.res");
+  auto uid = assetManager->Create("res://customRes.res");
+  auto asset = assetManager->Get(uid);
 
   auto& instance = *GPUDataPipelineFromAssetManager<CustomData>::GetInstance();
   instance.SetRHI(&m_rhiFactory);

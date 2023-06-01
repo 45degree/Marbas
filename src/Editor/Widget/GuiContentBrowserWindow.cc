@@ -1,4 +1,4 @@
-#include "ContentBrowser.hpp"
+#include "GuiContentBrowserWindow.hpp"
 
 #include <imgui.h>
 #include <stb_image.h>
@@ -12,10 +12,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #endif
 
-namespace Marbas {
-
+namespace Marbas::Gui {
 static std::optional<Path> s_currentPath;
-
 static Path s_fileIconPath = "./assert/icon/FileIcon.png";
 static Path s_floderIconPath = "./assert/icon/DirectoryIcon.png";
 static Path s_backIconPath = "./assert/icon/back.png";
@@ -67,7 +65,8 @@ LoadToImGui(const Path& path, RHIFactory* rhiFactory) {
   return imguiContext->CreateImGuiImage(imageView);
 }
 
-ContentBrowser::ContentBrowser(RHIFactory* rhiFactory) : Widget("ContentBrowser", rhiFactory) {
+GuiContentBrowserWindow::GuiContentBrowserWindow(RHIFactory* rhiFactory)
+    : GuiWindow("ContentBrowser"), m_rhiFactory(rhiFactory) {
   auto imguiContext = m_rhiFactory->GetImguiContext();
   auto bufContext = m_rhiFactory->GetBufferContext();
   m_fileIcon = LoadToImGui(s_fileIconPath, m_rhiFactory);
@@ -76,7 +75,7 @@ ContentBrowser::ContentBrowser(RHIFactory* rhiFactory) : Widget("ContentBrowser"
 }
 
 void
-ContentBrowser::Draw() {
+GuiContentBrowserWindow::OnDraw() {
   auto& projectDir = AssetRegistry::GetInstance()->GetProjectDir();
   if (!s_currentPath.has_value() || !AssetPath::IsSubpath(*s_currentPath, projectDir)) {
     s_currentPath = projectDir;
@@ -204,4 +203,4 @@ ContentBrowser::Draw() {
   }
 }
 
-}  // namespace Marbas
+}  // namespace Marbas::Gui

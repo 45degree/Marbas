@@ -39,10 +39,12 @@ target('Marbas.Core', function()
   add_files('$(projectdir)/src/Core/Renderer/Pass/PreComputePass/*.cc')
   add_files('$(projectdir)/src/Core/Renderer/Pass/DirectLightPass.cc')
   add_files('$(projectdir)/src/Core/Renderer/Pass/SSAOPass.cc')
+  add_files('$(projectdir)/src/Core/Renderer/GI/VXGI/*.cc')
 
   --
   -- remove_files('Scene/GPUDataPipeline/**.cc')
   remove_files('$(projectdir)/src/Core/Renderer/Pass/PreComputePass/RenderSceneFromProbe.cc')
+  remove_files('$(projectdir)/src/Core/Renderer/GI/VXGI/LightInject.*')
 
   add_includedirs('$(projectdir)/src/Shader')
   add_files('$(projectdir)/src/Shader/geometry.vert')
@@ -67,6 +69,14 @@ target('Marbas.Core', function()
   add_files('$(projectdir)/src/Shader/ScreenSpace.vert')
   add_files('$(projectdir)/src/Shader/directLightPass.frag')
   add_files('$(projectdir)/src/Shader/SSAO.frag')
+  add_files('$(projectdir)/src/Shader/voxelization.frag')
+  add_files('$(projectdir)/src/Shader/voxelization.vert')
+  add_files('$(projectdir)/src/Shader/voxelization.geom')
+  add_files('$(projectdir)/src/Shader/vxgi.frag')
+  add_files('$(projectdir)/src/Shader/Editor/*.frag')
+  add_files('$(projectdir)/src/Shader/Editor/*.geom')
+  add_files('$(projectdir)/src/Shader/Editor/*.vert')
+  add_files('$(projectdir)/src/Shader/lightInject.comp')
 
   if is_plat('windows') then
     add_files('./Platform/WindowsPolicy.cc')

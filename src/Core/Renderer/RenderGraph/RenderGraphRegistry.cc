@@ -4,22 +4,49 @@
 
 namespace Marbas {
 
-RenderGraphRegistry::RenderGraphRegistry(RenderGraph* graph, Scene* scene, details::RenderGraphGraphicsPass* pass)
+RenderGraphGraphicsRegistry::RenderGraphGraphicsRegistry(RenderGraph* graph, Scene* scene, Pass* pass)
     : m_graph(graph), m_pass(pass), m_scene(scene) {}
 
 uintptr_t
-RenderGraphRegistry::GetInputDescriptorSet() {
+RenderGraphGraphicsRegistry::GetInputDescriptorSet() {
   return m_pass->m_descriptorSet;
 }
 
 uintptr_t
-RenderGraphRegistry::GetPipeline(size_t index) {
+RenderGraphGraphicsRegistry::GetPipeline(size_t index) {
   return m_pass->m_pipelines[index];
 }
 
 FrameBuffer*
-RenderGraphRegistry::GetFrameBuffer() {
+RenderGraphGraphicsRegistry::GetFrameBuffer() {
   return m_pass->m_framebuffer;
+}
+
+Image*
+RenderGraphGraphicsRegistry::GetImage(RenderGraphTextureHandler handler) {
+  auto& texture = m_graph->m_resourceManager->m_graphTexture[handler.index];
+  return texture.GetImage();
+}
+
+// compute
+
+RenderGraphComputeRegistry::RenderGraphComputeRegistry(RenderGraph* graph, Scene* scene, Pass* pass)
+    : m_graph(graph), m_scene(scene), m_pass(pass) {}
+
+uintptr_t
+RenderGraphComputeRegistry::GetPipeline(size_t index) {
+  return m_pass->m_pipelines[index];
+}
+
+uintptr_t
+RenderGraphComputeRegistry::GetInputDescriptorSet() {
+  return m_pass->m_descriptorSet;
+}
+
+Image*
+RenderGraphComputeRegistry::GetImage(RenderGraphTextureHandler handler) {
+  auto& texture = m_graph->m_resourceManager->m_graphTexture[handler.index];
+  return texture.GetImage();
 }
 
 }  // namespace Marbas

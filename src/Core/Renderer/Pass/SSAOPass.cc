@@ -74,7 +74,7 @@ SSAOPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 }
 
 void
-SSAOPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+SSAOPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
   auto inputSet = registry.GetInputDescriptorSet();
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();

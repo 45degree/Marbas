@@ -74,6 +74,7 @@ GeometryPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.BeginPipeline();
   builder.AddShaderArgument(MeshGPUData::GetDescriptorSetArgument());
   builder.AddShaderArgument(m_argument);
+  builder.SetPushConstantSize(sizeof(glm::mat4));
   builder.AddShader("Shader/geometry.vert.spv", ShaderType::VERTEX_SHADER);
   builder.AddShader("Shader/geometry.frag.spv", ShaderType::FRAGMENT_SHADER);
   builder.AddColorTarget({
@@ -115,7 +116,7 @@ GeometryPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 }
 
 void
-GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+GeometryPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
   auto* scene = registry.GetCurrentActiveScene();
 
   auto& world = scene->GetWorld();
@@ -171,7 +172,6 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
   commandList.SetScissors(scissor);
 
   auto view = world.view<ModelSceneNode, RenderableTag>();
-  // auto view = world.view<RenderableTag, RenderableMeshTag, MeshComponent>();
   for (auto&& [entity, modelSceneNode] : view.each()) {
     glm::mat4 model = glm::mat4(1.0);
     if (world.any_of<TransformComp>(entity)) {
@@ -179,6 +179,7 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
       model = transformComp.GetGlobalTransform();
     }
 
+    commandList.PushConstant(pipeline, &model, sizeof(glm::mat4), 0);
     for (auto mesh : modelSceneNode.m_meshEntities) {
       if (!world.any_of<RenderableMeshTag>(mesh)) continue;
 
@@ -186,9 +187,6 @@ GeometryPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& comm
       if (data == nullptr) continue;
 
       auto& indexCount = data->m_indexCount;
-
-      // update transform matrix
-      bufferContext->UpdateBuffer(data->m_transformBuffer, &model, sizeof(model), 0);
 
       commandList.BindDescriptorSet(pipeline, {data->m_descriptorSet, m_descriptorSet});
       commandList.BindVertexBuffer(data->m_vertexBuffer);

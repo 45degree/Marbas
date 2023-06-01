@@ -2,8 +2,9 @@
 
 layout(location = 0) in vec3 aPos;
 
-layout(std140, binding = 1, set = 0) uniform ModelMatrix {
+layout(push_constant) uniform Constant {
   mat4 model;
+  int lightIndex;
 };
 
 void main() {

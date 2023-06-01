@@ -4,6 +4,10 @@
 
 #include "AssetManager/ModelAsset.hpp"
 #include "AssetManager/Singleton.hpp"
+#include "Core/Renderer/GI/VXGI/LightInjectPass.hpp"
+#include "Core/Renderer/GI/VXGI/VXGIPass.hpp"
+#include "Core/Renderer/GI/VXGI/VoxelVisualizatonPass.hpp"
+#include "Core/Renderer/GI/VXGI/VoxelizationPass.hpp"
 #include "Core/Renderer/Pass/AtmospherePass.hpp"
 #include "Core/Renderer/Pass/DirectLightPass.hpp"
 #include "Core/Renderer/Pass/DirectionLightShadowMapPass.hpp"
@@ -16,7 +20,6 @@
 #include "Core/Renderer/RenderGraph/RenderGraph.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphResourceManager.hpp"
 #include "Core/Scene/Component/Component.hpp"
-#include "Core/Scene/Component/MeshComponent.hpp"
 #include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
 #include "Core/Scene/GPUDataPipeline/MeshGPUData.hpp"
 
@@ -34,6 +37,9 @@ static std::optional<ImageView*> s_lastResultImageView;
 
 void
 RenderSystem::Initialize(RHIFactory* rhiFactory) {
+  uint32_t width = 800;
+  uint32_t height = 600;
+
   /**
    * create all resource
    */
@@ -49,13 +55,19 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   auto& multiscatterLUTCreateInfo = *Singleton<MultiScatterLUTCreateInfo>::GetInstance();
   auto& directLightPassCreateInfo = *Singleton<DirectLightPassCreateInfo>::GetInstance();
   auto& ssaoPassCreateInfo = *Singleton<SSAOCreateInfo>::GetInstance();
+  auto& vxgiPassCreateInfo = *Singleton<GI::VoxelizationCreateInfo>::GetInstance();
+  auto& skyImagePassCreateInfo = *Singleton<SkyImagePassCreateInfo>::GetInstance();
+  auto& gridRenderPassCreateInfo = *Singleton<GridRenderPassCreateInfo>::GetInstance();
+  auto& voxelVolizationCreateInfo = *Singleton<GI::VoxelVisulzationPassCreateInfo>::GetInstance();
+  auto& vxgiColorPassCreateInfo = *Singleton<GI::VXGIPassCreateInfo>::GetInstance();
+  auto& lightInjectPassCreateInfo = *Singleton<GI::LightInjectPassCreateInfo>::GetInstance();
 
   ImageCreateInfo createInfo;
   // geometry pass
   createInfo.sampleCount = SampleCount::BIT1;
   createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET;
-  createInfo.width = 1920;
-  createInfo.height = 1080;
+  createInfo.width = width;
+  createInfo.height = height;
   createInfo.format = ImageFormat::RGBA32F;
   createInfo.imageDesc = Image2DDesc();
   createInfo.mipMapLevel = 1;
@@ -69,8 +81,8 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   createInfo.usage = ImageUsageFlags::DEPTH_STENCIL | ImageUsageFlags::SHADER_READ;
   auto depthTexture = s_resourceManager->CreateTexture("depthTexture", createInfo);
 
-  geometryPassCreateInfo.width = 1920;
-  geometryPassCreateInfo.height = 1080;
+  geometryPassCreateInfo.width = width;
+  geometryPassCreateInfo.height = height;
   geometryPassCreateInfo.rhiFactory = rhiFactory;
   geometryPassCreateInfo.normalMetallicTexture = normalTextureHandler;
   geometryPassCreateInfo.colorTexture = colorTextureHandler;
@@ -80,8 +92,8 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   // ssao pass
   createInfo.sampleCount = SampleCount::BIT1;
   createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET;
-  createInfo.width = 1920;
-  createInfo.height = 1080;
+  createInfo.width = width;
+  createInfo.height = height;
   createInfo.format = ImageFormat::R32F;
   createInfo.imageDesc = Image2DDesc();
   createInfo.mipMapLevel = 1;
@@ -91,8 +103,8 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   ssaoPassCreateInfo.posTexture = positionTextureHandler;
   ssaoPassCreateInfo.depthTexture = depthTexture;
   ssaoPassCreateInfo.rhiFactory = rhiFactory;
-  ssaoPassCreateInfo.width = 1920;
-  ssaoPassCreateInfo.height = 1080;
+  ssaoPassCreateInfo.width = width;
+  ssaoPassCreateInfo.height = height;
   ssaoPassCreateInfo.ssaoTexture = ssaoTexture;
 
   // directional light shadow map pass
@@ -104,6 +116,43 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   createInfo.width = DirectionShadowComponent::MAX_SHADOWMAP_SIZE;
   directShadowMapData.rhiFactory = rhiFactory;
   directShadowMapData.directionalShadowMap = s_resourceManager->CreateTexture("shadowMap", createInfo);
+
+  // vxgi pass
+  createInfo.sampleCount = SampleCount::BIT1;
+  createInfo.usage = ImageUsageFlags::STORAGE | ImageUsageFlags::SHADER_READ;
+  createInfo.width = 256;
+  createInfo.height = 256;
+  createInfo.format = ImageFormat::RGBA32F;
+  createInfo.imageDesc = Image3DDesc{.depth = 256};
+  createInfo.mipMapLevel = 1;
+  auto voxelSceneTexture = s_resourceManager->CreateTexture("voxelSceneTexture", createInfo);
+  vxgiPassCreateInfo.shadowMap = directShadowMapData.directionalShadowMap;
+  vxgiPassCreateInfo.rhiFactory = rhiFactory;
+  vxgiPassCreateInfo.voxelScene = voxelSceneTexture;
+
+  // voxel normal
+  createInfo.sampleCount = SampleCount::BIT1;
+  createInfo.usage = ImageUsageFlags::STORAGE | ImageUsageFlags::SHADER_READ;
+  createInfo.width = 256;
+  createInfo.height = 256;
+  createInfo.format = ImageFormat::RGBA32F;
+  createInfo.imageDesc = Image3DDesc{.depth = 256};
+  createInfo.mipMapLevel = 1;
+  auto voxelNormalTexture = s_resourceManager->CreateTexture("voxelNormalTexture", createInfo);
+
+  // voxel Radiance
+  createInfo.sampleCount = SampleCount::BIT1;
+  createInfo.usage = ImageUsageFlags::STORAGE | ImageUsageFlags::SHADER_READ;
+  createInfo.width = 256;
+  createInfo.height = 256;
+  createInfo.format = ImageFormat::RGBA32F;
+  createInfo.imageDesc = Image3DDesc{.depth = 256};
+  createInfo.mipMapLevel = static_cast<uint32_t>(std::floor(std::log2(256))) + 1;
+  auto voxelRadianceTexture = s_resourceManager->CreateTexture("voxelRadianceTexture", createInfo);
+  lightInjectPassCreateInfo.rhiFactory = rhiFactory;
+  lightInjectPassCreateInfo.voxelTexture = voxelSceneTexture;
+  lightInjectPassCreateInfo.voxelNormal = voxelNormalTexture;
+  lightInjectPassCreateInfo.voxelRadiance = voxelRadianceTexture;
 
   // transmittanceLUT
   createInfo.sampleCount = SampleCount::BIT1;
@@ -152,11 +201,11 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   createInfo.format = ImageFormat::RGBA;
   createInfo.mipMapLevel = 1;
   createInfo.imageDesc = Image2DDesc{};
-  createInfo.width = 1920;
-  createInfo.height = 1080;
+  createInfo.width = width;
+  createInfo.height = height;
   directLightPassCreateInfo.finalColorTexture = s_resourceManager->CreateTexture("finalColorTexture", createInfo);
-  directLightPassCreateInfo.width = 1920;
-  directLightPassCreateInfo.height = 1080;
+  directLightPassCreateInfo.width = width;
+  directLightPassCreateInfo.height = height;
   directLightPassCreateInfo.rhiFactory = rhiFactory;
   directLightPassCreateInfo.directionalShadowmap = directShadowMapData.directionalShadowMap;
   directLightPassCreateInfo.aoTeture = ssaoPassCreateInfo.ssaoTexture;
@@ -164,14 +213,54 @@ RenderSystem::Initialize(RHIFactory* rhiFactory) {
   directLightPassCreateInfo.normalTeture = geometryPassCreateInfo.normalMetallicTexture;
   directLightPassCreateInfo.positionTeture = geometryPassCreateInfo.positionRoughnessTexture;
 
-  // vsgi voxelization pass
-  createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::STORAGE;
+  // sky image pass
+  skyImagePassCreateInfo.width = width;
+  skyImagePassCreateInfo.height = height;
+  skyImagePassCreateInfo.rhiFactory = rhiFactory;
+  skyImagePassCreateInfo.finalDepthTexture = geometryPassCreateInfo.depthTexture;
+  skyImagePassCreateInfo.finalColorTexture = directLightPassCreateInfo.finalColorTexture;
+  skyImagePassCreateInfo.atmosphereTexture = atmosphereCreateInfo.colorTexture;
+
+  // grid pass
+  gridRenderPassCreateInfo.finalDepthTexture = geometryPassCreateInfo.depthTexture;
+  gridRenderPassCreateInfo.finalColorTexture = directLightPassCreateInfo.finalColorTexture;
+  gridRenderPassCreateInfo.rhiFactory = rhiFactory;
+  gridRenderPassCreateInfo.width = width;
+  gridRenderPassCreateInfo.height = height;
+
+  // voxel visualization
+  createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET;
   createInfo.format = ImageFormat::RGBA32F;
   createInfo.mipMapLevel = 1;
-  createInfo.imageDesc = Image3DDesc{.depth = 512};
-  createInfo.width = 512;
-  createInfo.height = 512;
-  auto voxelSceneTexture = s_resourceManager->CreateTexture("voxelSceneTexture", createInfo);
+  createInfo.imageDesc = Image2DDesc{};
+  createInfo.width = width;
+  createInfo.height = height;
+  voxelVolizationCreateInfo.m_resultTexture = s_resourceManager->CreateTexture("voxelValizationTexture", createInfo);
+
+  createInfo.format = ImageFormat::DEPTH;
+  createInfo.usage = ImageUsageFlags::DEPTH_STENCIL | ImageUsageFlags::SHADER_READ;
+  voxelVolizationCreateInfo.m_depthTexture = s_resourceManager->CreateTexture("voxelDepth", createInfo);
+  voxelVolizationCreateInfo.m_voxelTexture = voxelRadianceTexture;
+  voxelVolizationCreateInfo.m_width = width;
+  voxelVolizationCreateInfo.m_height = height;
+  voxelVolizationCreateInfo.rhiFactory = rhiFactory;
+
+  // voxel color
+  createInfo.sampleCount = SampleCount::BIT1;
+  createInfo.usage = ImageUsageFlags::SHADER_READ | ImageUsageFlags::COLOR_RENDER_TARGET;
+  createInfo.width = width;
+  createInfo.height = height;
+  createInfo.format = ImageFormat::RGBA32F;
+  createInfo.imageDesc = Image2DDesc();
+  createInfo.mipMapLevel = 1;
+  vxgiColorPassCreateInfo.m_finalTexture = s_resourceManager->CreateTexture("vxgiColor", createInfo);
+  vxgiColorPassCreateInfo.m_voxelTexture = voxelRadianceTexture;
+  vxgiColorPassCreateInfo.m_diffuseTexture = geometryPassCreateInfo.colorTexture;
+  vxgiColorPassCreateInfo.m_positionRoughnessTexture = positionTextureHandler;
+  vxgiColorPassCreateInfo.m_normalMetallicTexture = normalTextureHandler;
+  vxgiColorPassCreateInfo.m_rhiFactory = rhiFactory;
+  vxgiColorPassCreateInfo.m_height = height;
+  vxgiColorPassCreateInfo.m_widht = width;
 }
 
 void
@@ -181,6 +270,12 @@ RenderSystem::Destroy(RHIFactory* rhiFactory) {
   Singleton<DirectionShadowMapPassCreateInfo>::Destroy();
   Singleton<AtmospherePassCreateInfo>::Destroy();
   Singleton<TransmittanceLUTPassCreateInfo>::Destroy();
+  Singleton<SkyImagePassCreateInfo>::Destroy();
+  Singleton<GridRenderPassCreateInfo>::Destroy();
+  Singleton<GI::VoxelizationCreateInfo>::Destroy();
+  Singleton<GI::VoxelVisulzationPassCreateInfo>::Destroy();
+  Singleton<GI::VXGIPassCreateInfo>::Destroy();
+  Singleton<GI::LightInjectPassCreateInfo>::Destroy();
 
   rhiFactory->DestroyFence(s_precomputeFence);
 
@@ -244,48 +339,33 @@ RenderSystem::CreateRenderGraph(RHIFactory* rhiFactory) {
   auto& multiScatterLUTCreateInfo = *Singleton<MultiScatterLUTCreateInfo>::GetInstance();
   auto& directLightPassCreateInfo = *Singleton<DirectLightPassCreateInfo>::GetInstance();
   auto& ssaoPassCreateInfo = *Singleton<SSAOCreateInfo>::GetInstance();
+  auto& vxgiPassCreateInfo = *Singleton<GI::VoxelizationCreateInfo>::GetInstance();
+  auto& skyImagePassCreateInfo = *Singleton<SkyImagePassCreateInfo>::GetInstance();
+  auto& gridRenderPassCreateInfo = *Singleton<GridRenderPassCreateInfo>::GetInstance();
+  auto& voxelVolizationCreateInfo = *Singleton<GI::VoxelVisulzationPassCreateInfo>::GetInstance();
+  auto& vxgiColorPassCreateInfo = *Singleton<GI::VXGIPassCreateInfo>::GetInstance();
+  auto& lightInjectPassCreateInfo = *Singleton<GI::LightInjectPassCreateInfo>::GetInstance();
 
   /**
    * precompute pass
    */
-  // auto& world = scene->GetWorld();
-  // auto envView = world.view<EnvironmentComponent>();
-  // LOG_IF(WARNING, envView.size() != 1) << "find multi environment component, use the first one";
 
   s_precomputeRenderGraph->AddPass<TransmittanceLUTPass>("TransmittanceLUTPass", transmittanceLUTCreateInfo);
   s_precomputeRenderGraph->AddPass<MultiScatterLUT>("MultiScatterLUTPass", multiScatterLUTCreateInfo);
 
-  // light all probe
-  // 每一个probe用一个compute shader计算
-
+  /**
+   * render graph
+   */
   s_renderGraph->AddPass<GeometryPass>("GeometryPass", geometryPassCreateInfo);
-
-  s_renderGraph->AddPass<SSAOPass>("SSAO", ssaoPassCreateInfo);
-
+  // s_renderGraph->AddPass<SSAOPass>("SSAO", ssaoPassCreateInfo);
   s_renderGraph->AddPass<DirectionShadowMapPass>("DirectionLight", directShadowMapData);
-
+  s_renderGraph->AddPass<GI::VoxelizationPass>("VXGIPass", vxgiPassCreateInfo);
+  s_renderGraph->AddPass<GI::LightInjectPass>("lightInjectPass", lightInjectPassCreateInfo);
+  s_renderGraph->AddPass<GI::VXGIPass>("VXGIPass", vxgiColorPassCreateInfo);
+  s_renderGraph->AddPass<GI::VoxelVisulzationPass>("VXGIPass", voxelVolizationCreateInfo);
   s_renderGraph->AddPass<DirectLightPass>("direct light pass", directLightPassCreateInfo);
-
-  // draw atmosphere
   s_renderGraph->AddPass<AtmospherePass>("atmospherePass", atmosphereCreateInfo);
-
-  // render the skybox by image
-  SkyImagePassCreateInfo skyImagePassCreateInfo;
-  skyImagePassCreateInfo.width = 1920;
-  skyImagePassCreateInfo.height = 1080;
-  skyImagePassCreateInfo.rhiFactory = rhiFactory;
-  skyImagePassCreateInfo.finalDepthTexture = geometryPassCreateInfo.depthTexture;
-  skyImagePassCreateInfo.finalColorTexture = directLightPassCreateInfo.finalColorTexture;
-  skyImagePassCreateInfo.atmosphereTexture = atmosphereCreateInfo.colorTexture;
   s_renderGraph->AddPass<SkyImagePass>("skyImagePass", skyImagePassCreateInfo);
-
-  // draw grid
-  GridRenderPassCreateInfo gridRenderPassCreateInfo;
-  gridRenderPassCreateInfo.finalDepthTexture = geometryPassCreateInfo.depthTexture;
-  gridRenderPassCreateInfo.finalColorTexture = directLightPassCreateInfo.finalColorTexture;
-  gridRenderPassCreateInfo.rhiFactory = rhiFactory;
-  gridRenderPassCreateInfo.width = 1920;
-  gridRenderPassCreateInfo.height = 1080;
   s_renderGraph->AddPass<GridRenderPass>("gridPass", gridRenderPassCreateInfo);
 
   s_precomputeRenderGraph->Compile();

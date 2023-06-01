@@ -25,10 +25,14 @@ class MockGraphicsCommandBuffer final : public GraphicsCommandBuffer {
 
   MOCK_METHOD(void, SetViewports, (std::span<ViewportInfo>));
   MOCK_METHOD(void, SetScissors, (std::span<ScissorInfo>));
+
+  MOCK_METHOD(void, SetCullMode, (CullMode));
   MOCK_METHOD(void, BindVertexBuffer, (Buffer*));
   MOCK_METHOD(void, BindIndexBuffer, (Buffer*));
   MOCK_METHOD(void, Draw, (uint32_t, uint32_t, uint32_t, uint32_t));
   MOCK_METHOD(void, DrawIndexed, (uint32_t, uint32_t, uint32_t, int32_t, uint32_t));
+  MOCK_METHOD(void, GenerateMipmap, (Image*, uint32_t));
+  MOCK_METHOD(void, ClearColorImage, (Image*, const ClearValue&, int, int, int, int));
 };
 
 class MockPipelineContext final : public PipelineContext {

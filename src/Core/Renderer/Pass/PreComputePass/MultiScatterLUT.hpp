@@ -23,7 +23,7 @@ class MultiScatterLUT final {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
+  Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList);
 
  private:
   uint32_t m_width;

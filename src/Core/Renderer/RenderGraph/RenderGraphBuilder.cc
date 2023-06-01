@@ -60,4 +60,47 @@ RenderGraphGraphicsBuilder::EndPipeline() {
   m_pass->m_pipelineCreateInfos.push_back(m_pipelineCreateInfo);
 }
 
+/**
+ * compute pass
+ */
+
+RenderGraphComputeBuilder::RenderGraphComputeBuilder(Pass* pass, RenderGraph* graph) : m_pass(pass), m_graph(graph) {}
+
+RenderGraphComputeBuilder::~RenderGraphComputeBuilder() {}
+
+void
+RenderGraphComputeBuilder::EndPipeline() {
+  m_pass->m_pipelineCreateInfos.push_back(m_pipelineCreateInfo);
+}
+
+void
+RenderGraphComputeBuilder::ReadTexture(const TextureHandler& handler, uintptr_t sampler, int baseLayer, int LayerCount,
+                                       int baseLevel, int levelCount) {
+  auto& res = m_graph->m_resourceManager->m_graphTexture[handler.index];
+  res.outputs.push_back(m_pass);
+  m_pass->inputs.push_back(&res);
+  auto* desc = m_pass->AddInputAttachment<details::CombineImageDesc>();
+  desc->m_sampler = sampler;
+  desc->m_handler = handler;
+  desc->m_baseLayer = baseLayer;
+  desc->m_baseLevel = baseLevel;
+  desc->m_layerCount = LayerCount;
+  desc->m_levelCount = levelCount;
+}
+
+void
+RenderGraphComputeBuilder::ReadStorageImage(const TextureHandler& handler, int baseLayer, int layerCount, int baseLevel,
+                                            int levelCount) {
+  auto& res = m_graph->m_resourceManager->m_graphTexture[handler.index];
+  res.outputs.push_back(m_pass);
+  m_pass->inputs.push_back(&res);
+
+  auto* desc = m_pass->AddInputAttachment<details::StorageImageDesc>();
+  desc->m_handler = handler;
+  desc->m_baseLayer = baseLayer;
+  desc->m_layerCount = layerCount;
+  desc->m_baseLevel = baseLevel;
+  desc->m_levelCount = levelCount;
+}
+
 }  // namespace Marbas

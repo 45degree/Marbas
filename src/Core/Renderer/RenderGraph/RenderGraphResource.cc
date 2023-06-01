@@ -18,8 +18,10 @@ RenderGraphTexture::~RenderGraphTexture() {
 
 void
 RenderGraphTexture::Create() {
+  if (m_isCreate) return;
   auto bufTex = m_rhiFactory->GetBufferContext();
   m_image = bufTex->CreateImage(m_imageCreateInfo);
+  m_isCreate = true;
 }
 
 ImageView*
@@ -49,6 +51,8 @@ RenderGraphTexture::GetImageView(uint32_t layerBase, uint32_t layerCount, uint32
         createInfo.type = ImageViewType::CUBEMAP;
       } else if constexpr (std::is_same_v<T, CubeMapArrayImageDesc>) {
         createInfo.type = ImageViewType::CUBEMAP_ARRAY;
+      } else if constexpr (std::is_same_v<T, Image3DDesc>) {
+        createInfo.type = ImageViewType::TEXTURE3D;
       }
     }, m_imageCreateInfo.imageDesc);
     // clang-format on

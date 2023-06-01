@@ -36,10 +36,10 @@ class DirectLightPass {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
+  Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
-  IsEnable(RenderGraphRegistry& registry);
+  IsEnable(RenderGraphGraphicsRegistry& registry);
 
  private:
   RHIFactory* m_rhiFactory;

@@ -24,10 +24,10 @@ class GridRenderPass final {
   SetUp(RenderGraphGraphicsBuilder& builder);
 
   void
-  Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList);
+  Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
-  IsEnable(RenderGraphRegistry& registry) {
+  IsEnable(RenderGraphGraphicsRegistry& registry) {
     return registry.GetCurrentActiveScene() != nullptr;
   }
 

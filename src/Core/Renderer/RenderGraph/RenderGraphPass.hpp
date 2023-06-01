@@ -39,8 +39,12 @@ class RenderGraphPass : public RenderGraphNode {
 
 struct InputDesc {
   virtual ~InputDesc() = default;
+
   virtual void
   Bind(RenderGraph* graph, PipelineContext* ctx, uintptr_t set, uint16_t bindingPoint) const = 0;
+
+  virtual void
+  SetArgument(DescriptorSetArgument& argument, uint16_t bindingPoint) const = 0;
 };
 
 struct ImageDesc {
@@ -64,6 +68,11 @@ struct CombineImageDesc final : public InputDesc, ImageDesc {
 
   void
   Bind(RenderGraph* graph, PipelineContext* ctx, uintptr_t set, uint16_t bindingPoint) const override;
+
+  void
+  SetArgument(DescriptorSetArgument& argument, uint16_t bindingPoint) const override {
+    argument.Bind(bindingPoint, DescriptorType::IMAGE);
+  }
 };
 
 struct StorageImageDesc final : public InputDesc, ImageDesc {
@@ -72,11 +81,16 @@ struct StorageImageDesc final : public InputDesc, ImageDesc {
 
   void
   Bind(RenderGraph* graph, PipelineContext* ctx, uintptr_t set, uint16_t bindingPoint) const override;
+
+  void
+  SetArgument(DescriptorSetArgument& argument, uint16_t bindingPoint) const override {
+    argument.Bind(bindingPoint, DescriptorType::STORAGE_IMAGE);
+  }
 };
 
 class RenderGraphGraphicsPass : public RenderGraphPass {
   friend class Marbas::RenderGraphGraphicsBuilder;
-  friend class Marbas::RenderGraphRegistry;
+  friend class Marbas::RenderGraphGraphicsRegistry;
 
  public:
   RenderGraphGraphicsPass(StringView name, RHIFactory* rhiFactory);
@@ -98,7 +112,7 @@ class RenderGraphGraphicsPass : public RenderGraphPass {
     return descPointer;
   }
 
-  virtual void
+  void
   Submit(Semaphore* waitSemaphore, Semaphore* signedSemaphore, Fence* fence) override final {
     m_commandBuffer->Submit({&waitSemaphore, 1}, {&signedSemaphore, 1}, fence);
   }
@@ -121,29 +135,68 @@ class RenderGraphGraphicsPass : public RenderGraphPass {
   Vector<std::unique_ptr<ImageDesc>> m_resolveAttachment;
 };
 
-// clang-format off
-template <typename T>
-concept RenderGraphLambdaPass = (
-  requires(T obj, RenderGraphGraphicsBuilder& builder) {
-    obj(builder);
-    { obj(builder) } -> std::invocable<RenderGraphRegistry&, GraphicsCommandBuffer&>;
-  }
-);
-// clang-format on
+class RenderGraphComputePass : public RenderGraphPass {
+  friend class Marbas::RenderGraphComputeBuilder;
+  friend class Marbas::RenderGraphComputeRegistry;
 
-// clang-format off
-template <typename T>
-concept RenderGraphGraphicsStructPass = (
-  requires(T obj) {
-     std::invocable<decltype(&T::SetUp), RenderGraphGraphicsBuilder&>;
-     std::invocable<decltype(&T::Execute), RenderGraphRegistry&, GraphicsCommandBuffer&>;
+ public:
+  RenderGraphComputePass(std::string_view name, RHIFactory* rhiFactory);
+  ~RenderGraphComputePass() override;
+
+  void
+  Initialize(RenderGraph* graph) final override;
+
+  template <typename Desc, typename... Args>
+  Desc*
+  AddInputAttachment(Args&&... args) {
+    auto desc = std::make_unique<Desc>(std::forward<Args>(args)...);
+    auto* descPointer = desc.get();
+    m_inputAttachment.push_back(std::move(desc));
+    return descPointer;
   }
-);
-// clang-format on
+
+  void
+  Submit(Semaphore* waitSemaphore, Semaphore* signedSemaphore, Fence* fence) override final {
+    m_commandBuffer->Submit({&waitSemaphore, 1}, {&signedSemaphore, 1}, fence);
+  }
+
+ protected:
+  std::vector<uintptr_t> m_pipelines;
+  std::vector<ComputePipelineCreateInfo> m_pipelineCreateInfos;
+
+  ComputeCommandBuffer* m_commandBuffer;
+  Vector<std::unique_ptr<InputDesc>> m_inputAttachment;  // the input from the last pass
+  uintptr_t m_descriptorSet;                             // the descriptor set for input attachment
+};
+
+template <typename T>
+concept RenderGraphGraphicsLambdaPass = requires(T obj, RenderGraphGraphicsBuilder& builder) {
+  obj(builder);
+  { obj(builder) } -> std::invocable<RenderGraphGraphicsRegistry&, GraphicsCommandBuffer&>;
+};
+
+template <typename T>
+concept RenderGraphComputeLambdaPass = requires(T obj, RenderGraphComputeBuilder& builder) {
+  obj(builder);
+  { obj(builder) } -> std::invocable<RenderGraphComputeRegistry&, ComputeCommandBuffer&>;
+};
+
+template <typename T>
+concept RenderGraphComputeStructPass = requires(T obj) {
+  requires std::invocable<decltype(&T::SetUp), T&, RenderGraphComputeBuilder&>;
+  requires std::invocable<decltype(&T::Execute), T&, RenderGraphComputeRegistry&, ComputeCommandBuffer&>;
+};
+
+template <typename T>
+concept RenderGraphGraphicsStructPass = requires(T obj) {
+  requires std::invocable<decltype(&T::SetUp), T&, RenderGraphGraphicsBuilder&>;
+  requires std::invocable<decltype(&T::Execute), T&, RenderGraphGraphicsRegistry&, GraphicsCommandBuffer&>;
+};
 
 class LambdaGraphicsRenderGraphPass final : public RenderGraphGraphicsPass {
-  using Lambda = std::function<void(RenderGraphRegistry&, GraphicsCommandBuffer&)>;
-  using EnableFunc = std::variant<std::function<bool()>, std::function<bool(RenderGraphRegistry&)>, std::monostate>;
+  using Lambda = std::function<void(RenderGraphGraphicsRegistry&, GraphicsCommandBuffer&)>;
+  using EnableFunc =
+      std::variant<std::function<bool()>, std::function<bool(RenderGraphGraphicsRegistry&)>, std::monostate>;
 
  public:
   LambdaGraphicsRenderGraphPass(StringView name, RHIFactory* rhiFactory);
@@ -171,7 +224,7 @@ class LambdaGraphicsRenderGraphPass final : public RenderGraphGraphicsPass {
     } else if (std::get_if<0>(&m_isEnable)) {
       return std::get<0>(m_isEnable)();
     } else if (std::get_if<1>(&m_isEnable)) {
-      RenderGraphRegistry registry(graph, scene, this);
+      RenderGraphGraphicsRegistry registry(graph, scene, this);
       return std::get<1>(m_isEnable)(registry);
     }
     return true;
@@ -201,7 +254,7 @@ class StructRenderGraphPass final : public RenderGraphGraphicsPass {
 
   void
   Execute(RenderGraph* graph, Scene* scene) override {
-    RenderGraphRegistry registry(graph, scene, this);
+    RenderGraphGraphicsRegistry registry(graph, scene, this);
     m_instance.Execute(registry, *m_commandBuffer);
   }
 
@@ -210,8 +263,8 @@ class StructRenderGraphPass final : public RenderGraphGraphicsPass {
     if constexpr (has_member(Pass, IsEnable)) {
       if constexpr (std::is_invocable_v<decltype(&Pass::IsEnable), Pass&>) {
         return m_instance.IsEnable();
-      } else if constexpr (std::is_invocable_v<decltype(&Pass::IsEnable), Pass&, RenderGraphRegistry&>) {
-        RenderGraphRegistry registry(graph, scene, this);
+      } else if constexpr (std::is_invocable_v<decltype(&Pass::IsEnable), Pass&, RenderGraphGraphicsRegistry&>) {
+        RenderGraphGraphicsRegistry registry(graph, scene, this);
         return m_instance.IsEnable(registry);
       }
     }
@@ -220,6 +273,87 @@ class StructRenderGraphPass final : public RenderGraphGraphicsPass {
 
  private:
   Pass m_instance;
+};
+
+template <details::RenderGraphComputeStructPass Pass, typename... Args>
+class StructRenderGraphComputePass final : public RenderGraphComputePass {
+  define_has_member(IsEnable);
+
+ public:
+  StructRenderGraphComputePass(std::string_view name, RHIFactory* rhiFactory, Args&&... args)
+      : RenderGraphComputePass(name, rhiFactory), m_instance(std::forward<Args>(args)...) {}
+  ~StructRenderGraphComputePass() override = default;
+
+ public:
+  void
+  SetUp(RenderGraph* graph) {
+    RenderGraphComputeBuilder builder(this, graph);
+    m_instance.SetUp(builder);
+  }
+
+  void
+  Execute(RenderGraph* graph, Scene* scene) override {
+    RenderGraphComputeRegistry registry(graph, scene, this);
+    m_instance.Execute(registry, *m_commandBuffer);
+  }
+
+  bool
+  IsEnable(RenderGraph* graph, Scene* scene) override {
+    if constexpr (has_member(Pass, IsEnable)) {
+      if constexpr (std::is_invocable_v<decltype(&Pass::IsEnable), Pass&>) {
+        return m_instance.IsEnable();
+      } else if constexpr (std::is_invocable_v<decltype(&Pass::IsEnable), Pass&, RenderGraphComputeRegistry&>) {
+        RenderGraphComputeRegistry registry(graph, scene, this);
+        return m_instance.IsEnable(registry);
+      }
+    }
+    return true;
+  }
+
+ private:
+  Pass m_instance;
+};
+
+class LambdaComputeRenderGraphPass final : public RenderGraphComputePass {
+  using Lambda = std::function<void(RenderGraphComputeRegistry&, ComputeCommandBuffer&)>;
+  using EnableFunc =
+      std::variant<std::function<bool()>, std::function<bool(RenderGraphComputeRegistry&)>, std::monostate>;
+
+ public:
+  LambdaComputeRenderGraphPass(StringView name, RHIFactory* rhiFactory);
+  virtual ~LambdaComputeRenderGraphPass() = default;
+
+ public:
+  void
+  SetRecordCommand(const Lambda& command) {
+    m_command = command;
+  }
+
+  void
+  SetEnableFunc(const EnableFunc& func) {
+    m_isEnable = func;
+  }
+
+ public:
+  void
+  Execute(RenderGraph* graph, Scene* scene) override;
+
+  bool
+  IsEnable(RenderGraph* graph, Scene* scene) override {
+    if (std::holds_alternative<std::monostate>(m_isEnable)) {
+      return true;
+    } else if (std::get_if<0>(&m_isEnable)) {
+      return std::get<0>(m_isEnable)();
+    } else if (std::get_if<1>(&m_isEnable)) {
+      RenderGraphComputeRegistry registry(graph, scene, this);
+      return std::get<1>(m_isEnable)(registry);
+    }
+    return true;
+  }
+
+ private:
+  Lambda m_command;
+  EnableFunc m_isEnable = std::monostate();
 };
 
 }  // namespace details

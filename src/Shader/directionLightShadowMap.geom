@@ -10,7 +10,7 @@
 layout (triangles, invocations = CASCADE_COUNT + 1) in;
 layout (triangle_strip, max_vertices=3) out;
 
-layout(std140, binding = 0, set = 1) uniform DirectionalLightList {
+layout(std140, binding = 0, set = 0) uniform DirectionalLightList {
   int shadowLightCount;
   int unshadowLightCount;
   int shadowLightIndexList[MAX_DIRECTIONAL_LIGHT_COUNT];
@@ -18,7 +18,8 @@ layout(std140, binding = 0, set = 1) uniform DirectionalLightList {
   DirectionLightInfo lightInfo[MAX_DIRECTIONAL_LIGHT_COUNT];
 };
 
-layout(push_constant) uniform CurrentLight {
+layout(push_constant) uniform Constant {
+  mat4 model;
   int lightIndex;
 };
 

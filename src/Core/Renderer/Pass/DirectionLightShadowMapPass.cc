@@ -18,9 +18,9 @@ DirectionShadowMapPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.WriteTexture(m_shadowMapTextureHandler, TextureAttachmentType::COLOR, 0, textureCount);
 
   builder.BeginPipeline();
-  builder.AddShaderArgument(MeshGPUData::GetDescriptorSetArgument());
+  // builder.AddShaderArgument(MeshGPUData::GetDescriptorSetArgument());
   builder.AddShaderArgument(LightGPUData::GetDescriptorSetArgument());
-  builder.SetPushConstantSize(sizeof(int));
+  builder.SetPushConstantSize(sizeof(Constant));
   builder.AddShader("Shader/directionLightShadowMap.vert.spv", ShaderType::VERTEX_SHADER);
   builder.AddShader("Shader/directionLightShadowMap.geom.spv", ShaderType::GEOMETRY_SHADER);
   builder.AddShader("Shader/directionLightShadowMap.frag.spv", ShaderType::FRAGMENT_SHADER);
@@ -43,7 +43,7 @@ DirectionShadowMapPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 }
 
 void
-DirectionShadowMapPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBuffer& commandList) {
+DirectionShadowMapPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
   // Create Shadow Alias
   auto* scene = registry.GetCurrentActiveScene();
   auto& world = scene->GetWorld();
@@ -72,8 +72,7 @@ DirectionShadowMapPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBu
   for (const auto& [entity, light, shadow] : view.each()) {
     if (!light.lightIndex.has_value()) continue;
 
-    m_currentLightIndex = light.lightIndex.value();
-    commandList.PushConstant(pipeline, &m_currentLightIndex, sizeof(int), 0);
+    m_constant.lightIndex = light.lightIndex.value();
 
     ViewportInfo viewportInfo;
     ScissorInfo scissorInfo;
@@ -94,13 +93,24 @@ DirectionShadowMapPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBu
     commandList.SetScissors({&scissorInfo, 1});
 
     for (auto&& [entity, modelSceneNode] : modelView.each()) {
+      glm::mat4 model = glm::mat4(1.0);
+      if (world.any_of<TransformComp>(entity)) {
+        const auto& transformComp = world.get<TransformComp>(entity);
+        model = transformComp.GetGlobalTransform();
+      }
+      m_constant.model = model;
+
+      commandList.PushConstant(pipeline, &m_constant, sizeof(Constant), 0);
+
       for (auto mesh : modelSceneNode.m_meshEntities) {
         if (!world.any_of<RenderableMeshTag>(mesh)) continue;
 
         auto data = meshGPUManager->Get(mesh);
+        if (data == nullptr) continue;
+
         auto& indexCount = data->m_indexCount;
 
-        std::vector<uintptr_t> sets = {data->m_descriptorSet, LightGPUData::GetLightSet()};
+        std::vector<uintptr_t> sets = {LightGPUData::GetLightSet()};
         commandList.BindDescriptorSet(pipeline, sets);
         commandList.BindVertexBuffer(data->m_vertexBuffer);
         commandList.BindIndexBuffer(data->m_indexBuffer);
@@ -114,7 +124,7 @@ DirectionShadowMapPass::Execute(RenderGraphRegistry& registry, GraphicsCommandBu
 }
 
 bool
-DirectionShadowMapPass::IsEnable(RenderGraphRegistry& registry) {
+DirectionShadowMapPass::IsEnable(RenderGraphGraphicsRegistry& registry) {
   auto scene = registry.GetCurrentActiveScene();
   if (scene == nullptr) return false;
 

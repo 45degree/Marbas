@@ -41,6 +41,11 @@ struct RenderSystem final {
     s_sink.connect<Func>(std::forward<Type>(instance));
   }
 
+  static RenderGraphResourceManager*
+  GetRenderGraphResourceManager() {
+    return s_resourceManager.get();
+  }
+
  private:
   /**
    * @brief Update the position and size of each shadow map in the texture atlas

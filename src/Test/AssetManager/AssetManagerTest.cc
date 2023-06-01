@@ -15,12 +15,12 @@ struct CustomAsset : public AssetBase {
     ar(i);
   }
 
-  static std::shared_ptr<CustomAsset>
+  static Task<std::shared_ptr<CustomAsset>>
   Load(const AssetPath& path) {
     // path的内容如下: res://icon.png
     auto assert = std::make_shared<CustomAsset>();
     assert->i = 1;
-    return assert;
+    co_return assert;
   }
 };
 
@@ -49,12 +49,13 @@ TEST_F(AssetManagerTest, CreateAsset) {
   // create the assert and add the assert to the lru cache
   // if the assert is not load, then laod the assert
   // if the assert has beed loaded, return the assert
-  auto assert = assetManager->Create("res://customRes.res");
-  ASSERT_EQ(assert->i, 1);
+  auto uid = assetManager->Create("res://customRes.res");
+  auto asset = assetManager->Get(uid);
+  ASSERT_EQ(asset->i, 1);
 
   // check file
-  auto assertPath = assetRegistry->GetAssertAbsolutePath(assert->GetUid());
-  ASSERT_EQ(assertPath, projectDir / ".import/" / (std::to_string(assert->GetUid()) + ".data"));
+  auto assertPath = assetRegistry->GetAssertAbsolutePath(asset->GetUid());
+  ASSERT_EQ(assertPath, projectDir / ".import/" / (std::to_string(asset->GetUid()) + ".data"));
   ASSERT_TRUE(std::filesystem::exists(assertPath));
 
   // throw exception if the assert is existed
@@ -63,18 +64,18 @@ TEST_F(AssetManagerTest, CreateAsset) {
 
 TEST_F(AssetManagerTest, GetAsset) {
   // create a temp assert
-  auto assert1 = assetManager->Create("res://customRes.res");
+  auto uid = assetManager->Create("res://customRes.res");
 
-  auto assert2 = assetManager->Get("res://customRes.res");
-  ASSERT_EQ(assert1, assert2);
+  auto asset = assetManager->Get("res://customRes.res");
+  ASSERT_NE(asset, nullptr);
 }
 
 TEST_F(AssetManagerTest, DeleteAsset) {
   // create a temp assert
-  auto assert = assetManager->Create("res://customRes.res");
+  auto uid = assetManager->Create("res://customRes.res");
   assetManager->Delete("res://customRes.res");
 
-  auto assertPath = projectDir / ".import/" / (std::to_string(assert->GetUid()) + ".data");
+  auto assertPath = projectDir / ".import/" / (std::to_string(uid) + ".data");
   ASSERT_FALSE(std::filesystem::exists(assertPath));
 }
 
@@ -83,11 +84,10 @@ TEST_F(AssetManagerTest, ChangeCacheSize) {
   assetManager->ResizeCache(2);
   Uid uid;
   {
-    auto assert1 = assetManager->Create("res://customRes.res");
-    auto assert2 = assetManager->Create("res://customRes2.res");
-    uid = assert1->GetUid();
+    uid = assetManager->Create("res://customRes.res");
+    auto uid2 = assetManager->Create("res://customRes2.res");
   }
-  auto assert3 = assetManager->Create("res://customRes3.res");
+  auto uid3 = assetManager->Create("res://customRes3.res");
   ASSERT_FALSE(assetManager->IsInCache(uid));
   ASSERT_FALSE(assetManager->IsInUse(uid));
 }
@@ -96,9 +96,8 @@ TEST_F(AssetManagerTest, Tick) {
   Uid uid;
   assetManager->ResizeCache(2);
   {
-    auto asset1 = assetManager->Create("res://customRes.res");
+    uid = assetManager->Create("res://customRes.res");
     auto asset2 = assetManager->Create("res://customRes2.res");
-    uid = asset1->GetUid();
   }
   auto assert3 = assetManager->Create("res://customRes3.res");
 
@@ -108,11 +107,7 @@ TEST_F(AssetManagerTest, Tick) {
 }
 
 TEST_F(AssetManagerTest, RemoveAssetFromCache) {
-  Uid uid;
-  {
-    auto asset = assetManager->Create("res://customRes.res");
-    uid = asset->GetUid();
-  }
+  Uid uid = assetManager->Create("res://customRes.res");
   ASSERT_TRUE(assetManager->IsInCache(uid));
   assetManager->RemoveFromCache(uid);
   ASSERT_FALSE(assetManager->IsInCache(uid));
