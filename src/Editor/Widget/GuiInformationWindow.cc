@@ -11,6 +11,8 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <concepts>
+
 #include "AssetManager/ModelAsset.hpp"
 #include "CommonName.hpp"
 #include "Core/Scene/Component/Component.hpp"
@@ -21,21 +23,21 @@
 
 namespace Marbas::Gui {
 
-static std::string
-_labelPrefix(const char* const label) {
-  float width = ImGui::CalcItemWidth();
-
-  float x = ImGui::GetCursorPosX();
-  ImGui::Text("%s", label);
-  ImGui::SameLine();
-  ImGui::SetCursorPosX(x + width * 0.5f + ImGui::GetStyle().ItemInnerSpacing.x);
-  ImGui::SetNextItemWidth(-1);
-
-  std::string labelID = "##";
-  labelID += label;
-
-  return labelID;
-}
+// static std::string
+// _labelPrefix(const char* const label) {
+//   float width = ImGui::CalcItemWidth();
+//
+//   float x = ImGui::GetCursorPosX();
+//   ImGui::Text("%s", label);
+//   ImGui::SameLine();
+//   ImGui::SetCursorPosX(x + width * 0.5f + ImGui::GetStyle().ItemInnerSpacing.x);
+//   ImGui::SetNextItemWidth(-1);
+//
+//   std::string labelID = "##";
+//   labelID += label;
+//
+//   return labelID;
+// }
 
 static bool
 ShowTextureOrColor(std::optional<AssetPath>& texPath, bool& isUseTex) {
@@ -55,7 +57,6 @@ ShowTextureOrColor(std::optional<AssetPath>& texPath, bool& isUseTex) {
   ImVec2 imageSize = ImVec2(100, 100);
   ImGui::Text("texture:");
   ImGui::SameLine();
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::CalcItemWidth() * 0.5f + ImGui::GetStyle().ItemInnerSpacing.x);
   if (gpuAsset.has_value()) {
     auto id = (*gpuAsset)->GetImGuiTextureId();
     ImGui::Image(id, imageSize);
@@ -104,7 +105,7 @@ ShowTextureOrColor(std::optional<AssetPath>& texPath, bool& isUseTex, Value&& co
   return changed;
 }
 
-static void
+static bool
 ShowMaterial(Mesh& mesh) {
   auto& material = mesh.m_material;
   auto& texChanged = mesh.m_materialTexChanged;
@@ -126,7 +127,9 @@ ShowMaterial(Mesh& mesh) {
     auto& color = material.m_diffuseColor;
 
     texChanged |= ShowTextureOrColor(path, useTex, color, [&](std::array<float, 4>& color) {
-      valueChanged |= ImGui::ColorEdit4(_labelPrefix("color").c_str(), color.data(), ImGuiColorEditFlags_AlphaBar);
+      ImGui::Text("color");
+      ImGui::SameLine();
+      valueChanged |= ImGui::ColorEdit4("##color", color.data(), ImGuiColorEditFlags_AlphaBar);
     });
   });
 
@@ -142,7 +145,9 @@ ShowMaterial(Mesh& mesh) {
     auto& value = material.m_roughnessValue;
 
     texChanged |= ShowTextureOrColor(path, useTex, value, [&](float& value) {
-      valueChanged |= ImGui::SliderFloat(_labelPrefix("roughtness").c_str(), &value, 0.f, 1.0f);
+      ImGui::Text("roughtness");
+      ImGui::SameLine();
+      valueChanged |= ImGui::SliderFloat("##roughtness", &value, 0.f, 1.0f);
     });
   });
 
@@ -151,19 +156,22 @@ ShowMaterial(Mesh& mesh) {
     auto& useTex = material.m_useMetalnessTexture;
     auto& value = material.m_metalnessValue;
     texChanged |= ShowTextureOrColor(path, useTex, value, [&](float& value) {
-      valueChanged |= ImGui::SliderFloat(_labelPrefix("metallic").c_str(), &value, 0.f, 1.0f);
+      ImGui::Text("metallic");
+      ImGui::SameLine();
+      valueChanged |= ImGui::SliderFloat("##metallic", &value, 0.f, 1.0f);
     });
   });
+  return true;
 }
 
-template <typename T, typename DrawComponentFunc>
+template <typename T, ComponentUpdateFunc<T> DrawComponentFunc>
 static void
-DrawComponentProp(const std::string_view name, entt::registry& world, entt::entity entity, DrawComponentFunc func) {
+DrawComponentProp(const std::string_view name, Scene* scene, entt::entity entity, DrawComponentFunc&& func) {
   const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed |
                                            ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap |
                                            ImGuiTreeNodeFlags_FramePadding;
-  if (world.any_of<T>(entity)) {
-    auto& component = world.get<T>(entity);
+  if (scene->AnyOf<T>(entity)) {
+    // const auto& component = world.get<T>(entity);
     ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{4, 4});
@@ -173,7 +181,7 @@ DrawComponentProp(const std::string_view name, entt::registry& world, entt::enti
     ImGui::PopStyleVar();
 
     if (open) {
-      func(component);
+      scene->Update<T>(entity, std::move(func));
       ImGui::TreePop();
     }
   }
@@ -183,18 +191,20 @@ void
 GuiInformationWindow::OnDraw() {
   auto sceneManager = SceneManager::GetInstance();
   auto activeScene = sceneManager->GetActiveScene();
-  auto& world = activeScene->GetWorld();
+  // auto& world = activeScene->GetWorld();
   if (m_entity == entt::null) return;
-  DrawComponentProp<ModelSceneNode>("model", world, m_entity, [&](ModelSceneNode& node) {
+  DrawComponentProp<ModelSceneNode>("model", activeScene, m_entity, [&](ModelSceneNode& node) {
     std::string modelpath = node.modelPath.to_string();
 
-    ImGui::InputText(_labelPrefix("model path:").c_str(), modelpath.data(), modelpath.size(),
-                     ImGuiInputTextFlags_ReadOnly);
+    ImGui::Text("model path:");
+    ImGui::SameLine();
+    ImGui::InputText("##model path:", modelpath.data(), modelpath.size(), ImGuiInputTextFlags_ReadOnly);
     if (ImGui::BeginDragDropTarget()) {
       if (auto* payload = ImGui::AcceptDragDropPayload(CONTENT_BROWSER_DRAGDROG); payload != nullptr) {
         const auto& path = *reinterpret_cast<AssetPath*>(payload->Data);
         // TODO: check path
         node.modelPath = path;
+        return true;
         modelpath = path.to_string();
       }
       ImGui::EndDragDropTarget();
@@ -204,10 +214,10 @@ GuiInformationWindow::OnDraw() {
     ImGui::Separator();
     ImGui::Text("mesh infomation");
 
-    if (modelpath == "res://") return;
+    if (modelpath == "res://") return false;
 
     auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
-    if (!modelAssetMgr->Existed(modelpath)) return;
+    if (!modelAssetMgr->Existed(modelpath)) return false;
 
     auto modelAsset = modelAssetMgr->Get(modelpath);
 
@@ -224,26 +234,36 @@ GuiInformationWindow::OnDraw() {
 
     auto& mesh = modelAsset->GetMesh(selectMesh);
     ImGui::Text("mesh name is :%s", mesh.m_name.c_str());
-    ShowMaterial(mesh);
+    return ShowMaterial(mesh);
   });
 
-  DrawComponentProp<EnvironmentComponent>("environment", world, m_entity, [&](EnvironmentComponent& node) {
+  DrawComponentProp<EnvironmentComponent>("environment", activeScene, m_entity, [&](EnvironmentComponent& node) {
     std::array<const char*, 3> items = {"clear value", "image", "physical sky"};
+    int currentItem = node.currentItem;
 
-    ImGui::Combo(_labelPrefix("environment type").c_str(), &node.currentItem, items.data(), items.size());
+    bool changeEnvironment = false;
+
+    ImGui::Text("environment type");
+    ImGui::SameLine();
+    changeEnvironment |= ImGui::Combo("##environment type", &node.currentItem, items.data(), items.size());
 
     if (node.currentItem == 0) {
       auto* color = node.clearValueSky.clearValue.data();
-      ImGui::ColorEdit4(_labelPrefix("clear color").c_str(), color, ImGuiColorEditFlags_AlphaPreviewHalf);
+      ImGui::Text("clear color");
+      ImGui::SameLine();
+      changeEnvironment |= ImGui::ColorEdit4("##clear color", color, ImGuiColorEditFlags_AlphaPreviewHalf);
     } else if (node.currentItem == 1) {
       auto path = node.imageSky.hdrImagePath.to_string();
-      ImGui::InputText(_labelPrefix("image res: ").c_str(), path.data(), path.size(), ImGuiInputTextFlags_ReadOnly);
+      ImGui::Text("image res:");
+      ImGui::SameLine();
+      ImGui::InputText("##image res:", path.data(), path.size(), ImGuiInputTextFlags_ReadOnly);
       if (ImGui::BeginDragDropTarget()) {
         if (auto* payload = ImGui::AcceptDragDropPayload(CONTENT_BROWSER_DRAGDROG); payload != nullptr) {
           const auto& path = *reinterpret_cast<AssetPath*>(payload->Data);
           // TODO: check path
           if (path != "res://") {
             node.imageSky.hdrImagePath = path;
+            changeEnvironment |= true;
             // RenderSystem::RerunPreComputePass("hdrImagePass", m_rhiFactory);
           }
         }
@@ -252,79 +272,125 @@ GuiInformationWindow::OnDraw() {
       }
     } else if (node.currentItem == EnvironmentComponent::physicalSkyItem) {
       auto& sky = node.physicalSky;
-      ImGui::InputFloat(_labelPrefix("Atmosphere Height").c_str(), &sky.atmosphereHeight);
-      ImGui::InputFloat(_labelPrefix("Rayleigh Scatter Scalar Height").c_str(), &sky.rayleighScalarHeight);
-      ImGui::InputFloat(_labelPrefix("Mie Scatter Scalar Height").c_str(), &sky.mieScalarHeight);
-      ImGui::SliderFloat(_labelPrefix("Mie Anisotropy").c_str(), &sky.mieAnisotropy, -1, 1);
-      ImGui::InputFloat(_labelPrefix("Ozone Center Height").c_str(), &sky.ozoneCenterHeight);
-      ImGui::InputFloat(_labelPrefix("Ozone Width").c_str(), &sky.ozoneWidth);
+      ImGui::Text("Atmosphere Height");
+      ImGui::SameLine();
+      if (ImGui::InputFloat("##Atmosphere Height", &node.physicalSky.atmosphereHeight)) {
+        return true;
+      }
+
+      ImGui::Text("Rayleigh Scatter Scalar Height");
+      ImGui::SameLine();
+      changeEnvironment |= ImGui::InputFloat("##Rayleigh Scatter Scalar Height", &sky.rayleighScalarHeight);
+
+      ImGui::Text("Mie Scatter Scalar Height");
+      ImGui::SameLine();
+      changeEnvironment |= ImGui::InputFloat("##Mie Scatter Scalar Height", &sky.mieScalarHeight);
+
+      ImGui::Text("Mie Anisotropy");
+      ImGui::SameLine();
+      changeEnvironment |= ImGui::SliderFloat("##Mie Anisotropy", &sky.mieAnisotropy, -1, 1);
+
+      ImGui::Text("Ozone Center Height");
+      ImGui::SameLine();
+      changeEnvironment |= ImGui::InputFloat("##Ozone Center Height", &sky.ozoneCenterHeight);
+
+      ImGui::Text("Ozone Width");
+      ImGui::SameLine();
+      changeEnvironment |= ImGui::InputFloat("##Ozone Width", &sky.ozoneWidth);
+
       if (ImGui::Button("recompute sky")) {
         RenderSystem::RerunPreComputePass("TransmittanceLUTPass", m_rhiFactory);
       }
     }
+    return changeEnvironment;
   });
 
-  DrawComponentProp<TransformComp>("transform", world, m_entity, [&](TransformComp& transform) {
+  DrawComponentProp<TransformComp>("transform", activeScene, m_entity, [&](TransformComp& transform) {
     float translation[3], rotation[3], scale[3];
     auto modelMatrix = transform.GetGlobalTransform();
     ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(modelMatrix), translation, rotation, scale);
 
+    const auto& world = activeScene->GetWorld();
     if (world.any_of<ModelSceneNode>(m_entity)) {
-      ImGui::InputFloat3(_labelPrefix("translate").c_str(), translation);
-      ImGui::InputFloat3(_labelPrefix("rotation").c_str(), rotation);
-      ImGui::InputFloat3(_labelPrefix("scale").c_str(), scale);
+      ImGui::Text("translate");
+      ImGui::SameLine();
+      ImGui::InputFloat3("##translate", translation);
+
+      ImGui::Text("rotation");
+      ImGui::SameLine();
+      ImGui::InputFloat3("##rotation", rotation);
+
+      ImGui::Text("scale");
+      ImGui::SameLine();
+      ImGui::InputFloat3("##scale", scale);
 
     } else if (world.any_of<DirectionalLightSceneNode>(m_entity)) {
-      ImGui::InputFloat3(_labelPrefix("translate").c_str(), translation);
+      ImGui::Text("translate");
+      ImGui::SameLine();
+      ImGui::InputFloat3("##translate", translation);
+    } else if (world.any_of<VXGIProbeSceneNode>(m_entity)) {
+      ImGui::Text("translate");
+      ImGui::SameLine();
+      ImGui::InputFloat3("##translate", translation);
     }
 
     ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, glm::value_ptr(modelMatrix));
     transform.SetGlobalTransform(modelMatrix);
+    return true;
   });
 
-  DrawComponentProp<DirectionLightComponent>("directional light", world, m_entity, [&](auto& node) {
-    auto color = node.m_color;
-    auto energy = node.m_energy;
-    auto dir = node.m_direction;
+  DrawComponentProp<DirectionLightComponent>("directional light", activeScene, m_entity, [&](auto& node) {
+    auto& color = node.m_color;
+    auto& energy = node.m_energy;
+    auto& dir = node.m_direction;
+    const auto& world = activeScene->GetWorld();
+
+    bool changeDirectionLight = false;
 
     ImGui::SeparatorText("light");
-    bool isChangeColor = ImGui::ColorEdit3("color", glm::value_ptr(color));
-    bool isChangeEnergy = ImGui::InputFloat("energy", &energy);
+    changeDirectionLight |= ImGui::ColorEdit3("color", glm::value_ptr(color));
+    changeDirectionLight |= ImGui::InputFloat("energy", &energy);
 
     ImGui::SeparatorText("direction");
-    bool isChangeDir = ImGui::InputFloat3("directional", glm::value_ptr(dir));
-    isChangeDir |= ImGui::gizmo3D("##gizmo1", dir);
-
-    if (isChangeColor || isChangeDir || isChangeEnergy) {
-      world.patch<DirectionLightComponent>(m_entity, [&color, &dir, &energy](auto& node) {
-        dir = glm::normalize(dir);
-        node.m_color = color;
-        node.m_energy = energy;
-        node.m_direction = dir;
-      });
-    }
+    changeDirectionLight |= ImGui::InputFloat3("directional", glm::value_ptr(dir));
+    changeDirectionLight |= ImGui::gizmo3D("##gizmo1", dir);
 
     auto regionSize = ImGui::GetContentRegionAvail();
 
-    bool isSun = world.any_of<SunLightTag>(m_entity);
+    bool isSun = activeScene->AnyOf<SunLightTag>(m_entity);
     ImGui::Checkbox("Set as Sun", &isSun);
 
     if (isSun) {
-      if (!world.any_of<SunLightTag>(m_entity)) {
+      if (!activeScene->AnyOf<SunLightTag>(m_entity)) {
         auto sunView = world.view<SunLightTag>();
         for (auto entity : sunView) {
-          world.remove<SunLightTag>(entity);
+          activeScene->Remove<SunLightTag>(m_entity);
         }
-        world.emplace<SunLightTag>(m_entity);
+        activeScene->Emplace<SunLightTag>(m_entity);
       }
     }
+    return changeDirectionLight;
   });
 
-  DrawComponentProp<DirectionShadowComponent>("directional light shadow", world, m_entity, [&](auto& node) {
+  DrawComponentProp<DirectionShadowComponent>("directional light shadow", activeScene, m_entity, [&](auto& node) {
+    auto& split = node.m_split;
+    bool changeFlag = false;
     for (int i = 0; i < node.m_split.size(); i++) {
       std::string name = "split" + std::to_string(i);
-      ImGui::SliderFloat(name.c_str(), &node.m_split[i], 0, 1);
+      changeFlag |= ImGui::SliderFloat(name.c_str(), &split[i], 0, 1);
     }
+
+    return changeFlag;
+  });
+
+  DrawComponentProp<VXGIProbeSceneNode>("vxgi probe", activeScene, m_entity, [&](auto& node) {
+    bool changeFlag = false;
+    ImGui::Text("probe size:");
+    ImGui::SameLine();
+
+    auto& size = node.size;
+    changeFlag |= ImGui::InputFloat3("##probe size:", glm::value_ptr(size));
+    return changeFlag;
   });
 }
 

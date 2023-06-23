@@ -1,11 +1,13 @@
 #include "DirectionLightShadowMapPass.hpp"
 
+#include <nameof.hpp>
+
 #include "AssetManager/ModelAsset.hpp"
 #include "Common/MathCommon.hpp"
 #include "Core/Common.hpp"
 #include "Core/Scene/Component/Component.hpp"
-#include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
-#include "Core/Scene/GPUDataPipeline/MeshGPUData.hpp"
+#include "Core/Scene/Component/RenderComponent/LightRenderComponent.hpp"
+#include "Core/Scene/Component/RenderComponent/MeshRenderComponent.hpp"
 
 namespace Marbas {
 
@@ -18,8 +20,7 @@ DirectionShadowMapPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.WriteTexture(m_shadowMapTextureHandler, TextureAttachmentType::COLOR, 0, textureCount);
 
   builder.BeginPipeline();
-  // builder.AddShaderArgument(MeshGPUData::GetDescriptorSetArgument());
-  builder.AddShaderArgument(LightGPUData::GetDescriptorSetArgument());
+  builder.AddShaderArgument(LightRenderComponent::GetDescriptorSetArgument());
   builder.SetPushConstantSize(sizeof(Constant));
   builder.AddShader("Shader/directionLightShadowMap.vert.spv", ShaderType::VERTEX_SHADER);
   builder.AddShader("Shader/directionLightShadowMap.geom.spv", ShaderType::GEOMETRY_SHADER);
@@ -57,8 +58,13 @@ DirectionShadowMapPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsC
 
   // load all model and calculate the sum of mesh
   auto modelManager = AssetManager<ModelAsset>::GetInstance();
-  auto meshGPUManager = MeshGPUDataManager::GetInstance();
   auto bufferContext = m_rhiFactory->GetBufferContext();
+
+  auto renderLightDataView = world.view<LightRenderComponent>();
+  DLOG_IF(WARNING, renderLightDataView.size() > 1)
+      << FORMAT("multi {} in the scene", NAMEOF_TYPE(LightRenderComponent));
+  auto& renderLightData = world.get<LightRenderComponent>(renderLightDataView[0]);
+  auto& lightDataSet = renderLightData.m_lightSet;
 
   /**
    * Record command
@@ -103,17 +109,15 @@ DirectionShadowMapPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsC
       commandList.PushConstant(pipeline, &m_constant, sizeof(Constant), 0);
 
       for (auto mesh : modelSceneNode.m_meshEntities) {
-        if (!world.any_of<RenderableMeshTag>(mesh)) continue;
+        if (!world.any_of<MeshRenderComponent>(mesh)) continue;
 
-        auto data = meshGPUManager->Get(mesh);
-        if (data == nullptr) continue;
+        auto& meshRenderComponent = world.get<MeshRenderComponent>(mesh);
+        auto& indexCount = meshRenderComponent.m_indexCount;
 
-        auto& indexCount = data->m_indexCount;
-
-        std::vector<uintptr_t> sets = {LightGPUData::GetLightSet()};
+        std::vector<uintptr_t> sets = {lightDataSet};
         commandList.BindDescriptorSet(pipeline, sets);
-        commandList.BindVertexBuffer(data->m_vertexBuffer);
-        commandList.BindIndexBuffer(data->m_indexBuffer);
+        commandList.BindVertexBuffer(meshRenderComponent.m_vertexBuffer);
+        commandList.BindIndexBuffer(meshRenderComponent.m_indexBuffer);
         commandList.DrawIndexed(indexCount, 1, 0, 0, 0);
       }
     }

@@ -1,13 +1,19 @@
 #pragma once
 
+#include <entt/entity/fwd.hpp>
+#include <entt/entity/observer.hpp>
 #include <entt/entt.hpp>
 
 #include "Common/Common.hpp"
 #include "Common/EditorCamera.hpp"
 #include "Component/Component.hpp"
-#include "System/SceneSystem.hpp"
 
 namespace Marbas {
+
+template <typename F, typename Component>
+concept ComponentUpdateFunc = requires(F&& f, Component component) {
+  { f(component) } -> std::same_as<bool>;
+};
 
 class Scene {
  public:
@@ -31,9 +37,59 @@ class Scene {
     return m_world;
   }
 
-  entt::registry&
-  GetWorld() {
-    return m_world;
+  entt::entity
+  CreateEntity() {
+    return m_world.create();
+  }
+
+  entt::entity
+  CreateSceneNode() {
+    throw std::logic_error("not implement");
+  };
+
+  template <typename Type, typename... Other, typename... Exclude>
+  [[nodiscard]] auto
+  View(entt::exclude_t<Exclude...> exclude = {}) const {
+    return m_world.view<Type, Other...>(exclude);
+  }
+
+  template <typename Component>
+  const Component&
+  Get(entt::entity entity) {
+    return m_world.get<Component>(entity);
+  }
+
+  template <typename Component, typename... Args>
+  void
+  Emplace(Args&&... args) {
+    m_world.emplace<Component>(std::forward<Args>(args)...);
+  }
+
+  template <typename Component, ComponentUpdateFunc<Component> Func>
+  void
+  Update(const entt::entity entity, Func&& func) {
+    auto& component = m_world.get<Component>(entity);
+    if (func(component)) {
+      m_world.patch<Component>(entity);
+    }
+  }
+
+  template <typename Component>
+  void
+  Remove(const entt::entity entity) {
+    m_world.remove<Component>(entity);
+  }
+
+  template <typename... Components>
+  bool
+  AnyOf(const entt::entity& entity) const {
+    return m_world.any_of<Components...>(entity);
+  }
+
+  template <typename Collector>
+  void
+  ConnectObserve(entt::observer& observer, Collector&& collector) {
+    observer.connect(m_world, std::forward<Collector>(collector));
   }
 
   entt::entity

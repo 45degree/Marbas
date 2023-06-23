@@ -35,4 +35,16 @@ struct RenderableTag {};
  */
 struct RenderableMeshTag {};
 
+/**
+ * vxgi probe
+ */
+struct NewVXGIProbeTag {};
+
+struct VXGIProbeUpdateTag {};
+
+/**
+ * editor component
+ */
+struct EditorComponentTag {};
+
 }  // namespace Marbas

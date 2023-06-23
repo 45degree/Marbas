@@ -4,6 +4,7 @@
 
 #include "Core/Renderer/RenderGraph/RenderGraphResourceManager.hpp"
 #include "Core/Scene/Scene.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 #include "RHIFactory.hpp"
 
 namespace Marbas {
@@ -21,13 +22,7 @@ struct RenderSystem final {
   Initialize(RHIFactory* rhiFactory);
 
   static void
-  CreateRenderGraph(RHIFactory* rhiFactory);
-
-  static void
   Update(const RenderInfo& renderInfo);
-
-  static ImageView*
-  GetOutputView();
 
   static void
   Destroy(RHIFactory* rhiFactory);
@@ -35,50 +30,16 @@ struct RenderSystem final {
   static void
   RerunPreComputePass(const StringView& passName, RHIFactory* rhiFactory);
 
-  template <auto Func, typename Type>
-  static void
-  RegistryListenerForResultImageChange(Type&& instance) {
-    s_sink.connect<Func>(std::forward<Type>(instance));
-  }
-
   static RenderGraphResourceManager*
   GetRenderGraphResourceManager() {
     return s_resourceManager.get();
   }
 
  private:
-  /**
-   * @brief Update the position and size of each shadow map in the texture atlas
-   *
-   * @param scene scene
-   */
-  static void
-  UpdateShadowMapAtlasPosition(Scene* scene);
-
-  static void
-  UpdateDirectionShadowInfo(Scene* scene);
-
-  static Task<>
-  UpdateLightGPUData(Scene* scene);
-
-  /**
-   * @brief update mesh gpu asset, such as material and so on;
-   *
-   * @param scene scene
-   * @param rhiFactory rhi factory
-   */
-  static Task<>
-  UpdateMeshGPUAsset(Scene* scene);
-
- private:
+  static std::shared_ptr<Job::RenderSystem> s_renderSystem;
   static std::shared_ptr<RenderGraphResourceManager> s_resourceManager;
-  static std::unique_ptr<RenderGraph> s_renderGraph;
-  static std::unique_ptr<RenderGraph> s_precomputeRenderGraph;
-  static Fence* s_precomputeFence;
-  static ImageView* s_resultImageView;
-
-  static entt::sigh<void(ImageView*)> s_newResultImageViewEvent;
-  static entt::sink<entt::sigh<void(ImageView*)>> s_sink;
+  static std::shared_ptr<RenderGraph> s_renderGraph;
+  static std::shared_ptr<RenderGraph> s_precomputeRenderGraph;
 };
 
 }  // namespace Marbas

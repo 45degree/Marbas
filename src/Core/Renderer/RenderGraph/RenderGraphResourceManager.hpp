@@ -13,12 +13,7 @@ class RenderGraphResourceManager final {
 
  public:
   RenderGraphTextureHandler
-  CreateTexture(const char* name, const ImageCreateInfo& createInfo) {
-    m_graphTexture.push_back(details::RenderGraphTexture(name, m_rhiFactory, createInfo));
-    RenderGraphTextureHandler handler;
-    handler.index = m_graphTexture.size() - 1;
-    return handler;
-  }
+  CreateTexture(std::string_view name, const ImageCreateInfo& createInfo);
 
   ImageView*
   GetImageView(RenderGraphTextureHandler handler, uint32_t baseLayer = 0, uint32_t layerCount = 1,
@@ -28,21 +23,21 @@ class RenderGraphResourceManager final {
 
   ImageView*
   GetImageView(std::string_view name, uint32_t baseLayer = 0, uint32_t layerCount = 1, uint32_t baseLevel = 0,
-               uint32_t levelCount = 1) {
-    auto iter = std::find_if(m_graphTexture.begin(), m_graphTexture.end(),
-                             [&](auto&& texture) { return texture.GetName() == name; });
-    if (iter != m_graphTexture.end()) {
-      return iter->GetImageView(baseLayer, layerCount, baseLevel, levelCount);
-    }
-    return nullptr;
+               uint32_t levelCount = 1);
+
+  RenderGraphTextureHandler
+  GetHandler(std::string_view name) {
+    return m_textureResLUT.at(std::string(name));
   }
 
   RenderGraphTextureHandler
-  AddExternTexture(const char* name, Image* image);
+  AddExternalTexture(std::string_view name, Image* image);
 
  public:
   RHIFactory* m_rhiFactory = nullptr;
   Vector<details::RenderGraphTexture> m_graphTexture;
+
+  std::unordered_map<std::string, RenderGraphTextureHandler> m_textureResLUT;
 };
 
 }  // namespace Marbas

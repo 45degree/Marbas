@@ -14,6 +14,7 @@
 #include "Core/Scene/GPUDataPipeline/GPUDataManager.hpp"
 #include "Core/Scene/SceneManager.hpp"
 #include "Core/Scene/System/RenderSystem.hpp"
+#include "Core/Scene/System/SceneSystem.hpp"
 #include "Editor/Widget/GuiContentBrowserWindow.hpp"
 #include "Editor/Widget/GuiRenderImageWindow.hpp"
 #include "GLFW/glfw3.h"
@@ -109,16 +110,16 @@ Application::Initialize() {
   // Setup Platform/Renderer backends
   m_imguiContext->SetUpImguiBackend(m_glfwWindow);
 
-  // create resource manager
-  // m_scene = std::make_unique<Scene>();
-  auto sceneManager = SceneManager::GetInstance();
-  auto scene = sceneManager->CreateEmptyScene();
-  sceneManager->SetActiveScene(scene);
-
   // create render engine
   GPUDataManager::SetUp(m_rhiFactory.get());
   RenderSystem::Initialize(m_rhiFactory.get());
-  RenderSystem::CreateRenderGraph(m_rhiFactory.get());
+  SceneSystem::Initialize();
+  // RenderSystem::CreateRenderGraph(m_rhiFactory.get());
+
+  // create resource manager
+  auto sceneManager = SceneManager::GetInstance();
+  auto scene = sceneManager->CreateEmptyScene();
+  sceneManager->SetActiveScene(scene);
 }
 
 void
@@ -133,8 +134,8 @@ Application::Run() {
 
   // auto outputImageView = RenderSystem::GetOutputView();
   auto renderGraphResourceManager = RenderSystem::GetRenderGraphResourceManager();
-  auto outputImageView = renderGraphResourceManager->GetImageView("finalColorTexture");
-  auto voxelImageView = renderGraphResourceManager->GetImageView("voxelValizationTexture");
+  auto outputImageView = renderGraphResourceManager->GetImageView("direct light");
+  auto voxelImageView = renderGraphResourceManager->GetImageView("vxgi color");
 
   Gui::RenderImageWindow renderImageWindow("image");
   Gui::RenderImageWindow voxelImageWindow("voxelImage");
@@ -146,6 +147,9 @@ Application::Run() {
   renderImageWindow.SetRenderImage(outputImageView);
   voxelImageWindow.SetRHIFactory(m_rhiFactory.get());
   voxelImageWindow.SetRenderImage(voxelImageView);
+
+  // TODO
+  m_rhiFactory->ResetFence(m_frameFence);
 
   while (!glfwWindowShouldClose(m_glfwWindow)) {
     glfwPollEvents();
@@ -191,7 +195,7 @@ Application::Run() {
           .imageIndex = currentFrame,
           .waitSemaphore = m_aviableSemaphores[currentFrame],
           .signalSemaphore = m_renderFinishSemaphore,
-          // .fence = m_frameFence,
+          .fence = m_frameFence,
       });
     }
 
@@ -220,7 +224,8 @@ Application::Run() {
     // present result
     {
       auto presentResult = m_rhiFactory->Present(m_swapChain, {&m_finishSemaphores[currentFrame], 1}, imageIndex);
-      // m_rhiFactory->WaitForFence(m_frameFence);
+      m_rhiFactory->WaitForFence(m_frameFence);
+      m_rhiFactory->ResetFence(m_frameFence);
       if (-1 == presentResult) {
         needResize = true;
         continue;
@@ -236,6 +241,8 @@ Application::Quit() {
 
   // Clear AssetManager
   GPUDataManager::TearDown();
+
+  SceneManager::Destroy();
 
   // clear context
   m_imguiContext->ClearUp();

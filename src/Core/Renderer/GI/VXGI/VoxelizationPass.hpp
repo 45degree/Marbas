@@ -7,7 +7,7 @@ namespace Marbas::GI {
 
 struct VoxelizationCreateInfo {
   RenderGraphTextureHandler shadowMap;
-  RenderGraphTextureHandler voxelScene;
+  // RenderGraphTextureHandler voxelScene;
   RHIFactory* rhiFactory;
 };
 
@@ -32,19 +32,13 @@ class VoxelizationPass {
   Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
-  IsEnable(RenderGraphGraphicsRegistry& registry) {
-    return true;
-  }
+  IsEnable(RenderGraphGraphicsRegistry& registry);
 
  private:
   RenderGraphTextureHandler m_shadowMap;
-  RenderGraphTextureHandler m_voxelScene;
 
-  VoxelInfo m_voxelInfo;
-  Buffer* m_voxelInfoBuffer;
-
-  DescriptorSetArgument m_argument;
-  uintptr_t m_set;
+  // VoxelInfo m_voxelInfo;
+  // Buffer* m_voxelInfoBuffer;
 
   RHIFactory* m_rhiFactory;
   uintptr_t m_sampler;

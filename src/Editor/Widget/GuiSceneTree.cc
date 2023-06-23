@@ -8,7 +8,7 @@
 namespace Marbas::Gui {
 
 std::string
-GetNodeName(entt::registry& world, entt::entity entity) {
+GetNodeName(const entt::registry& world, entt::entity entity) {
   std::string name = "default node name##";
   if (world.any_of<EmptySceneNode>(entity)) {
     auto& emptyNode = world.get<EmptySceneNode>(entity);
@@ -79,12 +79,12 @@ GuiSceneTree::DrawNode(entt::entity entity) {
   if (ImGui::BeginPopup("scenePopup")) {
     if (ImGui::MenuItem("empty node")) {
       auto node = m_scene->AddChild(entity);
-      world.emplace<EmptySceneNode>(node);
+      m_scene->Emplace<EmptySceneNode>(node);
     }
 
     if (ImGui::MenuItem(ICON_FA_CIRCLE_NODES " Add Model")) {
       auto node = m_scene->AddChild(entity);
-      world.emplace<ModelSceneNode>(node);
+      m_scene->Emplace<ModelSceneNode>(node);
     }
 
     if (ImGui::MenuItem(ICON_FA_CIRCLE_NODES " Add BillBoard")) {
@@ -93,9 +93,14 @@ GuiSceneTree::DrawNode(entt::entity entity) {
     if (ImGui::BeginMenu(ICON_FA_LIGHTBULB " Add Light")) {
       if (ImGui::MenuItem(ICON_FA_LIGHTBULB " Add direction Light")) {
         auto node = m_scene->AddChild(entity);
-        world.emplace<DirectionalLightSceneNode>(node);
+        m_scene->Emplace<DirectionalLightSceneNode>(node);
       }
       ImGui::EndMenu();
+    }
+
+    if (ImGui::MenuItem(ICON_FA_CUBE "Add GI Probe")) {
+      auto node = m_scene->AddChild(entity);
+      m_scene->Emplace<VXGIProbeSceneNode>(node);
     }
 
     ImGui::EndPopup();

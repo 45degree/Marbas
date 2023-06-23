@@ -18,4 +18,6 @@ target('Marbas.Editor', function()
   if is_plat('windows') then
     add_defines('NOMINMAX')
   end
+
+  add_defines('MAX_DIRECTION_LIGHT_COUNT=$(DirectionLightCount)')
 end)

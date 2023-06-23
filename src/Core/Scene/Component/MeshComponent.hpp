@@ -1,8 +1,6 @@
 #pragma once
 
 #include "AssetManager/ModelAsset.hpp"
-#include "Core/Scene/GPUDataPipeline/TextureGPUData.hpp"
-#include "RHIFactory.hpp"
 
 namespace Marbas {
 

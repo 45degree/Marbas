@@ -85,6 +85,8 @@ RenderImageWidget::OnDraw() {
     DrawModelManipulate(activeScene, m_zmoEntity, camera.get());
   } else if (world.any_of<DirectionalLightSceneNode>(m_zmoEntity)) {
     DrawLightManipulate(activeScene, m_zmoEntity, camera.get());
+  } else if (world.any_of<VXGIProbeSceneNode>(m_zmoEntity)) {
+    DrawLightManipulate(activeScene, m_zmoEntity, camera.get());
   }
 
   /**
@@ -96,15 +98,17 @@ RenderImageWidget::OnDraw() {
 
 void
 RenderImageWidget::DrawModelManipulate(Scene* scene, entt::entity entity, Camera* camera) {
+  using enum ImGuizmo::OPERATION;
+  using enum ImGuizmo::MODE;
+
   const auto viewMatrix = camera->GetViewMatrix();
   auto perspectiveMatrix = camera->GetProjectionMatrix();
   perspectiveMatrix[1][1] *= -1;  // flip the y axis because the vulkan coordinate is different from the imguizmo
 
   auto& world = scene->GetWorld();
   if (!world.any_of<TransformComp>(entity)) return;
-  auto modelMatrix = world.get<TransformComp>(entity).GetGlobalTransform();
 
-  // const auto& guizmoInfo = world.get<GuizmoComponent>(entity);
+  auto modelMatrix = world.get<TransformComp>(entity).GetLocalTransform();
 
   auto& showMove = m_zmoDrawInfo.showMove;
   auto& showRotate = m_zmoDrawInfo.showRotate;
@@ -112,17 +116,24 @@ RenderImageWidget::DrawModelManipulate(Scene* scene, entt::entity entity, Camera
   auto* viewMatrixPtr = glm::value_ptr(viewMatrix);
   auto* projMatrixPtr = glm::value_ptr(perspectiveMatrix);
   auto* modelMatrixPtr = glm::value_ptr(modelMatrix);
+
+  bool changeValue = false;
   if (showMove && showRotate && showScale) {
-    ImGuizmo::Manipulate(viewMatrixPtr, projMatrixPtr, ImGuizmo::OPERATION::UNIVERSAL, ImGuizmo::LOCAL, modelMatrixPtr);
+    changeValue |= ImGuizmo::Manipulate(viewMatrixPtr, projMatrixPtr, UNIVERSAL, LOCAL, modelMatrixPtr);
   } else if (showMove) {
-    ImGuizmo::Manipulate(viewMatrixPtr, projMatrixPtr, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, modelMatrixPtr);
+    changeValue |= ImGuizmo::Manipulate(viewMatrixPtr, projMatrixPtr, TRANSLATE, LOCAL, modelMatrixPtr);
   } else if (showRotate) {
-    ImGuizmo::Manipulate(viewMatrixPtr, projMatrixPtr, ImGuizmo::OPERATION::ROTATE, ImGuizmo::LOCAL, modelMatrixPtr);
+    changeValue |= ImGuizmo::Manipulate(viewMatrixPtr, projMatrixPtr, ROTATE, LOCAL, modelMatrixPtr);
   } else if (showScale) {
-    ImGuizmo::Manipulate(viewMatrixPtr, projMatrixPtr, ImGuizmo::OPERATION::SCALE, ImGuizmo::LOCAL, modelMatrixPtr);
+    changeValue |= ImGuizmo::Manipulate(viewMatrixPtr, projMatrixPtr, SCALE, LOCAL, modelMatrixPtr);
   }
 
-  scene->GetWorld().get<TransformComp>(entity).SetGlobalTransform(modelMatrix);
+  if (changeValue) {
+    scene->Update<TransformComp>(entity, [&](TransformComp& component) {
+      component.SetLocalTransform(modelMatrix);
+      return true;
+    });
+  }
 }
 
 void
@@ -133,14 +144,17 @@ RenderImageWidget::DrawLightManipulate(Scene* scene, entt::entity entity, Camera
 
   auto& world = scene->GetWorld();
   if (!world.any_of<TransformComp>(entity)) return;
-  auto modelMatrix = world.get<TransformComp>(entity).GetGlobalTransform();
+  auto modelMatrix = world.get<TransformComp>(entity).GetLocalTransform();
 
   auto* viewMatrixPtr = glm::value_ptr(viewMatrix);
   auto* projMatrixPtr = glm::value_ptr(perspectiveMatrix);
   auto* modelMatrixPtr = glm::value_ptr(modelMatrix);
   ImGuizmo::Manipulate(viewMatrixPtr, projMatrixPtr, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, modelMatrixPtr);
 
-  scene->GetWorld().get<TransformComp>(entity).SetGlobalTransform(modelMatrix);
+  scene->Update<TransformComp>(entity, [&](TransformComp& component) {
+    component.SetLocalTransform(modelMatrix);
+    return true;
+  });
 }
 
 /**

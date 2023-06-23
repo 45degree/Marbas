@@ -2,13 +2,6 @@
 
 namespace Marbas::GI {
 
-void
-VoxelVisulzationPrepass::SetUp(RenderGraphGraphicsBuilder& builder) {
-  builder.BeginPipeline();
-  // builder.AddShader();
-  builder.EndPipeline();
-}
-
 VoxelVisulzationPass::VoxelVisulzationPass(const VoxelVisulzationPassCreateInfo& createInfo)
     : m_rhiFactory(createInfo.rhiFactory),
       m_width(createInfo.m_width),
@@ -136,6 +129,11 @@ VoxelVisulzationPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCom
   commandList.Draw(256 * 256 * 256, 1, 0, 0);
   commandList.EndPipeline(pipeline);
   commandList.End();
+}
+
+bool
+VoxelVisulzationPass::IsEnable(RenderGraphGraphicsRegistry& registry) {
+  return true;
 }
 
 }  // namespace Marbas::GI

@@ -62,4 +62,15 @@ ModelSceneNode::OnCreate(entt::registry& world, entt::entity node) {
   }
 }
 
+void
+VXGIProbeSceneNode::OnCreate(entt::registry& world, entt::entity node) {
+  if (!world.any_of<TransformComp>(node)) {
+    world.emplace<TransformComp>(node);
+  }
+
+  if (!world.any_of<NewVXGIProbeTag>(node)) {
+    world.emplace<NewVXGIProbeTag>(node);
+  }
+}
+
 }  // namespace Marbas

@@ -104,4 +104,24 @@ struct ModelSceneNode {
   }
 };
 
+struct VXGIProbeSceneNode {
+  std::string nodeName;
+  glm::vec3 size = glm::vec3(4000, 4000, 4000);
+
+  template <typename Archive>
+  void
+  serialize(Archive&& ar) {
+    ar(nodeName, size);
+  }
+
+  static void
+  OnCreate(entt::registry& world, entt::entity node);
+
+  static void
+  OnUpdate(entt::registry& world, entt::entity node) {}
+
+  static void
+  OnDestroy(entt::registry& world, entt::entity node) {}
+};
+
 }  // namespace Marbas

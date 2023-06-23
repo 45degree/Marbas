@@ -5,77 +5,14 @@
 #include "AssetManager/ModelAsset.hpp"
 #include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/Component/MeshComponent.hpp"
-#include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
 #include "Core/Scene/Scene.hpp"
 
 namespace Marbas {
 
 void
-SceneSystem::UpdateTransformCompForEntity(Scene* scene, entt::entity entity) {
-  auto& world = scene->GetWorld();
-  if (!world.any_of<HierarchyComponent>(entity)) {
-    return;
-  }
-  auto& hierarchyComponent = world.get<HierarchyComponent>(entity);
-  if (world.any_of<TransformComp>(entity)) {
-    auto& transformComp = world.get<TransformComp>(entity);
-    auto parent = hierarchyComponent.parent;
-    if (parent != entt::null) {
-      auto& parentTransformComp = world.get<TransformComp>(parent);
-      // if the transform Component has a update tranform matrix, it meanus it has beed set a global transform
-      // so it no need to update it
-      if (!transformComp.m_updatedGlobalTransform.has_value()) {
-        auto& updateTransform = *transformComp.m_updatedGlobalTransform;
-        if (parentTransformComp.m_updatedGlobalTransform.has_value()) {
-          const auto& parentTransformMatrix = parentTransformComp.m_globalTransform;
-          const auto& parentUpdateTransform = *parentTransformComp.m_updatedGlobalTransform;
-          auto localTransformMatrix = glm::inverse(parentTransformMatrix) * transformComp.m_globalTransform;
-          updateTransform = parentUpdateTransform * localTransformMatrix;
-        }
-      }
-    }
-  }
-
-  for (auto& child : hierarchyComponent.children) {
-    UpdateTransformCompForEntity(scene, child);
-  }
-}
-
-void
-SceneSystem::UpdateTransformComp(Scene* scene) {
-  auto& world = scene->GetWorld();
-  auto root = scene->GetRootNode();
-  UpdateTransformCompForEntity(scene, root);
-
-  auto view = world.view<TransformComp>();
-  for (auto&& [entity, component] : view.each()) {
-    if (component.m_updatedGlobalTransform.has_value()) {
-      component.m_globalTransform = *component.m_updatedGlobalTransform;
-      component.m_updatedGlobalTransform = std::nullopt;
-    }
-  }
-}
-
-void
 SceneSystem::ClearUnuseAsset(Scene* scene) {
   AssetManager<TextureAsset>::GetInstance()->Tick();
   AssetManager<ModelAsset>::GetInstance()->Tick();
-}
-
-void
-SceneSystem::UpdateAABBComponent(Scene* scene) {
-  auto& world = scene->GetWorld();
-  auto aabbView = world.view<ModelSceneNode>();
-  for (auto&& [entity, modelSceneNode] : aabbView.each()) {
-    auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
-    if (world.any_of<AABBComponent>(entity)) continue;
-    if (modelSceneNode.modelPath == "res://") continue;
-
-    auto model = modelAssetMgr->Get(modelSceneNode.modelPath);
-    auto& aabb = world.emplace<AABBComponent>(entity, *model);
-    LOG(INFO) << FORMAT("Add a aabb for model: {}, center: {}, extend: {}", modelSceneNode.modelPath,
-                        glm::to_string(aabb.GetCenter()), glm::to_string(aabb.GetExtent()));
-  }
 }
 
 Task<void>
@@ -95,26 +32,50 @@ SceneSystem::CreateAssetCache(Scene* scene) {
 
 Task<void>
 SceneSystem::LoadMesh(Scene* scene) {
-  auto& world = scene->GetWorld();
-  auto modelNodeView = world.view<ModelSceneNode, NewModelTag>();
+  auto modelNodeView = scene->View<ModelSceneNode, NewModelTag>();
   auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
 
-  for (auto&& [entity, node] : modelNodeView.each()) {
+  for (auto& entity : modelNodeView) {
+    auto& node = scene->Get<ModelSceneNode>(entity);
     if (node.modelPath == "res://") continue;
+
     auto asset = co_await modelAssetMgr->GetAsync(node.modelPath);
-    node.m_meshEntities.clear();
+    scene->Update<ModelSceneNode>(entity, [&](auto& component) {
+      component.m_meshEntities.clear();
 
-    auto meshCount = asset->GetMeshCount();
-    for (int i = 0; i < meshCount; i++) {
-      auto meshEntity = world.create();
-      auto& component = world.emplace<MeshComponent>(meshEntity);
-      component.index = i;
-      component.m_modelAsset = asset;
-      node.m_meshEntities.push_back(meshEntity);
-    }
-
-    world.remove<NewModelTag>(entity);
+      auto meshCount = asset->GetMeshCount();
+      for (int i = 0; i < meshCount; i++) {
+        auto meshEntity = scene->CreateEntity();
+        scene->Emplace<MeshComponent>(meshEntity);
+        scene->Update<MeshComponent>(meshEntity, [&](auto& component) {
+          component.index = i;
+          component.m_modelAsset = asset;
+          return true;
+        });
+        component.m_meshEntities.push_back(meshEntity);
+      }
+      return true;
+    });
+    scene->Remove<NewModelTag>(entity);
   }
+  co_return;
+}
+
+Job::SceneSystem SceneSystem::s_sceneSystem;
+
+void
+SceneSystem::Initialize() {
+  s_sceneSystem.Init();
+}
+
+Task<void>
+SceneSystem::Update(Scene* scene) {
+  co_await CreateAssetCache(scene);
+  co_await LoadMesh(scene);
+  ClearUnuseAsset(scene);
+
+  // update scene aabb
+  s_sceneSystem.Update(0, scene);
 
   co_return;
 }

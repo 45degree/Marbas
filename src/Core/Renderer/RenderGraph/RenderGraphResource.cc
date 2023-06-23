@@ -4,7 +4,7 @@
 
 namespace Marbas::details {
 
-RenderGraphTexture::RenderGraphTexture(const char* name, RHIFactory* rhiFactory, const ImageCreateInfo& createInfo)
+RenderGraphTexture::RenderGraphTexture(std::string_view name, RHIFactory* rhiFactory, const ImageCreateInfo& createInfo)
     : RenderGraphResource(name, rhiFactory), m_imageCreateInfo(createInfo) {}
 
 RenderGraphTexture::~RenderGraphTexture() {

@@ -18,7 +18,7 @@ struct Material {
   bool m_useNormalTexture = false;
 
   std::optional<AssetPath> m_roughnessTexturePath;
-  float m_roughnessValue = 0;
+  float m_roughnessValue = 1;
   bool m_useRoughnessTexture = false;
 
   std::optional<AssetPath> m_metalnessTexturePath;

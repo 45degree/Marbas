@@ -23,6 +23,8 @@ struct DirectLightPassCreateInfo {
   RenderGraphTextureHandler metallicTeture;
   RenderGraphTextureHandler aoTeture;
   RenderGraphTextureHandler directionalShadowmap;
+  RenderGraphTextureHandler indirectDiffuse;
+  RenderGraphTextureHandler indirectSpecular;
   RenderGraphTextureHandler finalColorTexture;
 };
 
@@ -64,6 +66,8 @@ class DirectLightPass {
   RenderGraphTextureHandler m_aoTexture;
   RenderGraphTextureHandler m_directionalShadowmap;
   RenderGraphTextureHandler m_finalColorTexture;
+  RenderGraphTextureHandler m_indirectDiffuse;
+  RenderGraphTextureHandler m_indirectSpecular;
 };
 
 }  // namespace Marbas

@@ -16,12 +16,11 @@ layout(binding = 1, set = 0) uniform sampler2D gNormalMetallic;
 layout(binding = 2, set = 0) uniform sampler2D gPositionRoughness;
 layout(binding = 3, set = 0) uniform sampler2D gAO;
 layout(binding = 4, set = 0) uniform sampler2DArray directionalShadowMap;
+layout(binding = 5, set = 0) uniform sampler2D gIndirectDiffuse;
+layout(binding = 6, set = 0) uniform sampler2D gIndirectSpecular;
 
 layout(std140, binding = 0, set = 1) uniform DirectionalLightList {
-  int shadowLightCount;
-  int unshadowLightCount;
-  int shadowLightIndexList[MAX_DIRECTIONAL_LIGHT_COUNT];
-  int unshadowLightIndexList[MAX_DIRECTIONAL_LIGHT_COUNT];
+  int directionLightCount;
   DirectionLightInfo lightInfo[MAX_DIRECTIONAL_LIGHT_COUNT];
 };
 
@@ -77,25 +76,21 @@ void main() {
   vec3 color = vec3(0, 0, 0);
 
   // calculate unshadow light
-  for(int i = 0; i < unshadowLightCount; i++) {
-    int index = -unshadowLightIndexList[i];
-    vec3 L = -lightInfo[index].direction;
-    vec3 radiance = lightInfo[index].colorEnergy.xyz * lightInfo[index].colorEnergy.w;
+  for(int i = 0; i < directionLightCount; i++) {
+    float shadow = 0.0;
+    vec3 L = -lightInfo[i].directionShadow.xyz;
+    vec3 radiance = lightInfo[i].colorEnergy.xyz * lightInfo[i].colorEnergy.w;
     vec3 Lo = CalculateDirectLightColor(normal, L, V, radiance, albedo, metallic, roughness);
-    color += Lo;
-  }
-
-  for(int i = 0; i < shadowLightCount; i++) {
-    int index = shadowLightIndexList[i];
-    vec3 L = -lightInfo[index].direction;
-    vec3 radiance = lightInfo[index].colorEnergy.xyz * lightInfo[index].colorEnergy.w;
-    vec3 Lo = CalculateDirectLightColor(normal, L, V, radiance, albedo, metallic, roughness);
-
-    float shadow = DirectionLightShadow(worldPos, normal, cameraView, directionalShadowMap, lightInfo[index]);
+    if(lightInfo[i].directionShadow.w > 0.5) {
+      shadow = DirectionLightShadow(worldPos, normal, cameraView, directionalShadowMap, lightInfo[i]);
+    }
     color += (1 - shadow) * Lo;
   }
 
-  color += vec3(0.03) * albedo; // * ao;
+  color += 2 * (texture(gIndirectSpecular, inTex).xyz + texture(gIndirectDiffuse, inTex).xyz);
+  // color += 2 * (texture(gIndirectDiffuse, inTex).xyz);
+
+  // color += vec3(0.03) * albedo; // * ao;
   color = color / (color + vec3(1.0));
   color = pow(color, vec3(1.0/2.2));
 

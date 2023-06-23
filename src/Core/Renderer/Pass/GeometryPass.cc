@@ -8,7 +8,7 @@
 #include "Core/Common.hpp"
 #include "Core/Renderer/GBuffer.hpp"
 #include "Core/Scene/Component/Component.hpp"
-#include "Core/Scene/GPUDataPipeline/MeshGPUData.hpp"
+#include "Core/Scene/Component/RenderComponent/MeshRenderComponent.hpp"
 
 namespace Marbas {
 
@@ -72,7 +72,7 @@ GeometryPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.WriteTexture(m_depthTexture, TextureAttachmentType::DEPTH);
 
   builder.BeginPipeline();
-  builder.AddShaderArgument(MeshGPUData::GetDescriptorSetArgument());
+  builder.AddShaderArgument(MeshRenderComponent::GetDescriptorSetArgument());
   builder.AddShaderArgument(m_argument);
   builder.SetPushConstantSize(sizeof(glm::mat4));
   builder.AddShader("Shader/geometry.vert.spv", ShaderType::VERTEX_SHADER);
@@ -125,8 +125,8 @@ GeometryPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuff
   auto* bufferContext = m_rhiFactory->GetBufferContext();
   auto* pipelineContext = m_rhiFactory->GetPipelineContext();
 
-  auto modelManager = AssetManager<ModelAsset>::GetInstance();
-  auto meshGPUDataManager = MeshGPUDataManager::GetInstance();
+  // auto modelManager = AssetManager<ModelAsset>::GetInstance();
+  // auto meshGPUDataManager = MeshGPUDataManager::GetInstance();
 
   /**
    * load all model and calculate the sum of mesh
@@ -181,16 +181,14 @@ GeometryPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuff
 
     commandList.PushConstant(pipeline, &model, sizeof(glm::mat4), 0);
     for (auto mesh : modelSceneNode.m_meshEntities) {
-      if (!world.any_of<RenderableMeshTag>(mesh)) continue;
+      if (!world.any_of<MeshRenderComponent>(mesh)) continue;
 
-      auto data = meshGPUDataManager->Get(mesh);
-      if (data == nullptr) continue;
+      auto& meshRenderComponent = world.get<MeshRenderComponent>(mesh);
+      auto& indexCount = meshRenderComponent.m_indexCount;
 
-      auto& indexCount = data->m_indexCount;
-
-      commandList.BindDescriptorSet(pipeline, {data->m_descriptorSet, m_descriptorSet});
-      commandList.BindVertexBuffer(data->m_vertexBuffer);
-      commandList.BindIndexBuffer(data->m_indexBuffer);
+      commandList.BindDescriptorSet(pipeline, {meshRenderComponent.m_descriptorSet, m_descriptorSet});
+      commandList.BindVertexBuffer(meshRenderComponent.m_vertexBuffer);
+      commandList.BindIndexBuffer(meshRenderComponent.m_indexBuffer);
       commandList.DrawIndexed(indexCount, 1, 0, 0, 0);
     }
   }

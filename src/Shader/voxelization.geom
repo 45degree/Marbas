@@ -11,13 +11,14 @@ layout(location = 1) out vec3 outNormal;
 layout(location = 2) out vec2 outTex;
 layout(location = 3) out vec3 outPos;
 
-layout(std140, binding = 0, set = 1) uniform ProjMatrix {
+layout(std140, binding = 2, set = 1) uniform ProjMatrix {
   mat4 projX;
   mat4 projY;
   mat4 projZ;
-  mat4 viewMatrix;
-  int voxelResolution;
+  vec4 voxelSizeResolution;
+  vec3 probePos;
 };
+
 
 void main() {
   vec3 edge1 = gl_in[1].gl_Position.xyz - gl_in[0].gl_Position.xyz;

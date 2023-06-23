@@ -4,6 +4,7 @@
 #define CASCADE_COUNT 3
 
 #extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_shader_image_load_formatted : enable
 
 #include "common/Shadow.glsl"
 
@@ -16,17 +17,18 @@ layout(location = 3) in vec3 InPos;
  * input gbuffer
  */
 layout(binding = 0, set = 0) uniform sampler2DArray directionalShadowMap;
-layout(binding = 1, set = 0, rgba32f) uniform writeonly image3D voxelScene;
 
 /**
  * voxel info
  */
-layout(std140, binding = 0, set = 1) uniform VoxelInfo{
+layout(binding = 0, set = 1, r32ui) uniform volatile coherent uimage3D voxelDiffuse;
+layout(binding = 1, set = 1, r32ui) uniform volatile coherent uimage3D voxelNormal;
+layout(std140, binding = 2, set = 1) uniform VoxelInfo{
   mat4 projX;
   mat4 projY;
   mat4 projZ;
-  mat4 viewMatrix;
-  int voxelResolution;
+  vec4 voxelSizeResolution;
+  vec3 probePos;
 };
 
 /**
@@ -54,8 +56,52 @@ layout(std140, binding = 0, set = 3) uniform DirectionalLightList {
   DirectionLightInfo lightInfo[MAX_DIRECTIONAL_LIGHT_COUNT];
 };
 
+vec3 EncodeNormal(vec3 normal) {
+    return normal * 0.5f + vec3(0.5f);
+}
+
+vec3 DecodeNormal(vec3 normal) {
+    return normal * 2.0f - vec3(1.0f);
+}
+
+vec4 convRGBA8ToVec4(uint val) {
+    return vec4(float((val & 0x000000FF)), 
+    float((val & 0x0000FF00) >> 8U), 
+    float((val & 0x00FF0000) >> 16U), 
+    float((val & 0xFF000000) >> 24U));
+}
+
+uint convVec4ToRGBA8(vec4 val) {
+    return (uint(val.w) & 0x000000FF) << 24U | 
+    (uint(val.z) & 0x000000FF) << 16U | 
+    (uint(val.y) & 0x000000FF) << 8U | 
+    (uint(val.x) & 0x000000FF);
+}
+
+#define imageAtomicRGBA8Avg(grid, coords, value) do {                                       \
+    (value).rgb *= 255.0;                                                                   \
+    uint newVal = convVec4ToRGBA8((value));                                                 \
+    uint prevStoredVal = 0;                                                                 \
+    uint curStoredVal;                                                                      \
+    uint numIterations = 0;                                                                 \
+                                                                                            \
+    while((curStoredVal = imageAtomicCompSwap((grid), (coords), prevStoredVal, newVal))     \
+            != prevStoredVal                                                                \
+            && numIterations < 255)                                                         \
+    {                                                                                       \
+        prevStoredVal = curStoredVal;                                                       \
+        vec4 rval = convRGBA8ToVec4(curStoredVal);                                          \
+        rval.rgb = (rval.rgb * rval.a);                                                     \
+        vec4 curValF = rval + (value);                                                      \
+        curValF.rgb /= curValF.a;                                                           \
+        newVal = convVec4ToRGBA8(curValF);                                                  \
+        ++numIterations;                                                                    \
+    }                                                                                       \
+}while(false);
+
 void main() {
   // the framebuffer size must be equal to the voxel resolution;
+  int voxelResolution = int(voxelSizeResolution.w);
   ivec3 camPos = ivec3(gl_FragCoord.xy, voxelResolution * gl_FragCoord.z);
   ivec3 voxelPos;
   if( axis == 0 ) {
@@ -76,22 +122,21 @@ void main() {
   }
 
   // add shadowmap
-  vec4 color;
+  vec4 color = vec4(0);
   if(texInfo.x == 1) {
-    color = texture(diffuseTexture, InTex);
+    color = pow(texture(diffuseTexture, InTex), vec4(2.2));
+    // color = texture(diffuseTexture, InTex);
+    color.w = 1;
   }else {
     color = diffuseColor;
   }
-  color.w = 1;
-
-  // calculate shadow
-  // for(int i = 0; i < shadowLightCount; i++) {
-  //   int index = shadowLightIndexList[i];
-  //   float shadow = DirectionLightShadow(InPos, InNormal, viewMatrix, directionalShadowMap, lightInfo[index]);
-  //   color.xyz *= (1 - shadow);
-  // }
 
   // color = vec4(InPos, axis);
-  imageStore(voxelScene, voxelPos, color);
+  imageAtomicRGBA8Avg(voxelDiffuse, voxelPos, color);
+
+  vec4 normal = vec4(EncodeNormal(normalize(InNormal.xyz)), 1.0);
+  imageAtomicRGBA8Avg(voxelNormal, voxelPos, normal);
+  // imageStore(voxelDiffuse, voxelPos, color);
+  // imageStore(voxelNormal, voxelPos, vec4(InNormal, 1));
 }
 

@@ -2,6 +2,7 @@
 #include <entt/entt.hpp>
 
 #include "AssetManager/AssetManager.hpp"
+#include "Core/Scene/System/SceneSystemJob/SceneSystem.hpp"
 #include "RHIFactory.hpp"
 
 namespace Marbas {
@@ -15,18 +16,11 @@ class Scene;
  */
 struct SceneSystem {
  public:
+  static void
+  Initialize();
+
   static Task<void>
-  Update(Scene* scene) {
-    co_await CreateAssetCache(scene);
-    co_await LoadMesh(scene);
-    ClearUnuseAsset(scene);
-
-    // update scene aabb
-    UpdateAABBComponent(scene);
-    UpdateTransformComp(scene);
-
-    co_return;
-  }
+  Update(Scene* scene);
 
  private:
   /**
@@ -43,14 +37,7 @@ struct SceneSystem {
   static void
   ClearUnuseAsset(Scene* scene);
 
-  static void
-  UpdateTransformComp(Scene* scene);
-
-  static void
-  UpdateTransformCompForEntity(Scene* scene, entt::entity entity);
-
-  static void
-  UpdateAABBComponent(Scene* scene);
+  static Job::SceneSystem s_sceneSystem;
 };
 
 }  // namespace Marbas

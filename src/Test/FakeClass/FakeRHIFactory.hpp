@@ -11,6 +11,7 @@ class MockComputeCommandBuffer final : public ComputeCommandBuffer {
   MOCK_METHOD(void, BeginPipeline, (uintptr_t));
   MOCK_METHOD(void, EndPipeline, (uintptr_t));
   MOCK_METHOD(void, BindDescriptorSet, (uintptr_t, const std::vector<uintptr_t>&));
+  MOCK_METHOD(void, ClearColorImage, (Image*, const ClearValue&, int, int, int, int));
   MOCK_METHOD(void, Dispatch, (uint32_t, uint32_t, uint32_t));
 };
 

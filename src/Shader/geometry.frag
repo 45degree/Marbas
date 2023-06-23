@@ -23,7 +23,7 @@ layout(binding = 4, set = 0) uniform sampler2D metallicTexture;
 void main() {
 
   if(texInfo.x == 1) {
-    vec4 color = texture(diffuseTexture, ourTex);
+    vec4 color = pow(texture(diffuseTexture, ourTex), vec4(2.2));
     color[3] = 1;
     FragColor = color;
   }else {

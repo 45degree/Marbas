@@ -1,19 +1,23 @@
 #version 450
 
+#extension GL_GOOGLE_include_directive : enable
+#include "common/MicroFace.glsl"
+
 layout(location = 0) in vec2 inTex;
 layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outReflectColor;
 
-layout(binding = 0, set = 0) uniform sampler3D voxel;
-layout(binding = 1, set = 0) uniform sampler2D gWorldPos;
-layout(binding = 2, set = 0) uniform sampler2D gNormal;
-layout(binding = 3, set = 0) uniform sampler2D gDiffuse;
+layout(binding = 0, set = 0) uniform sampler2D gWorldPosRoughness;
+layout(binding = 1, set = 0) uniform sampler2D gNormalMetallic;
+layout(binding = 2, set = 0) uniform sampler2D gDiffuse;
 
-layout(std140, binding = 0, set = 1) uniform VoxelInfo {
-  vec4 voxelResolutionSize; // the length of xyz and the size of voxel
-  vec3 voxelCenter;
+layout(binding = 0, set = 1) uniform sampler3D voxelRadiance;
+layout(std140, binding = 1, set = 1) uniform VoxelInfo {
+  vec4 voxelSizeResolution;
+  vec3 probePos;
 };
 
-layout(binding = 1, set = 1) uniform CameraInfo {
+layout(binding = 0, set = 2) uniform CameraInfo {
   vec3 cameraPos;
 };
 
@@ -28,17 +32,33 @@ vec3 coneDirections[6] = vec3[] (
   vec3(-0.823639, 0.267617, 0.5)
 );
 
+/**
+ * @brief calculate the direct light color in PBR
+ *
+ * @param N the normal vector of shading point
+ * @param L the light vector(shading point -> light)
+ * @param V the camera veiew vector(shading point -> camera pos)
+ * @param albedo the albedo of shading point
+ * @param metallic the metallic of shading point
+ * @param roughness the roughness of shading point
+ */
+vec3
+CalculateSpecular(vec3 N, vec3 V, vec3 albedo, float metallic, float roughness) {
+  vec3 F0 = vec3(0.04);
+  F0 = mix(F0, albedo, metallic);
+  return FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+}
+
 vec4
 SampleVoxels(vec3 worldPos, float lod) {
-	vec3 clipPos = (worldPos - voxelCenter) / (voxelResolutionSize.xyz * voxelResolutionSize.w);
-  // clipPos.y = -clipPos.y;
+	vec3 clipPos = (worldPos - probePos) / (voxelSizeResolution.xyz * voxelSizeResolution.w);
 	vec3 ndc = clipPos + 0.5;
-	return textureLod(voxel, ndc, lod);
+	return textureLod(voxelRadiance, ndc, lod);
 }
 
 vec4
 ConeTracing(vec3 pos, vec3 direction, vec3 normal, float tanHalfAngle, float maxDist, float alphaThresh){
-  float voxelWorldSize = voxelResolutionSize.w;
+  float voxelWorldSize = voxelSizeResolution.x;
 	vec3 start = pos + normal * voxelWorldSize;
 
 	float d = voxelWorldSize;
@@ -61,13 +81,23 @@ ConeTracing(vec3 pos, vec3 direction, vec3 normal, float tanHalfAngle, float max
 }
 
 void main() {
-  vec3 worldPos = texture(gWorldPos, inTex).xyz;
-  vec3 normal = texture(gNormal, inTex).xyz;
+  vec3 worldPos = texture(gWorldPosRoughness, inTex).xyz;
+  float roughness = texture(gWorldPosRoughness, inTex).w;
+  vec3 normal = texture(gNormalMetallic, inTex).xyz;
+  float metallic = texture(gNormalMetallic, inTex).w;
   vec4 diffuse = texture(gDiffuse, inTex);
 
   vec3 wo = normalize(cameraPos - worldPos);
   vec3 N = normalize(normal);
-  vec3 reflectDir = normalize(reflect(-wo,N));
+
+  // check if the pos is in the probe
+  vec3 posDir = abs(worldPos - probePos);
+  vec3 halfProbeWorldSize = voxelSizeResolution.xyz * voxelSizeResolution.w * 0.5;
+  if(posDir.x > halfProbeWorldSize.x || posDir.y > halfProbeWorldSize.y || posDir.z > halfProbeWorldSize.z) {
+    outColor = vec4(0, 0, 0, 0);
+    outReflectColor = vec4(0, 0, 0, 0);
+    return;
+  }
 
   /**
    * use gram schmidt orthogonalization to generate a random TBN
@@ -82,16 +112,22 @@ void main() {
 	vec3 B = cross(T, N);
   mat3 TBN = mat3(T,B,N);
 
-  // //叠加六个锥体
-  vec4 diffuseReflection = vec4(0, 0, 0, 0);
+  float maxDistance = voxelSizeResolution.x * voxelSizeResolution.w;
 
-  // diffuseReflection = coneWeights[0] * ConeTracing(worldPos, normalize(TBN * coneDirections[0]) , N, 0.577, 1000, 0.95);
+  //叠加六个锥体
+  vec4 diffuseReflection = vec4(0, 0, 0, 0);
   for(int i = 0; i < 6; i++) {
-    diffuseReflection += coneWeights[i] * ConeTracing(worldPos, normalize(TBN * coneDirections[i]) , N, 0.577, 1000, 0.95);
+    diffuseReflection += coneWeights[i] * ConeTracing(worldPos, normalize(TBN * coneDirections[i]) , N, 0.577, maxDistance, 0.95);
   }
   outColor.xyz = diffuse.xyz * diffuseReflection.xyz;
+  outColor.a = 1;
 
-  // convert to gamma space
-  const float gamma = 2.2;
-  outColor.rgb = pow(outColor.rgb, vec3(1.0 / gamma));
+  // 计算反射
+  vec3 reflectDir = reflect(-wo, normal);
+  vec3 F0 = vec3(0.04);
+  F0 = mix(F0, diffuse.xyz, metallic);
+
+  float aperture = clamp(tan(HALF_PI * roughness), 0.0174533, PI);
+  outReflectColor.xyz = ConeTracing(worldPos, reflectDir, N, aperture, maxDistance, 0.95).xyz;
+  outReflectColor.xyz = F0 * outReflectColor.xyz;
 }

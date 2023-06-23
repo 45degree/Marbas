@@ -14,22 +14,6 @@ struct VoxelVisulzationPassCreateInfo {
   RenderGraphTextureHandler m_depthTexture;
 };
 
-class VoxelVisulzationPrepass {
- public:
-  VoxelVisulzationPrepass();
-
- public:
-  void
-  SetUp(RenderGraphGraphicsBuilder& builder);
-
-  void
-  Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList);
-
- private:
-  RenderGraphTextureHandler m_frontTexture;
-  RenderGraphTextureHandler m_backTexture;
-};
-
 class VoxelVisulzationPass {
  public:
   VoxelVisulzationPass(const VoxelVisulzationPassCreateInfo& createInfo);
@@ -42,9 +26,7 @@ class VoxelVisulzationPass {
   Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList);
 
   bool
-  IsEnable(RenderGraphGraphicsRegistry& registry) {
-    return true;
-  }
+  IsEnable(RenderGraphGraphicsRegistry& registry);
 
  private:
   struct VoxelVisulizationInfo {

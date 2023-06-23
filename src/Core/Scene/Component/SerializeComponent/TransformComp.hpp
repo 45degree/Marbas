@@ -23,30 +23,44 @@ class SceneLightNodeSystem;
  *
  */
 class TransformComp final {
-  friend class Scene;
-  friend class SceneSystem;
-
  private:
   glm::mat4 m_globalTransform = glm::mat4(1.0);
-
-  /**
-   * @brief the global transform matrix will be updated to this value in the next frame.
-   * @see SceneSystem::UpdateTransformComp
-   */
-  std::optional<glm::mat4> m_updatedGlobalTransform = std::nullopt;
+  glm::mat4 m_localTransform = glm::mat4(1.0);
+  bool m_isDirty = false;
 
  public:
   const glm::mat4&
   GetGlobalTransform() const {
-    if (m_updatedGlobalTransform.has_value()) {
-      return *m_updatedGlobalTransform;
-    }
     return m_globalTransform;
   }
 
+  const glm::mat4&
+  GetLocalTransform() const {
+    return m_localTransform;
+  }
+
   void
-  SetGlobalTransform(const glm::mat4& transformComp) {
-    m_updatedGlobalTransform = transformComp;
+  SetGlobalTransform(const glm::mat4& globalTransform) {
+    m_globalTransform = globalTransform;
+    m_isDirty = false;
+  }
+
+  void
+  SetLocalTransform(const glm::mat4& localTransform) {
+    m_localTransform = localTransform;
+    m_isDirty = true;
+  }
+
+  void
+  SetLocalTransform(const glm::mat4& localTransform, const glm::mat4& parentGlobalTransform) {
+    m_globalTransform = parentGlobalTransform * localTransform;
+    m_localTransform = localTransform;
+    m_isDirty = false;
+  }
+
+  bool
+  IsDirty() const {
+    return m_isDirty;
   }
 
   template <typename Archive>

@@ -167,7 +167,7 @@ AtmospherePass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBu
 
 bool
 AtmospherePass::IsEnable(RenderGraphGraphicsRegistry& registry) {
-  auto scene = registry.GetCurrentActiveScene();
+  const auto* scene = registry.GetCurrentActiveScene();
   if (scene == nullptr) return false;
 
   auto& world = scene->GetWorld();

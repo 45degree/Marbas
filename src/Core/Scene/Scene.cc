@@ -35,6 +35,7 @@ RegistryNodes(entt::registry& world) {
   RegistryNode<DirectionLightComponent>(world);
   RegistryNode<PointLightSceneNode>(world);
   RegistryNode<ModelSceneNode>(world);
+  RegistryNode<VXGIProbeSceneNode>(world);
 }
 
 Scene::Scene() {
@@ -76,10 +77,7 @@ Scene::LoadFromFile(const Path& scenePath) {
   entt::registry world;
   SerializeComponent(world, archive);
 
-  auto scene = std::make_unique<Scene>(std::move(world));
-
-  auto ExecuteCreateFunc = [&scene]<typename T>(T t) {
-    auto& world = scene->GetWorld();
+  auto ExecuteCreateFunc = [&]<typename T>(T t) {
     auto view = world.view<T>();
     for (auto entity : view) {
       T::OnCreate(world, entity);
@@ -90,6 +88,7 @@ Scene::LoadFromFile(const Path& scenePath) {
   ExecuteCreateFunc(DirectionLightComponent());
   ExecuteCreateFunc(DirectionShadowComponent());
 
+  auto scene = std::make_unique<Scene>(std::move(world));
   return scene;
 }
 

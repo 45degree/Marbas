@@ -32,9 +32,10 @@ struct ExecuteAfterLoad<> {
   operator()(entt::registry& world, entt::entity node){};
 };
 
+define_has_member(AfterLoad);
+
 template <typename Component, typename... Components>
 struct ExecuteAfterLoad<Component, Components...> {
-  define_has_member(AfterLoad);
 
   void
   operator()(entt::registry& world, entt::entity node) {
@@ -89,12 +90,17 @@ SerializeComponent(entt::registry& world, cereal::InputArchive<ArchiveType, flag
   loader.component<SerializeComponents>(archive);
   loader.orphans();
 
-  auto view = world.view<entt::entity>();
-  for (auto entity : view) {
+  world.each([&](auto entity) {
     if (world.any_of<SerializeComponents>(entity)) {
       details::ExecuteAfterLoad<SerializeComponents>()(world, entity);
     }
-  }
+  });
+  //auto view = world.view<entt::entity>();
+  //for (auto entity : view) {
+  //  if (world.any_of<SerializeComponents>(entity)) {
+  //    details::ExecuteAfterLoad<SerializeComponents>()(world, entity);
+  //  }
+  //}
 }
 
 template <typename ArchiveType, uint32_t flags = 0>

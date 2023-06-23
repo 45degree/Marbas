@@ -1,7 +1,8 @@
 #include "DirectLightPass.hpp"
 
+#include <nameof.hpp>
+
 #include "Core/Scene/Component/Component.hpp"
-#include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
 
 namespace Marbas {
 
@@ -15,6 +16,8 @@ DirectLightPass::DirectLightPass(const DirectLightPassCreateInfo& createInfo)
       m_roughnessTexture(createInfo.roughnessTeture),
       m_metallicTexture(createInfo.metallicTeture),
       m_aoTexture(createInfo.aoTeture),
+      m_indirectDiffuse(createInfo.indirectDiffuse),
+      m_indirectSpecular(createInfo.indirectSpecular),
       m_directionalShadowmap(createInfo.directionalShadowmap),
       m_finalColorTexture(createInfo.finalColorTexture) {
   auto pipelineCtx = m_rhiFactory->GetPipelineContext();
@@ -69,6 +72,8 @@ DirectLightPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.ReadTexture(m_positionTexture, m_sampler);
   builder.ReadTexture(m_aoTexture, m_sampler);
   builder.ReadTexture(m_directionalShadowmap, m_sampler, 0, shadowArraySize, 0, 1);
+  builder.ReadTexture(m_indirectDiffuse, m_sampler);
+  builder.ReadTexture(m_indirectSpecular, m_sampler);
   builder.WriteTexture(m_finalColorTexture);
 
   builder.SetFramebufferSize(m_width, m_height, 1);
@@ -92,8 +97,10 @@ DirectLightPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   argument.Bind(2, DescriptorType::IMAGE);
   argument.Bind(3, DescriptorType::IMAGE);
   argument.Bind(4, DescriptorType::IMAGE);
+  argument.Bind(5, DescriptorType::IMAGE);
+  argument.Bind(6, DescriptorType::IMAGE);
   builder.AddShaderArgument(argument);
-  builder.AddShaderArgument(LightGPUData::GetDescriptorSetArgument());
+  builder.AddShaderArgument(LightRenderComponent::GetDescriptorSetArgument());
   builder.AddShaderArgument(m_argument);
 
   builder.EndPipeline();
@@ -106,6 +113,7 @@ DirectLightPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandB
   auto pipeline = registry.GetPipeline(0);
   auto scene = registry.GetCurrentActiveScene();
 
+  auto& world = scene->GetWorld();
   auto bufCtx = m_rhiFactory->GetBufferContext();
   auto& camera = scene->GetEditorCamera();
   m_cameraInfo.cameraPos = camera->GetPosition();
@@ -126,11 +134,17 @@ DirectLightPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandB
   scissor[0].height = m_height;
   scissor[0].width = m_width;
 
+  auto renderLightDataView = world.view<LightRenderComponent>();
+  DLOG_IF(WARNING, renderLightDataView.size() > 1)
+      << FORMAT("multi {} in the scene", NAMEOF_TYPE(LightRenderComponent));
+  auto& renderLightData = world.get<LightRenderComponent>(renderLightDataView[0]);
+  auto& lightDataSet = renderLightData.m_lightSet;
+
   commandList.Begin();
   commandList.BeginPipeline(pipeline, framebuffer, {{0, 0, 0, 0}});
   commandList.SetViewports(viewport);
   commandList.SetScissors(scissor);
-  commandList.BindDescriptorSet(pipeline, {inputSet, LightGPUData::GetLightSet(), m_descriptorSet});
+  commandList.BindDescriptorSet(pipeline, {inputSet, lightDataSet, m_descriptorSet});
   commandList.Draw(6, 1, 0, 0);
   commandList.EndPipeline(pipeline);
   commandList.End();

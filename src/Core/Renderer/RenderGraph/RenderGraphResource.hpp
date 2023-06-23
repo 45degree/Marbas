@@ -11,7 +11,7 @@ namespace details {
 
 class RenderGraphResource : public RenderGraphNode {
  public:
-  RenderGraphResource(const char* name, RHIFactory* rhiFactory)
+  RenderGraphResource(std::string_view name, RHIFactory* rhiFactory)
       : RenderGraphNode(name, RenderGraphNodeType::Resource), m_rhiFactory(rhiFactory) {}
 
   virtual void
@@ -47,7 +47,7 @@ class RenderGraphTexture final : public RenderGraphResource {
   };
 
  public:
-  RenderGraphTexture(const char* name, RHIFactory* rhiFactory, const ImageCreateInfo& createInfo);
+  RenderGraphTexture(std::string_view name, RHIFactory* rhiFactory, const ImageCreateInfo& createInfo);
 
   ~RenderGraphTexture();
 

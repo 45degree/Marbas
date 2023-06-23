@@ -46,4 +46,6 @@ TEST_F(RenderGraphResourceTest, CreateTextureResource) {
   auto* imageView2 = texture.GetImageView();
 }
 
+TEST_F(RenderGraphResourceTest, CreateRenderGraphResourceManager) {}
+
 };  // namespace Marbas

@@ -1,32 +1,43 @@
-#include "MeshGPUData.hpp"
+#include "MeshRenderComponent.hpp"
 
 #include <glog/logging.h>
 
 namespace Marbas {
 
-Image* MeshGPUData::m_emptyImage;
-ImageView* MeshGPUData::m_emptyImageView;
-static std::once_flag s_onceFlags;
+MeshRenderComponent::MeshRenderComponent(RHIFactory* rhiFactory, uintptr_t sampler, ImageView* emptyImageView)
+    : m_rhiFactory(rhiFactory), m_externSampler(sampler), m_externEmptyImageView(emptyImageView) {}
 
-MeshGPUData::MeshGPUData() : GPUDataPipelineDataBase() {}
-
-MeshGPUData::~MeshGPUData() {
+MeshRenderComponent::~MeshRenderComponent() {
   auto bufCtx = m_rhiFactory->GetBufferContext();
-  auto pipelineCtx = m_rhiFactory->GetPipelineContext();
+  bufCtx->DestroyBuffer(m_materialInfoBuffer);
+}
 
-  bufCtx->DestroyBuffer(m_vertexBuffer);
-  bufCtx->DestroyBuffer(m_indexBuffer);
-  pipelineCtx->DestroySampler(m_sampler);
-  pipelineCtx->DestroyDescriptorSet(m_descriptorSet);
+void
+MeshRenderComponent::Init(Mesh& mesh) {
+  CreateMeshVertexIndexData(mesh);
+  CreateMaterialBuffer(mesh);
+  CreateMeshDescriptorSet(mesh);
+}
+
+void
+MeshRenderComponent::Update(Mesh& mesh) {
+  if (mesh.m_materialTexChanged) {
+    UpdateMaterial(mesh);
+    UpdateMaterialInfo(mesh);
+    return;
+  } else if (mesh.m_materialValueChanged) {
+    UpdateMaterialInfo(mesh);
+    return;
+  }
+  return;
 }
 
 const DescriptorSetArgument&
-MeshGPUData::GetDescriptorSetArgument() {
+MeshRenderComponent::GetDescriptorSetArgument() {
   static DescriptorSetArgument argument;
   static std::once_flag flags;
   std::call_once(flags, [&]() {
     argument.Bind(0, DescriptorType::UNIFORM_BUFFER);
-    // argument.Bind(1, DescriptorType::UNIFORM_BUFFER);
     argument.Bind(1, DescriptorType::IMAGE);  // diffuse
     argument.Bind(2, DescriptorType::IMAGE);  // normal
     argument.Bind(3, DescriptorType::IMAGE);  // roughness
@@ -37,11 +48,11 @@ MeshGPUData::GetDescriptorSetArgument() {
 }
 
 void
-MeshGPUData::CreateAndBindDescriptorSet() {
+MeshRenderComponent::CreateMeshDescriptorSet(const Mesh& mesh) {
   auto pipelineCtx = m_rhiFactory->GetPipelineContext();
-
   const auto& argument = GetDescriptorSetArgument();
   m_descriptorSet = pipelineCtx->CreateDescriptorSet(argument);
+
   pipelineCtx->BindBuffer(BindBufferInfo{
       .descriptorSet = m_descriptorSet,
       .descriptorType = DescriptorType::UNIFORM_BUFFER,
@@ -50,18 +61,53 @@ MeshGPUData::CreateAndBindDescriptorSet() {
       .offset = 0,
       .arrayElement = 0,
   });
-  // pipelineCtx->BindBuffer(BindBufferInfo{
-  //     .descriptorSet = m_descriptorSet,
-  //     .descriptorType = DescriptorType::UNIFORM_BUFFER,
-  //     .bindingPoint = 1,
-  //     .buffer = m_transformBuffer,
-  //     .offset = 0,
-  //     .arrayElement = 0,
-  // });
 }
 
 void
-MeshGPUData::UpdateMaterial(Mesh& mesh) {
+MeshRenderComponent::CreateMeshVertexIndexData(const Mesh& mesh) {
+  using enum BufferType;
+
+  m_indexCount = mesh.m_indices.size();
+
+  auto bufCtx = m_rhiFactory->GetBufferContext();
+  auto pipelineCtx = m_rhiFactory->GetPipelineContext();
+  auto vertexBufferSize = sizeof(Vertex) * mesh.m_vertices.size();
+  auto vertexBufferData = mesh.m_vertices.data();
+  auto indexBufferSize = sizeof(uint32_t) * mesh.m_indices.size();
+  auto indexBufferData = mesh.m_indices.data();
+  m_vertexBuffer = bufCtx->CreateBuffer(VERTEX_BUFFER, vertexBufferData, vertexBufferSize, false);
+  m_indexBuffer = bufCtx->CreateBuffer(INDEX_BUFFER, indexBufferData, indexBufferSize, false);
+}
+
+void
+MeshRenderComponent::CreateMaterialBuffer(Mesh& mesh) {
+  auto bufCtx = m_rhiFactory->GetBufferContext();
+
+  constexpr auto materialSize = sizeof(MeshRenderComponent::MaterialInfo);
+  auto& materialInfo = m_materialInfo;
+  auto* materialBuffer = bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, &materialInfo, materialSize, false);
+  m_materialInfoBuffer = materialBuffer;
+}
+
+void
+MeshRenderComponent::UpdateMaterialInfo(const Mesh& mesh) {
+  m_materialInfo.texInfo.x = mesh.m_material.m_useDiffuseTexture;
+  m_materialInfo.texInfo.y = mesh.m_material.m_useNormalTexture;
+  m_materialInfo.texInfo.z = mesh.m_material.m_useMetalnessTexture;
+  m_materialInfo.texInfo.w = mesh.m_material.m_useRoughnessTexture;
+
+  const auto& color = mesh.m_material.m_diffuseColor;
+  m_materialInfo.diffuseColor = glm::vec4(color[0], color[1], color[2], color[3]);
+  m_materialInfo.metallicValue = mesh.m_material.m_metalnessValue;
+  m_materialInfo.roughnessValue = mesh.m_material.m_roughnessValue;
+
+  auto bufCtx = m_rhiFactory->GetBufferContext();
+  auto bufferSize = sizeof(MeshRenderComponent::MaterialInfo);
+  bufCtx->UpdateBuffer(m_materialInfoBuffer, &m_materialInfo, bufferSize, false);
+}
+
+void
+MeshRenderComponent::UpdateMaterial(Mesh& mesh) {
   auto bufCtx = m_rhiFactory->GetBufferContext();
   auto pipelineCtx = m_rhiFactory->GetPipelineContext();
   auto textureManager = AssetManager<TextureAsset>::GetInstance();
@@ -84,7 +130,7 @@ MeshGPUData::UpdateMaterial(Mesh& mesh) {
         .descriptorSet = m_descriptorSet,
         .bindingPoint = bindingPoint,
         .imageView = imageView,
-        .sampler = m_sampler,
+        .sampler = m_externSampler,
     });
   };
 
@@ -92,8 +138,8 @@ MeshGPUData::UpdateMaterial(Mesh& mesh) {
     pipelineCtx->BindImage(BindImageInfo{
         .descriptorSet = m_descriptorSet,
         .bindingPoint = bindingPoint,
-        .imageView = m_emptyImageView,
-        .sampler = m_sampler,
+        .imageView = m_externEmptyImageView,
+        .sampler = m_externSampler,
     });
   };
 
@@ -161,87 +207,6 @@ MeshGPUData::UpdateMaterial(Mesh& mesh) {
   } else {
     bindEmptyImage(bindingPoint);
   }
-}
-
-void
-MeshGPUData::UpdateMaterialInfo(const Mesh& mesh) {
-  m_materialInfo.texInfo.x = mesh.m_material.m_useDiffuseTexture;
-  m_materialInfo.texInfo.y = mesh.m_material.m_useNormalTexture;
-  m_materialInfo.texInfo.z = mesh.m_material.m_useMetalnessTexture;
-  m_materialInfo.texInfo.w = mesh.m_material.m_useRoughnessTexture;
-
-  const auto& color = mesh.m_material.m_diffuseColor;
-  m_materialInfo.diffuseColor = glm::vec4(color[0], color[1], color[2], color[3]);
-  m_materialInfo.metallicValue = mesh.m_material.m_metalnessValue;
-  m_materialInfo.roughnessValue = mesh.m_material.m_roughnessValue;
-}
-
-Task<void>
-MeshGPUData::Update(Mesh& mesh) {
-  auto bufCtx = m_rhiFactory->GetBufferContext();
-
-  if (mesh.m_materialTexChanged) {
-    UpdateMaterial(mesh);
-    UpdateMaterialInfo(mesh);
-    bufCtx->UpdateBuffer(m_materialInfoBuffer, &m_materialInfo, sizeof(MaterialInfo), false);
-  } else if (mesh.m_materialValueChanged) {
-    UpdateMaterialInfo(mesh);
-    bufCtx->UpdateBuffer(m_materialInfoBuffer, &m_materialInfo, sizeof(MaterialInfo), false);
-  }
-  co_return;
-}
-
-Task<>
-MeshGPUData::Load(Mesh& mesh) {
-  m_indexCount = mesh.m_indices.size();
-
-  auto bufCtx = m_rhiFactory->GetBufferContext();
-  auto pipelineCtx = m_rhiFactory->GetPipelineContext();
-  auto vertexBufferSize = sizeof(Vertex) * mesh.m_vertices.size();
-  auto vertexBufferData = mesh.m_vertices.data();
-  auto indexBufferSize = sizeof(uint32_t) * mesh.m_indices.size();
-  auto indexBufferData = mesh.m_indices.data();
-  m_vertexBuffer = bufCtx->CreateBuffer(BufferType::VERTEX_BUFFER, vertexBufferData, vertexBufferSize, false);
-  m_indexBuffer = bufCtx->CreateBuffer(BufferType::INDEX_BUFFER, indexBufferData, indexBufferSize, false);
-
-  m_materialInfoBuffer = bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, &m_materialInfo, sizeof(MaterialInfo), false);
-  // m_transformBuffer = bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, nullptr, sizeof(glm::mat4), false);
-
-  SamplerCreateInfo samplerCreateInfo{
-      .filter = Marbas::Filter::MIN_MAG_MIP_LINEAR,
-      .addressU = Marbas::SamplerAddressMode::WRAP,
-      .addressV = Marbas::SamplerAddressMode::WRAP,
-      .addressW = Marbas::SamplerAddressMode::WRAP,
-      .comparisonOp = Marbas::ComparisonOp::ALWAYS,
-      .mipLodBias = 0,
-      .minLod = 0,
-      .maxLod = 0,
-      .borderColor = Marbas::BorderColor::IntOpaqueBlack,
-  };
-  m_sampler = pipelineCtx->CreateSampler(samplerCreateInfo);
-
-  std::call_once(s_onceFlags, [&]() {
-    m_emptyImage = bufCtx->CreateImage(ImageCreateInfo{
-        .width = 16,
-        .height = 16,
-        .format = ImageFormat::RGBA,
-        .sampleCount = SampleCount::BIT1,
-        .mipMapLevel = 1,
-        .usage = ImageUsageFlags::SHADER_READ,
-        .imageDesc = Image2DDesc(),
-    });
-    m_emptyImageView = bufCtx->CreateImageView(ImageViewCreateInfo{
-        .image = m_emptyImage,
-        .type = ImageViewType::TEXTURE2D,
-        .baseLevel = 0,
-        .levelCount = 1,
-        .baseArrayLayer = 0,
-        .layerCount = 1,
-    });
-  });
-
-  CreateAndBindDescriptorSet();
-  co_await Update(mesh);
 }
 
 }  // namespace Marbas

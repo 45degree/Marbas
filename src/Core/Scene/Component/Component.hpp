@@ -14,3 +14,8 @@
 #include "SerializeComponent/ShadowComponent.hpp"
 #include "SerializeComponent/TagComponent.hpp"
 #include "SerializeComponent/TransformComp.hpp"
+
+// render component
+#include "RenderComponent/LightRenderComponent.hpp"
+#include "RenderComponent/MeshRenderComponent.hpp"
+#include "RenderComponent/VXGIRenderComponent.hpp"

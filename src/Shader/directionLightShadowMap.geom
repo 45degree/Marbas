@@ -11,10 +11,7 @@ layout (triangles, invocations = CASCADE_COUNT + 1) in;
 layout (triangle_strip, max_vertices=3) out;
 
 layout(std140, binding = 0, set = 0) uniform DirectionalLightList {
-  int shadowLightCount;
-  int unshadowLightCount;
-  int shadowLightIndexList[MAX_DIRECTIONAL_LIGHT_COUNT];
-  int unshadowLightIndexList[MAX_DIRECTIONAL_LIGHT_COUNT];
+  int directionLightCount;
   DirectionLightInfo lightInfo[MAX_DIRECTIONAL_LIGHT_COUNT];
 };
 

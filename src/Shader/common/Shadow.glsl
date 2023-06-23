@@ -54,7 +54,7 @@ float DirectionLightShadow(vec3 worldPos, vec3 normal, mat4 cameraView,
   }
   vec4 fragPosLightSpace = lightInfo.lightMatrix[layer] * vec4(worldPos, 1.0);
 
-  vec3 lightDir = -lightInfo.direction;
+  vec3 lightDir = -lightInfo.directionShadow.xyz;
   float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
   bias *= 1 / (lightInfo.cascadePlaneDistances[layer].x * 0.5f);
 

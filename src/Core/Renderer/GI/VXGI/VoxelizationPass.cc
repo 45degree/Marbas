@@ -1,13 +1,13 @@
 #include "VoxelizationPass.hpp"
 
+#include <nameof.hpp>
+
 #include "Core/Common.hpp"
-#include "Core/Scene/GPUDataPipeline/LightGPUData.hpp"
-#include "Core/Scene/GPUDataPipeline/MeshGPUData.hpp"
 
 namespace Marbas::GI {
 
 VoxelizationPass::VoxelizationPass(const VoxelizationCreateInfo& createInfo)
-    : m_shadowMap(createInfo.shadowMap), m_voxelScene(createInfo.voxelScene), m_rhiFactory(createInfo.rhiFactory) {
+    : m_shadowMap(createInfo.shadowMap), m_rhiFactory(createInfo.rhiFactory) {
   auto pipelineCtx = m_rhiFactory->GetPipelineContext();
   auto bufCtx = m_rhiFactory->GetBufferContext();
 
@@ -23,44 +23,27 @@ VoxelizationPass::VoxelizationPass(const VoxelizationCreateInfo& createInfo)
       .borderColor = Marbas::BorderColor::IntOpaqueBlack,
   };
   m_sampler = pipelineCtx->CreateSampler(samplerCreateInfo);
-
-  m_argument.Bind(0, DescriptorType::UNIFORM_BUFFER);
-  m_set = pipelineCtx->CreateDescriptorSet(m_argument);
-
-  m_voxelInfoBuffer = bufCtx->CreateBuffer(BufferType::UNIFORM_BUFFER, &m_voxelInfo, sizeof(VoxelInfo), false);
-  pipelineCtx->BindBuffer(BindBufferInfo{
-      .descriptorSet = m_set,
-      .descriptorType = DescriptorType::UNIFORM_BUFFER,
-      .bindingPoint = 0,
-      .buffer = m_voxelInfoBuffer,
-      .offset = 0,
-      .arrayElement = 0,
-  });
 }
 
 VoxelizationPass::~VoxelizationPass() {
   auto bufCtx = m_rhiFactory->GetBufferContext();
   auto pipelineCtx = m_rhiFactory->GetPipelineContext();
 
-  bufCtx->DestroyBuffer(m_voxelInfoBuffer);
-  pipelineCtx->DestroyDescriptorSet(m_set);
   pipelineCtx->DestroySampler(m_sampler);
 }
 
 void
 VoxelizationPass::SetUp(RenderGraphGraphicsBuilder& builder) {
   builder.ReadTexture(m_shadowMap, m_sampler);
-  builder.ReadStorageImage(m_voxelScene);
 
   DescriptorSetArgument m_inputGBufferArgument;
-  m_inputGBufferArgument.Bind(0, DescriptorType::IMAGE);
-  m_inputGBufferArgument.Bind(1, DescriptorType::STORAGE_IMAGE);
+  m_inputGBufferArgument.Bind(0, DescriptorType::IMAGE);  // shadow map
 
   builder.BeginPipeline();
   builder.AddShaderArgument(m_inputGBufferArgument);
-  builder.AddShaderArgument(m_argument);
-  builder.AddShaderArgument(MeshGPUData::GetDescriptorSetArgument());
-  builder.AddShaderArgument(LightGPUData::GetDescriptorSetArgument());
+  builder.AddShaderArgument(VoxelRenderComponent::GetVoxelizationDescriptorArgument());
+  builder.AddShaderArgument(MeshRenderComponent::GetDescriptorSetArgument());
+  builder.AddShaderArgument(LightRenderComponent::GetDescriptorSetArgument());
   builder.SetPushConstantSize(sizeof(glm::mat4));
   builder.EnableDepthTest(false);
   builder.SetCullMode(CullMode::NONE);
@@ -80,77 +63,88 @@ VoxelizationPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommand
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
 
-  auto* voxelSceneImage = registry.GetImage(m_voxelScene);
-
   auto* scene = registry.GetCurrentActiveScene();
   auto& world = scene->GetWorld();
 
-  auto* meshGPUDataManager = MeshGPUDataManager::GetInstance();
+  auto renderLightDataView = world.view<LightRenderComponent>();
+  DLOG_IF(WARNING, renderLightDataView.size() > 1)
+      << FORMAT("multi {} in the scene", NAMEOF_TYPE(LightRenderComponent));
+  auto& renderLightData = world.get<LightRenderComponent>(renderLightDataView[0]);
+  auto& lightDataSet = renderLightData.m_lightSet;
 
-  /**
-   * update uniform buffer
-   */
-  float halfSize = 1500;
-  auto projectMatrix = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.f, 2 * halfSize);
-  projectMatrix[1][1] *= -1;
-  auto viewX = glm::lookAt(glm::vec3(halfSize, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-  auto viewY = glm::lookAt(glm::vec3(0, halfSize, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, -1));
-  auto viewZ = glm::lookAt(glm::vec3(0, 0, halfSize), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-  m_voxelInfo.projX = projectMatrix * viewX;
-  m_voxelInfo.projY = projectMatrix * viewY;
-  m_voxelInfo.projZ = projectMatrix * viewZ;
-  m_voxelInfo.viewMatrix = scene->GetEditorCamera()->GetViewMatrix();
-
-  auto bufCtx = m_rhiFactory->GetBufferContext();
-  bufCtx->UpdateBuffer(m_voxelInfoBuffer, &m_voxelInfo, sizeof(VoxelInfo), 0);
+  auto giDataView = world.view<VoxelRenderComponent>();
 
   /**
    * record command
    */
 
   commandBuffer.Begin();
-  commandBuffer.ClearColorImage(voxelSceneImage, {0, 0, 0, 0}, 0, 1, 0, 1);
-  commandBuffer.BeginPipeline(pipeline, framebuffer, {});
 
-  std::array<ViewportInfo, 1> viewportInfo;
-  viewportInfo[0].x = 0;
-  viewportInfo[0].y = 0;
-  viewportInfo[0].width = m_voxelInfo.voxelResolution;
-  viewportInfo[0].height = m_voxelInfo.voxelResolution;
+  for (auto&& [entity, giData] : giDataView.each()) {
+    commandBuffer.ClearColorImage(giData.m_voxelDiffuse, {0, 0, 0, 0}, 0, 1, 0, 1);
+    commandBuffer.ClearColorImage(giData.m_voxelNormal, {0, 0, 0, 0}, 0, 1, 0, 1);
+    commandBuffer.BeginPipeline(pipeline, framebuffer, {});
+    std::array<ViewportInfo, 1> viewportInfo;
+    viewportInfo[0].x = 0;
+    viewportInfo[0].y = 0;
+    viewportInfo[0].width = giData.m_resolution;
+    viewportInfo[0].height = giData.m_resolution;
 
-  std::array<ScissorInfo, 1> scissorInfo;
-  scissorInfo[0].x = 0;
-  scissorInfo[0].y = 0;
-  scissorInfo[0].width = m_voxelInfo.voxelResolution;
-  scissorInfo[0].height = m_voxelInfo.voxelResolution;
+    std::array<ScissorInfo, 1> scissorInfo;
+    scissorInfo[0].x = 0;
+    scissorInfo[0].y = 0;
+    scissorInfo[0].width = giData.m_resolution;
+    scissorInfo[0].height = giData.m_resolution;
 
-  commandBuffer.SetViewports(viewportInfo);
-  commandBuffer.SetScissors(scissorInfo);
+    commandBuffer.SetViewports(viewportInfo);
+    commandBuffer.SetScissors(scissorInfo);
 
-  auto view = world.view<ModelSceneNode, RenderableTag>();
-  for (auto&& [modelNode, modelNodeComp] : view.each()) {
-    glm::mat4 modelTransform(1.0);
-    if (world.any_of<TransformComp>(modelNode)) {
-      modelTransform = world.get<TransformComp>(modelNode).GetGlobalTransform();
+    auto view = world.view<ModelSceneNode, RenderableTag>();
+    for (auto&& [modelNode, modelNodeComp] : view.each()) {
+      glm::mat4 modelTransform(1.0);
+      if (world.any_of<TransformComp>(modelNode)) {
+        modelTransform = world.get<TransformComp>(modelNode).GetGlobalTransform();
+      }
+
+      commandBuffer.PushConstant(pipeline, &modelTransform, sizeof(glm::mat4), 0);
+      for (auto mesh : modelNodeComp.m_meshEntities) {
+        if (!world.any_of<MeshRenderComponent>(mesh)) continue;
+
+        auto& meshRenderComponent = world.get<MeshRenderComponent>(mesh);
+        auto& indexCount = meshRenderComponent.m_indexCount;
+
+        commandBuffer.BindDescriptorSet(
+            pipeline, {set, giData.m_setForVoxelization, meshRenderComponent.m_descriptorSet, lightDataSet});
+        commandBuffer.BindVertexBuffer(meshRenderComponent.m_vertexBuffer);
+        commandBuffer.BindIndexBuffer(meshRenderComponent.m_indexBuffer);
+        commandBuffer.DrawIndexed(meshRenderComponent.m_indexCount, 1, 0, 0, 0);
+      }
     }
-
-    commandBuffer.PushConstant(pipeline, &modelTransform, sizeof(glm::mat4), 0);
-    for (auto meshEntity : modelNodeComp.m_meshEntities) {
-      if (!world.any_of<RenderableMeshTag>(meshEntity)) continue;
-
-      auto data = meshGPUDataManager->TryGet(meshEntity);
-      if (data == nullptr) continue;
-
-      commandBuffer.BindDescriptorSet(pipeline, {set, m_set, data->m_descriptorSet, LightGPUData::GetLightSet()});
-      commandBuffer.BindVertexBuffer(data->m_vertexBuffer);
-      commandBuffer.BindIndexBuffer(data->m_indexBuffer);
-      commandBuffer.DrawIndexed(data->m_indexCount, 1, 0, 0, 0);
-    }
+    commandBuffer.EndPipeline(pipeline);
   }
 
   // TODO:
-  commandBuffer.EndPipeline(pipeline);
   commandBuffer.End();
+}
+
+bool
+VoxelizationPass::IsEnable(RenderGraphGraphicsRegistry& registry) {
+  auto* scene = registry.GetCurrentActiveScene();
+  auto& world = scene->GetWorld();
+
+  // no light in the scene
+  auto renderLightDataView = world.view<LightRenderComponent>();
+  if (renderLightDataView.size() == 0) return false;
+
+  // no gi probe in the scene
+  auto giProbeView = world.view<VXGIProbeSceneNode>();
+  if (giProbeView.size() == 0) return false;
+
+  // no active gi probe in the view port
+  auto giDataView = world.view<VoxelRenderComponent>();
+  if (giDataView.size() == 0) return false;
+
+  return true;
 }
 
 };  // namespace Marbas::GI

@@ -14,7 +14,7 @@
 #endif
 
 struct DirectionLightInfo {
-  vec3 direction;
+  vec4 directionShadow;
   vec4 colorEnergy;
   vec4 atlasViewport;
   vec4 cascadePlaneDistances[CASCADE_COUNT + 1];

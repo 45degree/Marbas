@@ -20,9 +20,7 @@ target('Marbas.Core', function()
     add_defines('CASCATE_COUNT=$(CascateCount)')
   end
 
-  if has_config('DirectionLightCount') then
-    add_defines('MAX_DIRECTION_LIGHT_COUNT=$(DirectionLightCount)')
-  end
+  add_defines('MAX_DIRECTION_LIGHT_COUNT=$(DirectionLightCount)')
 
   add_rules('glslc2spv', {
     outputdir = path.join('$(buildir)', '$(os)', '$(arch)', '$(mode)', 'Shader'),

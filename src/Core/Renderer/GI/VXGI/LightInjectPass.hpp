@@ -7,9 +7,6 @@ namespace Marbas::GI {
 
 struct LightInjectPassCreateInfo {
   RHIFactory* rhiFactory;
-  RenderGraphTextureHandler voxelTexture;
-  RenderGraphTextureHandler voxelNormal;
-  RenderGraphTextureHandler voxelRadiance;
 };
 
 class LightInjectPass final {
@@ -24,21 +21,11 @@ class LightInjectPass final {
   void
   Execute(RenderGraphComputeRegistry& registry, ComputeCommandBuffer& commandBuffer);
 
+  bool
+  IsEnable(RenderGraphComputeRegistry& registry);
+
  private:
   RHIFactory* m_rhiFactory = nullptr;
-  struct VoxelInfo {
-    glm::vec4 voxelResolutionSize = glm::vec4(256, 3000 / 256.0, 3000 / 256.0, 3000 / 256.0);
-    glm::vec3 voxelCenter = glm::vec3(0, 0, 0);
-  } m_voxelInfo;
-  Buffer* m_voxelInfoBuffer;
-
-  uintptr_t m_sampler;
-  RenderGraphTextureHandler m_voxelTexture;
-  RenderGraphTextureHandler m_voxelNormal;
-  RenderGraphTextureHandler m_voxelRadiance;
-
-  DescriptorSetArgument m_argument;
-  uintptr_t m_set;
 };
 
 }  // namespace Marbas::GI

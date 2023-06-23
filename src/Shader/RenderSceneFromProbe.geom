@@ -1,7 +1,7 @@
 #version 450
 
-layout (triangles) in;
-layout (triangle_strip, max_vertices=18) out;
+layout(triangles) in;
+layout(triangle_strip, max_vertices=18) out;
 
 layout(location = 0) out vec4 FragPos;    // FragPos from GS (output per emitvertex)
 layout(location = 1) out vec4 FragNormal;
