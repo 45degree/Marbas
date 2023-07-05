@@ -31,12 +31,6 @@ struct SceneSystem {
   static Task<void>
   CreateAssetCache(Scene* scene);
 
-  static Task<void>
-  LoadMesh(Scene* scene);
-
-  static void
-  ClearUnuseAsset(Scene* scene);
-
   static Job::SceneSystem s_sceneSystem;
 };
 

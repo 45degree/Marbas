@@ -23,22 +23,6 @@
 
 namespace Marbas::Gui {
 
-// static std::string
-// _labelPrefix(const char* const label) {
-//   float width = ImGui::CalcItemWidth();
-//
-//   float x = ImGui::GetCursorPosX();
-//   ImGui::Text("%s", label);
-//   ImGui::SameLine();
-//   ImGui::SetCursorPosX(x + width * 0.5f + ImGui::GetStyle().ItemInnerSpacing.x);
-//   ImGui::SetNextItemWidth(-1);
-//
-//   std::string labelID = "##";
-//   labelID += label;
-//
-//   return labelID;
-// }
-
 static bool
 ShowTextureOrColor(std::optional<AssetPath>& texPath, bool& isUseTex) {
   auto texMgr = AssetManager<TextureAsset>::GetInstance();
@@ -307,36 +291,38 @@ GuiInformationWindow::OnDraw() {
 
   DrawComponentProp<TransformComp>("transform", activeScene, m_entity, [&](TransformComp& transform) {
     float translation[3], rotation[3], scale[3];
-    auto modelMatrix = transform.GetGlobalTransform();
+    auto modelMatrix = transform.GetLocalTransform();
     ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(modelMatrix), translation, rotation, scale);
 
     const auto& world = activeScene->GetWorld();
+    bool changeFlag = false;
     if (world.any_of<ModelSceneNode>(m_entity)) {
       ImGui::Text("translate");
       ImGui::SameLine();
-      ImGui::InputFloat3("##translate", translation);
+      changeFlag |= ImGui::InputFloat3("##translate", translation);
 
       ImGui::Text("rotation");
       ImGui::SameLine();
-      ImGui::InputFloat3("##rotation", rotation);
+      changeFlag |= ImGui::InputFloat3("##rotation", rotation);
 
       ImGui::Text("scale");
       ImGui::SameLine();
-      ImGui::InputFloat3("##scale", scale);
-
+      changeFlag |= ImGui::InputFloat3("##scale", scale);
     } else if (world.any_of<DirectionalLightSceneNode>(m_entity)) {
       ImGui::Text("translate");
       ImGui::SameLine();
-      ImGui::InputFloat3("##translate", translation);
+      changeFlag |= ImGui::InputFloat3("##translate", translation);
     } else if (world.any_of<VXGIProbeSceneNode>(m_entity)) {
       ImGui::Text("translate");
       ImGui::SameLine();
-      ImGui::InputFloat3("##translate", translation);
+      changeFlag |= ImGui::InputFloat3("##translate", translation);
     }
 
-    ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, glm::value_ptr(modelMatrix));
-    transform.SetGlobalTransform(modelMatrix);
-    return true;
+    if (changeFlag) {
+      ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, glm::value_ptr(modelMatrix));
+      transform.SetLocalTransform(modelMatrix);
+    }
+    return changeFlag;
   });
 
   DrawComponentProp<DirectionLightComponent>("directional light", activeScene, m_entity, [&](auto& node) {

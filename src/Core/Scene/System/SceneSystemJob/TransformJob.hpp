@@ -17,7 +17,7 @@ class TransformJob : public entt::process<TransformJob, uint32_t> {
 
  private:
   entt::observer m_observer;
-  Scene* m_currentObserverScene = nullptr;
+  // Scene* m_currentObserverScene = nullptr;
 };
 
 }  // namespace Marbas::Job

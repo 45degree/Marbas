@@ -55,19 +55,24 @@ struct VoxelRenderComponent {
     glm::vec4 voxelSizeResolution;
     glm::vec3 pos = glm::vec3(0, 0, 0);
   } m_voxelInfo;
-  ImageView* m_voxelDiffuseView;
-  ImageView* m_voxelNormalView;
-  ImageView* m_voxelRadianceView;
-  ImageView* m_diffuseVoxelizationView;
-  ImageView* m_normalVoxelizationView;
+  // ImageView* m_voxelStaticDiffuseView = nullptr;
+  // ImageView* m_voxelStaticNormalView = nullptr;
+  ImageView* m_voxelDiffuseView = nullptr;
+  ImageView* m_voxelNormalView = nullptr;
+  ImageView* m_voxelRadianceView = nullptr;
+  ImageView* m_diffuseVoxelizationView = nullptr;
+  ImageView* m_normalVoxelizationView = nullptr;
   uintptr_t m_sampler;
   uintptr_t m_radianceSampler;
 
  public:
-  Image* m_voxelDiffuse;
-  Image* m_voxelNormal;
-  Image* m_voxelRadiance;
-  Buffer* m_giInfo;
+  // Image* m_voxelStaticDiffuse = nullptr;
+  // Image* m_voxelStaticNormal = nullptr;
+  Image* m_voxelDiffuse = nullptr;
+  Image* m_voxelNormal = nullptr;
+  Image* m_voxelRadiance = nullptr;
+  Buffer* m_giInfo = nullptr;
+  // uintptr_t m_setForStaticVoxelization;
   uintptr_t m_setForVoxelization;  // 用于体素化场景的descriptor set
   uintptr_t m_setForLightInject;   // 用于光线注入的descriptor set
   uint32_t m_resolution;
@@ -93,6 +98,9 @@ struct VoxelRenderComponent {
 
   void
   BindLightInjectSet();
+
+  void
+  BindStaticVoxelizationSet();
 
  private:
   RHIFactory* m_rhiFactory;

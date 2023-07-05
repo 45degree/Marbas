@@ -9,6 +9,7 @@
 #include "Core/Renderer/GBuffer.hpp"
 #include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/Component/RenderComponent/MeshRenderComponent.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 
 namespace Marbas {
 
@@ -117,7 +118,8 @@ GeometryPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 
 void
 GeometryPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
-  auto* scene = registry.GetCurrentActiveScene();
+  auto* userData = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData());
+  auto* scene = userData->scene;
 
   auto& world = scene->GetWorld();
   auto camera = scene->GetEditorCamera();

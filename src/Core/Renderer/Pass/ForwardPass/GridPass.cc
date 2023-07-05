@@ -2,6 +2,8 @@
 
 #include <nameof.hpp>
 
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
+
 namespace Marbas {
 
 GridRenderPass::GridRenderPass(const GridRenderPassCreateInfo& createInfo)
@@ -74,7 +76,7 @@ GridRenderPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBu
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
 
-  auto scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
 
   // set camera info
   auto camera = scene->GetEditorCamera();

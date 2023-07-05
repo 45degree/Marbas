@@ -3,21 +3,6 @@
 namespace Marbas {
 
 /**
- * the tag for light
- */
-
-struct NewLightTag {};
-
-struct UpdateLightTag {};
-
-struct DeleteLightTag {};
-
-/**
- * the tag for model
- */
-struct NewModelTag {};
-
-/**
  * tag for renderable
  */
 

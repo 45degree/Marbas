@@ -63,19 +63,19 @@ RenderGraphJob::init() {}
 void
 RenderGraphJob::update(DeltaTime deltaTime, void* data) {
   auto* renderInfo = reinterpret_cast<RenderInfo*>(data);
+  auto* userData = reinterpret_cast<RenderUserData*>(renderInfo->userData);
 
-  auto* scene = renderInfo->scene;
   auto* waitSemaphore = renderInfo->waitSemaphore;
   auto* signalSemaphore = renderInfo->signalSemaphore;
   auto* fence = renderInfo->fence;
-  m_renderGraph->Execute(scene, waitSemaphore, signalSemaphore, fence);
+  m_renderGraph->Execute(waitSemaphore, signalSemaphore, fence, userData);
 }
 
 void
 RenderGraphJob::CreateRenderGraphResource() {
   // TODO: how to change it dynamically
-  uint32_t width = 800;
-  uint32_t height = 600;
+  uint32_t width = 1920;
+  uint32_t height = 1080;
 
   ImageCreateInfo createInfo;
 
@@ -182,8 +182,8 @@ RenderGraphJob::CreateRenderGraphResource() {
 
 void
 RenderGraphJob::CreateRenderGraphPass() {
-  uint32_t width = 800;
-  uint32_t height = 600;
+  uint32_t width = 1920;
+  uint32_t height = 1080;
 
   // precompute render pass
   TransmittanceLUTPassCreateInfo transmittanceLUTCreateInfo;

@@ -88,6 +88,8 @@ VoxelRenderComponent::VoxelRenderComponent(RHIFactory* rhiFactory, const glm::ve
   createInfo.imageDesc = Image3DDesc{.depth = resolution};
   createInfo.mipMapLevel = 1;
 
+  // m_voxelStaticDiffuse = bufCtx->CreateImage(createInfo);
+  // m_voxelStaticNormal = bufCtx->CreateImage(createInfo);
   m_voxelDiffuse = bufCtx->CreateImage(createInfo);
   m_voxelNormal = bufCtx->CreateImage(createInfo);
 
@@ -98,6 +100,7 @@ VoxelRenderComponent::VoxelRenderComponent(RHIFactory* rhiFactory, const glm::ve
   m_giInfo = bufCtx->CreateBuffer(UNIFORM_BUFFER, &m_voxelInfo, sizeof(VoxelInfo), false);
 
   m_setForVoxelization = pipelineCtx->CreateDescriptorSet(GetVoxelizationDescriptorArgument());
+  // m_setForStaticVoxelization = pipelineCtx->CreateDescriptorSet(GetVoxelizationDescriptorArgument());
   m_setForLightInject = pipelineCtx->CreateDescriptorSet(GetLightInjectDescriptorArgument());
 
   // create image view
@@ -117,6 +120,24 @@ VoxelRenderComponent::VoxelRenderComponent(RHIFactory* rhiFactory, const glm::ve
       .baseArrayLayer = 0,
       .layerCount = 1,
   });
+  // m_voxelStaticDiffuseView = bufCtx->CreateImageView(ImageViewCreateInfo{
+  //     .image = m_voxelStaticDiffuse,
+  //     .type = ImageViewType::TEXTURE3D,
+  //     .format = ImageFormat::R32UI,
+  //     .baseLevel = 0,
+  //     .levelCount = 1,
+  //     .baseArrayLayer = 0,
+  //     .layerCount = 1,
+  // });
+  // m_voxelStaticNormalView = bufCtx->CreateImageView(ImageViewCreateInfo{
+  //     .image = m_voxelStaticNormal,
+  //     .type = ImageViewType::TEXTURE3D,
+  //     .format = ImageFormat::R32UI,
+  //     .baseLevel = 0,
+  //     .levelCount = 1,
+  //     .baseArrayLayer = 0,
+  //     .layerCount = 1,
+  // });
   m_diffuseVoxelizationView = bufCtx->CreateImageView(ImageViewCreateInfo{
       .image = m_voxelDiffuse,
       .type = ImageViewType::TEXTURE3D,
@@ -161,6 +182,7 @@ VoxelRenderComponent::VoxelRenderComponent(RHIFactory* rhiFactory, const glm::ve
   samplerCreateInfo.maxLod = static_cast<uint32_t>(std::floor(std::log2(resolution))) + 1,
   m_radianceSampler = pipelineCtx->CreateSampler(samplerCreateInfo);
 
+  BindStaticVoxelizationSet();
   BindVoxelizationSet();
   BindLightInjectSet();
 }
@@ -172,8 +194,12 @@ VoxelRenderComponent::~VoxelRenderComponent() {
   bufCtx->DestroyImage(m_voxelDiffuse);
   bufCtx->DestroyImage(m_voxelNormal);
   bufCtx->DestroyImage(m_voxelRadiance);
+  // bufCtx->DestroyImage(m_voxelStaticDiffuse);
+  // bufCtx->DestroyImage(m_voxelStaticNormal);
 
   // destroy image view
+  // bufCtx->DestroyImageView(m_voxelStaticDiffuseView);
+  // bufCtx->DestroyImageView(m_voxelStaticNormalView);
   bufCtx->DestroyImageView(m_voxelDiffuseView);
   bufCtx->DestroyImageView(m_voxelNormalView);
   bufCtx->DestroyImageView(m_voxelRadianceView);
@@ -224,6 +250,29 @@ VoxelRenderComponent::BindVoxelizationSet() {
       .offset = 0,
       .arrayElement = 0,
   });
+}
+
+void
+VoxelRenderComponent::BindStaticVoxelizationSet() {
+  auto pipelineCtx = m_rhiFactory->GetPipelineContext();
+  // pipelineCtx->BindStorageImage(BindStorageImageInfo{
+  //     .descriptorSet = m_setForStaticVoxelization,
+  //     .bindingPoint = 0,
+  //     .imageView = m_voxelStaticDiffuseView,
+  // });
+  // pipelineCtx->BindStorageImage(BindStorageImageInfo{
+  //     .descriptorSet = m_setForStaticVoxelization,
+  //     .bindingPoint = 1,
+  //     .imageView = m_voxelStaticNormalView,
+  // });
+  // pipelineCtx->BindBuffer(BindBufferInfo{
+  //     .descriptorSet = m_setForStaticVoxelization,
+  //     .descriptorType = DescriptorType::UNIFORM_BUFFER,
+  //     .bindingPoint = 2,
+  //     .buffer = m_giInfo,
+  //     .offset = 0,
+  //     .arrayElement = 0,
+  // });
 }
 
 void

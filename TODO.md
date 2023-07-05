@@ -28,9 +28,9 @@
 
 # SSR(未实现)
 
-# VXGI(未实现)
+# VXGI
 
-1. 根据场景动态选择 probe
+1. 计算三次反射
 
 # RenderGraph
 

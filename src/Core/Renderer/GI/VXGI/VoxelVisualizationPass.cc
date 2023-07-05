@@ -1,3 +1,4 @@
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 #include "VoxelVisualizatonPass.hpp"
 
 namespace Marbas::GI {
@@ -89,7 +90,7 @@ VoxelVisulzationPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 
 void
 VoxelVisulzationPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
-  auto* scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
 
   auto& world = scene->GetWorld();
   auto camera = scene->GetEditorCamera();

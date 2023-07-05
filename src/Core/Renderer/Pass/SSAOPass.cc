@@ -1,6 +1,7 @@
 #include "SSAOPass.hpp"
 
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 
 namespace Marbas {
 
@@ -78,7 +79,7 @@ SSAOPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& 
   auto inputSet = registry.GetInputDescriptorSet();
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
-  auto* scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
 
   auto bufCtx = m_rhiFactory->GetBufferContext();
   auto camera = scene->GetEditorCamrea();

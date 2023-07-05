@@ -34,11 +34,11 @@ RenderGraph::Compile() {
 }
 
 void
-RenderGraph::Execute(Scene* scene, Semaphore* waitSemaphore, Semaphore* signalSemaphore, Fence* fence) {
+RenderGraph::Execute(Semaphore* waitSemaphore, Semaphore* signalSemaphore, Fence* fence, void* userData) {
   // find all enabled pass
   std::vector<int> enablePassesIndex;
   for (int i = 0; i < m_passes.size(); i++) {
-    if (m_passes[i]->IsEnable(this, scene)) {
+    if (m_passes[i]->IsEnable(this, userData)) {
       enablePassesIndex.push_back(i);
     }
   }
@@ -54,7 +54,7 @@ RenderGraph::Execute(Scene* scene, Semaphore* waitSemaphore, Semaphore* signalSe
 
   // record the command
   for (int& enablePass : enablePassesIndex) {
-    m_passes[enablePass]->Execute(this, scene);
+    m_passes[enablePass]->Execute(this, userData);
   }
 
   // execute the command
@@ -72,8 +72,8 @@ RenderGraph::Execute(Scene* scene, Semaphore* waitSemaphore, Semaphore* signalSe
 }
 
 void
-RenderGraph::ExecuteAlone(const StringView& passName, Scene* scene, Semaphore* waitSemaphore,
-                          Semaphore* signalSemaphore, Fence* fence) {
+RenderGraph::ExecuteAlone(const StringView& passName, Semaphore* waitSemaphore, Semaphore* signalSemaphore,
+                          Fence* fence, void* userData) {
   auto iter = std::find_if(m_passes.begin(), m_passes.end(), [&](auto* pass) { return pass->GetName() == passName; });
   if (iter == m_passes.end()) {
     LOG(WARNING) << FORMAT("can't find the pass: {}, won't execute it", passName);
@@ -82,12 +82,12 @@ RenderGraph::ExecuteAlone(const StringView& passName, Scene* scene, Semaphore* w
 
   auto& pass = *iter;
 
-  if (!pass->IsEnable(this, scene)) {
+  if (!pass->IsEnable(this, userData)) {
     LOG(WARNING) << FORMAT("can't run pass: {} because IsEnable function of this pass return false", passName);
     return;
   }
 
-  pass->Execute(this, scene);
+  pass->Execute(this, userData);
   pass->Submit(waitSemaphore, signalSemaphore, fence);
 }
 

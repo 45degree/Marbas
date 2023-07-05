@@ -3,6 +3,7 @@
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
 #include "Core/Scene/Scene.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 
 namespace Marbas {
 
@@ -28,7 +29,9 @@ class GridRenderPass final {
 
   bool
   IsEnable(RenderGraphGraphicsRegistry& registry) {
-    return registry.GetCurrentActiveScene() != nullptr;
+    auto* userData = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData());
+    auto* scene = userData->scene;
+    return scene != nullptr;
   }
 
  private:

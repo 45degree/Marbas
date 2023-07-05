@@ -17,7 +17,7 @@ class RenderGraphGraphicsRegistry final {
   using Pass = details::RenderGraphGraphicsPass;
 
  public:
-  RenderGraphGraphicsRegistry(RenderGraph* graph, Scene* scene, Pass* pass);
+  RenderGraphGraphicsRegistry(RenderGraph* graph, Pass* pass, void* userData);
 
   uintptr_t
   GetInputDescriptorSet();
@@ -25,9 +25,9 @@ class RenderGraphGraphicsRegistry final {
   uintptr_t
   GetPipeline(size_t index);
 
-  const Scene*
-  GetCurrentActiveScene() const {
-    return m_scene;
+  void*
+  GetUserData() {
+    return m_userData;
   }
 
   FrameBuffer*
@@ -38,7 +38,7 @@ class RenderGraphGraphicsRegistry final {
 
  private:
   RenderGraph* m_graph;
-  Scene* m_scene;
+  void* m_userData;
   Pass* m_pass;
 };
 
@@ -46,7 +46,7 @@ class RenderGraphComputeRegistry final {
   using Pass = details::RenderGraphComputePass;
 
  public:
-  RenderGraphComputeRegistry(RenderGraph* graph, Scene* scene, Pass* pass);
+  RenderGraphComputeRegistry(RenderGraph* graph, Pass* pass, void* userData);
 
   uintptr_t
   GetInputDescriptorSet();
@@ -54,9 +54,9 @@ class RenderGraphComputeRegistry final {
   uintptr_t
   GetPipeline(size_t index);
 
-  const Scene*
-  GetCurrentActiveScene() const {
-    return m_scene;
+  void*
+  GetUserData() {
+    return m_userData;
   }
 
   Image*
@@ -64,7 +64,7 @@ class RenderGraphComputeRegistry final {
 
  private:
   RenderGraph* m_graph;
-  Scene* m_scene;
+  void* m_userData = nullptr;
   Pass* m_pass;
 };
 

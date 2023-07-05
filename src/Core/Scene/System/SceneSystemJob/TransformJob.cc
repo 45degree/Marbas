@@ -2,23 +2,23 @@
 
 #include "Core/Scene/Component/SerializeComponent/TransformComp.hpp"
 #include "Core/Scene/Scene.hpp"
+#include "Core/Scene/System/SceneSystemJob/SceneSystem.hpp"
 
 namespace Marbas::Job {
 
 void
 TransformJob::update(uint32_t deltaTime, void* data) {
-  auto* scene = reinterpret_cast<Scene*>(data);
-  if (scene != m_currentObserverScene && scene != nullptr) {
+  auto* sceneUserData = reinterpret_cast<SceneUserData*>(data);
+  if (sceneUserData->m_sceneChange && sceneUserData->m_scene != nullptr) {
     auto collector = entt::collector.update<TransformComp>();
-    scene->ConnectObserve(m_observer, collector);
-    m_currentObserverScene = scene;
+    sceneUserData->m_scene->ConnectObserve(m_observer, collector);
     return;
   }
 
-  if (m_observer.empty()) return;
+  if (!sceneUserData->m_sceneChange && m_observer.empty()) return;
 
-  auto rootEntity = scene->GetRootNode();
-  UpdateTransformRecursion(scene, rootEntity);
+  auto rootEntity = sceneUserData->m_scene->GetRootNode();
+  UpdateTransformRecursion(sceneUserData->m_scene, rootEntity);
 
   m_observer.clear();
 }
@@ -41,6 +41,7 @@ TransformJob::UpdateTransformRecursion(Scene* scene, entt::entity entity) {
     auto& parentTrans = scene->Get<TransformComp>(parentEntity);
     auto& parentGlobalTrans = parentTrans.GetGlobalTransform();
     scene->Update<TransformComp>(entity, [&](auto& component) {
+      // if (!component.IsDirty()) return false;  // this componet has set global transform
       auto& localTrans = component.GetLocalTransform();
       component.SetLocalTransform(localTrans, parentGlobalTrans);
       return false;  // not emit an update signal

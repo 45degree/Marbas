@@ -3,6 +3,7 @@
 #include <nameof.hpp>
 
 #include "Core/Common.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 
 namespace Marbas::GI {
 
@@ -63,7 +64,8 @@ VoxelizationPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommand
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
 
-  auto* scene = registry.GetCurrentActiveScene();
+  auto* userData = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData());
+  auto* scene = userData->scene;
   auto& world = scene->GetWorld();
 
   auto renderLightDataView = world.view<LightRenderComponent>();
@@ -80,9 +82,71 @@ VoxelizationPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommand
 
   commandBuffer.Begin();
 
+  // clear all new gi data
+  // for (auto entity : m_giCreateObserver) {
+  //   auto& giData = scene->Get<VoxelRenderComponent>(entity);
+  //   commandBuffer.ClearColor(giData.m_voxelStaticDiffuse, {0, 0, 0, 0}, 0, 1, 0, 1);
+  //   commandBuffer.ClearColor(giData.m_voxelStaticNormal, {0, 0, 0, 0}, 0, 1, 0, 1);
+  // }
+
+  // static model update
+  // for (auto&& [entity, giData] : giDataView.each()) {
+  //   // if (m_staticModelAddObserver.empty()) continue;
+  //   // m_staticModelAddObserver.clear();
+  //
+  //   commandBuffer.ClearColor(giData.m_voxelStaticDiffuse, {0, 0, 0, 0}, 0, 1, 0, 1);
+  //   commandBuffer.ClearColor(giData.m_voxelStaticNormal, {0, 0, 0, 0}, 0, 1, 0, 1);
+  //
+  //   commandBuffer.BeginPipeline(pipeline, framebuffer, {});
+  //   std::array<ViewportInfo, 1> viewportInfo;
+  //   viewportInfo[0].x = 0;
+  //   viewportInfo[0].y = 0;
+  //   viewportInfo[0].width = giData.m_resolution;
+  //   viewportInfo[0].height = giData.m_resolution;
+  //
+  //   std::array<ScissorInfo, 1> scissorInfo;
+  //   scissorInfo[0].x = 0;
+  //   scissorInfo[0].y = 0;
+  //   scissorInfo[0].width = giData.m_resolution;
+  //   scissorInfo[0].height = giData.m_resolution;
+  //
+  //   commandBuffer.SetViewports(viewportInfo);
+  //   commandBuffer.SetScissors(scissorInfo);
+  //
+  //   auto view = scene->View<ModelSceneNode, StaticModelTag, RenderableTag>();
+  //   for (auto&& [node, modelNodeComp] : view.each()) {
+  //     glm::mat4 modelTransform(1.0);
+  //     if (world.any_of<TransformComp>(node)) {
+  //       modelTransform = world.get<TransformComp>(node).GetGlobalTransform();
+  //     }
+  //
+  //     commandBuffer.PushConstant(pipeline, &modelTransform, sizeof(glm::mat4), 0);
+  //     for (auto mesh : modelNodeComp.m_meshEntities) {
+  //       if (!world.any_of<MeshRenderComponent>(mesh)) continue;
+  //
+  //       auto& meshRenderComponent = world.get<MeshRenderComponent>(mesh);
+  //       auto& indexCount = meshRenderComponent.m_indexCount;
+  //
+  //       commandBuffer.BindDescriptorSet(
+  //           pipeline, {set, giData.m_setForStaticVoxelization, meshRenderComponent.m_descriptorSet, lightDataSet});
+  //       commandBuffer.BindVertexBuffer(meshRenderComponent.m_vertexBuffer);
+  //       commandBuffer.BindIndexBuffer(meshRenderComponent.m_indexBuffer);
+  //       commandBuffer.DrawIndexed(meshRenderComponent.m_indexCount, 1, 0, 0, 0);
+  //     }
+  //   }
+  //   commandBuffer.EndPipeline(pipeline);
+  //
+  //   int resolution = giData.m_resolution;
+  //   CopyImageRange srcRange, dstRange;
+  //   commandBuffer.CopyImage(giData.m_voxelStaticDiffuse, giData.m_voxelDiffuse, srcRange, dstRange, resolution,
+  //                           resolution, resolution);
+  //   commandBuffer.CopyImage(giData.m_voxelStaticNormal, giData.m_voxelNormal, srcRange, dstRange, resolution,
+  //                           resolution, resolution);
+  // }
+
   for (auto&& [entity, giData] : giDataView.each()) {
-    commandBuffer.ClearColorImage(giData.m_voxelDiffuse, {0, 0, 0, 0}, 0, 1, 0, 1);
-    commandBuffer.ClearColorImage(giData.m_voxelNormal, {0, 0, 0, 0}, 0, 1, 0, 1);
+    commandBuffer.ClearColor(giData.m_voxelDiffuse, {0, 0, 0, 0}, 0, 1, 0, 1);
+    commandBuffer.ClearColor(giData.m_voxelNormal, {0, 0, 0, 0}, 0, 1, 0, 1);
     commandBuffer.BeginPipeline(pipeline, framebuffer, {});
     std::array<ViewportInfo, 1> viewportInfo;
     viewportInfo[0].x = 0;
@@ -129,8 +193,8 @@ VoxelizationPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommand
 
 bool
 VoxelizationPass::IsEnable(RenderGraphGraphicsRegistry& registry) {
-  auto* scene = registry.GetCurrentActiveScene();
-  auto& world = scene->GetWorld();
+  auto* userData = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData());
+  auto& world = userData->scene->GetWorld();
 
   // no light in the scene
   auto renderLightDataView = world.view<LightRenderComponent>();
@@ -143,6 +207,18 @@ VoxelizationPass::IsEnable(RenderGraphGraphicsRegistry& registry) {
   // no active gi probe in the view port
   auto giDataView = world.view<VoxelRenderComponent>();
   if (giDataView.size() == 0) return false;
+
+  // set the observer
+  if (userData->changeScene && userData->scene != nullptr) {
+    // constexpr auto staticCollector = entt::collector.group<ModelSceneNode, StaticModelTag>()
+    //                                      .update<ModelSceneNode>()
+    //                                      .where<StaticModelTag>()
+    //                                      .update<TransformComp>()
+    //                                      .where<StaticModelTag>();
+    // constexpr auto giCreateCollector = entt::collector.group<VXGIProbeSceneNode>();
+    // userData->scene->ConnectObserve(m_staticModelAddObserver, staticCollector);
+    // userData->scene->ConnectObserve(m_giCreateObserver, giCreateCollector);
+  }
 
   return true;
 }

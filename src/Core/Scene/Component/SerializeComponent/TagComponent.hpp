@@ -10,4 +10,12 @@ struct SunLightTag {
   }
 };
 
+// struct StaticModelTag {
+//   template <typename Archive>
+//   void
+//   serialize(Archive&& archive) {
+//     archive();
+//   }
+// };
+
 }  // namespace Marbas

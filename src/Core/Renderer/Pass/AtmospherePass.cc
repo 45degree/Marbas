@@ -3,6 +3,7 @@
 #include <glog/logging.h>
 
 #include "Core/Scene/Component/Component.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 
 namespace Marbas {
 
@@ -102,7 +103,7 @@ AtmospherePass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBu
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
   auto inputSet = registry.GetInputDescriptorSet();
-  auto* scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
 
   auto& world = scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();
@@ -167,7 +168,7 @@ AtmospherePass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBu
 
 bool
 AtmospherePass::IsEnable(RenderGraphGraphicsRegistry& registry) {
-  const auto* scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
   if (scene == nullptr) return false;
 
   auto& world = scene->GetWorld();

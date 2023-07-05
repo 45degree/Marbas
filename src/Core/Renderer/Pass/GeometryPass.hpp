@@ -3,6 +3,7 @@
 #include "AssetManager/AssetManager.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphBuilder.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 #include "RHIFactory.hpp"
 
 namespace Marbas {
@@ -38,7 +39,8 @@ class GeometryPass {
 
   bool
   IsEnable(RenderGraphGraphicsRegistry& registry) {
-    auto scene = registry.GetCurrentActiveScene();
+    auto* userData = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData());
+    auto* scene = userData->scene;
     return scene != nullptr;
   }
 

@@ -48,8 +48,8 @@ class Scene {
   };
 
   template <typename Type, typename... Other, typename... Exclude>
-  [[nodiscard]] auto
-  View(entt::exclude_t<Exclude...> exclude = {}) const {
+  [[nodiscard]] decltype(auto)
+  View(entt::exclude_t<Exclude...> exclude = entt::exclude_t<>{}) const {
     return m_world.view<Type, Other...>(exclude);
   }
 

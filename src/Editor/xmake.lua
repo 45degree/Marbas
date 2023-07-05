@@ -14,7 +14,7 @@ target('Marbas.Editor', function()
   add_deps('Marbas.Core', 'ImGuizmo', 'Marbas.Common', 'Marbas.AssetManager', 'imGuiZMO.quat')
   add_packages('glfw', 'fmt', 'assimp', 'glm', 'entt', 'glog', 'nativefiledialog', 'cereal', 'stb')
 
-  add_packages('icu4c')
+  add_packages('icu4c', 'efsw')
   if is_plat('windows') then
     add_defines('NOMINMAX')
   end

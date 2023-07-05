@@ -194,8 +194,8 @@ LambdaGraphicsRenderGraphPass::LambdaGraphicsRenderGraphPass(StringView name, RH
     : RenderGraphGraphicsPass(name, rhiFactory) {}
 
 void
-LambdaGraphicsRenderGraphPass::Execute(RenderGraph* graph, Scene* scene) {
-  RenderGraphGraphicsRegistry registry(graph, scene, this);
+LambdaGraphicsRenderGraphPass::Execute(RenderGraph* graph, void* userData) {
+  RenderGraphGraphicsRegistry registry(graph, this, userData);
   m_command(registry, *m_commandBuffer);
 }
 
@@ -203,8 +203,8 @@ LambdaComputeRenderGraphPass::LambdaComputeRenderGraphPass(StringView name, RHIF
     : RenderGraphComputePass(name, rhiFactory) {}
 
 void
-LambdaComputeRenderGraphPass::Execute(RenderGraph* graph, Scene* scene) {
-  RenderGraphComputeRegistry registry(graph, scene, this);
+LambdaComputeRenderGraphPass::Execute(RenderGraph* graph, void* userData) {
+  RenderGraphComputeRegistry registry(graph, this, userData);
   m_command(registry, *m_commandBuffer);
 }
 

@@ -9,12 +9,6 @@
 
 namespace Marbas {
 
-void
-SceneSystem::ClearUnuseAsset(Scene* scene) {
-  AssetManager<TextureAsset>::GetInstance()->Tick();
-  AssetManager<ModelAsset>::GetInstance()->Tick();
-}
-
 Task<void>
 SceneSystem::CreateAssetCache(Scene* scene) {
   auto& world = scene->GetWorld();
@@ -30,37 +24,6 @@ SceneSystem::CreateAssetCache(Scene* scene) {
   co_return;
 }
 
-Task<void>
-SceneSystem::LoadMesh(Scene* scene) {
-  auto modelNodeView = scene->View<ModelSceneNode, NewModelTag>();
-  auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
-
-  for (auto& entity : modelNodeView) {
-    auto& node = scene->Get<ModelSceneNode>(entity);
-    if (node.modelPath == "res://") continue;
-
-    auto asset = co_await modelAssetMgr->GetAsync(node.modelPath);
-    scene->Update<ModelSceneNode>(entity, [&](auto& component) {
-      component.m_meshEntities.clear();
-
-      auto meshCount = asset->GetMeshCount();
-      for (int i = 0; i < meshCount; i++) {
-        auto meshEntity = scene->CreateEntity();
-        scene->Emplace<MeshComponent>(meshEntity);
-        scene->Update<MeshComponent>(meshEntity, [&](auto& component) {
-          component.index = i;
-          component.m_modelAsset = asset;
-          return true;
-        });
-        component.m_meshEntities.push_back(meshEntity);
-      }
-      return true;
-    });
-    scene->Remove<NewModelTag>(entity);
-  }
-  co_return;
-}
-
 Job::SceneSystem SceneSystem::s_sceneSystem;
 
 void
@@ -70,12 +33,21 @@ SceneSystem::Initialize() {
 
 Task<void>
 SceneSystem::Update(Scene* scene) {
+  // TODO: remove to the editor
   co_await CreateAssetCache(scene);
-  co_await LoadMesh(scene);
-  ClearUnuseAsset(scene);
+
+  static Scene* s_lastScene = nullptr;
+  Job::SceneUserData userData;
+  userData.m_scene = scene;
+  if (scene != s_lastScene) {
+    userData.m_sceneChange = true;
+    s_lastScene = scene;
+  } else {
+    userData.m_sceneChange = false;
+  }
 
   // update scene aabb
-  s_sceneSystem.Update(0, scene);
+  s_sceneSystem.Update(0, &userData);
 
   co_return;
 }

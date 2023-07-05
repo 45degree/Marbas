@@ -106,18 +106,10 @@ DirectionShadowComponent::UpdateShadowInfo(const glm::vec3& lightDir, const Came
 }
 
 void
-DirectionShadowComponent::OnUpdate(entt::registry& world, entt::entity node) {
-  if (!world.any_of<UpdateLightTag>(node)) {
-    world.emplace<UpdateLightTag>(node);
-  }
-}
+DirectionShadowComponent::OnUpdate(entt::registry& world, entt::entity node) {}
 
 void
-DirectionShadowComponent::OnCreate(entt::registry& world, entt::entity node) {
-  if (!world.any_of<NewLightTag>(node)) {
-    world.emplace<NewLightTag>(node);
-  }
-}
+DirectionShadowComponent::OnCreate(entt::registry& world, entt::entity node) {}
 
 void
 DirectionShadowComponent::OnDestroy(entt::registry& world, entt::entity node) {}

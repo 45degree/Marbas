@@ -66,7 +66,7 @@ class TransformComp final {
   template <typename Archive>
   void
   serialize(Archive&& archive) {
-    archive(m_globalTransform);
+    archive(m_globalTransform, m_localTransform);
   }
 };
 

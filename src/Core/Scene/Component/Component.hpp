@@ -7,7 +7,7 @@
 // serialized component
 #include "SerializeComponent/EnvironmentComponent.hpp"
 #include "SerializeComponent/GLMSerialize.hpp"
-#include "SerializeComponent/HierarchyComponent.hpp"
+// #include "SerializeComponent/HierarchyComponent.hpp"
 #include "SerializeComponent/LightComponent.hpp"
 #include "SerializeComponent/SceneNodeComponent.hpp"
 #include "SerializeComponent/SerializeComponent.hpp"

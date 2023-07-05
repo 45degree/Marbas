@@ -25,10 +25,6 @@ class DirectionShadowMapPass final {
 
  private:
   RHIFactory* m_rhiFactory = nullptr;
-
-  Buffer* m_currentIndexBuf = nullptr;
-  int m_currentLightIndex = 0;
-
   DescriptorSetArgument m_argument;
   uintptr_t m_set;
 

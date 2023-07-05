@@ -4,6 +4,7 @@
 #include "Core/Renderer/RenderGraph/RenderGraphRegistry.hpp"
 #include "Core/Renderer/RenderGraph/RenderGraphResource.hpp"
 #include "Core/Scene/Scene.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 
 namespace Marbas {
 
@@ -29,7 +30,8 @@ class SSAOPass {
 
   bool
   IsEnable(RenderGraphGraphicsRegistry& registry) {
-    return registry.GetCurrentActiveScene() != nullptr;
+    auto* userData = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData());
+    return userData->scene != nullptr;
   }
 
  private:

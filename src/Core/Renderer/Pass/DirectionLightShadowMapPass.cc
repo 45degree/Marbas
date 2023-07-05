@@ -8,6 +8,7 @@
 #include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/Component/RenderComponent/LightRenderComponent.hpp"
 #include "Core/Scene/Component/RenderComponent/MeshRenderComponent.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 
 namespace Marbas {
 
@@ -46,7 +47,8 @@ DirectionShadowMapPass::SetUp(RenderGraphGraphicsBuilder& builder) {
 void
 DirectionShadowMapPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
   // Create Shadow Alias
-  auto* scene = registry.GetCurrentActiveScene();
+  auto* userData = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData());
+  auto* scene = userData->scene;
   auto& world = scene->GetWorld();
   auto view = world.view<DirectionLightComponent, DirectionShadowComponent>();
   auto shadowCount = view.size_hint();
@@ -129,7 +131,8 @@ DirectionShadowMapPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsC
 
 bool
 DirectionShadowMapPass::IsEnable(RenderGraphGraphicsRegistry& registry) {
-  auto scene = registry.GetCurrentActiveScene();
+  auto* userData = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData());
+  auto* scene = userData->scene;
   if (scene == nullptr) return false;
 
   auto& world = scene->GetWorld();

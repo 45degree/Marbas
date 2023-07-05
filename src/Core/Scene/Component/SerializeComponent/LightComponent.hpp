@@ -16,18 +16,10 @@ struct DirectionLightComponent {
   float m_energy = 1;
 
   static void
-  OnCreate(entt::registry& world, entt::entity node) {
-    if (!world.any_of<NewLightTag>(node)) {
-      world.emplace<NewLightTag>(node);
-    }
-  }
+  OnCreate(entt::registry& world, entt::entity node) {}
 
   static void
-  OnUpdate(entt::registry& world, entt::entity node) {
-    if (!world.any_of<UpdateLightTag>(node)) {
-      world.emplace<UpdateLightTag>(node);
-    }
-  }
+  OnUpdate(entt::registry& world, entt::entity node) {}
 
   static void
   OnDestroy(entt::registry& world, entt::entity node) {}

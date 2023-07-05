@@ -7,7 +7,8 @@ namespace Marbas::Job {
 void
 RenderViewClipJob::update(DeltaTime deltaTime, void* data) {
   auto* renderInfo = reinterpret_cast<RenderInfo*>(data);
-  auto* scene = renderInfo->scene;
+  auto* userData = renderInfo->userData;
+  auto* scene = reinterpret_cast<Job::RenderUserData*>(userData)->scene;
   auto& world = scene->GetWorld();
 
   auto camera = scene->GetEditorCamrea();

@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 
 #include "Core/Scene/Component/RenderComponent/VXGIRenderComponent.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 
 namespace Marbas::GI {
 
@@ -92,7 +93,7 @@ VXGIPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& 
   auto inputSet = registry.GetInputDescriptorSet();
   auto pipeline = registry.GetPipeline(0);
   auto framebuffer = registry.GetFrameBuffer();
-  auto scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
   auto& world = scene->GetWorld();
 
   m_cameraInfo.cameraPos = scene->GetEditorCamera()->GetPosition();
@@ -130,7 +131,7 @@ VXGIPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& 
 
 bool
 VXGIPass::IsEnable(RenderGraphGraphicsRegistry& registry) {
-  auto* scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
   auto& world = scene->GetWorld();
 
   // no light in the scene

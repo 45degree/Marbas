@@ -13,12 +13,17 @@
 
 namespace Marbas::Job {
 
+struct RenderUserData {
+  Scene* scene = nullptr;
+  bool changeScene = false;
+};
+
 struct RenderInfo {
-  Scene* scene;
   int imageIndex;
   Semaphore* waitSemaphore = nullptr;
   Semaphore* signalSemaphore = nullptr;
   Fence* fence = nullptr;
+  RenderUserData* userData = nullptr;
 };
 
 class RenderSystem {

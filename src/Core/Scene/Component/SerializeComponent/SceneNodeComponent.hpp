@@ -91,11 +91,7 @@ struct ModelSceneNode {
   OnDestroy(entt::registry& world, entt::entity node) {}
 
   static void
-  AfterLoad(entt::registry& world, entt::entity node) {
-    if (!world.any_of<NewModelTag>(node)) {
-      world.emplace<NewModelTag>(node);
-    }
-  }
+  AfterLoad(entt::registry& world, entt::entity node) {}
 
   static void
   AfterSave(entt::registry& world, entt::entity node) {

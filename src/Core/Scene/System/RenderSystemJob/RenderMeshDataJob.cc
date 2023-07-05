@@ -53,7 +53,8 @@ RenderMeshDataJob::init() {
 void
 RenderMeshDataJob::update(DeltaTime deltaTime, void* data) {
   auto* renderInfo = reinterpret_cast<RenderInfo*>(data);
-  auto* scene = renderInfo->scene;
+  auto* userData = renderInfo->userData;
+  auto* scene = reinterpret_cast<Job::RenderUserData*>(userData)->scene;
   auto& world = scene->GetWorld();
   auto modelAssetMgr = AssetManager<ModelAsset>::GetInstance();
 

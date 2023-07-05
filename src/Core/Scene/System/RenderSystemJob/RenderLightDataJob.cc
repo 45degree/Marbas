@@ -8,7 +8,7 @@ namespace Marbas::Job {
 void
 RenderLightDataJob::update(DeltaTime deltaTime, void* data) {
   auto* renderInfo = reinterpret_cast<RenderInfo*>(data);
-  auto* scene = renderInfo->scene;
+  auto* scene = reinterpret_cast<Job::RenderUserData*>(renderInfo->userData)->scene;
   auto& world = scene->GetWorld();
   auto rootEntity = scene->GetRootNode();
 
@@ -46,7 +46,6 @@ RenderLightDataJob::update(DeltaTime deltaTime, void* data) {
     }
     return true;
   });
-  // world.patch<LightRenderComponent>(rootEntity, [&](auto&& component) {});
 }
 
 void

@@ -108,14 +108,15 @@ RenderImageWidget::DrawModelManipulate(Scene* scene, entt::entity entity, Camera
   auto& world = scene->GetWorld();
   if (!world.any_of<TransformComp>(entity)) return;
 
-  auto modelMatrix = world.get<TransformComp>(entity).GetLocalTransform();
+  auto modelMatrix = world.get<TransformComp>(entity).GetGlobalTransform();
+  auto newModelMatrix = modelMatrix;
 
   auto& showMove = m_zmoDrawInfo.showMove;
   auto& showRotate = m_zmoDrawInfo.showRotate;
   auto& showScale = m_zmoDrawInfo.showScale;
   auto* viewMatrixPtr = glm::value_ptr(viewMatrix);
   auto* projMatrixPtr = glm::value_ptr(perspectiveMatrix);
-  auto* modelMatrixPtr = glm::value_ptr(modelMatrix);
+  auto* modelMatrixPtr = glm::value_ptr(newModelMatrix);
 
   bool changeValue = false;
   if (showMove && showRotate && showScale) {
@@ -130,7 +131,9 @@ RenderImageWidget::DrawModelManipulate(Scene* scene, entt::entity entity, Camera
 
   if (changeValue) {
     scene->Update<TransformComp>(entity, [&](TransformComp& component) {
-      component.SetLocalTransform(modelMatrix);
+      glm::mat4 deltaMatrix = glm::inverse(modelMatrix) * newModelMatrix;
+      auto localTransform = component.GetLocalTransform() * deltaMatrix;
+      component.SetLocalTransform(localTransform);
       return true;
     });
   }

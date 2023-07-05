@@ -13,7 +13,8 @@ RenderVXGIJob::~RenderVXGIJob() {}
 void
 RenderVXGIJob::update(DeltaTime deltaTime, void* data) {
   auto* renderInfo = reinterpret_cast<RenderInfo*>(data);
-  auto* scene = renderInfo->scene;
+  auto* userData = renderInfo->userData;
+  auto* scene = reinterpret_cast<Job::RenderUserData*>(userData)->scene;
   auto& world = scene->GetWorld();
   auto rootEntity = scene->GetRootNode();
 
@@ -76,8 +77,8 @@ RenderVXGIJob::update(DeltaTime deltaTime, void* data) {
       auto entity = activeGIProbeView[i];
       if (std::find(m_activeProbe.begin(), m_activeProbe.end(), entity) == m_activeProbe.end()) {
         m_activeProbe[unactiveList[j]] = entity;
+        component.BindVoxelProbe(world.get<VoxelRenderComponent>(entity), unactiveList[j]);
       }
-      component.BindVoxelProbe(world.get<VoxelRenderComponent>(entity), unactiveList[j]);
       j++;
     }
     return true;

@@ -56,8 +56,19 @@ RenderSystem::Destroy(RHIFactory* rhiFactory) {
 
 void
 RenderSystem::Update(const RenderInfo& renderInfo) {
+  static Scene* s_lastScene = nullptr;
+
   Job::RenderInfo info;
-  info.scene = renderInfo.scene;
+  Job::RenderUserData userData;
+  userData.scene = renderInfo.scene;
+  if (renderInfo.scene != s_lastScene) {
+    userData.changeScene = true;
+    s_lastScene = renderInfo.scene;
+  } else {
+    userData.changeScene = false;
+  }
+
+  info.userData = &userData;
   info.fence = renderInfo.fence;
   info.waitSemaphore = renderInfo.waitSemaphore;
   info.signalSemaphore = renderInfo.signalSemaphore;

@@ -4,8 +4,8 @@
 
 namespace Marbas {
 
-RenderGraphGraphicsRegistry::RenderGraphGraphicsRegistry(RenderGraph* graph, Scene* scene, Pass* pass)
-    : m_graph(graph), m_pass(pass), m_scene(scene) {}
+RenderGraphGraphicsRegistry::RenderGraphGraphicsRegistry(RenderGraph* graph, Pass* pass, void* userData)
+    : m_graph(graph), m_pass(pass), m_userData(userData) {}
 
 uintptr_t
 RenderGraphGraphicsRegistry::GetInputDescriptorSet() {
@@ -30,8 +30,8 @@ RenderGraphGraphicsRegistry::GetImage(RenderGraphTextureHandler handler) {
 
 // compute
 
-RenderGraphComputeRegistry::RenderGraphComputeRegistry(RenderGraph* graph, Scene* scene, Pass* pass)
-    : m_graph(graph), m_scene(scene), m_pass(pass) {}
+RenderGraphComputeRegistry::RenderGraphComputeRegistry(RenderGraph* graph, Pass* pass, void* userData)
+    : m_graph(graph), m_pass(pass), m_userData(userData) {}
 
 uintptr_t
 RenderGraphComputeRegistry::GetPipeline(size_t index) {

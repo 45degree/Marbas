@@ -16,11 +16,12 @@ else
 end
 add_requires('fmt 9.1.0')
 add_requires('gtest 1.11.0')
-add_requires('entt master')
+add_requires('entt v3.12.2')
 add_requires('nativefiledialog 1.1.6')
 add_requires('cereal 1.3.2')
 add_requires('shaderc') -- provide glslc
 add_requires('icu4c 72.1')
+add_requires('efsw 1.3.1')
 
 includes('src/Common/')
 includes('src/Editor/')

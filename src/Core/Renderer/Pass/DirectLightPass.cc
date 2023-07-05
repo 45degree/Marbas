@@ -3,6 +3,7 @@
 #include <nameof.hpp>
 
 #include "Core/Scene/Component/Component.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 
 namespace Marbas {
 
@@ -111,7 +112,7 @@ DirectLightPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandB
   auto inputSet = registry.GetInputDescriptorSet();
   auto framebuffer = registry.GetFrameBuffer();
   auto pipeline = registry.GetPipeline(0);
-  auto scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
 
   auto& world = scene->GetWorld();
   auto bufCtx = m_rhiFactory->GetBufferContext();
@@ -152,7 +153,7 @@ DirectLightPass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandB
 
 bool
 DirectLightPass::IsEnable(RenderGraphGraphicsRegistry& registry) {
-  auto scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
   return scene != nullptr;
 }
 

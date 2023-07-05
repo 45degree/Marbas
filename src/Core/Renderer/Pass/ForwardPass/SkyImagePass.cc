@@ -8,6 +8,7 @@
 #include "Core/Common.hpp"
 #include "Core/Scene/Component/Component.hpp"
 #include "Core/Scene/GPUDataPipeline/TextureGPUData.hpp"
+#include "Core/Scene/System/RenderSystemJob/RenderSystem.hpp"
 
 namespace Marbas {
 
@@ -148,7 +149,7 @@ SkyImagePass::SetUp(RenderGraphGraphicsBuilder& builder) {
 
 void
 SkyImagePass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuffer& commandList) {
-  auto* scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
   auto& world = scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();
   if (view.size() == 0) return;
@@ -233,7 +234,7 @@ SkyImagePass::Execute(RenderGraphGraphicsRegistry& registry, GraphicsCommandBuff
 
 bool
 SkyImagePass::IsEnable(RenderGraphGraphicsRegistry& registry) {
-  auto* scene = registry.GetCurrentActiveScene();
+  const auto* scene = reinterpret_cast<Job::RenderUserData*>(registry.GetUserData())->scene;
   auto& world = scene->GetWorld();
   auto view = world.view<EnvironmentComponent>();
   if (view.size() == 0) return false;

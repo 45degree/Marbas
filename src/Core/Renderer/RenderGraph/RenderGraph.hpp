@@ -81,12 +81,12 @@ class RenderGraph final {
   Compile();
 
   void
-  Execute(Scene* scene, Semaphore* waitSemaphore = nullptr, Semaphore* signalSemaphore = nullptr,
-          Fence* fence = nullptr);
+  Execute(Semaphore* waitSemaphore = nullptr, Semaphore* signalSemaphore = nullptr, Fence* fence = nullptr,
+          void* userData = nullptr);
 
   void
-  ExecuteAlone(const StringView& passName, Scene* scene = nullptr, Semaphore* waitSemaphore = nullptr,
-               Semaphore* signalSemaphore = nullptr, Fence* fence = nullptr);
+  ExecuteAlone(const StringView& passName, Semaphore* waitSemaphore = nullptr, Semaphore* signalSemaphore = nullptr,
+               Fence* fence = nullptr, void* userData = nullptr);
 
  private:
   friend class RenderGraphGraphicsRegistry;

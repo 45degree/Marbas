@@ -37,8 +37,9 @@ class VoxelizationPass {
  private:
   RenderGraphTextureHandler m_shadowMap;
 
-  // VoxelInfo m_voxelInfo;
-  // Buffer* m_voxelInfoBuffer;
+  // entt::observer m_staticModelAddObserver;
+  // entt::observer m_giCreateObserver;
+  Scene* m_currentScene = nullptr;
 
   RHIFactory* m_rhiFactory;
   uintptr_t m_sampler;
